@@ -1,6 +1,11 @@
-from subprocess import Popen, PIPE
+import subprocess
 import time
+import sys
+import logging
 
+#logging.basicConfig(level=logging.INFO)
+ctx_logger = logging.getLogger("SshContext")
+sess_logger = logging.getLogger("SshSession")
 
 # modified from the stdlib pipes module for windows
 _safechars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@%_-+=:,./'
@@ -15,48 +20,30 @@ def shquote(text):
         return text
     if "'" not in text:
         return "'" + text + "'"
-    def escaped(c):
-        if c in _funnychars:
-            return '\\' + c 
-        else:
-            return c
-    res = "".join(escaped(c) for c in text)
+    res = "".join(('\\' + c if c in _funnychars else c) for c in text)
     return '"' + res + '"'
 
 class ProcessExecutionError(Exception):
-    """raised by :func:`SshContext.execute` should the executed process 
-    terminate with an error"""
     def __init__(self, retcode, stdout, stderr):
         self.retcode = retcode
         self.stdout = stdout
         self.stderr = stderr
         Exception.__init__(self, retcode, stdout, stderr)
     def __str__(self):
-        stdout = "\n         | ".join(self.stdout.splitlines())
-        stderr = "\n         | ".join(self.stderr.splitlines())
-        return "Exit code: %s\nStdout:    %s\nStderr:    %s" % (self.retcode, 
-            stdout, stderr)
+        stdout = "\n  |      ".join(self.stdout.splitlines())
+        stderr = "\n  |      ".join(self.stderr.splitlines())
+        return "Exit code: %s\nStdout:  %s\nStderr:  %s" % (self.retcode, stdout, stderr)
 
-import subprocess
 def _get_startupinfo():
     if subprocess.mswindows:
         sui = subprocess.STARTUPINFO()
-        sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        sui.wShowWindow = subprocess.SW_HIDE
+        sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW    #@UndefinedVariable
+        sui.wShowWindow = subprocess.SW_HIDE              #@UndefinedVariable
         return sui
     else:
         return None
 
-
-class SshSession(object):
-    MARKER = "-:-:-End~Of~Output-:-:-"
-
-    def __init__(self, sshctx, tty, **kwargs):
-        self.sshctx = sshctx
-        self.tty = tty
-        self.proc = sshctx.popen(tt = tty, **kwargs)
-        self.execute("") # consume MOTD, banners, etc
-
+def resource_class(cls):
     def __del__(self):
         try:
             self.close()
@@ -66,6 +53,22 @@ class SshSession(object):
         return self
     def __exit__(self, t, v, tb):
         self.close()
+    cls.__del__ = __del__
+    cls.__enter__ = __enter__
+    cls.__exit__ = __exit__
+    return cls
+    
+
+@resource_class
+class SshSession(object):
+    MARKER = b"-:-:-End~Of~Output-:-:-"
+
+    def __init__(self, sshctx, tty, **kwargs):
+        self.sshctx = sshctx
+        self.tty = tty
+        self.proc = sshctx.popen(tt = tty, **kwargs)
+        self.execute("") # consume MOTD, banners, etc
+
     def __repr__(self):
         return "<SshSession to %s>" % (self.sshctx,)
     
@@ -102,22 +105,24 @@ class SshSession(object):
             shl = ctx.shell()
             rc, out, err = shl.execute("ls -la")
         """
-        trailer = "echo $? ; echo %s" % (self.MARKER,)
-        if cmdline.strip():
-            trailer = " ; " + trailer
+        full_cmdline = cmdline
+        if full_cmdline.strip():
+            full_cmdline += " ; "
+        full_cmdline += "echo $? ; echo %s" % (self.MARKER,)
         if not self.tty:
-            trailer += " ; echo %s 1>&2" % (self.MARKER)
-        self.proc.stdin.write(cmdline + trailer + "\n")
+            full_cmdline += " ; echo %s 1>&2" % (self.MARKER)
+        sess_logger.info("Running: %r" % (full_cmdline,))
+        self.proc.stdin.write((full_cmdline + "\n").encode(self.sshctx.encoding))
         stdout = []
         stderr = []
-        sources = [(stdout, self.proc.stdout)]
+        sources = [("1", stdout, self.proc.stdout)]
         if not self.tty:
             # in tty mode, stdout and stderr are unified
-            sources.append((stderr, self.proc.stderr))
-        for coll, pipe in sources:
+            sources.append(("2", stderr, self.proc.stderr))
+        for name, coll, pipe in sources:
             while True:
                 line = pipe.readline()
-                #print "1>" if coll is stdout else "2>", repr(line)
+                sess_logger.debug("%s> %r" % (name, line))
                 if line.strip() == self.MARKER:
                     break
                 coll.append(line)
@@ -126,36 +131,31 @@ class SshSession(object):
         try:
             rc = int(stdout.pop(-1))
         except (IndexError, ValueError):
-            rc = "Unknown"
-        stdout = "".join(stdout)
-        stderr = "".join(stderr)
+            rc = None
+        stdout = b"".join(stdout)
+        stderr = b"".join(stderr)
         if retcode is not None and rc != retcode:
-            raise ProcessExecutionError(rc, stdout, stderr)
+            raise ProcessExecutionError(rc, stdout.decode(self.sshctx.encoding), 
+                stderr.decode(self.sshctx.encoding))
         return rc, stdout, stderr
 
 
+@resource_class
 class SshTunnel(object):
     def __init__(self, session, src, dst):
         self.session = session
         self.src = src
         self.dst = dst
-
-    def __del__(self):
-        try:
-            self.close()
-        except Exception:
-            pass
-    def __enter__(self):
-        return self
-    def __exit__(self, t, v, tb):
-        self.close()
-    def close(self):
-        self.session.close()
+        ctx_logger.info("Tunnel %r has been created" % (self,))
 
     def __repr__(self):
         if not self.session.alive():
             return "<SshTunnel (closed)>"
         return "<SshTunnel %s -> %s>" % (self.src, self.dst) 
+
+    def close(self):
+        ctx_logger.info("Tunnel %r is shutting down" % (self,))
+        self.session.close()
 
 
 class SshContext(object):
@@ -176,10 +176,12 @@ class SshContext(object):
     """
     def __init__(self, host, user = None, port = None, keyfile = None,
             ssh_program = "ssh", ssh_env = None, ssh_cwd = None,
-            scp_program = "scp", scp_env = None, scp_cwd = None):
+            scp_program = "scp", scp_env = None, scp_cwd = None,
+            encoding = sys.getdefaultencoding()):
         self.host = host
         self.user = user
         self.port = port
+        self.encoding = encoding
         self.keyfile = keyfile
         self.ssh_program = ssh_program
         self.ssh_env = ssh_env
@@ -254,9 +256,9 @@ class SshContext(object):
         """
         cmdline = self._process_ssh_cmdline(kwargs)
         cmdline.extend(shquote(a) for a in args)
-        #print "!!", cmdline
-        return Popen(cmdline, stdin = PIPE, stdout = PIPE, stderr = PIPE,
-            cwd = self.ssh_cwd, env = self.ssh_env, shell = False, 
+        ctx_logger.info("Running: %r" % (cmdline,))
+        return subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE, 
+            stderr = subprocess.PIPE, cwd = self.ssh_cwd, env = self.ssh_env, shell = False, 
             startupinfo = _get_startupinfo())
 
     def execute(self, *args, **kwargs):
@@ -287,7 +289,8 @@ class SshContext(object):
         proc = self.popen(*args, **kwargs)
         stdout, stderr = proc.communicate(input)
         if retcode is not None and proc.returncode != retcode:
-            raise ProcessExecutionError(proc.returncode, stdout, stderr)
+            raise ProcessExecutionError(proc.returncode, stdout.decode(self.encoding), 
+                stderr.decode(self.encoding))
         return proc.returncode, stdout, stderr
 
     def upload(self, src, dst, **kwargs):
@@ -303,8 +306,10 @@ class SshContext(object):
         cmdline, host = self._process_scp_cmdline(kwargs)
         cmdline.append(src)
         cmdline.append("%s:%s" % (host, dst))
-        proc = Popen(cmdline, stdin = PIPE, stdout = PIPE, stderr = PIPE, shell = False,
-            cwd = self.scp_cwd, env = self.scp_env, startupinfo = _get_startupinfo())
+        ctx_logger.debug("Upload: %r" % (cmdline,))
+        proc = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE, 
+            stderr = subprocess.PIPE, shell = False, cwd = self.scp_cwd, env = self.scp_env, 
+            startupinfo = _get_startupinfo())
         stdout, stderr = proc.communicate()
         if proc.returncode != 0:
             raise ValueError("upload failed", stdout, stderr)
@@ -322,8 +327,10 @@ class SshContext(object):
         cmdline, host = self._process_scp_cmdline(kwargs)
         cmdline.append("%s:%s" % (host, src))
         cmdline.append(dst)
-        proc = Popen(cmdline, stdin = PIPE, stdout = PIPE, stderr = PIPE, shell = False,
-            cwd = self.scp_cwd, env = self.scp_env, startupinfo = _get_startupinfo())
+        ctx_logger.debug("Download: %r" % (cmdline,))
+        proc = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE, 
+            stderr = subprocess.PIPE, shell = False, cwd = self.scp_cwd, env = self.scp_env, 
+            startupinfo = _get_startupinfo())
         stdout, stderr = proc.communicate()
         if proc.returncode != 0:
             raise ValueError("upload failed", stdout, stderr)
@@ -381,7 +388,11 @@ if __name__ == "__main__":
     with sshctx.shell() as shl:
         print shl.execute("ls -l")
         print shl.execute("ls /")
-    
+        try:
+            shl.execute("git")
+        except ProcessExecutionError as ex:
+            print ex
+        
     #with sshctx.tunnel(19999, 18812) as t:
     #    import rpyc
     #    c = rpyc.classic.connect("localhost", 19999)
