@@ -1,6 +1,5 @@
-import os
-import signal
 from subprocess import Popen, PIPE
+import time
 
 
 # modified from the stdlib pipes module for windows
@@ -48,70 +47,41 @@ def _get_startupinfo():
     else:
         return None
 
-class BaseSshProcess(object):
-    def __enter__(self):
-        return self
-    def __exit__(self, t, v, tb):
-        self.close()
+
+class SshSession(object):
+    MARKER = "-:-:-End~Of~Output-:-:-"
+
+    def __init__(self, sshctx, tty, **kwargs):
+        self.sshctx = sshctx
+        self.tty = tty
+        self.proc = sshctx.popen(tt = tty, **kwargs)
+        self.execute("") # consume MOTD, banners, etc
+
     def __del__(self):
         try:
             self.close()
         except Exception:
             pass
-    def is_open(self):
+    def __enter__(self):
+        return self
+    def __exit__(self, t, v, tb):
+        self.close()
+    def __repr__(self):
+        return "<SshSession to %s>" % (self.sshctx,)
+    
+    def alive(self):
         """returns True if the ``ssh`` process is alive, False otherwise"""
         return self.proc and self.proc.poll() is None
+    
     def close(self):
-        if not self.is_open():
+        if not self.alive():
             return
-        self.proc.stdin.write(b"\nexit\n\n\nexit\n\n\n")
+        self.proc.stdin.write(b"\nexit\n\n\nexit\n\n")
         self.proc.stdin.flush()
-        #time.sleep(0.1)
-        self.proc.stdin.close()
-        self.proc.stdout.close()
-        self.proc.stderr.close()
-        try:
-            self.proc.kill()
-        except AttributeError:
-            os.kill(self.proc.pid, signal.SIGTERM)
-        self.proc.wait()
+        time.sleep(0.05)
+        #self.proc.stdout.readline()
+        self.proc.kill()
         self.proc = None
-
-class SshTunnel(BaseSshProcess):
-    """
-    Represents an active SSH tunnel (as created by ``ssh -L``).
-    
-    .. note:: 
-       Do not instantiate this class yourself -- use the :func:`SshContext.tunnel`
-       function for that.
-    """
-    
-    PROGRAM = r"""import sys;sys.stdout.write("ready\n\n\n");sys.stdout.flush();sys.stdin.readline()"""
-
-    def __init__(self, sshctx, loc_host, loc_port, rem_host, rem_port):
-        self.loc_host = loc_host
-        self.loc_port = loc_port
-        self.rem_host = rem_host
-        self.rem_port = rem_port
-        self.sshctx = sshctx
-        self.proc = sshctx.popen("python", "-u", "-c", self.PROGRAM,
-            L = "[%s]:%s:[%s]:%s" % (loc_host, loc_port, rem_host, rem_port))
-        banner = self.proc.stdout.readline().strip()
-        if banner != b"ready":
-            self.close()
-            raise ValueError("Tunnel setup failed", banner)
-    
-    def __str__(self):
-        return "%s:%s --> (%s)%s:%s" % (self.loc_host, self.loc_port, self.sshctx.host,
-            self.rem_host, self.rem_port)
-
-
-class SshSession(object):
-    MARKER = "-:-:-End~Of~Output-:-:-"
-
-    def __init__(self, sshctx, force_terminal):
-        self.proc = sshctx.popen(tt = force_terminal)
-        self.execute("") # consume MOTD, banners, etc
     
     def execute(self, cmdline, retcode = 0):
         """
@@ -129,25 +99,63 @@ class SshSession(object):
         
         Example::
             
-            sess = ctx.session()
-            rc, out, err = sess.execute("ls -la")
+            shl = ctx.shell()
+            rc, out, err = shl.execute("ls -la")
         """
-        self.proc.stdin.write(cmdline + "\necho $?\necho %s\necho %s 1>&2\n" % (self.MARKER, self.MARKER))
+        trailer = "echo $? ; echo %s" % (self.MARKER,)
+        if cmdline.strip():
+            trailer = " ; " + trailer
+        if not self.tty:
+            trailer += " ; echo %s 1>&2" % (self.MARKER)
+        self.proc.stdin.write(cmdline + trailer + "\n")
         stdout = []
         stderr = []
-        for coll, pipe in ((stdout, self.proc.stdout), (stderr, self.proc.stderr)):
+        sources = [(stdout, self.proc.stdout)]
+        if not self.tty:
+            # in tty mode, stdout and stderr are unified
+            sources.append((stderr, self.proc.stderr))
+        for coll, pipe in sources:
             while True:
                 line = pipe.readline()
-                #print "1!" if coll is stdout else "2!", repr(line)
+                #print "1>" if coll is stdout else "2>", repr(line)
                 if line.strip() == self.MARKER:
                     break
                 coll.append(line)
-        rc = int(stdout.pop(-1))
+        if self.tty:
+            stdout.pop(0) # discard first line prompt
+        try:
+            rc = int(stdout.pop(-1))
+        except (IndexError, ValueError):
+            rc = "Unknown"
         stdout = "".join(stdout)
         stderr = "".join(stderr)
         if retcode is not None and rc != retcode:
             raise ProcessExecutionError(rc, stdout, stderr)
         return rc, stdout, stderr
+
+
+class SshTunnel(object):
+    def __init__(self, session, src, dst):
+        self.session = session
+        self.src = src
+        self.dst = dst
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass
+    def __enter__(self):
+        return self
+    def __exit__(self, t, v, tb):
+        self.close()
+    def close(self):
+        self.session.close()
+
+    def __repr__(self):
+        if not self.session.alive():
+            return "<SshTunnel (closed)>"
+        return "<SshTunnel %s -> %s>" % (self.src, self.dst) 
 
 
 class SshContext(object):
@@ -246,7 +254,7 @@ class SshContext(object):
         """
         cmdline = self._process_ssh_cmdline(kwargs)
         cmdline.extend(shquote(a) for a in args)
-        print "!!", cmdline
+        #print "!!", cmdline
         return Popen(cmdline, stdin = PIPE, stdout = PIPE, stderr = PIPE,
             cwd = self.ssh_cwd, env = self.ssh_env, shell = False, 
             startupinfo = _get_startupinfo())
@@ -320,10 +328,23 @@ class SshContext(object):
         if proc.returncode != 0:
             raise ValueError("upload failed", stdout, stderr)
 
+    def shell(self, tty = False):
+        """
+        Creates an SSH shell session on the host; this session can be used 
+        to execute a stateful series of commands, without needing to create a new
+        connection each time 
+        
+        :param tty: whether to force TTY allocation (ssh -tt); needed for some 
+                    interactive programs
+        
+        :returns: an :class:`SshSession` instance
+        """
+        return SshSession(self, tty)
+
     def tunnel(self, loc_port, rem_port, loc_host = "localhost", rem_host = "localhost"):
         """
-        Creates an SSH tunnel from the local port to the remote one. This is
-        translated to ``ssh -L loc_host:loc_port:rem_host:rem_port``.
+        Creates an SSH tunnel from the local port to the remote one. This translates 
+        to ``ssh -L loc_host:loc_port:rem_host:rem_port``.
         
         :param loc_port: the local TCP port to forward
         :param rem_port: the remote (server) TCP port, to which the local port 
@@ -331,31 +352,46 @@ class SshContext(object):
         
         :returns: an :class:`SshTunnel` instance
         """
-        return SshTunnel(self, loc_host, loc_port, rem_host, rem_port)
+        session = SshSession(self, tty = False, 
+            L = "[%s]:%s:[%s]:%s" % (loc_host, loc_port, rem_host, rem_port))
+        return SshTunnel(session, "%s:%s" %(loc_host, loc_port), 
+            "(%s)%s:%s" % (self.host, rem_host, rem_port))
     
-    def session(self, force_terminal = False):
+    def rtunnel(self, rem_port, loc_port, rem_host = "localhost", loc_host = "localhost"):
         """
-        Creates an SSH session (shell) on the host; this session can be used 
-        to execute a stateful series of commands, without needing to create a new
-        connection each time 
+        Creates a reverse SSH tunnel from the remote port to the local one. This translates 
+        to ``ssh -R rem_host:rem_port:loc_host:loc_port``.
         
-        :param force_terminal: whether to force TTY allocation (ssh -tt); needed 
-                               for interactive programs like editors, pagers, etc.
+        :param rem_port: the remote TCP port to forward
+        :param rem_port: the local (client) TCP port, to which the remote port 
+                         will be forwarded
         
-        :returns: an :class:`SshSession` instance
+        :returns: an :class:`SshTunnel` instance
         """
-        return SshSession(self, force_terminal)
-
+        session = SshSession(self, tty = False, 
+            R = "[%s]:%s:[%s]:%s" % (rem_host, rem_port, loc_host, loc_port))
+        return SshTunnel(session, "(%s)%s:%s" % (self.host, rem_host, rem_port), 
+            "%s:%s" % (loc_host, loc_port))
 
 
 if __name__ == "__main__":
-    sshctx = SshContext("hollywood.xiv.ibm.com", ssh_program = r"c:\Program Files\Git\bin\ssh.exe",
-                user = "tomer", keyfile = r"c:\users\sebulba\.ssh\id_rsa")
-    sess = sshctx.session()
-    print sess.execute("ls")
-    print sess.execute("ls /")
-
-
+    #sshctx = SshContext("hollywood.xiv.ibm.com", ssh_program = r"c:\Program Files\Git\bin\ssh.exe",
+    #            user = "tomer", keyfile = r"c:\users\sebulba\.ssh\id_rsa")
+    sshctx = SshContext("localhost")
+    with sshctx.shell() as shl:
+        print shl.execute("ls -l")
+        print shl.execute("ls /")
+    
+    #with sshctx.tunnel(19999, 18812) as t:
+    #    import rpyc
+    #    c = rpyc.classic.connect("localhost", 19999)
+    #    print c.modules.sys
+    #    print c.modules.sys
+    #    print c.modules.sys
+    #try:
+    #    print c.modules.sys
+    #except EOFError:
+    #    print "ok"
 
 
 
