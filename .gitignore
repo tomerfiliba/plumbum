@@ -2,5 +2,5 @@
 .pydevproject
 *.pyc
 __pycache__
-
+.settings/
 
