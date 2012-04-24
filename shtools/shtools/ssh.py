@@ -386,10 +386,11 @@ if __name__ == "__main__":
     #            user = "tomer", keyfile = r"c:\users\sebulba\.ssh\id_rsa")
     sshctx = SshContext("localhost")
     with sshctx.shell() as shl:
+        #print shl.execute("\\ls")[1]
         print shl.execute("ls -l")
         print shl.execute("ls /")
         try:
-            shl.execute("git")
+            shl.execute("cd /non/existing")
         except ProcessExecutionError as ex:
             print ex
         
