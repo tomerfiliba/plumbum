@@ -2,6 +2,7 @@ import weakref
 from plumbum.localcmd import local, ChainableCommand, BoundCommand, CommandNotFound, _run
 from plumbum.ssh import SshContext, shquote
 from contextlib import contextmanager
+from plumbum.path import Path
 
 
 class SshCommand(ChainableCommand):
@@ -24,13 +25,57 @@ class SshCommand(ChainableCommand):
         return _run(self.popen(args, sshopts, **kwargs), retcode)
 
 
-class RemoteCwd(object):
+class RemotePathLocation(object):
     def __init__(self, remote):
+        self.remote = remote
+    def __eq__(self, other):
+        if isinstance(other, RemotePathLocation):
+            return self.remote == other.remote
+        return False
+    def __ne__(self, other):
+        return not (self == other)
+    def __str__(self):
+        return str(self.remote.sshctx)
+    def listdir(self, p):
+        files = self.remote.session.run("ls -a %s" % (shquote(p),))[1].splitlines()
+        if "." in files:
+            files.remove(".")
+        if ".." in files:
+            files.remove("..")
+        return files
+    def chdir(self, p):
+        self.remote.cwd.chdir(p)
+    def isdir(self, p):
+        pass
+    def isfile(self, p):
+        #self.stat(p).st_mode
+        pass
+    def exists(self, p):
+        return self._stat(p) is not None
+    def _stat(self, p):
+        rc, out, _ = self.remote.session.run("stat %s" % (shquote(p),), retcode = None)
+        if rc == 0:
+            return out.strip()
+        else:
+            return None
+    def stat(self, p):
+        res = self._stat(p)
+        return res
+
+
+class RemoteWorkdir(Path):
+    def __init__(self, remote):
+        self._location = remote._location
         self._remote = remote
         self._dirstack = [self._remote.session.run("pwd")[1].strip()]
 
     def __str__(self):
-        return str(self._dirstack[-1])
+        return str(self._path)
+    @property
+    def _path(self):
+        return self._dirstack[-1]
+    def __repr__(self):
+        return "<Workdir %s%s>" % (self.remote.sshctx, self)
     def __hash__(self):
         raise TypeError("Workdir can change and is unhashable")
     
@@ -43,7 +88,11 @@ class RemoteCwd(object):
         finally:
             self._dirstack.pop(-1)
             self.chdir(self._dirstack[-1])
+    
+    def getpath(self):
+        return self.remote.path(str(self))
     def chdir(self, dir):
+        dir = str(dir)
         self._remote.session.run("cd %s" % (shquote(dir),))
         self._dirstack[-1] = dir
 
@@ -57,7 +106,8 @@ class RemoteCommandNamespace(object):
     def __init__(self, sshctx):
         self.sshctx = sshctx
         self.session = sshctx.shell()
-        self.cwd = RemoteCwd(weakref.proxy(self))
+        self._location = RemotePathLocation(weakref.proxy(self))
+        self.cwd = RemoteWorkdir(weakref.proxy(self))
         self.env = RemoteEnv(weakref.proxy(self))
     
     def __enter__(self):
@@ -66,6 +116,8 @@ class RemoteCommandNamespace(object):
         self.close()
     def close(self):
         self.session.close()
+    def path(self, *parts):
+        return Path(self._location, *parts)
     
     def which(self, progname):
         rc, out, err = self.session.run("which %s" % (shquote(progname),), retcode = None)
@@ -90,6 +142,12 @@ if __name__ == "__main__":
         remote = RemoteCommandNamespace(sshctx)
         r_ls = remote["ls"]
         
+        print remote.cwd
+        
+        for fn in remote.cwd:
+            print fn
+        
+        exit()
         print r_ls("-l")
         with remote.cwd("/"):
             print r_ls("-l")

@@ -4,7 +4,7 @@ import logging
 from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
-from plumbum.path import Path
+from plumbum.path import Path, LocalPathLocation
 
 
 cmd_logger = logging.getLogger("LocalCommand")
@@ -13,7 +13,7 @@ WIN32 = sys.platform == "win32"
 __all__ = ["local", "BG", "FG", "ProcessExecutionError", "CommandNotFound"]
 
 
-class _Workdir(Path):
+class Workdir(Path):
     def __init__(self):
         self._dirstack = [os.getcwd()]
     def __str__(self):
@@ -23,6 +23,8 @@ class _Workdir(Path):
         return self._dirstack[-1]
     def __repr__(self):
         return "<Workdir %s>" % (self,)
+    def __hash__(self):
+        raise TypeError("Workdir can change and is unhashable")
     @contextmanager
     def __call__(self, dir): #@ReservedAssignment
         self._dirstack.append(None)
@@ -32,23 +34,21 @@ class _Workdir(Path):
         finally:
             self._dirstack.pop(-1)
             self.chdir(self._dirstack[-1])
-    def __hash__(self):
-        raise TypeError("Workdir can change and is unhashable")
 
     def getpath(self):
-        return Path(str(self))
+        return local.path(str(self))
     def chdir(self, dir): #@ReservedAssignment
         os.chdir(str(dir))
-        self._dirstack[-1] = Path(dir)
+        self._dirstack[-1] = local.path(dir)
 
-cwd = _Workdir()
+cwd = Workdir()
 
 class _Env(object):
     def __init__(self):
         self._envstack = [os.environ.copy()]
         self._update_path()
     def _update_path(self):
-        self.path = [Path(p) for p in self["PATH"].split(os.path.pathsep)]
+        self.path = [Path(LocalPathLocation, p) for p in self["PATH"].split(os.path.pathsep)]
     
     @contextmanager
     def __call__(self, **kwargs):
@@ -89,11 +89,11 @@ class _Env(object):
     @property
     def home(self):
         if "HOME" in self:
-            return Path(self["HOME"])
+            return local.path(self["HOME"])
         elif "USERPROFILE" in self:
-            return Path(self["USERPROFILE"])
+            return local.path(self["USERPROFILE"])
         elif "HOMEPATH" in self:
-            return Path(self.get("HOMEDRIVE", ""), self["HOMEPATH"])
+            return local.path(self.get("HOMEDRIVE", ""), self["HOMEPATH"])
         return None
     @home.setter
     def home(self, p):
@@ -302,6 +302,9 @@ class LocalCommandNamespace(object):
                     return filelist[n]
         return None
     
+    def path(self, *parts):
+        return Path(LocalPathLocation, *parts)
+    
     @classmethod
     def which(cls, progname):
         if WIN32:
@@ -315,7 +318,7 @@ class LocalCommandNamespace(object):
     def __getitem__(self, name):
         name = str(name)
         if "/" in name or "\\" in name:
-            return Command(Path(name))
+            return Command(local.path(name))
         else:
             return Command(self.which(name))
     
@@ -358,10 +361,10 @@ class Executer(object):
     def __call__(cls, retcode):
         return cls(retcode)
 
-#class _RUN(Executer):
-#    def __rand__(self, cmd):
-#        return cmd(retcode = self.retcode)
-#RUN = _RUN()
+class _RUN(Executer):
+    def __rand__(self, cmd):
+        return cmd(retcode = self.retcode)
+RUN = _RUN()
 
 class _BG(Executer):
     def __rand__(self, cmd):
