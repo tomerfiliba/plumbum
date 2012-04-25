@@ -1,15 +1,16 @@
-#import pystuck; pystuck.run_server()
-
 import sys
 import os
+import logging
 from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
 from plumbum.path import Path
 
 
+cmd_logger = logging.getLogger("LocalCommand")
+
 WIN32 = sys.platform == "win32"
-__all__ = ["cmd", "env", "cwd", "Command", "ProcessExecutionError", "CommandNotFound"]
+__all__ = ["local", "BG", "FG", "ProcessExecutionError", "CommandNotFound"]
 
 
 class _Workdir(Path):
@@ -24,21 +25,23 @@ class _Workdir(Path):
         return "<Workdir %s>" % (self,)
     @contextmanager
     def __call__(self, dir): #@ReservedAssignment
-        self._dirstack.append(Path(dir))
+        self._dirstack.append(None)
+        self.chdir(dir)
         try:
             yield
         finally:
             self._dirstack.pop(-1)
+            self.chdir(self._dirstack[-1])
     def __hash__(self):
         raise TypeError("Workdir can change and is unhashable")
 
     def getpath(self):
         return Path(str(self))
     def chdir(self, dir): #@ReservedAssignment
+        os.chdir(str(dir))
         self._dirstack[-1] = Path(dir)
 
-g_cwd = cwd = _Workdir()
-
+cwd = _Workdir()
 
 class _Env(object):
     def __init__(self):
@@ -110,16 +113,7 @@ class _Env(object):
             return self["USERNAME"]
         return None
 
-g_env = env = _Env()
-
-def _popen(args, executable = None, cwd = None, env = None, **kwargs):
-    if cwd is None:
-        cwd = str(g_cwd)
-    if env is None:
-        env = g_env.getdict()
-    proc = Popen(args, executable = executable, cwd = cwd, env = env, **kwargs)
-    proc.cmdline = args
-    return proc
+env = _Env()
 
 class ProcessExecutionError(Exception):
     def __init__(self, cmdline, retcode, stdout, stderr):
@@ -168,10 +162,16 @@ class ChainableCommand(object):
         return Redirection(self, stdin_file = stdin_file)
     def __lshift__(self, data):
         return Redirection(self, stdin_file = _make_input(data))
-    def __call__(self, **kwargs):
-        return self.run(**kwargs)[1]
+    def __call__(self, *args, **kwargs):
+        if args:
+            return self.run(args, **kwargs)[1]
+        else:
+            return self.run(**kwargs)[1]
 
 class Command(ChainableCommand):
+    cwd = cwd
+    env = env
+    
     def __init__(self, executable):
         self.executable = executable
     def __str__(self):
@@ -182,15 +182,24 @@ class Command(ChainableCommand):
         if not isinstance(args, tuple):
             args = (args,)
         return BoundCommand(self, args)
-    def __call__(self, *args, **kwargs):
-        return self.run(args, **kwargs)[1]
 
-    def popen(self, args = (), stdin = PIPE, stdout = PIPE, stderr = PIPE):
-        return _popen([str(self.executable)] + [str(a) for a in args], str(self.executable), 
-            stdin = stdin, stdout = stdout, stderr = stderr)
-    def run(self, args = (), retcode = 0, stdin = PIPE, #@ReservedAssignment
-            stdout = PIPE, stderr = PIPE):
-        proc = self.popen(args, stdin = stdin, stdout = stdout, stderr = stderr)
+    def popen(self, args = (), stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
+        if isinstance(args, str):
+            args = (args,)
+        cwd = str(kwargs.pop("cwd", self.cwd))
+        env = kwargs.pop("env", self.env)
+        if not isinstance(env, dict):
+            env = env.getdict()
+        
+        cmdline = [str(self.executable)] + [str(a) for a in args]
+        cmd_logger.debug("Running %r, cwd = %s" % (cmdline, cwd))
+        proc = Popen(cmdline, executable = str(self.executable), stdin = stdin, 
+            stdout = stdout, stderr = stderr, cwd = cwd, env = env, **kwargs)
+        proc.cmdline = cmdline
+        return proc
+
+    def run(self, args = (), retcode = 0, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
+        proc = self.popen(args, stdin = stdin, stdout = stdout, stderr = stderr, **kwargs)
         return _run(proc, retcode)
 
 class BoundCommand(ChainableCommand):
@@ -201,11 +210,11 @@ class BoundCommand(ChainableCommand):
         return "%s %s" % (self.cmd, " ".join(repr(a) for a in self.args))
     def __repr__(self):
         return "<BoundCommand(%r, %r)>" % (self.cmd, self.args)
-    def popen(self, stdin = PIPE, stdout = PIPE, stderr = PIPE):
-        return self.cmd.popen(self.args, stdin = stdin, stdout = stdout, stderr = stderr)
-    def run(self, retcode = 0, stdin = PIPE, stdout = PIPE, stderr = PIPE):
+    def popen(self, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
+        return self.cmd.popen(self.args, stdin = stdin, stdout = stdout, stderr = stderr, **kwargs)
+    def run(self, retcode = 0, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
         return self.cmd.run(self.args, retcode = retcode, stdin = stdin, stdout = stdout, 
-            stderr = stderr)
+            stderr = stderr, **kwargs)
 
 class Pipeline(ChainableCommand):
     def __init__(self, srccmd, dstcmd):
@@ -213,19 +222,21 @@ class Pipeline(ChainableCommand):
         self.dstcmd = dstcmd
     def __str__(self):
         return "(%s | %s)" % (self.srccmd, self.dstcmd)
+    def __repr__(self):
+        return "Pipeline(%r, %r)" % (self.srccmd, self.dstcmd)
     
-    def popen(self, stdin = PIPE, stdout = PIPE, stderr = PIPE):
-        srcproc = self.srccmd.popen(stdin = stdin, stderr = PIPE)
-        dstproc = self.dstcmd.popen(stdin = srcproc.stdout, stdout = stdout, stderr = stderr)
+    def popen(self, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
+        srcproc = self.srccmd.popen(stdin = stdin, stderr = PIPE, **kwargs)
+        dstproc = self.dstcmd.popen(stdin = srcproc.stdout, stdout = stdout, 
+            stderr = stderr, **kwargs)
         srcproc.stdout.close() # allow p1 to receive a SIGPIPE if p2 exits
         srcproc.stderr.close()
         dstproc.srcproc = srcproc
         return dstproc
     
-    def run(self, retcode = 0, stdin = PIPE, stdout = PIPE, stderr = PIPE): 
-        dstproc = self.popen(stdin = stdin, stdout = stdout, stderr = stderr)
-        stdout2, stderr2 = _run(dstproc, retcode)
-        return dstproc.returncode, stdout2, stderr2
+    def run(self, retcode = 0, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs): 
+        dstproc = self.popen(stdin = stdin, stdout = stdout, stderr = stderr, **kwargs)
+        return _run(dstproc, retcode)
 
 class Redirection(ChainableCommand):
     def __init__(self, cmd, stdin_file = PIPE, stdout_file = PIPE, stderr_file = PIPE):
@@ -254,14 +265,15 @@ class Redirection(ChainableCommand):
             parts.append("2> %s" % (getattr(self.stderr_file, "name", self.stderr_file),))
         return " ".join(parts)
     
-    def popen(self, stdin = PIPE, stdout = PIPE, stderr = PIPE):
+    def popen(self, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
         return self.cmd.popen(
             stdin = self.stdin_file if self.stdin_file != PIPE else stdin,
             stdout = self.stdout_file if self.stdout_file != PIPE else stdout,
-            stderr = self.stderr_file if self.stderr_file != PIPE else stderr)
+            stderr = self.stderr_file if self.stderr_file != PIPE else stderr, 
+            **kwargs)
     
-    def run(self, retcode = 0, stdin = PIPE, stdout = PIPE, stderr = PIPE):
-        return _run(self.popen(stdin = stdin, stdout = stdout, stderr = stderr), retcode)
+    def run(self, retcode = 0, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
+        return _run(self.popen(stdin = stdin, stdout = stdout, stderr = stderr, **kwargs), retcode)
 
 class CommandNotFound(Exception):
     def __init__(self, progname, path):
@@ -269,10 +281,13 @@ class CommandNotFound(Exception):
         self.progname = progname
         self.path = path
 
-class _CommandNamespace(object):
+class LocalCommandNamespace(object):
     _EXTENSIONS = [""]
     if WIN32:
         _EXTENSIONS += [".exe", ".bat"]
+
+    cwd = cwd
+    env = env
     
     @classmethod
     def _which(cls, progname):
@@ -291,15 +306,12 @@ class _CommandNamespace(object):
     def which(cls, progname):
         if WIN32:
             progname = progname.lower()
-        path = cls._which(progname)
-        if not path:
-            path = cls._which(progname.replace("_", "-"))
-        if not path:
-            raise CommandNotFound(progname, list(env.path))
-        return path
+        for pn in [progname, progname.replace("_", "-")]:
+            path = cls._which(pn)
+            if path:
+                return path
+        raise CommandNotFound(progname, list(env.path))
 
-    def __getattr__(self, name):
-        return self[name]
     def __getitem__(self, name):
         name = str(name)
         if "/" in name or "\\" in name:
@@ -309,7 +321,7 @@ class _CommandNamespace(object):
     
     python = Command(sys.executable)
 
-cmd = _CommandNamespace()
+local = LocalCommandNamespace()
 
 class Future(object):
     def __init__(self, proc, retcode):
@@ -346,10 +358,10 @@ class Executer(object):
     def __call__(cls, retcode):
         return cls(retcode)
 
-class _RUN(Executer):
-    def __rand__(self, cmd):
-        return cmd(retcode = self.retcode)
-RUN = _RUN()
+#class _RUN(Executer):
+#    def __rand__(self, cmd):
+#        return cmd(retcode = self.retcode)
+#RUN = _RUN()
 
 class _BG(Executer):
     def __rand__(self, cmd):
@@ -362,22 +374,21 @@ class _FG(Executer):
 FG = _FG()
 
 
-
 if __name__ == "__main__":
-    ls = cmd.ls
-    grep = cmd.grep
-    cat = cmd.cat
-    sort = cmd.sort
-    sleep = cmd.sleep
+    ls = local["ls"]
+    grep = local["grep"]
+    cat = local["cat"]
+    sort = local["sort"]
+    sleep = local["sleep"]
     
     x = (cat << "hello world\n") > sys.stdout
     x()
     
-    with env(FOO = 17):
+    with local.env(FOO = 17):
         env.path.append("/lalalala")
-        print cmd.python("-c", "import os;print os.environ.get('PATH');print os.environ.get('FOO')")
+        print local.python("-c", "import os;print os.environ.get('PATH');print os.environ.get('FOO')")
     
-    with cwd("/"):
+    with local.cwd("/"):
         (ls["-l"] > "test.txt")()
     x = (grep["v"] < "test.txt") | grep["vm"] | sort > sys.stdout
     print x
@@ -388,7 +399,7 @@ if __name__ == "__main__":
     f.wait()
     print f
     
-    print cmd.nano & FG(1)
+    #print cmd.nano & FG(1)
     
 
 

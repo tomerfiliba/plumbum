@@ -1,10 +1,9 @@
+import sys
 import os
 import shutil
-import sys
 
 
 WIN32 = sys.platform == "win32"
-
 
 class Path(object):
     def __init__(self, *parts):

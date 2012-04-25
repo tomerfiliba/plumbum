@@ -1,7 +1,9 @@
-import subprocess
-import time
 import sys
+import time
+import subprocess
 import logging
+from plumbum.localcmd import local, ProcessExecutionError, _run
+
 
 #logging.basicConfig(level=logging.INFO)
 ctx_logger = logging.getLogger("SshContext")
@@ -23,27 +25,24 @@ def shquote(text):
     res = "".join(('\\' + c if c in _funnychars else c) for c in text)
     return '"' + res + '"'
 
-class ProcessExecutionError(Exception):
-    def __init__(self, retcode, stdout, stderr):
-        self.retcode = retcode
-        self.stdout = stdout
-        self.stderr = stderr
-        Exception.__init__(self, retcode, stdout, stderr)
-    def __str__(self):
-        stdout = "\n  |      ".join(self.stdout.splitlines())
-        stderr = "\n  |      ".join(self.stderr.splitlines())
-        return "Exit code: %s\nStdout:  %s\nStderr:  %s" % (self.retcode, stdout, stderr)
-
-def _get_startupinfo():
-    if subprocess.mswindows:
+if subprocess.mswindows:
+    def _get_startupinfo():
         sui = subprocess.STARTUPINFO()
         sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW    #@UndefinedVariable
         sui.wShowWindow = subprocess.SW_HIDE              #@UndefinedVariable
         return sui
-    else:
+else:
+    def _get_startupinfo():
         return None
 
-def resource_class(cls):
+
+class SshSession(object):
+    def __init__(self, sshctx, tty, **kwargs):
+        self.sshctx = sshctx
+        self.tty = tty
+        self.proc = sshctx.popen((), sshopts = dict(tt = tty, **kwargs))
+        self.run("") # consume MOTD, banners, etc
+
     def __del__(self):
         try:
             self.close()
@@ -53,21 +52,6 @@ def resource_class(cls):
         return self
     def __exit__(self, t, v, tb):
         self.close()
-    cls.__del__ = __del__
-    cls.__enter__ = __enter__
-    cls.__exit__ = __exit__
-    return cls
-    
-
-@resource_class
-class SshSession(object):
-    MARKER = b"-:-:-End~Of~Output-:-:-"
-
-    def __init__(self, sshctx, tty, **kwargs):
-        self.sshctx = sshctx
-        self.tty = tty
-        self.proc = sshctx.popen(tt = tty, **kwargs)
-        self.execute("") # consume MOTD, banners, etc
 
     def __repr__(self):
         return "<SshSession to %s>" % (self.sshctx,)
@@ -80,13 +64,12 @@ class SshSession(object):
         if not self.alive():
             return
         self.proc.stdin.write(b"\nexit\n\n\nexit\n\n")
-        self.proc.stdin.flush()
+        self.proc.stdin.close()
         time.sleep(0.05)
-        #self.proc.stdout.readline()
         self.proc.kill()
         self.proc = None
     
-    def execute(self, cmdline, retcode = 0):
+    def run(self, cmdline, retcode = 0):
         """
         :param cmdline: the command line string (given as-is to the remote 
                         shell, so be sure to take care of proper escaping)
@@ -105,12 +88,13 @@ class SshSession(object):
             shl = ctx.shell()
             rc, out, err = shl.execute("ls -la")
         """
+        MARKER = b"-:#:-End~Of~Output-%s-:#:-" % (time.time(),)
         full_cmdline = cmdline
         if full_cmdline.strip():
             full_cmdline += " ; "
-        full_cmdline += "echo $? ; echo %s" % (self.MARKER,)
+        full_cmdline += "echo $? ; echo %s" % (MARKER,)
         if not self.tty:
-            full_cmdline += " ; echo %s 1>&2" % (self.MARKER)
+            full_cmdline += " ; echo %s 1>&2" % (MARKER)
         sess_logger.info("Running: %r" % (full_cmdline,))
         self.proc.stdin.write((full_cmdline + "\n").encode(self.sshctx.encoding))
         stdout = []
@@ -123,7 +107,7 @@ class SshSession(object):
             while True:
                 line = pipe.readline()
                 sess_logger.debug("%s> %r" % (name, line))
-                if line.strip() == self.MARKER:
+                if line.strip() == MARKER:
                     break
                 coll.append(line)
         if self.tty:
@@ -135,18 +119,22 @@ class SshSession(object):
         stdout = b"".join(stdout)
         stderr = b"".join(stderr)
         if retcode is not None and rc != retcode:
-            raise ProcessExecutionError(rc, stdout.decode(self.sshctx.encoding), 
+            raise ProcessExecutionError(full_cmdline, rc, stdout.decode(self.sshctx.encoding), 
                 stderr.decode(self.sshctx.encoding))
         return rc, stdout, stderr
 
 
-@resource_class
 class SshTunnel(object):
     def __init__(self, session, src, dst):
         self.session = session
         self.src = src
         self.dst = dst
         ctx_logger.info("Tunnel %r has been created" % (self,))
+
+    def __enter__(self):
+        return self
+    def __exit__(self, t, v, tb):
+        self.close()
 
     def __repr__(self):
         if not self.session.alive():
@@ -172,23 +160,21 @@ class SshContext(object):
     
         >>> sshctx = SshContext("mymachine", user="borg", keyfile="/home/foo/.ssh/mymachine-id")
         >>> sshctx.execute("ls")
-        (0, "...", "")
+        (0, "file1\\nfile2\\nfile3\\n", "")
     """
     def __init__(self, host, user = None, port = None, keyfile = None,
-            ssh_program = "ssh", ssh_env = None, ssh_cwd = None,
-            scp_program = "scp", scp_env = None, scp_cwd = None,
-            encoding = sys.getdefaultencoding()):
+            ssh_command = None, scp_command = None, encoding = sys.getdefaultencoding()):
         self.host = host
         self.user = user
         self.port = port
         self.encoding = encoding
         self.keyfile = keyfile
-        self.ssh_program = ssh_program
-        self.ssh_env = ssh_env
-        self.ssh_cwd = ssh_cwd
-        self.scp_program = scp_program
-        self.scp_env = scp_env
-        self.scp_cwd = scp_cwd
+        if not ssh_command:
+            ssh_command = local["ssh"]
+        self.ssh_command = ssh_command
+        if not scp_command:
+            scp_command = local["scp"]
+        self.scp_command = scp_command
 
     def __str__(self):
         uri = "ssh://"
@@ -213,7 +199,7 @@ class SshContext(object):
         return args
 
     def _process_scp_cmdline(self, kwargs):
-        args = [self.scp_program]
+        args = []
         if "r" not in kwargs:
             kwargs["r"] = True
         if self.keyfile and "i" not in kwargs:
@@ -228,7 +214,7 @@ class SshContext(object):
         return args, host
 
     def _process_ssh_cmdline(self, kwargs):
-        args = [self.ssh_program]
+        args = []
         if self.keyfile and "i" not in kwargs:
             kwargs["i"] = self.keyfile
         if self.port and "p" not in kwargs:
@@ -240,59 +226,15 @@ class SshContext(object):
             args.append(self.host)
         return args
 
-    def popen(self, *args, **kwargs):
-        """Runs the given command line remotely (over SSH), returning the 
-        ``subprocess.Popen`` instance of the command
-        
-        :param args: the command line arguments
-        :param kwargs: additional keyword arguments passed to ``ssh``
-        
-        :returns: a ``Popen`` instance
-        
-        Example::
-            
-            proc = ctx.popen("ls", "-la")
-            proc.wait()
-        """
-        cmdline = self._process_ssh_cmdline(kwargs)
-        cmdline.extend(shquote(a) for a in args)
-        ctx_logger.info("Running: %r" % (cmdline,))
-        return subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE, 
-            stderr = subprocess.PIPE, cwd = self.ssh_cwd, env = self.ssh_env, shell = False, 
-            startupinfo = _get_startupinfo())
+    def popen(self, args, sshopts = {}, **kwargs):
+        cmdline = self._process_ssh_cmdline(sshopts)
+        cmdline.extend(shquote(str(a)) for a in args)
+        return self.ssh_command.popen(cmdline, startupinfo = _get_startupinfo(), **kwargs)
 
-    def execute(self, *args, **kwargs):
-        """Runs the given command line remotely (over SSH), waits for it to finish,
-        returning the return code, stdout, and stderr of the executed process.
-        
-        :param args: the command line arguments
-        :param kwargs: additional keyword arguments passed to ``ssh``, except for
-                       ``retcode`` and ``input``.
-        :param retcode: *keyword only*, the expected return code (Defaults to 0 
-                        -- success). An exception is raised if the return code does
-                        not match the expected one, unless it is ``None``, in 
-                        which case it will not be tested.
-        :param input: *keyword only*, an input string that will be passed to 
-                      ``Popen.communicate``. Defaults to ``None``
-        
-        :raises: :class:`ProcessExecutionError` if the expected return code 
-                 is not matched
-        
-        :returns: a tuple of (return code, stdout, stderr)
-        
-        Example::
-            
-            rc, out, err = ctx.execute("ls", "-la")
-        """
-        retcode = kwargs.pop("retcode", 0)
-        input = kwargs.pop("input", None)
-        proc = self.popen(*args, **kwargs)
-        stdout, stderr = proc.communicate(input)
-        if retcode is not None and proc.returncode != retcode:
-            raise ProcessExecutionError(proc.returncode, stdout.decode(self.encoding), 
-                stderr.decode(self.encoding))
-        return proc.returncode, stdout, stderr
+    def run(self, args, retcode = 0, sshopts = {}, **kwargs):
+        return _run(self.popen(args, sshopts, **kwargs), retcode)
 
+    '''
     def upload(self, src, dst, **kwargs):
         """
         Uploads *src* from the local machine to *dst* on the other side. By default, 
@@ -334,6 +276,7 @@ class SshContext(object):
         stdout, stderr = proc.communicate()
         if proc.returncode != 0:
             raise ValueError("upload failed", stdout, stderr)
+    '''
 
     def shell(self, tty = False):
         """
@@ -382,28 +325,9 @@ class SshContext(object):
 
 
 if __name__ == "__main__":
-    #sshctx = SshContext("hollywood.xiv.ibm.com", ssh_program = r"c:\Program Files\Git\bin\ssh.exe",
-    #            user = "tomer", keyfile = r"c:\users\sebulba\.ssh\id_rsa")
-    sshctx = SshContext("localhost")
-#    with sshctx.shell() as shl:
-#        #print shl.execute("\\ls")[1]
-#        print shl.execute("ls -l")
-#        print shl.execute("ls /")
-#        try:
-#            shl.execute("cd /non/existing")
-#        except ProcessExecutionError as ex:
-#            print ex
+    with local.env(HOME = local.env.home):
+        sshctx = SshContext("hollywood.xiv.ibm.com")
+        print sshctx.run(["ls"])
     
-#    with sshctx.tunnel(19999, 18812) as t:
-#        import rpyc
-#        c = rpyc.classic.connect("localhost", 19999)
-#        print c.modules.sys
-#        print c.modules.sys
-#        print c.modules.sys
-#    try:
-#        print c.modules.sys
-#    except EOFError:
-#        print "ok"
-
 
 

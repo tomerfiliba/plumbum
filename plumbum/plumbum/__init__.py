@@ -1,5 +1,6 @@
-#from shtools.ssh import SshContext
-#from shtools.path import Path
-#from shtools.cli import (switch, SwitchError, SwitchAttr, ToggleAttr, CountAttr, 
-#    Range, Enum, CLIApplication)
+from plumbum.ssh import SshContext
+from plumbum.path import Path
+from plumbum.localcmd import local, FG, BG, ProcessExecutionError, CommandNotFound
+from plumbum.remotecmd import RemoteCommandNamespace
+
 
