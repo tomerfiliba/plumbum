@@ -1,0 +1,25 @@
+total 88
+drwxr-xr-x   2 root root  4096 2011-12-15 12:39 bin
+drwxr-xr-x   3 root root  4096 2012-04-15 13:17 boot
+drwxr-xr-x   2 root root  4096 2011-09-20 17:11 cdrom
+drwxr-xr-x  18 root root  4720 2012-04-12 11:55 dev
+drwxr-xr-x 146 root root 12288 2012-04-25 10:13 etc
+drwxr-xr-x   3 root root  4096 2011-09-20 17:12 home
+lrwxrwxrwx   1 root root    33 2012-04-15 13:15 initrd.img -> boot/initrd.img-2.6.38-14-generic
+lrwxrwxrwx   1 root root    33 2011-11-29 11:49 initrd.img.old -> boot/initrd.img-2.6.38-13-generic
+drwxr-xr-x  20 root root  4096 2012-04-25 10:13 lib
+drwx------   2 root root 16384 2011-09-20 17:09 lost+found
+drwxr-xr-x   3 root root  4096 2012-02-20 15:22 media
+drwxr-xr-x   2 root root  4096 2011-04-21 19:50 mnt
+drwxr-xr-x   3 root root  4096 2011-09-20 17:49 opt
+dr-xr-xr-x 269 root root     0 2012-04-11 23:04 proc
+drwx------  10 root root  4096 2012-01-18 16:44 root
+drwxr-xr-x   2 root root  4096 2012-04-24 15:18 sbin
+drwxr-xr-x   2 root root  4096 2011-03-21 10:26 selinux
+drwxr-xr-x   2 root root  4096 2011-04-26 01:50 srv
+drwxr-xr-x  12 root root     0 2012-04-11 23:04 sys
+drwxrwxrwt  19 root root  4096 2012-04-25 14:09 tmp
+drwxr-xr-x  12 root root  4096 2011-09-20 19:15 usr
+drwxr-xr-x  15 root root  4096 2011-04-26 02:06 var
+lrwxrwxrwx   1 root root    30 2012-04-15 13:15 vmlinuz -> boot/vmlinuz-2.6.38-14-generic
+lrwxrwxrwx   1 root root    30 2011-11-29 11:49 vmlinuz.old -> boot/vmlinuz-2.6.38-13-generic

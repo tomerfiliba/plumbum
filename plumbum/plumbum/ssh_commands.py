@@ -385,25 +385,25 @@ if __name__ == "__main__":
     #sshctx = SshContext("hollywood.xiv.ibm.com", ssh_program = r"c:\Program Files\Git\bin\ssh.exe",
     #            user = "tomer", keyfile = r"c:\users\sebulba\.ssh\id_rsa")
     sshctx = SshContext("localhost")
-    with sshctx.shell() as shl:
-        #print shl.execute("\\ls")[1]
-        print shl.execute("ls -l")
-        print shl.execute("ls /")
-        try:
-            shl.execute("cd /non/existing")
-        except ProcessExecutionError as ex:
-            print ex
-        
-    #with sshctx.tunnel(19999, 18812) as t:
-    #    import rpyc
-    #    c = rpyc.classic.connect("localhost", 19999)
-    #    print c.modules.sys
-    #    print c.modules.sys
-    #    print c.modules.sys
-    #try:
-    #    print c.modules.sys
-    #except EOFError:
-    #    print "ok"
+#    with sshctx.shell() as shl:
+#        #print shl.execute("\\ls")[1]
+#        print shl.execute("ls -l")
+#        print shl.execute("ls /")
+#        try:
+#            shl.execute("cd /non/existing")
+#        except ProcessExecutionError as ex:
+#            print ex
+    
+#    with sshctx.tunnel(19999, 18812) as t:
+#        import rpyc
+#        c = rpyc.classic.connect("localhost", 19999)
+#        print c.modules.sys
+#        print c.modules.sys
+#        print c.modules.sys
+#    try:
+#        print c.modules.sys
+#    except EOFError:
+#        print "ok"
 
 
 

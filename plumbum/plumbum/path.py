@@ -1,45 +1,61 @@
 import os
+import shutil
+import sys
+
+
+WIN32 = sys.platform == "win32"
 
 
 class Path(object):
-    def __init__(self, *paths):
-        self._path = os.path.abspath(os.path.join(*(str(p) for p in paths)))
-        self.basename = os.path.basename(self._path)
-        self.dirname = os.path.dirname(self._path)
+    def __init__(self, *parts):
+        self._path = os.path.abspath(os.path.join(*(str(p) for p in parts)))
+        if WIN32:
+            self._path = self._path.lower()
     def __str__(self):
         return self._path
     def __repr__(self):
-        return "<Path %r>" % (self._path,)
+        return "<Path %s>" % (self,)
     def __div__(self, other):
         return Path(self, other)
     def __iter__(self):
         return iter(self.list())
     def __eq__(self, other):
-        return self._path == str(other)
+        return str(self) == str(other)
     def __ne__(self, other):
-        return self._path != str(other)
+        return str(self) != str(other)
     def __hash__(self):
-        return hash(self._path)
+        return hash(str(self))
+    def __nonzero__(self):
+        return bool(str(self))
+    __bool__ = __nonzero__
 
-    def up(self):
-        return Path(self.dirname)
     def list(self): #@ReservedAssignment
-        return [self / fn for fn in os.listdir(self._path)]
-    def traverse(self, filter = lambda p: True): #@ReservedAssignment
+        return [self / fn for fn in os.listdir(str(self))]
+    def walk(self, filter = lambda p: True): #@ReservedAssignment
         for p in self:
             if filter(p):
                 yield p
             if p.isdir() and filter(p):
                 for p2 in p.walk():
                     yield p2
+    
+    @property
+    def basename(self):
+        return os.path.basename(str(self))
+    @property
+    def dirname(self):
+        return os.path.dirname(str(self))
+    def up(self):
+        return Path(self.dirname)
     def isdir(self):
-        return os.path.isdir(self._path)
+        return os.path.isdir(str(self))
     def isfile(self):
-        return os.path.isfile(self._path)
+        return os.path.isfile(str(self))
     def exists(self):
-        return os.path.exists(self._path)
+        return os.path.exists(str(self))
     def stat(self):
-        return os.stat(self._path)
+        return os.stat(str(self))
+
 
 # copy, move rename, delete, open
 
