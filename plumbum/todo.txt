@@ -1,0 +1,3 @@
+* remote paths done properly
+* command nesting
+* rpyc integration?

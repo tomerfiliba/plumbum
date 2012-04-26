@@ -1,12 +1,12 @@
-import sys
 import os
+import glob
 
-
-WIN32 = sys.platform == "win32"
 
 class LocalPathLocation(object):
     def __str__(self):
         return ""
+    def normpath(self, parts):
+        return os.path.normpath(os.path.join(os.getcwd(), *(str(p) for p in parts)))
     def listdir(self, p):
         return os.listdir(p)
     def isdir(self, p):
@@ -19,20 +19,19 @@ class LocalPathLocation(object):
         return os.stat(p)
     def chdir(self, p):
         os.chdir(p)
+    def glob(self, p):
+        return glob.glob(p)
 
 LocalPathLocation = LocalPathLocation()
-
 
 class Path(object):
     def __init__(self, location, *parts):
         self._location = location
-        self._path = os.path.abspath(os.path.join(*(str(p) for p in parts)))
-        if WIN32:
-            self._path = self._path.lower()
+        self._path = self._location.normpath(parts)
     def __str__(self):
         return self._path
     def __repr__(self):
-        return "<Path %s%s>" % (self._location, self._path)
+        return "<Path %s:%s>" % (self._location, self._path)
     def __div__(self, other):
         return Path(self._location, self, other)
     def __iter__(self):
@@ -77,8 +76,10 @@ class Path(object):
         return self._location.exists(str(self))
     def stat(self):
         return self._location.stat(str(self))
-
-
+    
+    def glob(self, pattern):
+        return [Path(self._location, fn) 
+            for fn in self._location.glob(str(self / pattern))]
 
 
 

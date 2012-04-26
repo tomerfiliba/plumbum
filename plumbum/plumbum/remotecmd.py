@@ -1,9 +1,12 @@
+import os
 import weakref
+from contextlib import contextmanager
 from plumbum.localcmd import local, ChainableCommand, BoundCommand, CommandNotFound, _run
 from plumbum.ssh import SshContext, shquote
-from contextlib import contextmanager
 from plumbum.path import Path
 
+
+WIN32 = os.name == "nt"
 
 class SshCommand(ChainableCommand):
     def __init__(self, remote, executable):
@@ -35,7 +38,7 @@ class RemotePathLocation(object):
     def __ne__(self, other):
         return not (self == other)
     def __str__(self):
-        return str(self.remote.sshctx)
+        return "%s/" % (self.remote.sshctx,)
     def listdir(self, p):
         files = self.remote.session.run("ls -a %s" % (shquote(p),))[1].splitlines()
         if "." in files:
@@ -43,11 +46,18 @@ class RemotePathLocation(object):
         if ".." in files:
             files.remove("..")
         return files
+    def normpath(self, parts):
+        joined = os.path.join(str(self.remote.cwd), *(str(p) for p in parts))
+        "[/\\\\](.*)?"
+        normed = joined
+        return normed
+        
     def chdir(self, p):
         self.remote.cwd.chdir(p)
     def isdir(self, p):
         pass
     def isfile(self, p):
+        #return stat.S_ISREG(st.st_mode)
         #self.stat(p).st_mode
         pass
     def exists(self, p):
@@ -61,7 +71,11 @@ class RemotePathLocation(object):
     def stat(self, p):
         res = self._stat(p)
         return res
-
+    def glob(self, p):
+        matches = self.remote.session.run("for fn in %s; do echo $fn; done" % (p,))[1].splitlines()
+        if len(matches) == 1 and not self._stat(matches[0]):
+            return () # pattern expansion failed
+        return matches
 
 class RemoteWorkdir(Path):
     def __init__(self, remote):
@@ -145,14 +159,6 @@ if __name__ == "__main__":
         print remote.cwd
         
         for fn in remote.cwd:
-            print fn
-        
-        exit()
-        print r_ls("-l")
-        with remote.cwd("/"):
-            print r_ls("-l")
-        print r_ls("-l")
-
-
+            print repr(fn)
 
 

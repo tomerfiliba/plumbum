@@ -1,19 +1,22 @@
 import sys
 import os
 import logging
+from types import ModuleType
 from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
 from plumbum.path import Path, LocalPathLocation
 
 
-cmd_logger = logging.getLogger("LocalCommand")
+cmd_logger = logging.getLogger(__name__)
 
-WIN32 = sys.platform == "win32"
+WIN32 = os.name == "nt"
 __all__ = ["local", "BG", "FG", "ProcessExecutionError", "CommandNotFound"]
 
-
-class Workdir(Path):
+#===================================================================================================
+# Workdir and Environment abstractions
+#===================================================================================================
+class _Workdir(Path):
     def __init__(self):
         self._dirstack = [os.getcwd()]
     def __str__(self):
@@ -41,11 +44,14 @@ class Workdir(Path):
         os.chdir(str(dir))
         self._dirstack[-1] = local.path(dir)
 
-cwd = Workdir()
+cwd = _Workdir()
 
 class _Env(object):
     def __init__(self):
-        self._envstack = [os.environ.copy()]
+        if WIN32:
+            self._envstack = [dict((k.upper(), v) for k, v in os.environ.items())]
+        else:
+            self._envstack = [os.environ.copy()]
         self._update_path()
     def _update_path(self):
         self.path = [Path(LocalPathLocation, p) for p in self["PATH"].split(os.path.pathsep)]
@@ -62,19 +68,32 @@ class _Env(object):
     def __iter__(self):
         return self._envstack[-1].iteritems()
     def __contains__(self, name):
+        if WIN32:
+            name = name.upper()
         return name in self._envstack[-1]
     def __delitem__(self, name):
+        if WIN32:
+            name = name.upper()
         del self._envstack[-1][name]
     def __getitem__(self, name):
+        if WIN32:
+            name = name.upper()
         return self._envstack[-1][name]
     def __setitem__(self, name, value):
+        if WIN32:
+            name = name.upper()
         self._envstack[-1][name] = value
         if name == "PATH":
             self._update_path()
     def update(self, *args, **kwargs):
         self._envstack[-1].update(*args, **kwargs)
+        if WIN32:
+            for k, v in list(self._envstack[-1].items()):
+                self._envstack[-1][k.upper()] = v
         self._update_path()
     def get(self, name, default = None):
+        if WIN32:
+            name = name.upper()
         return self._envstack[-1].get(name, default)
     def getdict(self):
         self._envstack[-1]["PATH"] = os.path.pathsep.join(str(p) for p in self.path)
@@ -115,6 +134,9 @@ class _Env(object):
 
 env = _Env()
 
+#===================================================================================================
+# Utilities
+#===================================================================================================
 class ProcessExecutionError(Exception):
     def __init__(self, cmdline, retcode, stdout, stderr):
         Exception.__init__(self, cmdline, retcode, stdout, stderr)
@@ -139,10 +161,11 @@ def _run(proc, retcode):
     if not stderr:
         stderr = ""
     if retcode is not None and proc.returncode != retcode:
-        raise ProcessExecutionError(proc.cmdline, proc.returncode, stdout, stderr)
+        raise ProcessExecutionError(getattr(proc, "cmdline", None), 
+            proc.returncode, stdout, stderr)
     return proc.returncode, stdout, stderr
 
-def _make_input(data, CHUNK_SIZE = 32000):
+def _make_input(data, CHUNK_SIZE = 16000):
     f = TemporaryFile()
     while data:
         chunk = data[:CHUNK_SIZE]
@@ -151,6 +174,9 @@ def _make_input(data, CHUNK_SIZE = 32000):
     f.seek(0)
     return f
 
+#===================================================================================================
+# Command objects
+#===================================================================================================
 class ChainableCommand(object):
     def __or__(self, other):
         return Pipeline(self, other)
@@ -163,10 +189,13 @@ class ChainableCommand(object):
     def __lshift__(self, data):
         return Redirection(self, stdin_file = _make_input(data))
     def __call__(self, *args, **kwargs):
-        if args:
-            return self.run(args, **kwargs)[1]
-        else:
-            return self.run(**kwargs)[1]
+        return self.run(*args, **kwargs)[1]
+    def popen(self, *args, **kwargs):
+        raise NotImplementedError()
+    def run(self, *args, **kwargs):
+        proc = self.popen(args, **kwargs) if args else self.popen(**kwargs)
+        retcode = kwargs.pop("retcode", 0)
+        return _run(proc, retcode)
 
 class Command(ChainableCommand):
     cwd = cwd
@@ -198,10 +227,6 @@ class Command(ChainableCommand):
         proc.cmdline = cmdline
         return proc
 
-    def run(self, args = (), retcode = 0, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
-        proc = self.popen(args, stdin = stdin, stdout = stdout, stderr = stderr, **kwargs)
-        return _run(proc, retcode)
-
 class BoundCommand(ChainableCommand):
     def __init__(self, cmd, args):
         self.cmd = cmd
@@ -209,12 +234,9 @@ class BoundCommand(ChainableCommand):
     def __str__(self):
         return "%s %s" % (self.cmd, " ".join(repr(a) for a in self.args))
     def __repr__(self):
-        return "<BoundCommand(%r, %r)>" % (self.cmd, self.args)
-    def popen(self, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
-        return self.cmd.popen(self.args, stdin = stdin, stdout = stdout, stderr = stderr, **kwargs)
-    def run(self, retcode = 0, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
-        return self.cmd.run(self.args, retcode = retcode, stdin = stdin, stdout = stdout, 
-            stderr = stderr, **kwargs)
+        return "BoundCommand(%r, %r)" % (self.cmd, self.args)
+    def popen(self, **kwargs):
+        return self.cmd.popen(self.args, **kwargs)
 
 class Pipeline(ChainableCommand):
     def __init__(self, srccmd, dstcmd):
@@ -234,10 +256,6 @@ class Pipeline(ChainableCommand):
         dstproc.srcproc = srcproc
         return dstproc
     
-    def run(self, retcode = 0, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs): 
-        dstproc = self.popen(stdin = stdin, stdout = stdout, stderr = stderr, **kwargs)
-        return _run(dstproc, retcode)
-
 class Redirection(ChainableCommand):
     def __init__(self, cmd, stdin_file = PIPE, stdout_file = PIPE, stderr_file = PIPE):
         self.cmd = cmd
@@ -253,7 +271,7 @@ class Redirection(ChainableCommand):
             args.append("stdout_file = %r" % (self.stdout_file,))
         if self.stderr_file != PIPE:
             args.append("stderr_file = %r" % (self.stderr_file,))
-        return "<Redirection(%r, %s)>" % (self.cmd, ", ".join(args))
+        return "Redirection(%r, %s)" % (self.cmd, ", ".join(args))
     
     def __str__(self):
         parts = [str(self.cmd)]
@@ -271,10 +289,10 @@ class Redirection(ChainableCommand):
             stdout = self.stdout_file if self.stdout_file != PIPE else stdout,
             stderr = self.stderr_file if self.stderr_file != PIPE else stderr, 
             **kwargs)
-    
-    def run(self, retcode = 0, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
-        return _run(self.popen(stdin = stdin, stdout = stdout, stderr = stderr, **kwargs), retcode)
 
+#===================================================================================================
+# Local command namespace
+#===================================================================================================
 class CommandNotFound(Exception):
     def __init__(self, progname, path):
         Exception.__init__(self, progname, path)
@@ -326,10 +344,25 @@ class LocalCommandNamespace(object):
 
 local = LocalCommandNamespace()
 
+#===================================================================================================
+# executers
+#===================================================================================================
+class Executer(object):
+    def __init__(self, retcode = 0):
+        self.retcode = retcode
+    @classmethod
+    def __call__(cls, retcode):
+        return cls(retcode)
+
+class RUN(Executer):
+    def __rand__(self, cmd):
+        return cmd(retcode = self.retcode)
+RUN = RUN()
+
 class Future(object):
-    def __init__(self, proc, retcode):
+    def __init__(self, proc, expected_retcode):
         self.proc = proc
-        self._expected_retcode = retcode
+        self._expected_retcode = expected_retcode
         self._returncode = None
         self._stdout = None
         self._stderr = None
@@ -354,63 +387,27 @@ class Future(object):
         self.wait()
         return self._returncode
 
-class Executer(object):
-    def __init__(self, retcode = 0):
-        self.retcode = retcode
-    @classmethod
-    def __call__(cls, retcode):
-        return cls(retcode)
-
-class _RUN(Executer):
-    def __rand__(self, cmd):
-        return cmd(retcode = self.retcode)
-RUN = _RUN()
-
-class _BG(Executer):
+class BG(Executer):
     def __rand__(self, cmd):
         return Future(cmd.popen(), self.retcode)
-BG = _BG()
+BG = BG()
 
-class _FG(Executer):
+class FG(Executer):
     def __rand__(self, cmd):
         return cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None)
-FG = _FG()
+FG = FG()
 
+#===================================================================================================
+# Local module (e.g., from plumbum.local import grep)
+#===================================================================================================
+class LocalModule(ModuleType):
+    def __init__(self):
+        ModuleType.__init__(self, "plumbum.local", __doc__)
+        self.__package__ = __package__
+    def __getattr__(self, name):
+        return local[name]
+LocalModule = LocalModule()
 
-if __name__ == "__main__":
-    ls = local["ls"]
-    grep = local["grep"]
-    cat = local["cat"]
-    sort = local["sort"]
-    sleep = local["sleep"]
-    
-    x = (cat << "hello world\n") > sys.stdout
-    x()
-    
-    with local.env(FOO = 17):
-        env.path.append("/lalalala")
-        print local.python("-c", "import os;print os.environ.get('PATH');print os.environ.get('FOO')")
-    
-    with local.cwd("/"):
-        (ls["-l"] > "test.txt")()
-    x = (grep["v"] < "test.txt") | grep["vm"] | sort > sys.stdout
-    print x
-    x()
-    
-    f = sleep[1] & BG
-    print f
-    f.wait()
-    print f
-    
-    #print cmd.nano & FG(1)
-    
-
-
-
-
-
-
-
-
+sys.modules[LocalModule.__name__] = LocalModule
 
 
