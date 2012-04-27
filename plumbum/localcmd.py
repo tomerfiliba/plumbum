@@ -199,9 +199,8 @@ class ChainableCommand(object):
         raise NotImplementedError()
 
     def run(self, args = (), **kwargs):
-        proc = self.popen(args, **kwargs) if args else self.popen(**kwargs)
         retcode = kwargs.pop("retcode", 0)
-        return _run(proc, retcode)
+        return _run(self.popen(args, **kwargs), retcode)
 
 class Command(ChainableCommand):
     cwd = cwd
@@ -305,7 +304,7 @@ class Redirection(ChainableCommand):
         stdout = kwargs.pop("stdout", PIPE)
         stderr = kwargs.pop("stderr", PIPE)
         
-        return self.cmd.popen(
+        return self.cmd.popen(args,
             stdin = self.stdin_file if self.stdin_file != PIPE else stdin,
             stdout = self.stdout_file if self.stdout_file != PIPE else stdout,
             stderr = self.stderr_file if self.stderr_file != PIPE else stderr, 
