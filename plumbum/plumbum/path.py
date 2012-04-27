@@ -31,7 +31,7 @@ class Path(object):
     def __str__(self):
         return self._path
     def __repr__(self):
-        return "<Path %s:%s>" % (self._location, self._path)
+        return "<Path %s%s>" % (self._location, self._path)
     def __div__(self, other):
         return Path(self._location, self, other)
     def __iter__(self):
@@ -125,15 +125,6 @@ class Path(object):
 #    """opens a file at this path"""
 #    return open(str(self / fn), *args)
 
-
-#class SshPath(object):
-#    def __init__(self, session, path):
-#        self._session = session
-#        self._path = path
-#    def list(self):
-#        return self._session.execute("\\ls").splitlines()
-#
-#
 #class Multimethod(object):
 #    def __init__(self, name):
 #        self.name = name

@@ -189,10 +189,16 @@ class ChainableCommand(object):
     def __lshift__(self, data):
         return Redirection(self, stdin_file = _make_input(data))
     def __call__(self, *args, **kwargs):
-        return self.run(*args, **kwargs)[1]
-    def popen(self, *args, **kwargs):
+        return self.run(args, **kwargs)[1]
+    def __getitem__(self, args):
+        if not isinstance(args, tuple):
+            args = (args,)
+        return BoundCommand(self, args)
+    
+    def popen(self, args = (), **kwargs):
         raise NotImplementedError()
-    def run(self, *args, **kwargs):
+
+    def run(self, args = (), **kwargs):
         proc = self.popen(args, **kwargs) if args else self.popen(**kwargs)
         retcode = kwargs.pop("retcode", 0)
         return _run(proc, retcode)
@@ -207,12 +213,17 @@ class Command(ChainableCommand):
         return str(self.executable)
     def __repr__(self):
         return "<Command %s>" % (self.executable,)
-    def __getitem__(self, args):
-        if not isinstance(args, tuple):
-            args = (args,)
-        return BoundCommand(self, args)
 
-    def popen(self, args = (), stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
+    def formulate(self, args = ()):
+        argv = [str(self.executable)]
+        argv.extend(a.formulate() if hasattr(a, "formulate") else str(a) 
+            for a in args)
+        return argv
+
+    def popen(self, args = (), **kwargs):
+        stdin = kwargs.pop("stdin", PIPE)
+        stdout = kwargs.pop("stdout", PIPE)
+        stderr = kwargs.pop("stderr", PIPE)
         if isinstance(args, str):
             args = (args,)
         cwd = str(kwargs.pop("cwd", self.cwd))
@@ -220,7 +231,7 @@ class Command(ChainableCommand):
         if not isinstance(env, dict):
             env = env.getdict()
         
-        cmdline = [str(self.executable)] + [str(a) for a in args]
+        cmdline = self.formulate(args)
         cmd_logger.debug("Running %r, cwd = %s" % (cmdline, cwd))
         proc = Popen(cmdline, executable = str(self.executable), stdin = stdin, 
             stdout = stdout, stderr = stderr, cwd = cwd, env = env, **kwargs)
@@ -230,13 +241,15 @@ class Command(ChainableCommand):
 class BoundCommand(ChainableCommand):
     def __init__(self, cmd, args):
         self.cmd = cmd
-        self.args = args
+        self.args = tuple(args)
     def __str__(self):
         return "%s %s" % (self.cmd, " ".join(repr(a) for a in self.args))
     def __repr__(self):
         return "BoundCommand(%r, %r)" % (self.cmd, self.args)
-    def popen(self, **kwargs):
-        return self.cmd.popen(self.args, **kwargs)
+    def popen(self, args = (), **kwargs):
+        return self.cmd.popen(self.args + tuple(args), **kwargs)
+    def formulate(self, args = ()):
+        return self.cmd.formulate(self.args + tuple(args))
 
 class Pipeline(ChainableCommand):
     def __init__(self, srccmd, dstcmd):
@@ -247,8 +260,12 @@ class Pipeline(ChainableCommand):
     def __repr__(self):
         return "Pipeline(%r, %r)" % (self.srccmd, self.dstcmd)
     
-    def popen(self, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
-        srcproc = self.srccmd.popen(stdin = stdin, stderr = PIPE, **kwargs)
+    def popen(self, args = (), **kwargs):
+        stdin = kwargs.pop("stdin", PIPE)
+        stdout = kwargs.pop("stdout", PIPE)
+        stderr = kwargs.pop("stderr", PIPE)
+        
+        srcproc = self.srccmd.popen(args, stdin = stdin, stderr = PIPE, **kwargs)
         dstproc = self.dstcmd.popen(stdin = srcproc.stdout, stdout = stdout, 
             stderr = stderr, **kwargs)
         srcproc.stdout.close() # allow p1 to receive a SIGPIPE if p2 exits
@@ -283,7 +300,11 @@ class Redirection(ChainableCommand):
             parts.append("2> %s" % (getattr(self.stderr_file, "name", self.stderr_file),))
         return " ".join(parts)
     
-    def popen(self, stdin = PIPE, stdout = PIPE, stderr = PIPE, **kwargs):
+    def popen(self, args, **kwargs):
+        stdin = kwargs.pop("stdin", PIPE)
+        stdout = kwargs.pop("stdout", PIPE)
+        stderr = kwargs.pop("stderr", PIPE)
+        
         return self.cmd.popen(
             stdin = self.stdin_file if self.stdin_file != PIPE else stdin,
             stdout = self.stdout_file if self.stdout_file != PIPE else stdout,
@@ -345,7 +366,7 @@ class LocalCommandNamespace(object):
 local = LocalCommandNamespace()
 
 #===================================================================================================
-# executers
+# execution modifiers (background, foreground)
 #===================================================================================================
 class Executer(object):
     def __init__(self, retcode = 0):
@@ -403,11 +424,13 @@ FG = FG()
 class LocalModule(ModuleType):
     def __init__(self):
         ModuleType.__init__(self, "plumbum.local", __doc__)
+        self.__file__ = __file__
         self.__package__ = __package__
     def __getattr__(self, name):
         return local[name]
 LocalModule = LocalModule()
 
 sys.modules[LocalModule.__name__] = LocalModule
+
 
 

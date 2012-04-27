@@ -20,10 +20,12 @@ class SshCommand(ChainableCommand):
         if not isinstance(args, tuple):
             args = (args,)
         return BoundCommand(self, args)
+
+    def formulate(self, args = ()):
+        return ["cd", self.remote.cwd, "&&", self.executable] + list(args)
     
     def popen(self, args = (), sshopts = {}, **kwargs):
-        cmdline = ["cd", self.remote.cwd, "&&", self.executable] + list(args)
-        return self.remote.sshctx.popen(cmdline, sshopts, **kwargs)
+        return self.remote.sshctx.popen(self.formulate(args), sshopts, **kwargs)
     def run(self, args = (), retcode = 0, sshopts = {}, **kwargs):
         return _run(self.popen(args, sshopts, **kwargs), retcode)
 
@@ -48,18 +50,21 @@ class RemotePathLocation(object):
         return files
     def normpath(self, parts):
         joined = os.path.join(str(self.remote.cwd), *(str(p) for p in parts))
-        "[/\\\\](.*)?"
-        normed = joined
-        return normed
-        
+        if WIN32 and "/" in joined: # assume remote path is posix and fix all backslashes
+            joined = joined.replace("\\", "/")
+        return joined 
+    
     def chdir(self, p):
         self.remote.cwd.chdir(p)
     def isdir(self, p):
-        pass
+        res = self._stat(p)
+        if not res:
+            return False
     def isfile(self, p):
-        #return stat.S_ISREG(st.st_mode)
-        #self.stat(p).st_mode
-        pass
+        res = self._stat(p)
+        if not res:
+            return False
+        #return stat.S_ISREG(.st_mode)
     def exists(self, p):
         return self._stat(p) is not None
     def _stat(self, p):
@@ -89,7 +94,7 @@ class RemoteWorkdir(Path):
     def _path(self):
         return self._dirstack[-1]
     def __repr__(self):
-        return "<Workdir %s%s>" % (self.remote.sshctx, self)
+        return "<Workdir %s%s>" % (self._remote.sshctx, self)
     def __hash__(self):
         raise TypeError("Workdir can change and is unhashable")
     
@@ -104,7 +109,7 @@ class RemoteWorkdir(Path):
             self.chdir(self._dirstack[-1])
     
     def getpath(self):
-        return self.remote.path(str(self))
+        return self._remote.path(str(self))
     def chdir(self, dir):
         dir = str(dir)
         self._remote.session.run("cd %s" % (shquote(dir),))
@@ -155,10 +160,10 @@ if __name__ == "__main__":
         sshctx = SshContext("hollywood.xiv.ibm.com")
         remote = RemoteCommandNamespace(sshctx)
         r_ls = remote["ls"]
+        r_sudo = remote["sudo"]
         
-        print remote.cwd
-        
-        for fn in remote.cwd:
-            print repr(fn)
+        r_sudo_ls = r_sudo[r_ls]
+        print r_sudo_ls.formulate()
+
 
 
