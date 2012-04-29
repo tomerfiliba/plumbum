@@ -139,7 +139,7 @@ which are there to help you. ``FG`` runs programs in the foreground (they receiv
     -rw-r--r--    1 sebulba  Administ       18 Apr 27 11:54 todo.txt
     
 .. note:: 
-   Note that the output of `ls` went straight to the screen
+   Note that the output of ``ls`` went straight to the screen
 
 ::
 
