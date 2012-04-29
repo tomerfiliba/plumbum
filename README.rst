@@ -112,7 +112,7 @@ finish), you can use the `popen` method, which returns a normal `subprocess.Pope
 In order to make programming easier, there are two special objects called `FG` and `BG`,
 which you can use. `FG` runs programs in the foreground (they receive the parent's `stdin`, 
 `stdout` and `stderr`), and `BG` runs programs in the background (much like `popen` above,
-but it returns a `Future` object, instead of a `subprocess.Popen` one).
+but it returns a `Future` object, instead of a `subprocess.Popen` one). ::
 
     >>> from plumbum import FG, BG
     >>> ls["-l"] & FG
