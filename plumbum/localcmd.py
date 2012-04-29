@@ -374,11 +374,6 @@ class Executer(object):
     def __call__(cls, retcode):
         return cls(retcode)
 
-class RUN(Executer):
-    def __rand__(self, cmd):
-        return cmd(retcode = self.retcode)
-RUN = RUN()
-
 class Future(object):
     def __init__(self, proc, expected_retcode):
         self.proc = proc
@@ -388,8 +383,11 @@ class Future(object):
         self._stderr = None
     def __repr__(self):
         return "<Future %r (%s)>" % (self.proc.cmdline, self._returncode if self.ready() else "running",)
-    def ready(self):
+    def poll(self):
+        if self.proc.poll() is not None:
+            self.wait()
         return self._returncode is not None
+    ready = poll
     def wait(self):
         if self.ready():
             return
@@ -414,7 +412,7 @@ BG = BG()
 
 class FG(Executer):
     def __rand__(self, cmd):
-        return cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None)
+        cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None)
 FG = FG()
 
 #===================================================================================================
