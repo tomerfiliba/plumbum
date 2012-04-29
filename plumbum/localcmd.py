@@ -299,7 +299,7 @@ class Redirection(ChainableCommand):
             parts.append("2> %s" % (getattr(self.stderr_file, "name", self.stderr_file),))
         return " ".join(parts)
     
-    def popen(self, args, **kwargs):
+    def popen(self, args = (), **kwargs):
         stdin = kwargs.pop("stdin", PIPE)
         stdout = kwargs.pop("stdout", PIPE)
         stderr = kwargs.pop("stderr", PIPE)
@@ -389,7 +389,7 @@ class Future(object):
         return self._returncode is not None
     ready = poll
     def wait(self):
-        if self.ready():
+        if self._returncode is not None:
             return
         self._returncode, self._stdout, self._stderr = _run(self.proc, self._expected_retcode)
     @property

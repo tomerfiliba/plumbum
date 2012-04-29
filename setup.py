@@ -14,7 +14,7 @@ setup(name = "plumbum",
     author = "Tomer Filiba",
     author_email = "tomerfiliba@gmail.com",
     license = "MIT",
-    url = "http://plumbum.readthedocs.org",
+    url = "https://github.com/tomerfiliba/plumbum",
     packages = [
         'plumbum',
     ],

@@ -121,13 +121,17 @@ class RemoteEnv(object):
         self._remote = remote
 
 
-class RemoteCommandNamespace(object):
+class Remote(object):
     def __init__(self, sshctx):
         self.sshctx = sshctx
         self.session = sshctx.shell()
         self._location = RemotePathLocation(weakref.proxy(self))
         self.cwd = RemoteWorkdir(weakref.proxy(self))
         self.env = RemoteEnv(weakref.proxy(self))
+    
+    @classmethod
+    def connect(cls, *args, **kwargs):
+        return cls(SshContext(*args, **kwargs))
     
     def __enter__(self):
         pass
@@ -137,6 +141,9 @@ class RemoteCommandNamespace(object):
         self.session.close()
     def path(self, *parts):
         return Path(self._location, *parts)
+    
+    def tunnel(self, *args, **kwargs):
+        return self.sshctx.tunnel(*args, **kwargs)
     
     def which(self, progname):
         rc, out, err = self.session.run("which %s" % (shquote(progname),), retcode = None)
@@ -157,10 +164,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
     with local.env(HOME = local.env.home):
-        sshctx = SshContext("hollywood.xiv.ibm.com")
-        remote = RemoteCommandNamespace(sshctx)
-        r_ls = remote["ls"]
-        r_sudo = remote["sudo"]
+        hollywood = Remote.connect("hollywood.xiv.ibm.com")
+        r_ls = hollywood["ls"]
+        r_sudo = hollywood["sudo"]
         
         r_sudo_ls = r_sudo[r_ls]
         print r_sudo_ls.formulate()
