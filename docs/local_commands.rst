@@ -1,14 +1,21 @@
 Local Commands
 ==============
 Plumbum exposes a special singleton object named ``local``, which represents your local machine
-and serves as a factory for command objects (among other tasks) ::
+and serves as a factory for command objects ::
 
     >>> from plumbum import local
     >>>
     >>> ls = local["ls"]
     >>> ls
     <Command C:\Program Files\Git\bin\ls.exe>
-    >>>    
+    >>> notepad = local["c:\\windows\\notepad.exe"]
+    >>> notepad
+    <Command c:\windows\notepad.exe>
+
+If you don't specify a full path, the program is searched for in your system's ``PATH`` (and if no
+match is found, an exception is raised). Otherwise, the full path is used as given. Once you have
+a ``Command`` object, you can execute it like a normal function ::
+
     >>> ls()
     'README.rst\nplumbum\nsetup.py\ntests\ntodo.txt\n'
     >>> ls("-a")
@@ -116,10 +123,11 @@ finish), you can use the ``popen`` method, which returns a normal ``subprocess.P
 Background and Foreground
 -------------------------
 In order to make programming easier, there are two special objects called ``FG`` and ``BG``,
-which you can use. ``FG`` runs programs in the foreground (they receive the parent's ``stdin``, 
-``stdout`` and ``stderr``), and ``BG`` runs programs in the background (much like ``popen`` above,
-but it returns a ``Future` object, instead of a ``subprocess.Popen`` one). ``FG`` is especially
-useful for interactive programs like editors, etc., that require a TTY. ::
+which are there to help you. ``FG`` runs programs in the foreground (they receive the parent's 
+``stdin``, ``stdout`` and ``stderr``), and ``BG`` runs programs in the background (much like 
+``popen`` above, but it returns a ``Future`` object, instead of a ``subprocess.Popen`` one). 
+``FG`` is especially useful for interactive programs like editors, etc., that require a ``TTY``. 
+::
 
     >>> from plumbum import FG, BG
     >>> ls["-l"] & FG
@@ -129,9 +137,12 @@ useful for interactive programs like editors, etc., that require a TTY. ::
     -rw-r--r--    1 sebulba  Administ        0 Apr 27 11:54 setup.py
     drwxr-xr-x    2 sebulba  Administ        0 Apr 27 11:54 tests
     -rw-r--r--    1 sebulba  Administ       18 Apr 27 11:54 todo.txt
-    >>>
-    >>> # Note that the output of `ls` went straight to the screen
-    ...
+    
+.. note:: 
+   Note that the output of `ls` went straight to the screen
+
+::
+
     >>> ls["-a"] & BG
     <Future ['C:\\Program Files\\Git\\bin\\ls.exe', '-a'] (running)>
     >>> f = _
@@ -140,112 +151,5 @@ useful for interactive programs like editors, etc., that require a TTY. ::
     >>> f.wait()
     >>> f.stdout
     '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\nplumbum\n[...]'
-
-The Local Object
-================
-So far we've only seen running local commands, but there's more to the ``local`` object than
-this; it provides some other useful features. First, you should get acquainted with ``python``,
-which is a command object that points to the current interpreter (i.e., ``sys.executable``) ::
-
-    >>> local.python
-    <Command c:\python27\python.exe>
-    >>> local.python("-c", "import sys;print sys.version")
-    '2.7.2 (default, Jun 12 2011, 15:08:59) [MSC v.1500 32 bit (Intel)]\r\n'
-
-Another useful member is ``which``, which performs program name resolution in the executible 
-``PATH`` (returns the first match, or raises an exception if no match is found) ::
-
-    >>> local.which("ls")
-    <Path C:\Program Files\Git\bin\ls.exe>
-
-Working Directory
------------------
-The ``local.cwd`` attribute represents the current working directory. You can change it like so ::
-
-    >>> local.cwd
-    <Workdir d:\workspace\plumbum>
-    >>> local.cwd.chdir("d:\\workspace\\plumbum\\docs")
-    >>> local.cwd
-    <Workdir d:\workspace\plumbum\docs>
-
-But a much more useful pattern is to use it as a *context manager*, so it behaves like 
-``pushd``-``popd`` ::
-
-    >>> with local.cwd("c:\\windows"):
-    ...     print "%s:%s" % (local.cwd, (ls | wc["-l"])())
-    ...     with local.cwd("c:\\windows\\system32"):
-    ...         print "%s:%s" % (local.cwd, (ls | wc["-l"])())
-    ...
-    c:\windows:    105
-    c:\windows\system32:   3013
-    >>> print "%s:%s" % (local.cwd, (ls | wc["-l"])())
-    d:\workspace\plumbum:      9
-
-Environment
------------
-Similarly to ``cwd``, ``local.env`` represents the local environment. It is a dictionary-like 
-object that holds the environment variables, which you can get/set intuitively ::
-
-    >>> local.env["JAVA_HOME"]
-    'C:\\Program Files\\Java\\jdk1.6.0_20'
-    >>> local.env["JAVA_HOME"] = "foo"
-
-And like ``cwd`` again, you can work with ``env`` as a context manager; each level would have
-it's own private copy of the environment ::
-
-    >>> with local.env(FOO="BAR"):
-    ...     local.python("-c", "import os;print os.environ['FOO']")
-    ...     with local.env(FOO="SPAM"):
-    ...         local.python("-c", "import os;print os.environ['FOO']")
-    ...     local.python("-c", "import os;print os.environ['FOO']")
-    ...
-    'BAR\r\n'
-    'SPAM\r\n'
-    'BAR\r\n'
-    >>> local.python("-c", "import os;print os.environ['FOO']")
-    Traceback (most recent call last):
-       [...]
-    ProcessExecutionError: Command line: ['c:\\python27\\python.exe', '-c', "import os;print os.environ['FOO']"]
-    Exit code: 1
-    Stderr:  | Traceback (most recent call last):
-             |   File "<string>", line 1, in <module>
-             |   File "c:\python27\lib\os.py", line 423, in __getitem__
-             |     return self.data[key.upper()]
-             | KeyError: 'FOO'
-
-In order to make cross-platform-ness easier, the ``local.env`` object provides some convenience 
-properties for getting the username (``user``), the home path (``home``), and the executible path
-(``path``). For instance ::
-
-    >>> local.env.user
-    'sebulba'
-    >>> local.env.home
-    <Path c:\Users\sebulba>
-    >>> local.env.path
-    [<Path c:\python27\lib\site-packages\gtk-2.0\runtime\bin>, <Path c:\Users\sebulba\bin>, ...]
-    >>>
-    >>> local.which("python")
-    <Path c:\python27\python.exe>
-    >>> local.env.path.insert(0, "c:\\python32")
-    >>> local.which("python")
-    <Path c:\python32\python.exe>
-
-
-Local Path
-==========
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

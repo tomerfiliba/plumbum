@@ -34,25 +34,42 @@ manipulation. But enough with the talk, let's see some code! ::
     >>> (ls["-a"] | wc["-l"]) & BG
     <Future ['C:\\Program Files\\Git\\bin\\wc.exe', '-l'] (running)>
 
-There's much more Plumbum can do, so be sure to read on...
-
-Contents
---------
+There's much more Plumbum can do, so be sure to read on:
 
 .. toctree::
    :maxdepth: 2
    
-   local
-   path
-   remote
-   about
+   local_commands
+   local_object
+   local_path
+   ssh
+   remote_commands
+   remote_path
+   api
 
+About
+=====
+The original purpose of Plumbum was to enable local and remote program execution with ease, 
+assuming nothing fancier than good-old SSH. On top of this, a file-system abstraction layer
+was devised, so that working with local and remote files would be seamless. 
 
-.. comment
-    Indices and tables
-    ==================
+I've toyed with this idea for some time now, but it wasn't until I had to write build scripts
+for a project I've been working on that I decided I've had it with shell scripts and it's time
+to make it happen. Plumbum was born from the scraps of the ``Path`` class, which I 
+wrote for the aforementioned build system, and the ``SshContext`` and ``SshTunnel`` classes
+that I wrote for `RPyC <http://rpyc.sf.net>`_. When I combined the two with *shell combinators*
+(because shell scripts do have an edge there) the magic happened and here we are.
 
-    * :ref:`genindex`
-    * :ref:`modindex`
-    * :ref:`search`
+Credits
+=======
+The project has been inspired by `PBS <https://github.com/amoffat/pbs>`_ 
+of `Andrew Moffat <https://github.com/amoffat>`_, 
+and has borrowed some of his ideas (namely treating programs like functions and the
+nice trick for importing commands). However, I felt there was too much magic going on in PBS, 
+and that the syntax wasn't what I had in mind when I came to write shell-like programs. 
+I contacted Andrew, but he wanted to keep PBS this way. Other than that, the two libraries 
+go in different directions.
+
+Plumbum pays tribute to `Rotem Yaari <https://github.com/vmalloc/>`_ who suggested a library 
+code-named ``pyplatform`` for that very same purpose, but it had never materialized.
 

@@ -15,18 +15,11 @@ setup(name = "plumbum",
     author_email = "tomerfiliba@gmail.com",
     license = "MIT",
     url = "https://github.com/tomerfiliba/plumbum",
-    packages = [
-        'plumbum',
-    ],
+    packages = ['plumbum'],
     platforms = ["POSIX", "Windows"],
     use_2to3 = False,
     zip_safe = True,
-    long_description = """Plumbum (Latin for *lead*) is a small yet very functional library for 
-writing shell-script-like programs in Python. Plumbum treats programs as first-class objects, 
-which you can invoke to run the program, or form pipelines, just like you'd do in shell scripts.
-The idea is to never have to write shell scripts again.
-
-See http://plumbum.readthedocs.org for more info.""",
+    long_description = open("README.rst", "r").read(),
     classifiers = [
         "Programming Language :: Python :: 2.5",
         "Programming Language :: Python :: 2.6",
