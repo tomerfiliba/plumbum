@@ -9,9 +9,13 @@ attempts to mimic the shell syntax (but only where it makes sense) while keeping
 
 Apart from shell-like syntax and nifty shortcuts, the library focuses on local and 
 remote command execution, local and remote *paths*, and working directory and environment 
-manipulation. But enough with the talk, let's see some code! ::
+manipulation. But enough with the talk, let's see some code!
 
-    >>> from plumbum import local, FG, BG
+Basic Usage
+-----------
+::
+
+    >>> from plumbum import local
     >>> from plumbum.local import ls, grep, cat, wc
     >>>
     >>> ls()
@@ -22,7 +26,15 @@ manipulation. But enough with the talk, let's see some code! ::
     (C:\Program Files\Git\bin\ls.exe | C:\Program Files\Git\bin\wc.exe '-l')
     >>> chain()
     '9\n'
-    >>>
+    >>> notepad = local["c:\\windows\\notepad.exe"]
+    >>> notepad()
+    ''
+
+Foregound and Background
+------------------------
+::
+
+    >>> from plumbum import FG, BG
     >>> ls["-l"] & FG
     total 10
     -rw-r--r--    1 sebulba  Administ     1079 Apr 29 15:34 LICENSE
@@ -37,7 +49,11 @@ manipulation. But enough with the talk, let's see some code! ::
     >>> f.wait()
     >>> f.stdout
     '16\n'
-    >>>
+
+Working Directory and Environment
+---------------------------------
+::
+
     >>> with local.cwd("c:\\windows"):
     ...     (ls | wc["-l"])()
     ...
@@ -50,24 +66,28 @@ manipulation. But enough with the talk, let's see some code! ::
     ...
     'SPAM\r\n'
     'BAR\r\n'
-    >>>
-    >>> # Remote execution (over SSH)
-    ...
+
+Remote Execution (over SSH)
+---------------------------
+::
+
     >>> from plumbum import Remote
-    >>> r = Remote.connect("linuxbox")
+    >>> r = Remote.connect("linuxbox.foo.bar")
     >>> r["uname"]()
     'Linux\n'
     >>> r_ls = r["ls"]
     >>> r_ls
-    <SshCommand ssh://hollywood.xiv.ibm.com /bin/ls>
+    <SshCommand ssh://linuxbox.foo.bar /bin/ls>
     >>>
     >>> with r.cwd("/"):
     ...     r_ls()
     ...
     'bin\nboot\ncdrom\ndev\netc\nhome\ninitrd.img\n[...]'
-    >>>
-    >>> # Tunneling
-    ...
+
+Tunneling (over SSH)
+--------------------
+::
+
     >>> r_python = r["python"]
     >>> f = (r_python["-c", "import socket;s=socket.socket();s.bind(('localhost',16666));" +
     ... "s.listen(1);s2=s.accept()[0];s2.send('great success')"] & BG

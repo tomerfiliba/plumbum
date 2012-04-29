@@ -57,7 +57,7 @@ the output to a file named ``tmp.txt`` ::
 
 .. note::
    Parenthesis are required here! ``grep["world"] < sys.stdin > "tmp.txt"`` would 
-   result in a type error.
+   result in ``False``...
 
 Right after ``foo``, Ctrl+D was pressed, which caused ``grep`` to finish. The empty string
 at the end is the command's ``stdout`` (and it's empty because it actually went to a file).
@@ -157,7 +157,6 @@ Another useful member is ``which``, which performs program name resolution in th
 
     >>> local.which("ls")
     <Path C:\Program Files\Git\bin\ls.exe>
-
 
 Working Directory
 -----------------
