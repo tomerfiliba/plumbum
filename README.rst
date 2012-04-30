@@ -11,6 +11,10 @@ Apart from shell-like syntax and nifty shortcuts, the library focuses on local a
 remote command execution, local and remote *paths*, and working directory and environment 
 manipulation. But enough with the talk, let's see some code!
 
+.. note::
+   This is only a teaser; the full documentation can be found at 
+   `Read the Docs <http://plumbum.readthedocs.org>`_
+
 Basic Usage
 -----------
 ::
@@ -101,5 +105,3 @@ Tunneling (over SSH)
     >>> f.ready()
     True
 
-This is only a teaser; the full documentation can be found at 
-`Read the Docs <http://plumbum.readthedocs.org>`_
