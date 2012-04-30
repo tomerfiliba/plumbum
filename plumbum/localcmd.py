@@ -3,11 +3,12 @@ import os
 import logging
 import functools
 import glob
+import shutil
 from types import ModuleType
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
 from plumbum.path import Path
-from plumbum.base import make_input, run_proc, CommandNotFound, IS_WIN32, shquote
+from plumbum.commands import CommandNotFound, ChainableCommand, IS_WIN32
 
 
 cmd_logger = logging.getLogger(__name__)
@@ -34,11 +35,21 @@ class LocalPathLocation(object):
         os.chdir(p)
     def glob(self, p):
         return glob.glob(p)
+    def delete(self, p):
+        if not self.exists(p):
+            return
+        elif self.isdir(p):
+            shutil.rmtree(p, ignore_errors = True)
+        else:
+            os.remove(p)
+    def move(self, src, dst):
+        shutil.move(src, dst)
 
 LocalPathLocation = LocalPathLocation()
 
 class LocalWorkdir(Path):
     def __init__(self):
+        self._location = LocalPathLocation
         self._dirstack = [os.getcwd()]
     def __str__(self):
         return str(self._path)
@@ -206,31 +217,6 @@ env = LocalEnv()
 #===================================================================================================
 # Command objects
 #===================================================================================================
-class ChainableCommand(object):
-    def __or__(self, other):
-        return Pipeline(self, other)
-    def __gt__(self, stdout_file):
-        return Redirection(self, stdout_file = stdout_file)
-    def __ge__(self, stderr_file):
-        return Redirection(self, stderr_file = stderr_file)
-    def __lt__(self, stdin_file):
-        return Redirection(self, stdin_file = stdin_file)
-    def __lshift__(self, data):
-        return Redirection(self, stdin_file = make_input(data))
-    def __call__(self, *args, **kwargs):
-        return self.run(args, **kwargs)[1]
-    def __getitem__(self, args):
-        if not isinstance(args, tuple):
-            args = (args,)
-        return BoundCommand(self, args)
-    
-    def popen(self, args = (), **kwargs):
-        raise NotImplementedError()
-
-    def run(self, args = (), **kwargs):
-        retcode = kwargs.pop("retcode", 0)
-        return run_proc(self.popen(args, **kwargs), retcode)
-
 class Command(ChainableCommand):
     cwd = cwd
     env = env
@@ -245,7 +231,9 @@ class Command(ChainableCommand):
     def formulate(self, args = ()):
         argv = [str(self.executable)]
         for a in args:
-            if hasattr(a, "formulate"):
+            if not a:
+                continue
+            elif hasattr(a, "formulate"):
                 argv.extend(a.formulate())
             else:
                 argv.append(str(a))
@@ -269,109 +257,6 @@ class Command(ChainableCommand):
         proc.cmdline = cmdline
         return proc
 
-class BoundCommand(ChainableCommand):
-    def __init__(self, cmd, args):
-        self.cmd = cmd
-        self.args = tuple(args)
-    def __str__(self):
-        return "%s %s" % (self.cmd, " ".join(repr(a) for a in self.args))
-    def __repr__(self):
-        return "BoundCommand(%r, %r)" % (self.cmd, self.args)
-    def popen(self, args = (), **kwargs):
-        return self.cmd.popen(self.args + tuple(args), **kwargs)
-    def formulate(self, args = ()):
-        return self.cmd.formulate(self.args + tuple(args))
-
-class Pipeline(ChainableCommand):
-    def __init__(self, srccmd, dstcmd):
-        self.srccmd = srccmd
-        self.dstcmd = dstcmd
-    def __str__(self):
-        return "(%s | %s)" % (self.srccmd, self.dstcmd)
-    def __repr__(self):
-        return "Pipeline(%r, %r)" % (self.srccmd, self.dstcmd)
-    
-    def popen(self, args = (), **kwargs):
-        stdin = kwargs.pop("stdin", PIPE)
-        stdout = kwargs.pop("stdout", PIPE)
-        stderr = kwargs.pop("stderr", PIPE)
-        
-        srcproc = self.srccmd.popen(args, stdin = stdin, stderr = PIPE, **kwargs)
-        dstproc = self.dstcmd.popen(stdin = srcproc.stdout, stdout = stdout, 
-            stderr = stderr, **kwargs)
-        srcproc.stdout.close() # allow p1 to receive a SIGPIPE if p2 exits
-        srcproc.stderr.close()
-        dstproc.srcproc = srcproc
-        return dstproc
-
-    def formulate(self, args = ()):
-        return [shquote(a) for a in self.srccmd.formulate(args)] + ["|"] + [shquote(a) for a in self.dstcmd.formulate(args)]
-
-class RedirectionError(Exception):
-    pass
-
-class Redirection(ChainableCommand):
-    def __init__(self, cmd, stdin_file = None, stdout_file = None, stderr_file = None):
-        self.cmd = cmd
-        self.stdin_file = stdin_file
-        self.stdout_file = stdout_file
-        self.stderr_file = stderr_file
-    
-    def __repr__(self):
-        args = []
-        if self.stdin_file:
-            args.append("stdin_file = %r" % (self.stdin_file,))
-        if self.stdout_file:
-            args.append("stdout_file = %r" % (self.stdout_file,))
-        if self.stderr_file:
-            args.append("stderr_file = %r" % (self.stderr_file,))
-        return "Redirection(%r, %s)" % (self.cmd, ", ".join(args))
-    
-    def __str__(self):
-        parts = [str(self.cmd)]
-        if self.stdin_file:
-            parts.append("< %s" % (getattr(self.stdin_file, "name", self.stdin_file),))
-        if self.stdout_file:
-            parts.append("> %s" % (getattr(self.stdout_file, "name", self.stdout_file),))
-        if self.stderr_file:
-            parts.append("2> %s" % (getattr(self.stderr_file, "name", self.stderr_file),))
-        return " ".join(parts)
-
-    def formulate(self, args = ()):
-        parts = self.cmd.formulate(args)
-        for f, arrow in [(self.stdin_file, "<"), (self.stdout_file, ">"), (self.stderr_file, "2>")]:
-            if f:
-                parts.append(arrow)
-                parts.append(shquote(str(getattr(f, "name", f))))
-        return parts
-    
-    def popen(self, args = (), **kwargs):
-        kw_stdin = kwargs.pop("stdin", PIPE)
-        kw_stdout = kwargs.pop("stdout", PIPE)
-        kw_stderr = kwargs.pop("stderr", PIPE)
-        
-        if self.stdin_file:
-            if kw_stdin != PIPE:
-                raise RedirectionError("stdin is already redirected")
-            stdin = open(self.stdin_file, "r") if isinstance(self.stdin_file, str) else self.stdin_file
-        else:
-            stdin = kw_stdin
-        
-        if self.stdout_file:
-            if kw_stdout != PIPE:
-                raise RedirectionError("stdout is already redirected")
-            stdout = open(self.stdout_file, "w") if isinstance(self.stdout_file, str) else self.stdout_file
-        else:
-            stdout = kw_stdout
-        
-        if self.stderr_file:
-            if kw_stderr != PIPE:
-                raise RedirectionError("stderr is already redirected")
-            stderr = open(self.stderr_file, "w") if isinstance(self.stderr_file, str) else self.stderr_file
-        else:
-            stderr = kw_stderr
-        
-        return self.cmd.popen(args, stdin = stdin, stdout = stdout, stderr = stderr, **kw_stderr) 
 
 #===================================================================================================
 # Local command namespace

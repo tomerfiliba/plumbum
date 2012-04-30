@@ -65,6 +65,12 @@ class Path(object):
     def glob(self, pattern):
         return [Path(self._location, fn) 
             for fn in self._location.glob(str(self / pattern))]
+    
+    def delete(self):
+        self._location.delete(str(self))
+
+    def move(self, dst):
+        self._location.move(str(self), str(dst))
 
 
 

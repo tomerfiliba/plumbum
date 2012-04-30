@@ -1,4 +1,5 @@
-* command nesting
-* python 3 issues
-* docs
-* rethink names
+1) redo command nesting
+2) rethink names
+3) docs
+4) python 3 issues
+

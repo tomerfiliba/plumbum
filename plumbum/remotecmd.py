@@ -1,7 +1,7 @@
 import os
 import weakref
 from contextlib import contextmanager
-from plumbum.base import CommandNotFound, IS_WIN32, shquote, ExecutionModifier
+from plumbum.base import CommandNotFound, IS_WIN32, shquote
 from plumbum.localcmd import ChainableCommand, BoundCommand, run_proc
 from plumbum.ssh import SshContext
 from plumbum.path import Path
@@ -176,13 +176,17 @@ if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.DEBUG)
 
-    r = Remote.connect("localhost")
-    r_ls = r["ls"]
-    r_grep = r["grep"]
-    r_sudo = r["sudo"]
-    r_ssh = r["ssh"]
-    
-    print r.run(r_ls | r_grep["h"])
+#    r = Remote.connect("hollywood.xiv.ibm.com")
+#    r_ls = r["ls"]
+#    r_grep = r["grep"]
+#    r_sudo = r["sudo"]
+#    r_ssh = r["ssh"]
+#    
+#    print r.run(r_ls | r_grep["h"])
+#    from plumbum import FG
+#    from plumbum.local import xargs, echo, ls
+#    
+#    (ls | xargs[echo]) & FG
 
 
 
