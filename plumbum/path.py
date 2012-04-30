@@ -1,28 +1,5 @@
 import os
-import glob
 
-
-class LocalPathLocation(object):
-    def __str__(self):
-        return ""
-    def normpath(self, parts):
-        return os.path.normpath(os.path.join(os.getcwd(), *(str(p) for p in parts)))
-    def listdir(self, p):
-        return os.listdir(p)
-    def isdir(self, p):
-        return os.path.isdir(p)
-    def isfile(self, p):
-        return os.path.isfile(p)
-    def exists(self, p):
-        return os.path.exists(p)
-    def stat(self, p):
-        return os.stat(p)
-    def chdir(self, p):
-        os.chdir(p)
-    def glob(self, p):
-        return glob.glob(p)
-
-LocalPathLocation = LocalPathLocation()
 
 class Path(object):
     def __init__(self, location, *parts):
@@ -40,9 +17,17 @@ class Path(object):
         if isinstance(other, Path):
             return (self._location, str(self)) == (other._location, str(other))
         else:
-            return str(self) == str(other)
+            return str(self) == other
     def __ne__(self, other):
         return not (self == other)
+    def __gt__(self, other):
+        return str(self) > set(other)
+    def __ge__(self, other):
+        return str(self) >= set(other)
+    def __lt__(self, other):
+        return str(self) < set(other)
+    def __le__(self, other):
+        return str(self) <= set(other)
     def __hash__(self):
         return hash(str(self))
     def __nonzero__(self):
@@ -174,20 +159,4 @@ class Path(object):
 #def copy(src, dst):
 #    copy(str(src), str(dst))
 #    return Path(dst)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

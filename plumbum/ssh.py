@@ -2,7 +2,9 @@ import sys
 import time
 import subprocess
 import logging
-from plumbum.localcmd import local, ProcessExecutionError, _run
+from plumbum.localcmd import local
+from plumbum.base import ProcessExecutionError, run_proc
+import random
 
 
 #logging.basicConfig(level=logging.INFO)
@@ -88,7 +90,7 @@ class SshSession(object):
             shl = ctx.shell()
             rc, out, err = shl.execute("ls -la")
         """
-        MARKER = b"-:#:-End~Of~Output-%s-:#:-" % (time.time(),)
+        MARKER = b"-:#:-End~Of~Output-%s-:#:-" % (time.time() * random.random())
         full_cmdline = cmdline
         if full_cmdline.strip():
             full_cmdline += " ; "
@@ -227,12 +229,14 @@ class SshContext(object):
         return args
 
     def popen(self, args, sshopts = {}, **kwargs):
+        if isinstance(args, str):
+            args = (args,)
         cmdline = self._process_ssh_cmdline(sshopts)
         cmdline.extend(shquote(str(a)) for a in args)
         return self.ssh_command.popen(cmdline, startupinfo = _get_startupinfo(), **kwargs)
 
     def run(self, args, retcode = 0, sshopts = {}, **kwargs):
-        return _run(self.popen(args, sshopts, **kwargs), retcode)
+        return run_proc(self.popen(args, sshopts, **kwargs), retcode)
 
     '''
     def upload(self, src, dst, **kwargs):
@@ -322,12 +326,5 @@ class SshContext(object):
             R = "[%s]:%s:[%s]:%s" % (rem_host, rem_port, loc_host, loc_port))
         return SshTunnel(session, "(%s)%s:%s" % (self.host, rem_host, rem_port), 
             "%s:%s" % (loc_host, loc_port))
-
-
-if __name__ == "__main__":
-    with local.env(HOME = local.env.home):
-        sshctx = SshContext("hollywood.xiv.ibm.com")
-        print sshctx.run(["ls"])
-    
 
 

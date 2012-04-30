@@ -6,7 +6,8 @@ try:
 except ImportError:
     from distutils.core import setup
 
-exec(open(os.path.join(os.path.dirname(__file__), 'plumbum', 'version.py')).read())
+HERE = os.path.dirname(__file__)
+exec(open(os.path.join(HERE, "plumbum", "version.py")).read())
 
 setup(name = "plumbum",
     version = version_string, #@UndefinedVariable
@@ -15,11 +16,11 @@ setup(name = "plumbum",
     author_email = "tomerfiliba@gmail.com",
     license = "MIT",
     url = "https://github.com/tomerfiliba/plumbum",
-    packages = ['plumbum'],
+    packages = ["plumbum"],
     platforms = ["POSIX", "Windows"],
     use_2to3 = False,
-    zip_safe = True,
-    long_description = open("README.rst", "r").read(),
+    #zip_safe = True,
+    long_description = open(os.path.join(HERE, "README.rst"), "r").read(),
     classifiers = [
         "Programming Language :: Python :: 2.5",
         "Programming Language :: Python :: 2.6",

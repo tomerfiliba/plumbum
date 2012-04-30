@@ -1,22 +1,43 @@
 import sys
 import os
 import logging
+import functools
+import glob
 from types import ModuleType
-from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
-from plumbum.path import Path, LocalPathLocation
+from plumbum.path import Path
+from plumbum.base import make_input, run_proc, CommandNotFound, IS_WIN32
 
 
 cmd_logger = logging.getLogger(__name__)
 
-WIN32 = os.name == "nt"
-__all__ = ["local", "BG", "FG", "ProcessExecutionError", "CommandNotFound"]
-
 #===================================================================================================
 # Workdir and Environment abstractions
 #===================================================================================================
-class _Workdir(Path):
+class LocalPathLocation(object):
+    def __str__(self):
+        return ""
+    def normpath(self, parts):
+        return os.path.normpath(os.path.join(os.getcwd(), *(str(p) for p in parts)))
+    def listdir(self, p):
+        return os.listdir(p)
+    def isdir(self, p):
+        return os.path.isdir(p)
+    def isfile(self, p):
+        return os.path.isfile(p)
+    def exists(self, p):
+        return os.path.exists(p)
+    def stat(self, p):
+        return os.stat(p)
+    def chdir(self, p):
+        os.chdir(p)
+    def glob(self, p):
+        return glob.glob(p)
+
+LocalPathLocation = LocalPathLocation()
+
+class LocalWorkdir(Path):
     def __init__(self):
         self._dirstack = [os.getcwd()]
     def __str__(self):
@@ -44,17 +65,40 @@ class _Workdir(Path):
         os.chdir(str(dir))
         self._dirstack[-1] = local.path(dir)
 
-cwd = _Workdir()
+cwd = LocalWorkdir()
 
-class _Env(object):
+class LocalEnvPath(list):
+    def append(self, path):
+        list.extend(self, local.path(path))
+    def extend(self, paths):
+        list.extend(self, (local.path(p) for p in paths)) #@UndefinedVariable
+    def insert(self, index, path):
+        list.extend(self, index, local.path(path))
+    def index(self, path):
+        list.index(self, local.path(path))
+    def __contains__(self, path):
+        return list.__contains__(self, local.path(path)) 
+    def remove(self, path):
+        list.remove(self, local.path(path))
+    def update(self):
+        self[:] = [local.path(p) for p in env.get("PATH", "").split(os.path.pathsep)] #@UndefinedVariable
+    def commit(self):
+        local.env._envstack[-1]["PATH"] =  os.path.pathsep.join(str(p) for p in self)
+
+def upperify_on_win32(func):
+    if IS_WIN32:
+        @functools.wraps(func)
+        def wrapper(self, name, *args):
+            return func(self, name.upper(), *args)
+        return wrapper
+    else:
+        return func
+
+class LocalEnv(object):
     def __init__(self):
-        if WIN32:
-            self._envstack = [dict((k.upper(), v) for k, v in os.environ.items())]
-        else:
-            self._envstack = [os.environ.copy()]
-        self._update_path()
-    def _update_path(self):
-        self.path = [Path(LocalPathLocation, p) for p in self["PATH"].split(os.path.pathsep)]
+        # os.environ already takes care of upper'ing on windows
+        self._envstack = [os.environ.copy()]
+        self._path = None
     
     @contextmanager
     def __call__(self, **kwargs):
@@ -63,41 +107,59 @@ class _Env(object):
         try:
             yield
         finally:
-            self._update_path()
             self._envstack.pop(-1)
+            self.path.update()
+    
     def __iter__(self):
-        return self._envstack[-1].iteritems()
+        return iter(self._envstack[-1].items())
+    def __hash__(self):
+        raise TypeError("unhashable type")
+    def __len__(self):
+        return len(self._envstack[-1])
+    @upperify_on_win32
     def __contains__(self, name):
-        if WIN32:
-            name = name.upper()
         return name in self._envstack[-1]
+    @upperify_on_win32
     def __delitem__(self, name):
-        if WIN32:
-            name = name.upper()
         del self._envstack[-1][name]
+    @upperify_on_win32
     def __getitem__(self, name):
-        if WIN32:
-            name = name.upper()
         return self._envstack[-1][name]
+    @upperify_on_win32
     def __setitem__(self, name, value):
-        if WIN32:
-            name = name.upper()
         self._envstack[-1][name] = value
         if name == "PATH":
-            self._update_path()
-    def update(self, *args, **kwargs):
-        self._envstack[-1].update(*args, **kwargs)
-        if WIN32:
+            self.path.update()
+    
+    def clear(self):
+        self._envstack[-1].clear()
+    def keys(self):
+        return self._envstack[-1].keys()
+    def items(self):
+        return self._envstack[-1].items()
+    def values(self):
+        return self._envstack[-1].values()
+    @upperify_on_win32
+    def get(self, name, *default):
+        return self._envstack[-1].get(name, *default)
+    @upperify_on_win32
+    def pop(self, name, *default):
+        return self._envstack[-1].pop(name, *default)
+
+    if IS_WIN32:
+        def update(self, *args, **kwargs):
+            self._envstack[-1].update(*args, **kwargs)
             for k, v in list(self._envstack[-1].items()):
                 self._envstack[-1][k.upper()] = v
-        self._update_path()
-    def get(self, name, default = None):
-        if WIN32:
-            name = name.upper()
-        return self._envstack[-1].get(name, default)
+            self.path.update()
+    else:
+        def update(self, *args, **kwargs):
+            self._envstack[-1].update(*args, **kwargs)
+            self.path.update()
+    
     def getdict(self):
-        self._envstack[-1]["PATH"] = os.path.pathsep.join(str(p) for p in self.path)
-        return dict((str(k), str(v)) for k, v in self._envstack[-1].items())
+        self.path.commit()
+        return dict((k, str(v)) for k, v in self._envstack[-1].items())
     def expand(self, expr):
         old = os.environ
         os.environ = self.getdict()
@@ -106,7 +168,13 @@ class _Env(object):
         return output
 
     @property
-    def home(self):
+    def path(self):
+        if self._path is None:
+            self._path = LocalEnvPath()
+            self._path.update()
+        return self._path
+
+    def _get_home(self):
         if "HOME" in self:
             return local.path(self["HOME"])
         elif "USERPROFILE" in self:
@@ -114,8 +182,7 @@ class _Env(object):
         elif "HOMEPATH" in self:
             return local.path(self.get("HOMEDRIVE", ""), self["HOMEPATH"])
         return None
-    @home.setter
-    def home(self, p):
+    def _set_home(self, p):
         if "HOME" in self:
             self["HOME"] = str(p)
         elif "USERPROFILE" in self:
@@ -124,6 +191,8 @@ class _Env(object):
             self["HOMEPATH"] = str(p)
         else:
             self["HOME"] = str(p)
+    home = property(_get_home, _set_home)
+    
     @property
     def user(self):
         if "USER" in self:
@@ -132,47 +201,7 @@ class _Env(object):
             return self["USERNAME"]
         return None
 
-env = _Env()
-
-#===================================================================================================
-# Utilities
-#===================================================================================================
-class ProcessExecutionError(Exception):
-    def __init__(self, cmdline, retcode, stdout, stderr):
-        Exception.__init__(self, cmdline, retcode, stdout, stderr)
-        self.cmdline = cmdline
-        self.retcode = retcode
-        self.stdout = stdout
-        self.stderr = stderr
-    def __str__(self):
-        stdout = "\n         | ".join(self.stdout.splitlines())
-        stderr = "\n         | ".join(self.stderr.splitlines())
-        lines = ["Command line: %r" % (self.cmdline,), "Exit code: %s" % (self.retcode)]
-        if stdout:
-            lines.append("Stdout:  | %s" % (stdout,))
-        if stderr:
-            lines.append("Stderr:  | %s" % (stderr,))
-        return "\n".join(lines)
-
-def _run(proc, retcode):
-    stdout, stderr = proc.communicate()
-    if not stdout:
-        stdout = ""
-    if not stderr:
-        stderr = ""
-    if retcode is not None and proc.returncode != retcode:
-        raise ProcessExecutionError(getattr(proc, "cmdline", None), 
-            proc.returncode, stdout, stderr)
-    return proc.returncode, stdout, stderr
-
-def _make_input(data, CHUNK_SIZE = 16000):
-    f = TemporaryFile()
-    while data:
-        chunk = data[:CHUNK_SIZE]
-        f.write(chunk)
-        data = data[CHUNK_SIZE:]
-    f.seek(0)
-    return f
+env = LocalEnv()
 
 #===================================================================================================
 # Command objects
@@ -187,7 +216,7 @@ class ChainableCommand(object):
     def __lt__(self, stdin_file):
         return Redirection(self, stdin_file = stdin_file)
     def __lshift__(self, data):
-        return Redirection(self, stdin_file = _make_input(data))
+        return Redirection(self, stdin_file = make_input(data))
     def __call__(self, *args, **kwargs):
         return self.run(args, **kwargs)[1]
     def __getitem__(self, args):
@@ -200,7 +229,7 @@ class ChainableCommand(object):
 
     def run(self, args = (), **kwargs):
         retcode = kwargs.pop("retcode", 0)
-        return _run(self.popen(args, **kwargs), retcode)
+        return run_proc(self.popen(args, **kwargs), retcode)
 
 class Command(ChainableCommand):
     cwd = cwd
@@ -313,15 +342,9 @@ class Redirection(ChainableCommand):
 #===================================================================================================
 # Local command namespace
 #===================================================================================================
-class CommandNotFound(Exception):
-    def __init__(self, progname, path):
-        Exception.__init__(self, progname, path)
-        self.progname = progname
-        self.path = path
-
-class LocalCommandNamespace(object):
+class Local(object):
     _EXTENSIONS = [""]
-    if WIN32:
+    if IS_WIN32:
         _EXTENSIONS += [".exe", ".bat"]
 
     cwd = cwd
@@ -340,12 +363,18 @@ class LocalCommandNamespace(object):
                     return filelist[n]
         return None
     
-    def path(self, *parts):
-        return Path(LocalPathLocation, *parts)
+    def path(self, p):
+        if isinstance(p, Path):
+            if p._location is LocalPathLocation:
+                return p
+            else:
+                raise TypeError("Given path is non-local: %r" % (p,))
+        else:
+            return Path(LocalPathLocation, p)
     
     @classmethod
     def which(cls, progname):
-        if WIN32:
+        if IS_WIN32:
             progname = progname.lower()
         for pn in [progname, progname.replace("_", "-")]:
             path = cls._which(pn)
@@ -354,69 +383,21 @@ class LocalCommandNamespace(object):
         raise CommandNotFound(progname, list(env.path))
 
     def __getitem__(self, name):
-        name = str(name)
-        if "/" in name or "\\" in name:
+        if isinstance(name, Path):
+            return Command(name)
+        elif "/" in name or "\\" in name:
+            # assume absolute/relate path
             return Command(local.path(name))
         else:
+            # search for command
             return Command(self.which(name))
     
     python = Command(sys.executable)
 
-local = LocalCommandNamespace()
+local = Local()
 
 #===================================================================================================
-# execution modifiers (background, foreground)
-#===================================================================================================
-class Executer(object):
-    def __init__(self, retcode = 0):
-        self.retcode = retcode
-    @classmethod
-    def __call__(cls, retcode):
-        return cls(retcode)
-
-class Future(object):
-    def __init__(self, proc, expected_retcode):
-        self.proc = proc
-        self._expected_retcode = expected_retcode
-        self._returncode = None
-        self._stdout = None
-        self._stderr = None
-    def __repr__(self):
-        return "<Future %r (%s)>" % (self.proc.cmdline, self._returncode if self.ready() else "running",)
-    def poll(self):
-        if self.proc.poll() is not None:
-            self.wait()
-        return self._returncode is not None
-    ready = poll
-    def wait(self):
-        if self._returncode is not None:
-            return
-        self._returncode, self._stdout, self._stderr = _run(self.proc, self._expected_retcode)
-    @property
-    def stdout(self):
-        self.wait()
-        return self._stdout
-    @property
-    def stderr(self):
-        self.wait()
-        return self._stderr
-    @property
-    def returncode(self):
-        self.wait()
-        return self._returncode
-
-class BG(Executer):
-    def __rand__(self, cmd):
-        return Future(cmd.popen(), self.retcode)
-BG = BG()
-
-class FG(Executer):
-    def __rand__(self, cmd):
-        cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None)
-FG = FG()
-
-#===================================================================================================
-# Local module (e.g., from plumbum.local import grep)
+# Local module (e.g., ``from plumbum.local import grep``)
 #===================================================================================================
 class LocalModule(ModuleType):
     def __init__(self):

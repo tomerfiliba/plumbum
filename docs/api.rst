@@ -6,6 +6,11 @@ plumbum.localcmd
 .. automodule:: plumbum.localcmd
    :members:
 
+plumbum.base
+------------
+.. automodule:: plumbum.base
+   :members:
+
 plumbum.path
 ------------
 .. automodule:: plumbum.path

@@ -1,1 +1,4 @@
 * command nesting
+* python 3 issues
+* docs
+* rethink names
