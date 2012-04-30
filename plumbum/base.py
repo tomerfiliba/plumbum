@@ -53,6 +53,23 @@ def make_input(data, CHUNK_SIZE = 16000):
     f.seek(0)
     return f
 
+# modified from the stdlib pipes module for windows
+_safechars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@%_-+=:,./'
+_funnychars = '"`$\\'
+def shquote(text):
+    if not text:
+        return "''"
+    for c in text:
+        if c not in _safechars:
+            break
+    else:
+        return text
+    if "'" not in text:
+        return "'" + text + "'"
+    res = "".join(('\\' + c if c in _funnychars else c) for c in text)
+    return '"' + res + '"'
+
+
 #===================================================================================================
 # execution modifiers (background, foreground)
 #===================================================================================================

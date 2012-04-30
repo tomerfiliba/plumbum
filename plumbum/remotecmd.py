@@ -1,16 +1,16 @@
 import os
 import weakref
 from contextlib import contextmanager
-from plumbum.localcmd import local, ChainableCommand, BoundCommand, CommandNotFound, _run
-from plumbum.ssh import SshContext, shquote
+from plumbum.base import CommandNotFound, IS_WIN32, shquote, ExecutionModifier
+from plumbum.localcmd import ChainableCommand, BoundCommand, run_proc
+from plumbum.ssh import SshContext
 from plumbum.path import Path
 
-
-WIN32 = os.name == "nt"
 
 class SshCommand(ChainableCommand):
     def __init__(self, remote, executable):
         self.remote = remote
+        self.cwd = self.remote.cwd
         self.executable = executable
     def __repr__(self):
         return "<SshCommand %s %s>" % (self.remote.sshctx, self.executable)
@@ -22,12 +22,19 @@ class SshCommand(ChainableCommand):
         return BoundCommand(self, args)
 
     def formulate(self, args = ()):
-        return ["cd", self.remote.cwd, "&&", self.executable] + list(args)
+        argv = [str(self.executable)]
+        for a in args:
+            if hasattr(a, "formulate"):
+                argv.extend(shquote(b) for b in a.formulate())
+            else:
+                argv.append(shquote(str(a)))
+        return argv
     
     def popen(self, args = (), sshopts = {}, **kwargs):
-        return self.remote.sshctx.popen(self.formulate(args), sshopts, **kwargs)
+        return self.remote.sshctx.popen(["cd", shquote(str(self.cwd)), "&&"] + self.formulate(args), 
+            sshopts, **kwargs)
     def run(self, args = (), retcode = 0, sshopts = {}, **kwargs):
-        return _run(self.popen(args, sshopts, **kwargs), retcode)
+        return run_proc(self.popen(args, sshopts, **kwargs), retcode)
 
 
 class RemotePathLocation(object):
@@ -50,7 +57,7 @@ class RemotePathLocation(object):
         return files
     def normpath(self, parts):
         joined = os.path.join(str(self.remote.cwd), *(str(p) for p in parts))
-        if WIN32 and "/" in joined: # assume remote path is posix and fix all backslashes
+        if IS_WIN32 and "/" in joined: # assume remote path is posix and fix all backslashes
             joined = joined.replace("\\", "/")
         return joined 
     
@@ -142,6 +149,12 @@ class Remote(object):
     def path(self, *parts):
         return Path(self._location, *parts)
     
+    def run(self, cmd, *args):
+        return self.sshctx.run(cmd.formulate(args))
+    
+    def run_session(self, cmd, *args):
+        return self.session.run(" ".join(cmd.formulate(args)))
+    
     def tunnel(self, *args, **kwargs):
         return self.sshctx.tunnel(*args, **kwargs)
     
@@ -163,13 +176,13 @@ if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.DEBUG)
 
-    with local.env(HOME = local.env.home):
-        hollywood = Remote.connect("hollywood.xiv.ibm.com")
-        r_ls = hollywood["ls"]
-        r_sudo = hollywood["sudo"]
-        
-        r_sudo_ls = r_sudo[r_ls]
-        print r_sudo_ls.formulate()
+    r = Remote.connect("localhost")
+    r_ls = r["ls"]
+    r_grep = r["grep"]
+    r_sudo = r["sudo"]
+    r_ssh = r["ssh"]
+    
+    print r.run(r_ls | r_grep["h"])
 
 
 

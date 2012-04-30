@@ -2,30 +2,14 @@ import sys
 import time
 import subprocess
 import logging
-from plumbum.localcmd import local
-from plumbum.base import ProcessExecutionError, run_proc
 import random
+from plumbum.localcmd import local
+from plumbum.base import shquote, ProcessExecutionError, run_proc
 
 
 #logging.basicConfig(level=logging.INFO)
 ctx_logger = logging.getLogger("SshContext")
 sess_logger = logging.getLogger("SshSession")
-
-# modified from the stdlib pipes module for windows
-_safechars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@%_-+=:,./'
-_funnychars = '"`$\\'
-def shquote(text):
-    if not text:
-        return "''"
-    for c in text:
-        if c not in _safechars:
-            break
-    else:
-        return text
-    if "'" not in text:
-        return "'" + text + "'"
-    res = "".join(('\\' + c if c in _funnychars else c) for c in text)
-    return '"' + res + '"'
 
 if subprocess.mswindows:
     def _get_startupinfo():
@@ -105,12 +89,18 @@ class SshSession(object):
         if not self.tty:
             # in tty mode, stdout and stderr are unified
             sources.append(("2", stderr, self.proc.stderr))
-        for name, coll, pipe in sources:
-            while True:
-                line = pipe.readline()
-                sess_logger.debug("%s> %r" % (name, line))
-                if line.strip() == MARKER:
-                    break
+        i = 0
+        while sources:
+            i = (i + 1) % len(sources)
+            name, coll, pipe = sources[i]
+            line = pipe.readline()
+            sess_logger.debug("%s> %r" % (name, line))
+            if not line:
+                self.close()
+                break
+            if line.strip() == MARKER:
+                del sources[i]
+            else:
                 coll.append(line)
         if self.tty:
             stdout.pop(0) # discard first line prompt
@@ -164,8 +154,8 @@ class SshContext(object):
         >>> sshctx.execute("ls")
         (0, "file1\\nfile2\\nfile3\\n", "")
     """
-    def __init__(self, host, user = None, port = None, keyfile = None,
-            ssh_command = None, scp_command = None, encoding = sys.getdefaultencoding()):
+    def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None, 
+            scp_command = None, encoding = sys.getdefaultencoding()):
         self.host = host
         self.user = user
         self.port = port
@@ -232,13 +222,12 @@ class SshContext(object):
         if isinstance(args, str):
             args = (args,)
         cmdline = self._process_ssh_cmdline(sshopts)
-        cmdline.extend(shquote(str(a)) for a in args)
+        cmdline.extend(args)
         return self.ssh_command.popen(cmdline, startupinfo = _get_startupinfo(), **kwargs)
 
     def run(self, args, retcode = 0, sshopts = {}, **kwargs):
         return run_proc(self.popen(args, sshopts, **kwargs), retcode)
 
-    '''
     def upload(self, src, dst, **kwargs):
         """
         Uploads *src* from the local machine to *dst* on the other side. By default, 
@@ -252,13 +241,7 @@ class SshContext(object):
         cmdline, host = self._process_scp_cmdline(kwargs)
         cmdline.append(src)
         cmdline.append("%s:%s" % (host, dst))
-        ctx_logger.debug("Upload: %r" % (cmdline,))
-        proc = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE, 
-            stderr = subprocess.PIPE, shell = False, cwd = self.scp_cwd, env = self.scp_env, 
-            startupinfo = _get_startupinfo())
-        stdout, stderr = proc.communicate()
-        if proc.returncode != 0:
-            raise ValueError("upload failed", stdout, stderr)
+        self.scp_command(cmdline, startupinfo = _get_startupinfo())
 
     def download(self, src, dst, **kwargs):
         """
@@ -273,14 +256,7 @@ class SshContext(object):
         cmdline, host = self._process_scp_cmdline(kwargs)
         cmdline.append("%s:%s" % (host, src))
         cmdline.append(dst)
-        ctx_logger.debug("Download: %r" % (cmdline,))
-        proc = subprocess.Popen(cmdline, stdin = subprocess.PIPE, stdout = subprocess.PIPE, 
-            stderr = subprocess.PIPE, shell = False, cwd = self.scp_cwd, env = self.scp_env, 
-            startupinfo = _get_startupinfo())
-        stdout, stderr = proc.communicate()
-        if proc.returncode != 0:
-            raise ValueError("upload failed", stdout, stderr)
-    '''
+        self.scp_command(cmdline, startupinfo = _get_startupinfo())
 
     def shell(self, tty = False):
         """
