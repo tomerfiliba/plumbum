@@ -1,11 +1,8 @@
-from tempfile import TemporaryFile
-from subprocess import PIPE, Popen
-import subprocess
-import sys
-import threading
-from contextlib import contextmanager
-import random
 import time
+import random
+from tempfile import TemporaryFile
+from subprocess import PIPE
+from contextlib import contextmanager
 
 
 class ProcessExecutionError(Exception):
@@ -90,7 +87,7 @@ class BaseCommand(object):
     def __call__(self, *args, **kwargs):
         return self.run(args, **kwargs)[1]
     
-    def formulate(self, args = ()):
+    def formulate(self, level = 0, args = ()):
         raise NotImplementedError()
     def popen(self, args = (), **kwargs):
         raise NotImplementedError()
@@ -104,9 +101,8 @@ class BoundCommand(BaseCommand):
         self.cmd = cmd
         self.args = args
 
-    def formulate(self, args = ()):
-        with formulation_level():
-            return self.cmd.formulate(self.args + tuple(args))
+    def formulate(self, level = 0, args = ()):
+        return self.cmd.formulate(level + 1, self.args + tuple(args))
     
     def popen(self, args = (), **kwargs):
         if isinstance(args, str):
@@ -118,9 +114,8 @@ class Pipeline(BaseCommand):
         self.srccmd = srccmd
         self.dstcmd = dstcmd
 
-    def formulate(self, args = ()):
-        with formulation_level():
-            return self.srccmd.formulate() + ["|"] + self.dstcmd.formulate(args)
+    def formulate(self, level = 0, args = ()):
+        return self.srccmd.formulate(level + 1) + ["|"] + self.dstcmd.formulate(level + 1, args)
 
     def popen(self, args = (), **kwargs):
         src_kwargs = kwargs.copy()
@@ -143,9 +138,8 @@ class BaseRedirection(BaseCommand):
     def __init__(self, cmd, file):
         self.cmd = cmd
         self.file = file
-    def formulate(self, args = ()):
-        with formulation_level():
-            return self.cmd.formulate(args) + [self.SYM, shquote(getattr(self.file, "name", self.file))]
+    def formulate(self, level = 0, args = ()):
+        return self.cmd.formulate(level + 1, args) + [self.SYM, shquote(getattr(self.file, "name", self.file))]
     def popen(self, args = (), **kwargs):
         if self.KWARG in kwargs and kwargs[self.KWARG] != PIPE:
             raise RedirectionError("%s is already redirected" % (self.KWARG,))
@@ -184,7 +178,7 @@ class StdinDataRedirection(BaseCommand):
             shortened += "..."
         return "%s << %r" % (self.cmd, shortened)
     
-    def formulate(self, args = ()):
+    def formulate(self, level = 0, args = ()):
         raise NotImplementedError()
         #return shquote_list(self.cmd.formulate(args)) + [self.SYM] + \
         #    [shquote(getattr(self.file, "name", self.file))]
@@ -201,59 +195,9 @@ class StdinDataRedirection(BaseCommand):
         f.seek(0)
         return self.cmd.popen(args, stdin = f, **kwargs)
 
-
-_thread_local_level = threading.local()
-@contextmanager
-def formulation_level():
-    if not hasattr(_thread_local_level, "level"):
-        _thread_local_level.level = 0
-    curr = _thread_local_level.level
-    _thread_local_level.level += 1
-    try:
-        yield curr
-    finally:
-        _thread_local_level.level -= 1
-
-class LocalCommand(BaseCommand):
-    def __init__(self, executable):
-        self.executable = executable
-
-    def __str__(self):
-        return str(self.executable)
-
-    def formulate(self, args = ()):
-        with formulation_level() as level:
-            argv = [str(self.executable)]
-            for a in args:
-                if not a:
-                    continue
-                if isinstance(a, BaseCommand):
-                    if level >= 2:
-                        argv.extend(shquote_list(a.formulate()))
-                    else:
-                        argv.extend(a.formulate())
-                else:
-                    if level >= 2:
-                        argv.append(shquote(a))
-                    else:
-                        argv.append(a)
-            return argv
-    
-    def popen(self, args = (), stdin = PIPE, stdout = PIPE, stderr = PIPE, cwd = None, 
-            env = None, **kwargs):
-        if isinstance(args, str):
-            args = (args,)
-        if subprocess.mswindows and "startupinfo" not in kwargs and not sys.stdin.isatty():
-            kwargs["startupinfo"] = subprocess.STARTUPINFO()
-            kwargs["startupinfo"].dwFlags |= subprocess.STARTF_USESHOWWINDOW  #@UndefinedVariable
-            kwargs["startupinfo"].wShowWindow = subprocess.SW_HIDE  #@UndefinedVariable
-        argv = self.formulate(args)
-        print "!!", argv
-        proc = Popen(argv, executable = str(self.executable), stdin = stdin, stdout = stdout, 
-            stderr = stderr, cwd = cwd, env = env, **kwargs)
-        proc.argv = argv
-        return proc
-
+#===================================================================================================
+# Shell Session Popen
+#===================================================================================================
 class MarkedPipe(object):
     __slots__ = ["pipe", "marker"]
     def __init__(self, pipe, marker):
@@ -357,7 +301,10 @@ class ShellSession(object):
         if self._current and not self._current._done:
             raise ShellSessionError("Each shell may start only one process at a time")
         
-        full_cmd = str(cmd)
+        if isinstance(cmd, BaseCommand):
+            full_cmd = cmd.formulate(1)
+        else:
+            full_cmd = cmd
         marker = b"--END%s--" % (time.time() * random.random())
         if full_cmd.strip():
             full_cmd += " ; "
@@ -372,91 +319,6 @@ class ShellSession(object):
     
     def run(self, cmd, retcode = 0):
         return run_proc(self.popen(cmd), retcode)
-
-
-
-class SshContext(object):
-    def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None, 
-            scp_command = None, ssh_opts = (), scp_opts = ()):
-        if ssh_command is None:
-            ssh_command = LocalCommand("ssh")
-        if scp_command is None:
-            scp_command = LocalCommand("scp")
-        if user:
-            self._fqhost = "%s@%s" % (user, host)
-        else:
-            self._fqhost = host
-        scp_args = []
-        ssh_args = [self._fqhost]
-        if port:
-            ssh_args.extend(["-p", port])
-            scp_args.extend(["-P", port])
-        if keyfile:
-            ssh_args.extend(["-i", keyfile])
-            scp_args.extend(["-i", keyfile])
-        scp_args.append("-r")
-        ssh_args.extend(ssh_opts)
-        scp_args.extend(scp_opts)
-        self.ssh_command = ssh_command[tuple(ssh_args)]
-        self.scp_command = scp_command[tuple(scp_args)]
-    
-    def session(self, isatty = False):
-        return ShellSession(self.ssh_command.popen(["-tt" if isatty else ""]), isatty)
-    
-    def download(self, src, dst):
-        pass
-    
-    def upload(self, src, dst):
-        pass
-    
-    def tunnel(self, local_port, remote_port):
-        pass
-
-
-
-
-class SshCommand(BaseCommand):
-    def __init__(self, remote, executable):
-        self.remote = remote
-        self.executable = executable
-    
-    def formulate(self, args = ()):
-        argv = [str(self.executable)]
-        for a in args:
-            if not a:
-                continue
-            if isinstance(a, BaseCommand):
-                argv.extend(a.formulate())
-            else:
-                argv.append(a)
-        return argv
-    
-    def popen(self, args = (), **kwargs):
-        return self.remote.sshctx.popen(args, **kwargs)
-
-
-with ShellSession(LocalCommand("sh").popen()) as shl:
-    print shl.run("echo hi")
-    print shl.run("echo hi")
-
-
-#
-#ls = LocalCommand("ls")
-#grep = LocalCommand("grep")
-#echo = LocalCommand("echo")
-#sudo = LocalCommand("sudo")
-#ssh = LocalCommand("ssh")
-#pwd = LocalCommand("pwd")
-#
-#
-##print sudo[ls | grep["py"]]
-##print sudo[sudo[ls | grep["py"]]]
-#
-#cmd = ssh["localhost", "cd", "/usr", "&&", ssh["localhost", "cd", "/", "&&", ssh["localhost", "cd", "/bin", "&&", pwd]]]
-#print cmd
-#print cmd()
-
-
 
 
 
