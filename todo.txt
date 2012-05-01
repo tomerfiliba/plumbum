@@ -1,5 +1,6 @@
 1) redo command nesting
 2) rethink names
+3) encoding??
+4) support python 2.5-3.2
 3) docs
-4) python 3 issues
 

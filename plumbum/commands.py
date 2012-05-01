@@ -44,6 +44,7 @@ _funnychars = '"`$\\'
 def shquote(text):
     if not text:
         return "''"
+    text = str(text)
     for c in text:
         if c not in _safechars:
             break
@@ -53,6 +54,9 @@ def shquote(text):
         return "'" + text + "'"
     res = "".join(('\\' + c if c in _funnychars else c) for c in text)
     return '"' + res + '"'
+
+def shquote_all(items):
+    return [shquote(item) for item in items]
 
 def run_proc(proc, retcode):
     stdout, stderr = proc.communicate()
@@ -139,7 +143,7 @@ class Pipeline(ChainableCommand):
         return dstproc
 
     def formulate(self, args = ()):
-        return [shquote(a) for a in self.srccmd.formulate(args)] + ["|"] + [shquote(a) for a in self.dstcmd.formulate(args)]
+        return shquote_all(self.srccmd.formulate()) + ["|"] + shquote_all(self.dstcmd.formulate(args))
 
 class Redirection(ChainableCommand):
     def __init__(self, cmd, stdin_file = None, stdout_file = None, stderr_file = None):

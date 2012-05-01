@@ -4,22 +4,12 @@ import subprocess
 import logging
 import random
 from plumbum.localcmd import local
-from plumbum.base import shquote, ProcessExecutionError, run_proc
+from plumbum.commands import shquote, ProcessExecutionError, run_proc
 
 
 #logging.basicConfig(level=logging.INFO)
 ctx_logger = logging.getLogger("SshContext")
 sess_logger = logging.getLogger("SshSession")
-
-if subprocess.mswindows:
-    def _get_startupinfo():
-        sui = subprocess.STARTUPINFO()
-        sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW    #@UndefinedVariable
-        sui.wShowWindow = subprocess.SW_HIDE              #@UndefinedVariable
-        return sui
-else:
-    def _get_startupinfo():
-        return None
 
 
 class SshSession(object):
@@ -223,7 +213,7 @@ class SshContext(object):
             args = (args,)
         cmdline = self._process_ssh_cmdline(sshopts)
         cmdline.extend(args)
-        return self.ssh_command.popen(cmdline, startupinfo = _get_startupinfo(), **kwargs)
+        return self.ssh_command.popen(cmdline, **kwargs)
 
     def run(self, args, retcode = 0, sshopts = {}, **kwargs):
         return run_proc(self.popen(args, sshopts, **kwargs), retcode)
@@ -241,7 +231,7 @@ class SshContext(object):
         cmdline, host = self._process_scp_cmdline(kwargs)
         cmdline.append(src)
         cmdline.append("%s:%s" % (host, dst))
-        self.scp_command(cmdline, startupinfo = _get_startupinfo())
+        self.scp_command.run(cmdline)
 
     def download(self, src, dst, **kwargs):
         """
@@ -256,15 +246,16 @@ class SshContext(object):
         cmdline, host = self._process_scp_cmdline(kwargs)
         cmdline.append("%s:%s" % (host, src))
         cmdline.append(dst)
-        self.scp_command(cmdline, startupinfo = _get_startupinfo())
+        self.scp_command.run(cmdline)
 
     def shell(self, tty = False):
         """
         Creates an SSH shell session on the host; this session can be used 
-        to execute a stateful series of commands, without needing to create a new
-        connection each time 
+        to execute a stateful series of commands (for instance, change director,
+        set environment variables, etc.), or it can be used as an optimization,
+        as there's no need to create an SSH connection for each command separately.
         
-        :param tty: whether to force TTY allocation (ssh -tt); needed for some 
+        :param tty: whether to force TTY allocation (``ssh -tt``); needed for some 
                     interactive programs
         
         :returns: an :class:`SshSession` instance

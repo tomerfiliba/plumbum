@@ -6,13 +6,3 @@ from plumbum.remotecmd import Remote
 from plumbum.version import version as __version__
 
 
-def rm(*paths):
-    for p in paths:
-        if isinstance(p, Path):
-            p.delete()
-        elif isinstance(p, str):
-            local.path(p).delete()
-        elif hasattr(p, "__iter__"):
-            rm(*p)
-        else:
-            raise TypeError("Cannot delete %r" % (p,))

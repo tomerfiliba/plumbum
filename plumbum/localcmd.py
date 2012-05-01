@@ -9,6 +9,7 @@ from subprocess import Popen, PIPE
 from contextlib import contextmanager
 from plumbum.path import Path
 from plumbum.commands import CommandNotFound, ChainableCommand, IS_WIN32
+import subprocess
 
 
 cmd_logger = logging.getLogger(__name__)
@@ -249,9 +250,14 @@ class Command(ChainableCommand):
         env = kwargs.pop("env", self.env)
         if not isinstance(env, dict):
             env = env.getdict()
+
+        if subprocess.mswindows and "startupinfo" not in kwargs:
+            kwargs["startupinfo"] = subprocess.STARTUPINFO()
+            kwargs["startupinfo"].dwFlags |= subprocess.STARTF_USESHOWWINDOW  #@UndefinedVariable
+            kwargs["startupinfo"].wShowWindow = subprocess.SW_HIDE  #@UndefinedVariable
         
         cmdline = self.formulate(args)
-        cmd_logger.debug("Running %r, cwd = %s" % (cmdline, cwd))
+        cmd_logger.debug("Running %r, cwd = %s", cmdline, cwd)
         proc = Popen(cmdline, executable = str(self.executable), stdin = stdin, 
             stdout = stdout, stderr = stderr, cwd = cwd, env = env, **kwargs)
         proc.cmdline = cmdline
@@ -266,8 +272,12 @@ class Local(object):
     if IS_WIN32:
         _EXTENSIONS += [".exe", ".bat"]
 
-    cwd = cwd
-    env = env
+    @property
+    def cwd(self):
+        return cwd
+    @property
+    def env(self):
+        return env
     
     @classmethod
     def _which(cls, progname):
