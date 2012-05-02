@@ -3,18 +3,72 @@ from plumbum.commands import ShellSession, BaseCommand
 from plumbum.local import local
 
 
-class SshPath(Path):
-    __slots__ = ["_path", "_remote"]
+class RemotePath(Path):
+    __slots__ = ["_path", "remote"]
     def __init__(self, remote, *parts):
-        self._remote = remote
-        self._path = None
+        self.remote = remote
+        normed = []
+        parts = (self.remote.cwd,) + parts
+        for p in parts:
+            plist = str(p).replace("\\", "/").split("/")
+            if not plist[0]:
+                plist.pop(0)
+                del normed[:]
+            for item in plist:
+                if item == "" or item == ".":
+                    continue
+                if item == "..":
+                    if normed:
+                        normed.pop(-1)
+                else:
+                    normed.append(item)
+        self._path = "/" + "/".join(normed)
+    
     def __str__(self):
         return self._path
-    def _get_info(self):
-        return (self._remote, self._path)
     
+    @property
+    def basename(self):
+        return str(self).rsplit("/", 1)[0]
+    @property
+    def dirname(self):
+        raise NotImplementedError()
+    
+    def _get_info(self):
+        return (self.remote, self._path)
     def join(self, *parts):
-        return SshPath(self._remote, self, *parts)
+        return RemotePath(self, *parts)
+    def list(self):
+        return [self / fn for fn in self.remote.session.run("ls", "-a").splitlines()]
+    def isdir(self):
+        raise NotImplementedError()
+    def isfile(self):
+        raise NotImplementedError()
+    def exists(self):
+        raise NotImplementedError()
+    def stat(self):
+        raise NotImplementedError()
+    def glob(self, pattern):
+        raise NotImplementedError()
+    def delete(self):
+        raise NotImplementedError()
+    def move(self, dst):
+        raise NotImplementedError()
+    def copy(self, copy, override = False):
+        raise NotImplementedError()
+    def mkdir(self):
+        raise NotImplementedError()
+
+
+class RemoteMachine(object):
+    def __init__(self):
+        self.cwd = "/foo/bar"
+
+r = RemoteMachine()
+p = RemotePath(r, "/") #"lala", "baba", "..", "../zaza", "/spam")
+print p
+
+exit()
 
 
 

@@ -81,6 +81,7 @@ class LocalPath(Path):
             os.makedirs(str(self))
 
 class Workdir(LocalPath):
+    __slots__ = []
     def __init__(self):
         self._path = os.path.normpath(os.getcwd())
     def __hash__(self):
@@ -102,6 +103,7 @@ class Workdir(LocalPath):
 
 
 class EnvPathList(list):
+    __slots__ = []
     def append(self, path):
         list.extend(self, LocalPath(path))
     def extend(self, paths):
@@ -129,6 +131,8 @@ def upperify_on_win32(func):
         return func
 
 class Env(object):
+    __slots__ = ["_curr", "_path"]
+
     def __init__(self):
         # os.environ already takes care of upper'ing on windows
         self._curr = os.environ.copy()
@@ -372,7 +376,7 @@ class LocalModule(ModuleType):
         self.__package__ = __package__
     def __getattr__(self, name):
         return local[name]
-LocalModule = LocalModule("plumbum.local")
+LocalModule = LocalModule("plumbum.local_commands")
 sys.modules[LocalModule.__name__] = LocalModule
 
 
