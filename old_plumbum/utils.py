@@ -1,4 +1,5 @@
-from plumbum.local import local
+from plumbum.localcmd import local
+from plumbum.path import Path
 
 
 def rm(*paths):
@@ -38,6 +39,8 @@ def cp(src, dst):
         with local.mktemp() as tmp:
             cp(src, tmp)
             cp(tmp, dst)
+
+
 
 
 

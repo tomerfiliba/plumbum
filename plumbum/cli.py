@@ -1,5 +1,6 @@
 import sys
 import inspect
+import six
 
 
 class SwitchError(Exception):
@@ -205,7 +206,8 @@ class Application(object):
             if swinfo.argtype:
                 try:
                     val = swinfo.argtype(val)
-                except (TypeError, ValueError) as ex:
+                except (TypeError, ValueError):
+                    ex = sys.exc_info()[1] # compat
                     raise WrongArgumentType("Argument of %s expected to be %r, not %r:\n    %r" % (
                         swname, swinfo.argtype, val, ex))
             else:
@@ -221,9 +223,9 @@ class Application(object):
                 else:
                     swfuncs[swinfo.func] = (swname, val)
         
-        if self.help.im_func in swfuncs:
+        if six.get_method_function(self.help) in swfuncs:
             raise ShowHelp()
-        if self.version.im_func in swfuncs:
+        if six.get_method_function(self.version) in swfuncs:
             raise ShowVersion()
         
         requirements = {}
@@ -247,7 +249,7 @@ class Application(object):
                     (swfuncs[func][0], [swfuncs[f] for f in invalid]))
         
         m_args, m_varargs, _, m_defaults = inspect.getargspec(self.main)
-        max_args = sys.maxint if m_varargs else len(m_args) - 1
+        max_args = six.MAXSIZE if m_varargs else len(m_args) - 1
         min_args = len(m_args) - 1 - (len(m_defaults) if m_defaults else 0)
         if len(tailargs) < min_args:
             raise PositionalArgumentsError("Expected at least %d positional arguments, got %r" % 
@@ -270,9 +272,10 @@ class Application(object):
         except ShowVersion:
             inst.version()
             sys.exit(0)
-        except SwitchError, ex:
-            print ex
-            print
+        except SwitchError:
+            ex = sys.exc_info()[1] # compat
+            print(ex)
+            print()
             inst.help()
             sys.exit(1)
         for f, (_, a) in swfuncs.items():
@@ -291,7 +294,7 @@ class Application(object):
         """Prints this help message and quits"""
         self.version()
         if self.DESCRIPTION:
-            print self.DESCRIPTION.strip()
+            print(self.DESCRIPTION.strip())
 
         m_args, m_varargs, _, m_defaults = inspect.getargspec(self.main)
         tailargs = m_args[1:] # skip self
@@ -302,9 +305,9 @@ class Application(object):
             tailargs.append("%s..." % (m_varargs,))
         tailargs = " ".join(tailargs)
         
-        print
-        print self.USAGE % {"executable" : self.executable, "progname" : self.PROGNAME, 
-            "tailargs" : tailargs} 
+        print()
+        print(self.USAGE % {"executable" : self.executable, "progname" : self.PROGNAME, 
+            "tailargs" : tailargs}) 
         
         by_groups = {}
         for si in self._switches_by_func.values():
@@ -314,9 +317,9 @@ class Application(object):
         
         for grp, swinfos in sorted(by_groups.items(), key = lambda item: item[0]):
             if grp is None:
-                print "Switches:"
+                print("Switches:")
             if grp is not None:
-                print "%s:" % (grp,)
+                print("%s:" % (grp,))
             
             for si in sorted(swinfos, key = lambda si: si.names):
                 swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names 
@@ -338,39 +341,39 @@ class Application(object):
                     help += "; requires %s" % (", ".join(si.requires))
                 if si.excludes:
                     help += "; excludes %s" % (", ".join(si.excludes))
-                print "    %-25s  %s" % (swnames + argtype, help)
-            print
+                print("    %-25s  %s" % (swnames + argtype, help))
+            print()
     
     @switch(["-v", "--version"], overridable = True, group = "Meta-switches")
     def version(self):
         """Prints the program's version and quits"""
-        print self.PROGNAME, "v" + self.VERSION
+        print("%s v%s" % (self.PROGNAME, self.VERSION))
 
 
 
 #===================================================================================================
 # test
 #===================================================================================================
-#if __name__ == "__main__":
-#    class Test(Application):
-#        @switch(["a"])
-#        def spam(self):
-#            print "!!a"
-#
-#        @switch(["b", "bacon"], argtype=int, mandatory = True)
-#        def bacon(self, param):
-#            print "!!b", param
-#        
-#        eggs = SwitchAttr(["e"], str, help = "sets the eggs attribute")
-#        verbose = CountAttr(["v"], help = "increases the verbosity level")
-#        
-#        def main(self, *args):
-#            print args
-#            print "vebosity =", self.verbose
-#            print "eggs =", self.eggs
-#    
-#    Test.run(["foo", "--bacon=81", "-a", "-v", "-e", "7", "-vv", "--", "lala", "-e", "7"])
-#    #Test.run(["foo", "-h"])
+if __name__ == "__main__":
+    class Test(Application):
+        @switch(["a"])
+        def spam(self):
+            print("!!a")
+
+        @switch(["b", "bacon"], argtype=int, mandatory = True)
+        def bacon(self, param):
+            print ("!!b", param)
+        
+        eggs = SwitchAttr(["e"], str, help = "sets the eggs attribute")
+        verbose = CountAttr(["v"], help = "increases the verbosity level")
+        
+        def main(self, *args):
+            print (args)
+            print ("vebosity =", self.verbose)
+            print ("eggs =", self.eggs)
+    
+    Test.run(["foo", "--bacon=81", "-a", "-v", "-e", "7", "-vv", "--", "lala", "-e", "7"])
+    #Test.run(["foo", "-h"])
 
 
 

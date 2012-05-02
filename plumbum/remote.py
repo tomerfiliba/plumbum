@@ -1,5 +1,6 @@
-from plumbum2.path import Path
-from plumbum2.commands import ShellSession, BaseCommand
+from plumbum.path import Path
+from plumbum.commands import ShellSession, BaseCommand
+from plumbum.local import local
 
 
 class SshPath(Path):
@@ -21,9 +22,9 @@ class SshContext(object):
     def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None, 
             scp_command = None, ssh_opts = (), scp_opts = ()):
         if ssh_command is None:
-            ssh_command = LocalCommand("ssh")
+            ssh_command = local["ssh"]
         if scp_command is None:
-            scp_command = LocalCommand("scp")
+            scp_command = local["scp"]
         if user:
             self._fqhost = "%s@%s" % (user, host)
         else:
@@ -41,6 +42,9 @@ class SshContext(object):
         scp_args.extend(scp_opts)
         self.ssh_command = ssh_command[tuple(ssh_args)]
         self.scp_command = scp_command[tuple(scp_args)]
+    
+    def __str__(self):
+        return "ssh://%s" % (self._fqhost,)
     
     def session(self, isatty = False):
         return ShellSession(self.ssh_command.popen(["-tt"] if isatty else []), isatty)
