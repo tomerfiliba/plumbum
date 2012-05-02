@@ -264,6 +264,9 @@ if __name__ == "__main__":
     ssh = LocalCommand("ssh")
     pwd = LocalCommand("pwd")
     
+    here = LocalPath(os.getcwd())
+    print here // "*.py"
+    
     cmd = ssh["localhost", "cd", "/usr", "&&", ssh["localhost", "cd", "/", "&&", 
         ssh["localhost", "cd", "/bin", "&&", pwd]]]
     print cmd.formulate(0)

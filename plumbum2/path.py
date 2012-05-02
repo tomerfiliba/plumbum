@@ -1,11 +1,12 @@
 class Path(object):
+    def __repr__(self):
+        return "<%s %s>" % (self.__class__.__name__, str(self))
     def __div__(self, other):
-        if isinstance(other, str) and ("*" in other or "?" in other):
-            return self.glob(other)
         return self.join(self, other)
+    def __floordiv__(self, other):
+        return self.glob(other)
     def __iter__(self):
         return iter(self.list())
-
     def __eq__(self, other):
         if isinstance(other, type(self)):
             return self._get_info() == other._get_info()
