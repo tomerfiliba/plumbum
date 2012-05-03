@@ -1,3 +1,5 @@
-1) encoding
-2) support python 2.5-3.2
-3) docs
+1) ssh shell
+2) encoding
+3) tests
+4) support python 2.5-3.2
+5) docs
