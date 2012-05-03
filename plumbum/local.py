@@ -16,6 +16,9 @@ local_logger = logging.getLogger("plumbum.local")
 
 IS_WIN32 = os.name == "nt"
 
+#===================================================================================================
+# Local Paths
+#===================================================================================================
 class LocalPath(Path):
     __slots__ = ["_path"]
     def __init__(self, *parts):
@@ -101,7 +104,9 @@ class Workdir(LocalPath):
         finally:
             self.chdir(prev)
 
-
+#===================================================================================================
+# Environment
+#===================================================================================================
 class EnvPathList(list):
     __slots__ = []
     def append(self, path):
@@ -244,13 +249,17 @@ class Env(object):
             return self["USERNAME"]
         return None
 
-
+#===================================================================================================
+# Local Commands
+#===================================================================================================
 class LocalCommand(BaseCommand):
     def __init__(self, executable):
         self.executable = executable
 
     def __str__(self):
         return str(self.executable)
+    def __repr__(self):
+        return "LocalCommand(%s)" % (self.executable,)
 
     def formulate(self, level = 0, args = ()):
         argv = [str(self.executable)]
@@ -288,15 +297,17 @@ class LocalCommand(BaseCommand):
             env = local.env
         if hasattr(env, "getdict"):
             env = env.getdict()
-        
-        argv = self.formulate(args)
+
+        argv = self.formulate(0, args)
         local_logger.debug("Running %r", argv)
         proc = Popen(argv, executable = str(self.executable), stdin = stdin, stdout = stdout, 
             stderr = stderr, cwd = str(cwd), env = env, **kwargs)
         proc.argv = argv
         return proc
 
-
+#===================================================================================================
+# Local Machine
+#===================================================================================================
 class LocalMachine(object):
     cwd = Workdir()
     env = Env()
@@ -367,7 +378,7 @@ class LocalMachine(object):
 local = LocalMachine()
 
 #===================================================================================================
-# Module hack: ``from plumbum.local import ls``
+# Module hack: ``from plumbum.local_commands import ls``
 #===================================================================================================
 class LocalModule(ModuleType):
     def __init__(self, name):
@@ -381,13 +392,13 @@ sys.modules[LocalModule.__name__] = LocalModule
 
 
 
-if __name__ == "__main__":
-    ssh = local["ssh"]
-    pwd = local["pwd"]
-    
-    print (ssh, pwd)
-    print (local.cwd // "*.py")
-    
-    cmd = ssh["localhost", "cd", "/usr", "&&", ssh["localhost", "cd", "/", "&&", 
-        ssh["localhost", "cd", "/bin", "&&", pwd]]]
-    print (cmd.formulate(0))
+#if __name__ == "__main__":
+#    ssh = local["ssh"]
+#    pwd = local["pwd"]
+#    
+#    print (ssh, pwd)
+#    print (local.cwd // "*.py")
+#    
+#    cmd = ssh["localhost", "cd", "/usr", "&&", ssh["localhost", "cd", "/", "&&", 
+#        ssh["localhost", "cd", "/bin", "&&", pwd]]]
+#    print (cmd.formulate(0))

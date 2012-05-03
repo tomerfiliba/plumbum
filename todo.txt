@@ -1,5 +1,5 @@
-1) ssh shell
-2) encoding
-3) tests
-4) support python 2.5-3.2
-5) docs
+1) ssh: cwd and env
+1) encoding
+2) tests
+3) support python 2.5-3.2
+4) docs

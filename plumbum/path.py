@@ -69,7 +69,7 @@ class Path(object):
         raise NotImplementedError()
     def move(self, dst):
         raise NotImplementedError()
-    def copy(self, copy, override = False):
+    def copy(self, dst, override = False):
         raise NotImplementedError()
     def mkdir(self):
         raise NotImplementedError()
