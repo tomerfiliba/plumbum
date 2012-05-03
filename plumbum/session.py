@@ -106,9 +106,12 @@ class ShellSession(object):
             self.proc.stdin.write(b"\nexit\n\n\nexit\n\n")
             self.proc.stdin.close()
             time.sleep(0.05)
+        except (ValueError, EnvironmentError):
+            pass
+        try:
+            self.proc.kill()
         except EnvironmentError:
             pass
-        self.proc.kill()
         self.proc = None
     
     def popen(self, cmd, retcode = 0):

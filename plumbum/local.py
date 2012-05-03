@@ -10,6 +10,7 @@ from plumbum.path import Path
 from plumbum.commands import shquote, shquote_list, BaseCommand, CommandNotFound
 from contextlib import contextmanager
 from types import ModuleType
+from plumbum.session import ShellSession
 
 
 local_logger = logging.getLogger("plumbum.local")
@@ -287,12 +288,12 @@ class LocalCommand(BaseCommand):
             kwargs["startupinfo"].dwFlags |= subprocess.STARTF_USESHOWWINDOW  #@UndefinedVariable
             kwargs["startupinfo"].wShowWindow = subprocess.SW_HIDE  #@UndefinedVariable
         if cwd is None:
-            cwd = self.cwd
+            cwd = getattr(self, "cwd", None)
         if cwd is None:
             cwd = local.cwd
 
         if env is None:
-            env = self.env
+            env = getattr(self, "env", None)
         if env is None:
             env = local.env
         if hasattr(env, "getdict"):
@@ -313,7 +314,7 @@ class LocalMachine(object):
     env = Env()
 
     if IS_WIN32:
-        _EXTENSIONS = ["", ".exe", ".bat"]
+        _EXTENSIONS = [""] + env.get("PATHEXT", ":.exe:.bat").lower().split(os.path.pathsep)
         
         @classmethod
         def _which(cls, progname):
@@ -371,6 +372,9 @@ class LocalMachine(object):
                 return LocalCommand(self.which(cmd))
         else:
             raise TypeError("cmd must be a path or a string: %r" % (cmd,))
+
+    def session(self, isatty = False):
+        return ShellSession(self["sh"].popen(), isatty)
     
     python = LocalCommand(sys.executable)
 

@@ -2,7 +2,7 @@ import os
 import errno
 from contextlib import contextmanager
 from plumbum.path import Path
-from plumbum.commands import BaseCommand, CommandNotFound, run_proc, shquote, shquote_list
+from plumbum.commands import BaseCommand, CommandNotFound, shquote, shquote_list
 from plumbum.session import ShellSession
 from plumbum.local import local
 
@@ -45,7 +45,7 @@ class RemotePath(Path):
     def list(self):
         if not self.isdir():
             return []
-        return [self.join(fn) for fn in self.remote.session.run("ls -a %s" % (self,))[1].splitlines()]
+        return [self.join(fn) for fn in self.remote._session.run("ls -a %s" % (self,))[1].splitlines()]
     
     def isdir(self):
         mode, _ = self._stat()
@@ -57,7 +57,7 @@ class RemotePath(Path):
         return self._stat() is not None
     
     def _stat(self):
-        rc, out, _ = self.remote.session.run(
+        rc, out, _ = self.remote._session.run(
             "stat -c '%F,%f,%i,%d,%h,%u,%g,%s,%X,%Y,%Z' " + shquote(self), retcode = None)
         if rc != 0:
             return None
@@ -72,7 +72,7 @@ class RemotePath(Path):
         return res[1]
     
     def glob(self, pattern):
-        matches = self.remote.session.run("for fn in %s/%s; do echo $fn; done" % (self, pattern))[1].splitlines()
+        matches = self.remote._session.run("for fn in %s/%s; do echo $fn; done" % (self, pattern))[1].splitlines()
         if len(matches) == 1 and not self._stat(matches[0]):
             return [] # pattern expansion failed
         return [RemotePath(self.remote, m) for m in matches]
@@ -80,25 +80,25 @@ class RemotePath(Path):
     def delete(self):
         if not self.exists():
             return
-        self.remote.session.run("rm -rf %s" % (shquote(self),))
+        self.remote._session.run("rm -rf %s" % (shquote(self),))
     def move(self, dst):
-        self.remote.session.run("mv %s %s" % (shquote(self), shquote(dst)))
+        self.remote._session.run("mv %s %s" % (shquote(self), shquote(dst)))
     def copy(self, dst, override = False):
-        self.remote.session.run("cp -r %s %s" % (shquote(self), shquote(dst)))
+        # TODO: override
+        self.remote._session.run("cp -r %s %s" % (shquote(self), shquote(dst)))
     def mkdir(self):
-        self.remote.session.run("mkdir -p %s" % (shquote(self),))
+        self.remote._session.run("mkdir -p %s" % (shquote(self),))
 
 class Workdir(RemotePath):
-    __slots__ = []
     def __init__(self, remote):
         self.remote = remote
-        self._path = self.remote.session.run("pwd")[1].strip()
+        self._path = self.remote._session.run("pwd")[1].strip()
     def __hash__(self):
         raise TypeError("unhashable type")
     
     def chdir(self, newdir):
-        self.remote.session.run("cd %s" % (shquote(newdir),))
-        self._path = self.remote.session.run("pwd")[1].strip()
+        self.remote._session.run("cd %s" % (shquote(newdir),))
+        self._path = self.remote._session.run("pwd")[1].strip()
     def getpath(self):
         return RemotePath(self.remote, self)
     @contextmanager
@@ -111,81 +111,21 @@ class Workdir(RemotePath):
             self.chdir(prev)
 
 class Env(object):
-    __slots__ = ["remote", "_curr"]
     def __init__(self, remote):
         self.remote = remote
-        self._curr = dict(line.split("=",1) for line in self.remote.session.run("env")[1].splitlines())
+        self._curr = dict(line.split("=",1) for line in self.remote._session.run("env")[1].splitlines())
     def __contains__(self, name):
         return name in self._curr
     def __getitem__(self, name):
         return self._curr[name]
+    def get(self, name, *default):
+        return self._curr.get(name, *default)
     @property
     def path(self):
         return self.get("PATH", "").split(os.path.pathsep)
 
-
-class SshTunnel(object):
-    __slots__ = []
-    def __init__(self, session):
-        self.session = session
-    def __enter__(self):
-        return self
-    def __exit__(self, t, v, tb):
-        self.close()
-    def close(self):
-        self.session.close()
-
-class SshContext(object):
-    def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None, 
-            scp_command = None, ssh_opts = (), scp_opts = ()):
-        if ssh_command is None:
-            ssh_command = local["ssh"]
-        if scp_command is None:
-            scp_command = local["scp"]
-        if user:
-            self._fqhost = "%s@%s" % (user, host)
-        else:
-            self._fqhost = host
-        scp_args = []
-        ssh_args = [self._fqhost]
-        if port:
-            ssh_args.extend(["-p", port])
-            scp_args.extend(["-P", port])
-        if keyfile:
-            ssh_args.extend(["-i", keyfile])
-            scp_args.extend(["-i", keyfile])
-        scp_args.append("-r")
-        ssh_args.extend(ssh_opts)
-        scp_args.extend(scp_opts)
-        self.ssh_command = ssh_command[tuple(ssh_args)]
-        self.scp_command = scp_command[tuple(scp_args)]
-    
-    def __str__(self):
-        return "ssh://%s" % (self._fqhost,)
-    def __repr__(self):
-        return "<SshContext %r>" % (self._fqhost,)
-    def __getitem__(self, args):
-        return self.ssh_command[args]
-    
-    def popen(self, args = (), ssh_opts = (), **kwargs):
-        if isinstance(args, str):
-            args = (args,)
-        return self.ssh_command[tuple(ssh_opts) + tuple(args)].popen()
-    def run(self, args = (), ssh_opts = (), retcode = 0, **kwargs):
-        return run_proc(self.popen(args, ssh_opts, **kwargs), retcode)
-    
-    def session(self, isatty = False):
-        return ShellSession(self.popen("-tt" if isatty else ""), isatty)
-    def download(self, src, dst):
-        self.scp_command("%s:%s" % (self._fqdn, src), dst)
-    def upload(self, src, dst):
-        self.scp_command(src, "%s:%s" % (self._fqdn, dst))
-    def tunnel(self, lport, rport, lhost = "localhost", rhost = "localhost"):
-        return SshTunnel(ShellSession(self.popen(
-            "-L", "[%s]:%s:[%s]:%s" % (lhost, lport, rhost, rport))
-            ))
-
 class SshCommand(BaseCommand):
+    __slots__ = ["remote", "executable"]
     def __init__(self, remote, executable):
         self.remote = remote
         self.executable = executable
@@ -211,14 +151,13 @@ class SshCommand(BaseCommand):
         return argv
     
     def popen(self, args = (), **kwargs):
-        return self.remote.sshctx.ssh_command[self[args]].popen()
+        return self.remote.popen(self[args], **kwargs)
 
 
-class RemoteMachine(object):
-    def __init__(self, sshctx):
-        self.sshctx = sshctx
-        self.session = sshctx.session()
-        rc, out, _ = self.session.run("uname", retcode = None)
+class BaseRemoteMachine(object):
+    def __init__(self):
+        self._session = self.session()
+        rc, out, _ = self._session.run("uname", retcode = None)
         if rc == 0:
             self.uname = out.strip()
         else:
@@ -228,27 +167,21 @@ class RemoteMachine(object):
         self.env = Env(self)
         self._python = None
 
-    @classmethod
-    def connect(self, host, **kwargs):
-        return RemoteMachine(SshContext(host, **kwargs))
-
     def __repr__(self):
-        return "RemoteMachine(%r)" % (self.sshctx,)
-    
+        return "<RemoteMachine %s>" % (self,)
+
     def __enter__(self):
         return self
     def __exit__(self, t, v, tb):
         self.close()
     def close(self):
-        if self.session:
-            self.session.close()
-            self.session = None
+        self._session.close()
     
     def path(self, *parts):
         return RemotePath(self, *parts)
     
     def which(self, progname):
-        rc, out, _ = self.session.run("which %s" % (shquote(progname),), retcode = None)
+        rc, out, _ = self._session.run("which %s" % (shquote(progname),), retcode = None)
         if rc == 0:
             return self.path(out.strip())
         raise CommandNotFound(progname, self.env.path)
@@ -258,28 +191,94 @@ class RemoteMachine(object):
             if cmd.remote is self:
                 return SshCommand(self, cmd)
             else:
-                raise 
+                raise TypeError("Given path does not belong to the remote machine: %r" % (cmd,))
         elif isinstance(cmd, Path):
-            raise
+            raise TypeError("Given path does not belong to the remote machine: %r" % (cmd,))
         elif isinstance(cmd, str):
             if "/" in cmd or "\\" in cmd:
                 return SshCommand(self, self.path(cmd))
             else:
                 return SshCommand(self, self.which(cmd))
-    
+        else:
+            raise TypeError("cmd must be a path or a string: %r" % (cmd,))
+
     @property
     def python(self):
         if not self._python:
             self._python = self["python"]
         return self._python
 
+    def session(self, isatty = False):
+        raise NotImplementedError()
+    def download(self, src, dst):
+        raise NotImplementedError()
+    def upload(self, src, dst):
+        raise NotImplementedError()
+    def popen(self, args = (), **kwargs):
+        raise NotImplementedError
 
+
+class SshTunnel(object):
+    __slots__ = ["_session"]
+    def __init__(self, proc):
+        self._session = ShellSession(proc)
+    def __repr__(self):
+        if self._session.alive():
+            return "<SshTunnel %s>" % (self._session.proc,)
+        else:
+            return "<SshTunnel (defunct)>"
+    def __enter__(self):
+        return self
+    def __exit__(self, t, v, tb):
+        self.close()
+    def close(self):
+        self._session.close()
+
+class SshMachine(BaseRemoteMachine):
+    def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None, 
+            scp_command = None, ssh_opts = (), scp_opts = ()):
+        if ssh_command is None:
+            ssh_command = local["ssh"]
+        if scp_command is None:
+            scp_command = local["scp"]
+        if user:
+            self._fqhost = "%s@%s" % (user, host)
+        else:
+            self._fqhost = host
+        scp_args = []
+        ssh_args = [self._fqhost]
+        if port:
+            ssh_args.extend(["-p", port])
+            scp_args.extend(["-P", port])
+        if keyfile:
+            ssh_args.extend(["-i", keyfile])
+            scp_args.extend(["-i", keyfile])
+        scp_args.append("-r")
+        ssh_args.extend(ssh_opts)
+        scp_args.extend(scp_opts)
+        self._ssh_command = ssh_command[tuple(ssh_args)]
+        self._scp_command = scp_command[tuple(scp_args)]
+        BaseRemoteMachine.__init__(self)
+
+    def __str__(self):
+        return "ssh://%s" % (self._fqhost,)
+
+    def popen(self, args = (), **kwargs):
+        return self._ssh_command[args].popen(**kwargs)
+    def session(self, isatty = False):
+        return ShellSession(self.popen("-tt" if isatty else ""), isatty)
+    def download(self, src, dst):
+        self._scp_command("%s:%s" % (self._fqhost, src), dst)
+    def upload(self, src, dst):
+        self._scp_command(src, "%s:%s" % (self._fqhost, dst))
+    def tunnel(self, lport, rport, lhost = "localhost", rhost = "localhost"):
+        return SshTunnel(self.popen(["-L", "[%s]:%s:[%s]:%s" % (lhost, lport, rhost, rport)]))
 
 
 if __name__ == "__main__":
-    #import logging
+    import logging
     #logging.basicConfig(level = logging.DEBUG)
-    with RemoteMachine.connect("localhost") as r:
+    with SshMachine("hollywood.xiv.ibm.com") as r: 
         #r.cwd.chdir(r.cwd / "workspace" / "plumbum")
         #print r.cwd // "*/*.py"
         r_ssh = r["ssh"]
@@ -287,13 +286,7 @@ if __name__ == "__main__":
         r_grep = r["grep"]
 
         print (r_ssh["localhost", r_ls | r_grep["hs"]])()
-        
-
-
-
-
-
-
+        r.close()
 
 
 

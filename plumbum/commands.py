@@ -70,8 +70,7 @@ def run_proc(proc, retcode):
 # Commands
 #===================================================================================================
 class BaseCommand(object):
-    cwd = None
-    env = None
+    __slots__ = ["cwd", "env"]
     
     def __str__(self):
         return " ".join(self.formulate())
@@ -107,6 +106,7 @@ class BaseCommand(object):
         return run_proc(self.popen(args, **kwargs), retcode)
 
 class BoundCommand(BaseCommand):
+    __slots__ = ["cmd", "args"]
     def __init__(self, cmd, args):
         self.cmd = cmd
         self.args = args
@@ -123,6 +123,7 @@ class BoundCommand(BaseCommand):
         return self.cmd.popen(self.args + tuple(args), **kwargs)
 
 class Pipeline(BaseCommand):
+    __slots__ = ["srccmd", "dstcmd"]
     def __init__(self, srccmd, dstcmd):
         self.srccmd = srccmd
         self.dstcmd = dstcmd
@@ -147,6 +148,7 @@ class Pipeline(BaseCommand):
         return dstproc
 
 class BaseRedirection(BaseCommand):
+    __slots__ = ["cmd", "file"]
     SYM = None
     KWARG = None
     MODE = None
@@ -168,16 +170,19 @@ class BaseRedirection(BaseCommand):
         return self.cmd.popen(args, **kwargs)
 
 class StdinRedirection(BaseRedirection):
+    __slots__ = []
     SYM = "<"
     KWARG = "stdin"
     MODE = "r"
 
 class StdoutRedirection(BaseRedirection):
+    __slots__ = []
     SYM = ">"
     KWARG = "stdout"
     MODE = "w"
 
 class StderrRedirection(BaseRedirection):
+    __slots__ = []
     SYM = "2>"
     KWARG = "stderr"
     MODE = "w"
@@ -215,6 +220,7 @@ class StdinDataRedirection(BaseCommand):
 # execution modifiers (background, foreground)
 #===================================================================================================
 class ExecutionModifier(object):
+    __slots__ = ["retcode"]
     def __init__(self, retcode = 0):
         self.retcode = retcode
     def __repr__(self):
@@ -255,11 +261,13 @@ class Future(object):
         return self._returncode
 
 class BG(ExecutionModifier):
+    __slots__ = []
     def __rand__(self, cmd):
         return Future(cmd.popen(), self.retcode)
 BG = BG()
 
 class FG(ExecutionModifier):
+    __slots__ = []
     def __rand__(self, cmd):
         cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None)
 FG = FG()

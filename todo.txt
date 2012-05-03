@@ -1,5 +1,9 @@
-1) ssh: cwd and env
-1) encoding
-2) tests
-3) support python 2.5-3.2
-4) docs
+* remote
+    * cwd, env
+    * verify paths are indeed to the same remote 
+* local
+    * as user
+* encoding
+* support python 2.5-3.2
+* tests
+* docs
