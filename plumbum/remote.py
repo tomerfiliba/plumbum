@@ -82,9 +82,20 @@ class RemotePath(Path):
             return
         self.remote._session.run("rm -rf %s" % (shquote(self),))
     def move(self, dst):
+        if isinstance(dst, RemotePath) and dst.remote is not self.remote:
+            raise TypeError("dst points to a different remote machine")
+        elif not isinstance(dst, str):
+            raise TypeError("dst must be a string or a RemotePath (to the same remote machine)")
         self.remote._session.run("mv %s %s" % (shquote(self), shquote(dst)))
     def copy(self, dst, override = False):
-        # TODO: override
+        if isinstance(dst, RemotePath) and dst.remote is not self.remote:
+            raise TypeError("dst points to a different remote machine")
+        elif not isinstance(dst, str):
+            raise TypeError("dst must be a string or a RemotePath (to the same remote machine)")
+        if override:
+            if isinstance(dst, str):
+                dst = RemotePath(self.remote, dst)
+            dst.remove()
         self.remote._session.run("cp -r %s %s" % (shquote(self), shquote(dst)))
     def mkdir(self):
         self.remote._session.run("mkdir -p %s" % (shquote(self),))
@@ -151,7 +162,7 @@ class SshCommand(BaseCommand):
         return argv
     
     def popen(self, args = (), **kwargs):
-        return self.remote.popen(self[args], **kwargs)
+        return self.remote.popen(["cd", self.remote.cwd, "&&", self[args]], **kwargs)
 
 
 class BaseRemoteMachine(object):
@@ -191,9 +202,7 @@ class BaseRemoteMachine(object):
             if cmd.remote is self:
                 return SshCommand(self, cmd)
             else:
-                raise TypeError("Given path does not belong to the remote machine: %r" % (cmd,))
-        elif isinstance(cmd, Path):
-            raise TypeError("Given path does not belong to the remote machine: %r" % (cmd,))
+                raise TypeError("Given path does not belong to this remote machine: %r" % (cmd,))
         elif isinstance(cmd, str):
             if "/" in cmd or "\\" in cmd:
                 return SshCommand(self, self.path(cmd))

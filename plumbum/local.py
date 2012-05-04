@@ -23,7 +23,12 @@ IS_WIN32 = os.name == "nt"
 class LocalPath(Path):
     __slots__ = ["_path"]
     def __init__(self, *parts):
+        for p in parts:
+            if not isinstance(p, (str, LocalPath)):
+                raise TypeError("LocalPath can be constructed only from strings or other LocalPaths")
         self._path = os.path.normpath(os.path.join(os.getcwd(), *(str(p) for p in parts)))
+        if IS_WIN32:
+            self._path = self._path.lower()
     def __new__(cls, *parts):
         if len(parts) == 1 and isinstance(parts[0], cls):
             return parts[0]
@@ -318,6 +323,7 @@ class LocalMachine(object):
         
         @classmethod
         def _which(cls, progname):
+            progname = progname.lower()
             for p in cls.env.path:
                 try:
                     filelist = {n.basename : n for n in p.list()}
@@ -342,27 +348,18 @@ class LocalMachine(object):
     
     @classmethod
     def which(cls, progname):
-        if IS_WIN32:
-            progname = progname.lower()
         for pn in [progname, progname.replace("_", "-")]:
             path = cls._which(pn)
             if path:
                 return path
         raise CommandNotFound(progname, list(cls.env.path))
 
-    def path(self, p):
-        if isinstance(p, LocalPath):
-            return p
-        elif isinstance(p, Path):
-            raise TypeError("Given path is non-local: %r" % (p,))
-        else:
-            return LocalPath(p)
+    def path(self, *parts):
+        return LocalPath(*parts)
 
     def __getitem__(self, cmd):
         if isinstance(cmd, LocalPath):
             return LocalCommand(cmd)
-        elif isinstance(cmd, Path):
-            raise TypeError("Given path is non-local: %r" % (cmd,))
         elif isinstance(cmd, str): 
             if "/" in cmd or "\\" in cmd:
                 # assume path
@@ -371,7 +368,7 @@ class LocalMachine(object):
                 # search for command
                 return LocalCommand(self.which(cmd))
         else:
-            raise TypeError("cmd must be a path or a string: %r" % (cmd,))
+            raise TypeError("cmd must be a LocalPath or a string: %r" % (cmd,))
 
     def session(self, isatty = False):
         return ShellSession(self["sh"].popen(), isatty)

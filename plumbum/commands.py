@@ -85,7 +85,7 @@ class BaseCommand(object):
     def __lshift__(self, data):
         return StdinDataRedirection(self, data)
     def __getitem__(self, args):
-        if not isinstance(args, tuple):
+        if not isinstance(args, (tuple, list)):
             args = (args,)
         if not args:
             return self
