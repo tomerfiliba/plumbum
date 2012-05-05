@@ -1,3 +1,4 @@
+from __future__ import with_statement
 import os
 import unittest
 from plumbum import local, FG, BG, ERROUT
@@ -24,7 +25,7 @@ class LocalMachineTest(unittest.TestCase):
     
     def test_cwd(self):
         from plumbum.cmd import ls
-        self.assertEquals(local.cwd, os.getcwd())
+        self.assertEqual(local.cwd, os.getcwd())
         self.assertTrue("__init__.py" not in ls().splitlines())
         with local.cwd("../plumbum"):
             self.assertTrue("__init__.py" in ls().splitlines())
@@ -53,13 +54,13 @@ class LocalMachineTest(unittest.TestCase):
         self.assertFalse("FOOBAR72" in local.env)
         self.assertRaises(ProcessExecutionError, local.python, "-c", "import os;os.environ['FOOBAR72']")
         local.env["FOOBAR72"] = "spAm"
-        self.assertEquals(local.python("-c", "import os;print (os.environ['FOOBAR72'])").splitlines(), ["spAm"])
+        self.assertEqual(local.python("-c", "import os;print (os.environ['FOOBAR72'])").splitlines(), ["spAm"])
         
         with local.env(FOOBAR73 = 1889):
-            self.assertEquals(local.python("-c", "import os;print (os.environ['FOOBAR73'])").splitlines(), ["1889"])
+            self.assertEqual(local.python("-c", "import os;print (os.environ['FOOBAR73'])").splitlines(), ["1889"])
             with local.env(FOOBAR73 = 1778):
-                self.assertEquals(local.python("-c", "import os;print (os.environ['FOOBAR73'])").splitlines(), ["1778"])
-            self.assertEquals(local.python("-c", "import os;print (os.environ['FOOBAR73'])").splitlines(), ["1889"])
+                self.assertEqual(local.python("-c", "import os;print (os.environ['FOOBAR73'])").splitlines(), ["1778"])
+            self.assertEqual(local.python("-c", "import os;print (os.environ['FOOBAR73'])").splitlines(), ["1889"])
         self.assertRaises(ProcessExecutionError, local.python, "-c", "import os;os.environ['FOOBAR73']")
         
         # path manipulation
@@ -67,15 +68,15 @@ class LocalMachineTest(unittest.TestCase):
         with local.env():
             local.env.path.insert(0, local.cwd / "not-in-path")
             p = local.which("dummy-executable")
-            self.assertEquals(p, local.cwd / "not-in-path" / "dummy-executable")
+            self.assertEqual(p, local.cwd / "not-in-path" / "dummy-executable")
 
     def test_local(self):
         self.assertTrue("plumbum" in str(local.cwd))
         self.assertTrue("PATH" in local.env.getdict())
-        self.assertEquals(local.path("foo"), os.path.join(os.getcwd(), "foo"))
+        self.assertEqual(local.path("foo"), os.path.join(os.getcwd(), "foo"))
         local.which("ls")
         local["ls"]
-        self.assertEquals(local.python("-c", "print 'hi there'").splitlines(), ["hi there"])
+        self.assertEqual(local.python("-c", "print ('hi there')").splitlines(), ["hi there"])
     
     def test_piping(self):
         from plumbum.cmd import ls, grep
@@ -99,13 +100,13 @@ class LocalMachineTest(unittest.TestCase):
         self.assertTrue("world of helloness and" in chain3().splitlines())
 
         rc, _, err = (grep["-Zq5"] >= "tmp2.txt").run(["-Zq5"], retcode = None)
-        self.assertEquals(rc, 2)
+        self.assertEqual(rc, 2)
         self.assertFalse(err)
         self.assertTrue("Usage" in (cat < "tmp2.txt")())
         rm("tmp2.txt")
 
         rc, out, _ = (grep["-Zq5"] >= ERROUT).run(["-Zq5"], retcode = None)
-        self.assertEquals(rc, 2)
+        self.assertEqual(rc, 2)
         self.assertTrue("Usage" in out)
     
     def test_popen(self):
@@ -113,14 +114,14 @@ class LocalMachineTest(unittest.TestCase):
         
         p = ls.popen(["-a"])
         out, _ = p.communicate()
-        self.assertEquals(p.returncode, 0)
-        self.assertTrue("test_local.py" in out.splitlines())
+        self.assertEqual(p.returncode, 0)
+        self.assertTrue("test_local.py" in out.decode(local.encoding).splitlines())
 
     def test_run(self):
         from plumbum.cmd import ls, grep
         
         rc, out, err = (ls | grep["non_exist1N9"]).run(retcode = 1)
-        self.assertEquals(rc, 1)
+        self.assertEqual(rc, 1)
     
     def test_modifiers(self):
         from plumbum.cmd import ls, grep
@@ -139,7 +140,7 @@ class LocalMachineTest(unittest.TestCase):
         sh.run("cd ..")
         sh.run("export FOO=17")
         out = sh.run("echo $FOO")[1]
-        self.assertEquals(out.splitlines(), ["17"])
+        self.assertEqual(out.splitlines(), ["17"])
 
     def test_quoting(self):
         ssh = local["ssh"]

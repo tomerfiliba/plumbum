@@ -6,6 +6,7 @@ class Path(object):
         return "<%s %s>" % (self.__class__.__name__, str(self))
     def __div__(self, other):
         return self.join(self, other)
+    __truediv__ = __div__
     def __floordiv__(self, other):
         return self.glob(other)
     def __iter__(self):

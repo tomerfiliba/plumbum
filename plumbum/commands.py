@@ -3,9 +3,8 @@ from tempfile import TemporaryFile
 from subprocess import PIPE
 import subprocess
 
-if six.PY3:
+if not six.PY3:
     bytes = str
-else:
     ascii = repr
 
 #===================================================================================================
@@ -72,8 +71,8 @@ def run_proc(proc, retcode):
     if not stderr:
         stderr = six.b("")
     if getattr(proc, "encoding", None):
-        stdout = stdout.decode(proc.encoding, "replace")
-        stderr = stderr.decode(proc.encoding, "replace")
+        stdout = stdout.decode(proc.encoding, "ignore")
+        stderr = stderr.decode(proc.encoding, "ignore")
     
     if retcode is not None and proc.returncode != retcode:
         raise ProcessExecutionError(getattr(proc, "argv", None), 
@@ -109,7 +108,9 @@ class BaseCommand(object):
             return BoundCommand(self, args)
     def __call__(self, *args, **kwargs):
         return self.run(args, **kwargs)[1]
-    
+
+    def _get_encoding(self):
+        raise NotImplementedError()
     def formulate(self, level = 0, args = ()):
         raise NotImplementedError()
     def popen(self, args = (), **kwargs):
@@ -117,20 +118,27 @@ class BaseCommand(object):
     
     def run(self, args = (), **kwargs):
         retcode = kwargs.pop("retcode", 0)
-        return run_proc(self.popen(args, **kwargs), retcode)
+        p = self.popen(args, **kwargs)
+        try:
+            return run_proc(p, retcode)
+        finally:
+            for f in [p.stdin, p.stdout, p.stderr]:
+                try:
+                    f.close()
+                except Exception:
+                    pass
 
 class BoundCommand(BaseCommand):
     __slots__ = ["cmd", "args"]
     def __init__(self, cmd, args):
         self.cmd = cmd
         self.args = args
-    
     def __repr__(self):
         return "BoundCommand(%r, %r)" % (self.cmd, self.args)
-
+    def _get_encoding(self):
+        return self.cmd._get_encoding()
     def formulate(self, level = 0, args = ()):
         return self.cmd.formulate(level + 1, self.args + tuple(args))
-    
     def popen(self, args = (), **kwargs):
         if isinstance(args, str):
             args = (args,)
@@ -141,10 +149,10 @@ class Pipeline(BaseCommand):
     def __init__(self, srccmd, dstcmd):
         self.srccmd = srccmd
         self.dstcmd = dstcmd
-
     def __repr__(self):
         return "Pipeline(%r, %r)" % (self.srccmd, self.dstcmd)
-
+    def _get_encoding(self):
+        return self.srccmd._get_encoding() or self.dstcmd._get_encoding()
     def formulate(self, level = 0, args = ()):
         return self.srccmd.formulate(level + 1) + ["|"] + self.dstcmd.formulate(level + 1, args)
 
@@ -156,8 +164,11 @@ class Pipeline(BaseCommand):
         srcproc = self.srccmd.popen(args, **src_kwargs)
         kwargs["stdin"] = srcproc.stdout
         dstproc = self.dstcmd.popen(**kwargs)
-        srcproc.stdout.close() # allow p1 to receive a SIGPIPE if p2 exits
+        # allow p1 to receive a SIGPIPE if p2 exits
+        srcproc.stdout.close()
         srcproc.stderr.close()
+        if srcproc.stdin:
+            srcproc.stdin.close()
         dstproc.srcproc = srcproc
         return dstproc
 
@@ -170,6 +181,8 @@ class BaseRedirection(BaseCommand):
     def __init__(self, cmd, file):
         self.cmd = cmd
         self.file = file
+    def _get_encoding(self):
+        return self.cmd._get_encoding()
     def __repr__(self):
         return "%s(%r, %r)" % (self.__class__.__name__, self.cmd, self.file)
     def formulate(self, level = 0, args = ()):
@@ -178,10 +191,15 @@ class BaseRedirection(BaseCommand):
         if self.KWARG in kwargs and kwargs[self.KWARG] not in (PIPE, None):
             raise RedirectionError("%s is already redirected" % (self.KWARG,))
         if isinstance(self.file, str):
-            kwargs[self.KWARG] = open(self.file, self.MODE)
+            f = kwargs[self.KWARG] = open(self.file, self.MODE)
         else:
             kwargs[self.KWARG] = self.file
-        return self.cmd.popen(args, **kwargs)
+            f = None
+        try:
+            return self.cmd.popen(args, **kwargs)
+        finally:
+            if f:
+                f.close()
 
 class StdinRedirection(BaseRedirection):
     __slots__ = []
@@ -215,21 +233,27 @@ class StdinDataRedirection(BaseCommand):
     def __init__(self, cmd, data):
         self.cmd = cmd
         self.data = data
+    def _get_encoding(self):
+        return self.cmd._get_encoding()
     
     def formulate(self, level = 0, args = ()):
         return ["echo %s" % (shquote(self.data),), "|", self.cmd.formulate(level + 1, args)]
-    
     def popen(self, args = (), **kwargs):
         if "stdin" in kwargs and kwargs["stdin"] != PIPE:
             raise RedirectionError("stdin is already redirected")
         data = self.data
+        if not isinstance(data, bytes) and self._get_encoding() is not None:
+            data = data.encode(self._get_encoding())
         f = TemporaryFile()
         while data:
             chunk = data[:self.CHUNK_SIZE]
             f.write(chunk)
             data = data[self.CHUNK_SIZE:]
         f.seek(0)
-        return self.cmd.popen(args, stdin = f, **kwargs)
+        try:
+            return self.cmd.popen(args, stdin = f, **kwargs)
+        finally:
+            f.close()
 
 class ConcreteCommand(BaseCommand):
     QUOTE_LEVEL = None
@@ -239,6 +263,8 @@ class ConcreteCommand(BaseCommand):
         self.encoding = encoding
     def __str__(self):
         return str(self.executable)
+    def _get_encoding(self):
+        return self.encoding
 
     def formulate(self, level = 0, args = ()):
         argv = [str(self.executable)]
@@ -255,8 +281,8 @@ class ConcreteCommand(BaseCommand):
                     argv.append(shquote(a))
                 else:
                     argv.append(str(a))
-        if self.encoding:
-            argv = [a.encode(self.encoding) for a in argv]
+        #if self.encoding:
+        #    argv = [a.encode(self.encoding) for a in argv if isinstance(a, six.string_types)]
         return argv
 
 #===================================================================================================

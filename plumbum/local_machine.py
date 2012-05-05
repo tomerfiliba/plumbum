@@ -35,7 +35,7 @@ class LocalPath(Path):
     def __new__(cls, *parts):
         if len(parts) == 1 and isinstance(parts[0], cls):
             return parts[0]
-        return object.__new__(cls, *parts)
+        return object.__new__(cls)
     def __str__(self):
         return self._path
     def _get_info(self):
@@ -316,7 +316,7 @@ class LocalMachine(object):
             progname = progname.lower()
             for p in cls.env.path:
                 try:
-                    filelist = {n.basename : n for n in p.list()}
+                    filelist = dict((n.basename, n) for n in p.list())
                 except OSError:
                     continue
                 for ext in cls._EXTENSIONS:
@@ -329,7 +329,7 @@ class LocalMachine(object):
         def _which(cls, progname):
             for p in cls.env.path:
                 try:
-                    filelist = {n.basename : n for n in p.list()}
+                    filelist = dict((n.basename, n) for n in p.list())
                 except OSError:
                     continue
                 if progname in filelist:

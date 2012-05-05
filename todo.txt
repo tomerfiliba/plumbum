@@ -1,6 +1,12 @@
-* which: look only for +x bit
-* remote
-    * env
-* support python 2.5-3.2
+* local.which: look only for +x bit
+* remote.env: propagate to session and popen
+* python 3
+    * encoding issues
+    * shell session gets stuck
 * tests
+    * finish cli
+    * remote
+    * utils
 * docs
+    * tutorial
+    * add docstrings

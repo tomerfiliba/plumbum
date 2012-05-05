@@ -1,3 +1,4 @@
+from __future__ import with_statement
 from plumbum.local_machine import local
 from plumbum.path import Path
 

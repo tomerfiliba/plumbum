@@ -2,6 +2,7 @@ import time
 import random
 import logging
 from plumbum.commands import BaseCommand, run_proc
+import six
 
 
 class ShellSessionError(Exception):
@@ -22,10 +23,11 @@ class MarkedPipe(object):
         pass
     def readline(self):
         line = self.pipe.readline()
+        print ("!!", repr(line))
         if not line:
             raise EOFError()
         if line.strip() == self.marker:
-            return ""
+            return six.b("")
         return line
 
 class SessionPopen(object):
@@ -74,8 +76,8 @@ class SessionPopen(object):
         except (IndexError, ValueError):
             self.returncode = "Unknown"
         self._done = True
-        stdout = b"".join(stdout)
-        stderr = b"".join(stderr)
+        stdout = six.b("").join(stdout)
+        stderr = six.b("").join(stderr)
         return stdout, stderr
 
 
@@ -105,7 +107,7 @@ class ShellSession(object):
         if not self.alive():
             return
         try:
-            self.proc.stdin.write(b"\nexit\n\n\nexit\n\n")
+            self.proc.stdin.write(six.b("\nexit\n\n\nexit\n\n"))
             self.proc.stdin.close()
             time.sleep(0.05)
         except (ValueError, EnvironmentError):
@@ -124,7 +126,7 @@ class ShellSession(object):
             full_cmd = cmd.formulate(1)
         else:
             full_cmd = cmd
-        marker = b"--.END%s.--" % (time.time() * random.random(),)
+        marker = six.b("--.END%s.--" % (time.time() * random.random(),))
         if full_cmd.strip():
             full_cmd += " ; "
         else:
@@ -135,7 +137,7 @@ class ShellSession(object):
         if self.encoding:
             full_cmd = full_cmd.encode(self.encoding)
         shell_logger.debug("Running %r", full_cmd)
-        self.proc.stdin.write(full_cmd + "\n")
+        self.proc.stdin.write(full_cmd + six.b("\n"))
         self._current = SessionPopen(full_cmd, self.isatty, self.proc.stdin, 
             MarkedPipe(self.proc.stdout, marker), MarkedPipe(self.proc.stderr, marker),
             self.encoding)
