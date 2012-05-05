@@ -22,6 +22,9 @@ IS_WIN32 = os.name == "nt"
 #===================================================================================================
 class LocalPath(Path):
     __slots__ = ["_path"]
+    if IS_WIN32:
+        CASE_SENSITIVE = False
+    
     def __init__(self, *parts):
         for p in parts:
             if not isinstance(p, (str, LocalPath)):
@@ -120,7 +123,7 @@ class EnvPathList(list):
     def extend(self, paths):
         list.extend(self, (LocalPath(p) for p in paths))
     def insert(self, index, path):
-        list.extend(self, index, LocalPath(path))
+        list.insert(self, index, LocalPath(path))
     def index(self, path):
         list.index(self, LocalPath(path))
     def __contains__(self, path):
@@ -371,8 +374,8 @@ local = LocalMachine()
 class LocalModule(ModuleType):
     def __init__(self, name):
         ModuleType.__init__(self, name, __doc__)
-        self.__file__ = __file__
-        self.__package__ = __package__
+        self.__file__ = None
+        self.__package__ = ".".join(name.split(".")[:-1])
     def __getattr__(self, name):
         return local[name]
 

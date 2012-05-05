@@ -305,7 +305,7 @@ class Application(object):
             tailargs.append("%s..." % (m_varargs,))
         tailargs = " ".join(tailargs)
         
-        print()
+        print("")
         print(self.USAGE % {"executable" : self.executable, "progname" : self.PROGNAME, 
             "tailargs" : tailargs}) 
         
@@ -342,40 +342,12 @@ class Application(object):
                 if si.excludes:
                     help += "; excludes %s" % (", ".join(si.excludes))
                 print("    %-25s  %s" % (swnames + argtype, help))
-            print()
+            print ("")
     
     @switch(["-v", "--version"], overridable = True, group = "Meta-switches")
     def version(self):
         """Prints the program's version and quits"""
-        print("%s v%s" % (self.PROGNAME, self.VERSION))
-
-
-
-#===================================================================================================
-# test
-#===================================================================================================
-if __name__ == "__main__":
-    class Test(Application):
-        @switch(["a"])
-        def spam(self):
-            print("!!a")
-
-        @switch(["b", "bacon"], argtype=int, mandatory = True)
-        def bacon(self, param):
-            print ("!!b", param)
-        
-        eggs = SwitchAttr(["e"], str, help = "sets the eggs attribute")
-        verbose = CountAttr(["v"], help = "increases the verbosity level")
-        
-        def main(self, *args):
-            print (args)
-            print ("vebosity =", self.verbose)
-            print ("eggs =", self.eggs)
-    
-    Test.run(["foo", "--bacon=81", "-a", "-v", "-e", "7", "-vv", "--", "lala", "-e", "7"])
-    #Test.run(["foo", "-h"])
-
-
+        print ("%s v%s" % (self.PROGNAME, self.VERSION))
 
 
 

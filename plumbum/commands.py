@@ -151,7 +151,7 @@ class Pipeline(BaseCommand):
     def popen(self, args = (), **kwargs):
         src_kwargs = kwargs.copy()
         src_kwargs["stdout"] = PIPE
-        #src_kwargs["stderr"] = PIPE
+        src_kwargs["stderr"] = PIPE
         
         srcproc = self.srccmd.popen(args, **src_kwargs)
         kwargs["stdin"] = srcproc.stdout
@@ -175,7 +175,7 @@ class BaseRedirection(BaseCommand):
     def formulate(self, level = 0, args = ()):
         return self.cmd.formulate(level + 1, args) + [self.SYM, shquote(getattr(self.file, "name", self.file))]
     def popen(self, args = (), **kwargs):
-        if self.KWARG in kwargs and kwargs[self.KWARG] != PIPE:
+        if self.KWARG in kwargs and kwargs[self.KWARG] not in (PIPE, None):
             raise RedirectionError("%s is already redirected" % (self.KWARG,))
         if isinstance(self.file, str):
             kwargs[self.KWARG] = open(self.file, self.MODE)

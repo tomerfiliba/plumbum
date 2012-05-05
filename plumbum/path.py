@@ -1,5 +1,7 @@
 class Path(object):
     __slots__ = []
+    CASE_SENSITIVE = True
+    
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, str(self))
     def __div__(self, other):
@@ -12,7 +14,10 @@ class Path(object):
         if isinstance(other, Path):
             return self._get_info() == other._get_info()
         elif isinstance(other, str):
-            return str(self) == other
+            if self.CASE_SENSITIVE:
+                return str(self) == other
+            else:
+                return str(self).lower() == other.lower()
         else:
             return NotImplemented
     def __ne__(self, other):

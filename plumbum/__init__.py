@@ -1,4 +1,4 @@
-from plumbum.commands import FG, BG, ProcessExecutionError, CommandNotFound, ERROUT
+from plumbum.commands import FG, BG, ERROUT, ProcessExecutionError, CommandNotFound
 from plumbum.path import Path
 from plumbum.local_machine import local, LocalPath
 from plumbum.remote_machine import SshMachine, RemotePath

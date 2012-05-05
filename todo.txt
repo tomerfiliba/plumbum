@@ -1,9 +1,6 @@
+* which: look only for +x bit
 * remote
-    * cwd, env
-    * verify paths are indeed to the same remote 
-* local
-    * as user
-* encoding
+    * env
 * support python 2.5-3.2
 * tests
 * docs
