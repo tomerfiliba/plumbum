@@ -1,4 +1,5 @@
-from plumbum.local import local
+from plumbum.local_machine import local
+from plumbum.path import Path
 
 
 def rm(*paths):

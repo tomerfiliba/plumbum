@@ -29,12 +29,13 @@ class MarkedPipe(object):
         return line
 
 class SessionPopen(object):
-    def __init__(self, argv, isatty, stdin, stdout, stderr):
+    def __init__(self, argv, isatty, stdin, stdout, stderr, encoding):
         self.argv = argv
         self.isatty = isatty
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
+        self.encoding = encoding
         self.returncode = None
         self._done = False
     def poll(self):
@@ -79,8 +80,9 @@ class SessionPopen(object):
 
 
 class ShellSession(object):
-    def __init__(self, proc, isatty = False):
+    def __init__(self, proc, encoding = "auto", isatty = False):
         self.proc = proc
+        self.encoding = proc.encoding if encoding == "auto" else encoding  
         self.isatty = isatty
         self._current = None
         self.run("")
@@ -122,18 +124,21 @@ class ShellSession(object):
             full_cmd = cmd.formulate(1)
         else:
             full_cmd = cmd
-        marker = b"--.END%s.--" % (time.time() * random.random())
+        marker = b"--.END%s.--" % (time.time() * random.random(),)
         if full_cmd.strip():
             full_cmd += " ; "
         else:
-            full_cmd = "echo -n ''; "
+            full_cmd = "echo -n ; "
         full_cmd += "echo $? ; echo %s" % (marker,)
         if not self.isatty:
             full_cmd += " ; echo %s 1>&2" % (marker,)
+        if self.encoding:
+            full_cmd = full_cmd.encode(self.encoding)
         shell_logger.debug("Running %r", full_cmd)
         self.proc.stdin.write(full_cmd + "\n")
         self._current = SessionPopen(full_cmd, self.isatty, self.proc.stdin, 
-            MarkedPipe(self.proc.stdout, marker), MarkedPipe(self.proc.stderr, marker))
+            MarkedPipe(self.proc.stdout, marker), MarkedPipe(self.proc.stderr, marker),
+            self.encoding)
         return self._current
     
     def run(self, cmd, retcode = 0):

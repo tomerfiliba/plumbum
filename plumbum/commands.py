@@ -1,6 +1,12 @@
+import six
 from tempfile import TemporaryFile
 from subprocess import PIPE
+import subprocess
 
+if six.PY3:
+    bytes = str
+else:
+    ascii = repr
 
 #===================================================================================================
 # Exceptions
@@ -10,6 +16,10 @@ class ProcessExecutionError(Exception):
         Exception.__init__(self, argv, retcode, stdout, stderr)
         self.argv = argv
         self.retcode = retcode
+        if isinstance(stdout, bytes) and not isinstance(stderr, str):
+            stdout = ascii(stdout)
+        if isinstance(stderr, bytes) and not isinstance(stderr, str):
+            stderr = ascii(stderr)
         self.stdout = stdout
         self.stderr = stderr
     def __str__(self):
@@ -58,9 +68,13 @@ def shquote_list(seq):
 def run_proc(proc, retcode):
     stdout, stderr = proc.communicate()
     if not stdout:
-        stdout = ""
+        stdout = six.b("")
     if not stderr:
-        stderr = ""
+        stderr = six.b("")
+    if getattr(proc, "encoding", None):
+        stdout = stdout.decode(proc.encoding, "replace")
+        stderr = stderr.decode(proc.encoding, "replace")
+    
     if retcode is not None and proc.returncode != retcode:
         raise ProcessExecutionError(getattr(proc, "argv", None), 
             proc.returncode, stdout, stderr)
@@ -70,7 +84,7 @@ def run_proc(proc, retcode):
 # Commands
 #===================================================================================================
 class BaseCommand(object):
-    __slots__ = ["cwd", "env"]
+    __slots__ = ["cwd", "env", "encoding"]
     
     def __str__(self):
         return " ".join(self.formulate())
@@ -187,19 +201,20 @@ class StderrRedirection(BaseRedirection):
     KWARG = "stderr"
     MODE = "w"
 
+class ERROUT(int):
+    def __repr__(self):
+        return "ERROUT"
+    def __str__(self):
+        return "&1"
+ERROUT = ERROUT(subprocess.STDOUT)
+
 class StdinDataRedirection(BaseCommand):
+    __slots__ = ["cmd", "data"]
     CHUNK_SIZE = 16000
-    TRUNCATE = 15
     
     def __init__(self, cmd, data):
         self.cmd = cmd
         self.data = data
-    
-    def __str__(self):
-        shortened = self.data[:self.TRUNCATE]
-        if len(self.data) > self.TRUNCATE:
-            shortened += "..."
-        return "%s << %r" % (self.cmd, shortened)
     
     def formulate(self, level = 0, args = ()):
         return ["echo %s" % (shquote(self.data),), "|", self.cmd.formulate(level + 1, args)]
@@ -215,6 +230,34 @@ class StdinDataRedirection(BaseCommand):
             data = data[self.CHUNK_SIZE:]
         f.seek(0)
         return self.cmd.popen(args, stdin = f, **kwargs)
+
+class ConcreteCommand(BaseCommand):
+    QUOTE_LEVEL = None
+    __slots__ = ["executable", "encoding"]
+    def __init__(self, executable, encoding):
+        self.executable = executable
+        self.encoding = encoding
+    def __str__(self):
+        return str(self.executable)
+
+    def formulate(self, level = 0, args = ()):
+        argv = [str(self.executable)]
+        for a in args:
+            if not a:
+                continue
+            if isinstance(a, BaseCommand):
+                if level >= self.QUOTE_LEVEL:
+                    argv.extend(shquote_list(a.formulate(level + 1)))
+                else:
+                    argv.extend(a.formulate(level + 1))
+            else:
+                if level >= self.QUOTE_LEVEL:
+                    argv.append(shquote(a))
+                else:
+                    argv.append(str(a))
+        if self.encoding:
+            argv = [a.encode(self.encoding) for a in argv]
+        return argv
 
 #===================================================================================================
 # execution modifiers (background, foreground)

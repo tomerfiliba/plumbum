@@ -2,9 +2,9 @@ import os
 import errno
 from contextlib import contextmanager
 from plumbum.path import Path
-from plumbum.commands import BaseCommand, CommandNotFound, shquote, shquote_list
+from plumbum.commands import CommandNotFound, shquote, ConcreteCommand
 from plumbum.session import ShellSession
-from plumbum.local import local
+from plumbum.local_machine import local
 
 
 class RemotePath(Path):
@@ -135,44 +135,31 @@ class Env(object):
     def path(self):
         return self.get("PATH", "").split(os.path.pathsep)
 
-class SshCommand(BaseCommand):
+class SshCommand(ConcreteCommand):
     __slots__ = ["remote", "executable"]
-    def __init__(self, remote, executable):
+    QUOTE_LEVEL = 1
+    
+    def __init__(self, remote, executable, encoding = "auto"):
         self.remote = remote
-        self.executable = executable
+        ConcreteCommand.__init__(self, executable, 
+            remote.encoding if encoding == "auto" else encoding)
 
     def __repr__(self):
         return "RemoteCommand(%r, %r)" % (self.remote, self.executable)
     
-    def formulate(self, level = 0, args = ()):
-        argv = [str(self.executable)]
-        for a in args:
-            if not a:
-                continue
-            if isinstance(a, BaseCommand):
-                if level >= 1:
-                    argv.extend(shquote_list(a.formulate(level + 1)))
-                else:
-                    argv.extend(a.formulate(level + 1))
-            else:
-                if level >= 1:
-                    argv.append(shquote(a))
-                else:
-                    argv.append(a)
-        return argv
-    
     def popen(self, args = (), **kwargs):
-        return self.remote.popen(["cd", self.remote.cwd, "&&", self[args]], **kwargs)
+        return self.remote.popen(["cd", str(self.remote.cwd), "&&", self[args]], **kwargs)
 
 
 class BaseRemoteMachine(object):
-    def __init__(self):
+    def __init__(self, encoding = "utf8"):
+        self.encoding = encoding
         self._session = self.session()
         rc, out, _ = self._session.run("uname", retcode = None)
         if rc == 0:
             self.uname = out.strip()
         else:
-            self.uname = ""
+            self.uname = None
         
         self.cwd = Workdir(self)
         self.env = Env(self)
@@ -275,7 +262,7 @@ class SshMachine(BaseRemoteMachine):
     def popen(self, args = (), **kwargs):
         return self._ssh_command[args].popen(**kwargs)
     def session(self, isatty = False):
-        return ShellSession(self.popen("-tt" if isatty else ""), isatty)
+        return ShellSession(self.popen(["-tt" if isatty else ""]), self.encoding, isatty)
     def download(self, src, dst):
         self._scp_command("%s:%s" % (self._fqhost, src), dst)
     def upload(self, src, dst):
@@ -286,15 +273,15 @@ class SshMachine(BaseRemoteMachine):
 
 if __name__ == "__main__":
     import logging
-    #logging.basicConfig(level = logging.DEBUG)
+    logging.basicConfig(level = logging.DEBUG)
     with SshMachine("hollywood.xiv.ibm.com") as r: 
-        #r.cwd.chdir(r.cwd / "workspace" / "plumbum")
+        r.cwd.chdir(r.cwd / "workspace" / "plumbum")
         #print r.cwd // "*/*.py"
         r_ssh = r["ssh"]
         r_ls = r["ls"]
         r_grep = r["grep"]
 
-        print (r_ssh["localhost", r_ls | r_grep["hs"]])()
+        print (r_ssh["localhost", "cd", r.cwd, "&&", r_ls | r_grep[".py"]])()
         r.close()
 
 

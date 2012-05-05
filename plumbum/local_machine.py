@@ -6,11 +6,11 @@ import subprocess
 import functools
 import logging
 from subprocess import Popen, PIPE
-from plumbum.path import Path
-from plumbum.commands import shquote, shquote_list, BaseCommand, CommandNotFound
 from contextlib import contextmanager
-from types import ModuleType
+from plumbum.path import Path
+from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.session import ShellSession
+from types import ModuleType
 
 
 local_logger = logging.getLogger("plumbum.local")
@@ -258,37 +258,22 @@ class Env(object):
 #===================================================================================================
 # Local Commands
 #===================================================================================================
-class LocalCommand(BaseCommand):
-    def __init__(self, executable):
-        self.executable = executable
+class LocalCommand(ConcreteCommand):
+    __slots__ = []
+    QUOTE_LEVEL = 2
+    
+    def __init__(self, executable, encoding = "auto"):
+        ConcreteCommand.__init__(self, executable, 
+            local.encoding if encoding == "auto" else encoding)
 
-    def __str__(self):
-        return str(self.executable)
     def __repr__(self):
-        return "LocalCommand(%s)" % (self.executable,)
-
-    def formulate(self, level = 0, args = ()):
-        argv = [str(self.executable)]
-        for a in args:
-            if not a:
-                continue
-            if isinstance(a, BaseCommand):
-                if level >= 2:
-                    argv.extend(shquote_list(a.formulate(level + 1)))
-                else:
-                    argv.extend(a.formulate(level + 1))
-            else:
-                if level >= 2:
-                    argv.append(shquote(a))
-                else:
-                    argv.append(a)
-        return argv
+        return "LocalCommand(%r)" % (self.executable,)
     
     def popen(self, args = (), stdin = PIPE, stdout = PIPE, stderr = PIPE, cwd = None, 
             env = None, **kwargs):
         if isinstance(args, str):
             args = (args,)
-        if subprocess.mswindows and "startupinfo" not in kwargs and not sys.stdin.isatty():
+        if subprocess.mswindows and "startupinfo" not in kwargs and stdin not in (sys.stdin, None):
             kwargs["startupinfo"] = subprocess.STARTUPINFO()
             kwargs["startupinfo"].dwFlags |= subprocess.STARTF_USESHOWWINDOW  #@UndefinedVariable
             kwargs["startupinfo"].wShowWindow = subprocess.SW_HIDE  #@UndefinedVariable
@@ -303,11 +288,12 @@ class LocalCommand(BaseCommand):
             env = local.env
         if hasattr(env, "getdict"):
             env = env.getdict()
-
+        
         argv = self.formulate(0, args)
         local_logger.debug("Running %r", argv)
         proc = Popen(argv, executable = str(self.executable), stdin = stdin, stdout = stdout, 
             stderr = stderr, cwd = str(cwd), env = env, **kwargs)
+        proc.encoding = self.encoding
         proc.argv = argv
         return proc
 
@@ -317,6 +303,7 @@ class LocalCommand(BaseCommand):
 class LocalMachine(object):
     cwd = Workdir()
     env = Env()
+    encoding = sys.getfilesystemencoding()
 
     if IS_WIN32:
         _EXTENSIONS = [""] + env.get("PATHEXT", ":.exe:.bat").lower().split(os.path.pathsep)
@@ -371,15 +358,15 @@ class LocalMachine(object):
             raise TypeError("cmd must be a LocalPath or a string: %r" % (cmd,))
 
     def session(self, isatty = False):
-        return ShellSession(self["sh"].popen(), isatty)
+        return ShellSession(self["sh"].popen(), isatty = isatty)
     
-    python = LocalCommand(sys.executable)
+    python = LocalCommand(sys.executable, encoding)
 
 
 local = LocalMachine()
 
 #===================================================================================================
-# Module hack: ``from plumbum.local_commands import ls``
+# Module hack: ``from plumbum.cmd import ls``
 #===================================================================================================
 class LocalModule(ModuleType):
     def __init__(self, name):
@@ -388,18 +375,7 @@ class LocalModule(ModuleType):
         self.__package__ = __package__
     def __getattr__(self, name):
         return local[name]
-LocalModule = LocalModule("plumbum.local_commands")
+
+LocalModule = LocalModule("plumbum.cmd")
 sys.modules[LocalModule.__name__] = LocalModule
 
-
-
-#if __name__ == "__main__":
-#    ssh = local["ssh"]
-#    pwd = local["pwd"]
-#    
-#    print (ssh, pwd)
-#    print (local.cwd // "*.py")
-#    
-#    cmd = ssh["localhost", "cd", "/usr", "&&", ssh["localhost", "cd", "/", "&&", 
-#        ssh["localhost", "cd", "/bin", "&&", pwd]]]
-#    print (cmd.formulate(0))
