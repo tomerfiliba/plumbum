@@ -4,13 +4,18 @@ from subprocess import PIPE
 import subprocess
 
 if not six.PY3:
-    bytes = str
+    bytes = str #@ReservedAssignment
     ascii = repr
 
 #===================================================================================================
 # Exceptions
 #===================================================================================================
 class ProcessExecutionError(Exception):
+    """Represents the failure of a process. When the exit code of a terminated process does not
+    match the expected result, this exception is raised by :func:`plumbum.commands.run_proc`.
+    It contains the process' return code, stdout, and stderr, as well as the command line
+    used to create the process (``argv``)
+    """
     def __init__(self, argv, retcode, stdout, stderr):
         Exception.__init__(self, argv, retcode, stdout, stderr)
         self.argv = argv
@@ -32,13 +37,17 @@ class ProcessExecutionError(Exception):
         return "\n".join(lines)
 
 class CommandNotFound(Exception):
+    """Raised by :func:`plumbum.local_machine.LocalMachine.which` and 
+    :func:`plumbum.remote_machine.RemoteMachine.which` when a command was not found in the
+    system's ``PATH``"""
     def __init__(self, program, path):
         Exception.__init__(self, program, path)
         self.program = program
         self.path = path
 
 class RedirectionError(Exception):
-    pass
+    """Raised when an attempt is made to redirect an process' standard handle,
+    which was already redirected to/from a file""" 
 
 
 #===================================================================================================
@@ -48,6 +57,7 @@ class RedirectionError(Exception):
 _safechars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@%_-+=:,./'
 _funnychars = '"`$\\'
 def shquote(text):
+    """Quotes the given text with shell escaping (assumes as syntax similar to ``sh``)"""
     if not text:
         return "''"
     text = str(text)
@@ -65,6 +75,15 @@ def shquote_list(seq):
     return [shquote(item) for item in seq]
 
 def run_proc(proc, retcode):
+    """Waits for the given process to terminate, with the expected exit code
+    
+    :param proc: a running Popen-like object
+    
+    :param retcode: the expected return (exit) code. 0 is the convention for success.
+                    pass ``None`` in order to ignore the return code
+
+    :returns: A tuple of (return code, stdout, stderr)
+    """
     stdout, stderr = proc.communicate()
     if not stdout:
         stdout = six.b("")
@@ -83,21 +102,34 @@ def run_proc(proc, retcode):
 # Commands
 #===================================================================================================
 class BaseCommand(object):
+    """Base of all command objects"""
+    
     __slots__ = ["cwd", "env", "encoding"]
     
     def __str__(self):
         return " ".join(self.formulate())
+    
     def __or__(self, other):
+        """Creates a pipe with the other command"""
         return Pipeline(self, other)
+    
     def __gt__(self, file):
+        """Redirects the process' stdout to the given file"""
         return StdoutRedirection(self, file)
+    
     def __ge__(self, file):
+        """Redirects the process' stderr to the given file"""
         return StderrRedirection(self, file)
+    
     def __lt__(self, file):
+        """Redirects the given file into the process' stdin"""
         return StdinRedirection(self, file)
     def __lshift__(self, data):
+        """Redirects the given data into the process' stdin"""
         return StdinDataRedirection(self, data)
+    
     def __getitem__(self, args):
+        """Creates a bound-command with the given arguments"""
         if not isinstance(args, (tuple, list)):
             args = (args,)
         if not args:
@@ -106,17 +138,53 @@ class BaseCommand(object):
             return BoundCommand(self.cmd, self.args + tuple(args))
         else:
             return BoundCommand(self, args)
+    
     def __call__(self, *args, **kwargs):
+        """A shortcut for `run(args)`, returning only the process' stdout"""
         return self.run(args, **kwargs)[1]
 
     def _get_encoding(self):
         raise NotImplementedError()
+
     def formulate(self, level = 0, args = ()):
+        """Formulates the command into a command-line, i.e., a list of shell-quoted strings
+        that can be executed by ``Popen`` or shells. 
+        
+        :param level: The nesting level of the formulation; it dictates how much shell-quoting
+                      (if any) should be performed
+        
+        :param args: The arguments passed to this command (a tuple)
+        
+        :returns: A list of strings
+        """
         raise NotImplementedError()
+
     def popen(self, args = (), **kwargs):
+        """Spawns the given command, returning a ``Popen``-like object.
+        
+        :param args: Any arguments to be passed to the process (a tuple)
+        
+        :param kwargs: Any keyword-arguments to be passed to the ``Popen`` constructor
+        
+        :returns: A ``Popen``-like object
+        """
         raise NotImplementedError()
     
     def run(self, args = (), **kwargs):
+        """Runs the given command (equivalent to popen() followed by 
+        :func:`plumbum.commands.run_proc`). If the exit code of the process does
+        not match the expected one, :class:`plumbum.commands.ProcessExecutionError` is raised.
+        
+        :param args: Any arguments to be passed to the process (a tuple)
+        
+        :param retcode: The expected return code of this process (defaults to 0).
+                        In order to disable exit-code validation, pass ``None``. 
+                        Note: this argument must be passed as a keyword argument.
+        
+        :param kwargs: Any keyword-arguments to be passed to the ``Popen`` constructor
+        
+        :returns: A tuple of (return code, stdout, stderr)
+        """
         retcode = kwargs.pop("retcode", 0)
         p = self.popen(args, **kwargs)
         try:
@@ -306,7 +374,7 @@ class Future(object):
         self._stdout = None
         self._stderr = None
     def __repr__(self):
-        return "<Future %r (%s)>" % (self.proc.cmdline, self._returncode if self.ready() else "running",)
+        return "<Future %r (%s)>" % (self.proc.argv, self._returncode if self.ready() else "running",)
     def poll(self):
         if self.proc.poll() is not None:
             self.wait()
@@ -330,12 +398,33 @@ class Future(object):
         return self._returncode
 
 class BG(ExecutionModifier):
+    """
+    An execution modifier that runs the given command in the background, returning a 
+    :class:`plumbum.commands.Future` object. In order to mimic shell syntax, it applies
+    when you right-and it with a command. If you wish to expect a different return code
+    (other than the normal success indicate by 0), use ``BG(retcode)``. Example::
+       
+        future = sleep[5] & BG       # a future expecting an exit code of 0 
+        future = sleep[5] & BG(7)    # a future expecting an exit code of 7
+    """
     __slots__ = []
     def __rand__(self, cmd):
         return Future(cmd.popen(), self.retcode)
 BG = BG()
 
 class FG(ExecutionModifier):
+    """
+    An execution modifier that runs the given command in the foreground, passing it the
+    current process' stdin, stdout and stderr. Useful for interactive programs that require
+    a TTY. There is no return value.
+    
+    In order to mimic shell syntax, it applies when you right-and it with a command. 
+    If you wish to expect a different return code (other than the normal success indicate by 0), 
+    use ``BG(retcode)``. Example::
+       
+        vim & FG       # run vim in the foreground, expecting an exit code of 0 
+        vim & FG(7)    # run vim in the foreground, expecting an exit code of 7
+    """
     __slots__ = []
     def __rand__(self, cmd):
         cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None)

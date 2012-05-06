@@ -118,47 +118,40 @@ class Workdir(LocalPath):
 # Environment
 #===================================================================================================
 class EnvPathList(list):
-    __slots__ = []
+    __slots__ = ["_path_factory"]
+    PATHSEP = os.path.pathsep
+    def __init__(self, path_factory):
+        self._path_factory = path_factory
     def append(self, path):
-        list.extend(self, LocalPath(path))
+        list.append(self, self._path_factory(path))
     def extend(self, paths):
-        list.extend(self, (LocalPath(p) for p in paths))
+        list.extend(self, (self._path_factory(p) for p in paths))
     def insert(self, index, path):
-        list.insert(self, index, LocalPath(path))
+        list.insert(self, index, self._path_factory(path))
     def index(self, path):
-        list.index(self, LocalPath(path))
+        list.index(self, self._path_factory(path))
     def __contains__(self, path):
-        return list.__contains__(self, LocalPath(path)) 
+        return list.__contains__(self, self._path_factory(path)) 
     def remove(self, path):
-        list.remove(self, LocalPath(path))
+        list.remove(self, self._path_factory(path))
     def update(self, text):
-        self[:] = [LocalPath(p) for p in text.split(os.path.pathsep)]
+        self[:] = [self._path_factory(p) for p in text.split(os.path.pathsep)]
     def join(self):
-        return os.path.pathsep.join(str(p) for p in self)
+        return self.PATHSEP.join(str(p) for p in self)
 
-def upperify_on_win32(func):
-    if IS_WIN32:
-        @functools.wraps(func)
-        def wrapper(self, name, *args):
-            return func(self, name.upper(), *args)
-        return wrapper
-    else:
-        return func
 
-class Env(object):
-    __slots__ = ["_curr", "_path"]
+class BaseEnv(object):
+    __slots__ = ["_curr", "_path", "_path_factory"]
+    CASE_SENSITIVE = True
 
-    def __init__(self):
-        # os.environ already takes care of upper'ing on windows
-        self._curr = os.environ.copy()
-        self._path = EnvPathList()
+    def __init__(self, path_factory):
+        self._path_factory = path_factory
+        self._path = EnvPathList(path_factory)
         self._update_path()
-        if IS_WIN32 and "HOME" not in self and self.home is not None:
-            self["HOME"] = self.home
-    
+
     def _update_path(self):
         self._path.update(self.get("PATH", ""))
-    
+
     @contextmanager
     def __call__(self, **kwargs):
         prev = self._curr.copy()
@@ -168,65 +161,55 @@ class Env(object):
         finally:
             self._curr = prev
             self._update_path()
-    
+
     def __iter__(self):
         return iter(self._curr.items())
     def __hash__(self):
         raise TypeError("unhashable type")
     def __len__(self):
         return len(self._curr)
-    @upperify_on_win32
     def __contains__(self, name):
-        return name in self._curr
-    @upperify_on_win32
-    def __delitem__(self, name):
-        del self._curr[name]
-    @upperify_on_win32
+        return (name if self.CASE_SENSITIVE else name.upper()) in self._curr
     def __getitem__(self, name):
-        return self._curr[name]
-    @upperify_on_win32
-    def __setitem__(self, name, value):
-        self._curr[name] = value
-        if name == "PATH":
-            self._update_path()
-    
-    def clear(self):
-        self._curr.clear()
+        return self._curr[name if self.CASE_SENSITIVE else name.upper()]
     def keys(self):
         return self._curr.keys()
     def items(self):
         return self._curr.items()
     def values(self):
         return self._curr.values()
-    @upperify_on_win32
     def get(self, name, *default):
-        return self._curr.get(name, *default)
-    @upperify_on_win32
-    def pop(self, name, *default):
-        return self._curr.pop(name, *default)
+        return self._curr.get((name if self.CASE_SENSITIVE else name.upper()), *default)
 
-    if IS_WIN32:
-        def update(self, *args, **kwargs):
-            self._curr.update(*args, **kwargs)
+    def __delitem__(self, name):
+        name = name if self.CASE_SENSITIVE else name.upper()
+        del self._curr[name]
+        if name == "PATH":
+            self._update_path()
+    def __setitem__(self, name, value):
+        name = name if self.CASE_SENSITIVE else name.upper()
+        self._curr[name] = value
+        if name == "PATH":
+            self._update_path()    
+    def pop(self, name, *default):
+        name = name if self.CASE_SENSITIVE else name.upper()
+        res = self._curr.pop(name, *default)
+        if name == "PATH":
+            self._update_path()
+        return res
+    def clear(self):
+        self._curr.clear()
+        self._update_path()
+    def update(self, *args, **kwargs):
+        self._curr.update(*args, **kwargs)
+        if not self.CASE_SENSITIVE:
             for k, v in list(self._curr.items()):
                 self._curr[k.upper()] = v
-            self._update_path()
-    else:
-        def update(self, *args, **kwargs):
-            self._curr.update(*args, **kwargs)
-            self._update_path()
-    
+        self._update_path()
+
     def getdict(self):
         self._curr["PATH"] = self.path.join()
         return dict((k, str(v)) for k, v in self._curr.items())
-    def expand(self, expr):
-        prev = os.environ
-        os.environ = self.getdict()
-        try:
-            output = os.path.expanduser(os.path.expandvars(expr))
-        finally:
-            os.environ = prev
-        return output
 
     @property
     def path(self):
@@ -234,11 +217,11 @@ class Env(object):
 
     def _get_home(self):
         if "HOME" in self:
-            return LocalPath(self["HOME"])
+            return self._path_factory(self["HOME"])
         elif "USERPROFILE" in self:
-            return LocalPath(self["USERPROFILE"])
+            return self._path_factory(self["USERPROFILE"])
         elif "HOMEPATH" in self:
-            return LocalPath(self.get("HOMEDRIVE", ""), self["HOMEPATH"])
+            return self._path_factory(self.get("HOMEDRIVE", ""), self["HOMEPATH"])
         return None
     def _set_home(self, p):
         if "HOME" in self:
@@ -258,6 +241,28 @@ class Env(object):
         elif "USERNAME" in self:
             return self["USERNAME"]
         return None
+
+
+class LocalEnv(BaseEnv):
+    __slots__ = []
+    CASE_SENSITIVE = not IS_WIN32
+    
+    def __init__(self):
+        # os.environ already takes care of upper'ing on windows
+        self._curr = os.environ.copy()
+        BaseEnv.__init__(self, LocalPath)
+        if IS_WIN32 and "HOME" not in self and self.home is not None:
+            self["HOME"] = self.home
+    
+    def expand(self, expr):
+        prev = os.environ
+        os.environ = self.getdict()
+        try:
+            output = os.path.expanduser(os.path.expandvars(expr))
+        finally:
+            os.environ = prev
+        return output
+
 
 #===================================================================================================
 # Local Commands
@@ -306,7 +311,7 @@ class LocalCommand(ConcreteCommand):
 #===================================================================================================
 class LocalMachine(object):
     cwd = Workdir()
-    env = Env()
+    env = LocalEnv()
     encoding = sys.getfilesystemencoding()
 
     if IS_WIN32:
@@ -364,8 +369,8 @@ class LocalMachine(object):
         else:
             raise TypeError("cmd must be a LocalPath or a string: %r" % (cmd,))
 
-    def session(self, isatty = False):
-        return ShellSession(self["sh"].popen(), isatty = isatty)
+    def session(self):
+        return ShellSession(self["sh"].popen())
     
     python = LocalCommand(sys.executable, encoding)
 

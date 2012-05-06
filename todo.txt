@@ -1,8 +1,6 @@
-* remote.env: propagate to session and popen
 * tests
-    * cli
-    * remote
     * utils
+    * cli (finish)
 * docs
     * docstrings
     * tutorial

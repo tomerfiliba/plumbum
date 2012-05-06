@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from plumbum.path import Path
 from plumbum.commands import CommandNotFound, shquote, ConcreteCommand
 from plumbum.session import ShellSession
-from plumbum.local_machine import local
+from plumbum.local_machine import local, BaseEnv, EnvPathList
 
 
 class RemotePath(Path):
@@ -125,19 +125,43 @@ class Workdir(RemotePath):
         finally:
             self.chdir(prev)
 
-class Env(object):
+class RemoteEnv(BaseEnv):
+    __slots__ = ["_orig", "remote"]
     def __init__(self, remote):
         self.remote = remote
         self._curr = dict(line.split("=",1) for line in self.remote._session.run("env")[1].splitlines())
-    def __contains__(self, name):
-        return name in self._curr
-    def __getitem__(self, name):
-        return self._curr[name]
-    def get(self, name, *default):
-        return self._curr.get(name, *default)
-    @property
-    def path(self):
-        return self.get("PATH", "").split(os.path.pathsep)
+        self._orig = self._curr.copy()
+        BaseEnv.__init__(self, self.remote.path)
+
+    def __delitem__(self, name):
+        BaseEnv.__delitem__(self, name)
+        self.remote._session.run("unset %s" % (name,))
+    def __setitem__(self, name, value):
+        BaseEnv.__setitem__(self, name, value)
+        self.remote._session.run("export %s=%s" % (name, shquote(value)))
+    def pop(self, name, *default):
+        BaseEnv.pop(self, name, *default)
+        self.remote._session.run("unset %s" % (name,))
+    def update(self, *args, **kwargs):
+        BaseEnv.update(self, *args, **kwargs)
+        self.remote._session.run("export " + 
+            " ".join("%s=%s" % (k, shquote(v)) for k, v in self.getdict().items()))
+
+    #def clear(self):
+    #    BaseEnv.clear(self, *args, **kwargs)
+    #    self.remote._session.run("export %s" % " ".join("%s=%s" % (k, v) for k, v in self.getdict()))
+
+    def getdelta(self):
+        self._curr["PATH"] = self.path.join()
+        delta = {}
+        for k, v in self._curr.items():
+            if k not in self._orig:
+                delta[k] = str(v)
+        for k, v in self._orig.items():
+            if k not in self._curr:
+                delta[k] = ""
+        return delta
+
 
 class SshCommand(ConcreteCommand):
     __slots__ = ["remote", "executable"]
@@ -152,7 +176,9 @@ class SshCommand(ConcreteCommand):
         return "RemoteCommand(%r, %r)" % (self.remote, self.executable)
     
     def popen(self, args = (), **kwargs):
-        return self.remote.popen(["cd", str(self.remote.cwd), "&&", self[args]], **kwargs)
+        #cmdline = ["%s = %s" % (k, v) for k, v in self.remote.env.getdelta().items()]
+        #cmdline.extend(("cd", str(self.remote.cwd), "&&", self[args]))
+        return self.remote.popen(self[args], **kwargs)
 
 
 class BaseRemoteMachine(object):
@@ -166,7 +192,7 @@ class BaseRemoteMachine(object):
             self.uname = None
         
         self.cwd = Workdir(self)
-        self.env = Env(self)
+        self.env = RemoteEnv(self)
         self._python = None
 
     def __repr__(self):
@@ -220,8 +246,8 @@ class BaseRemoteMachine(object):
 
 class SshTunnel(object):
     __slots__ = ["_session"]
-    def __init__(self, proc):
-        self._session = ShellSession(proc)
+    def __init__(self, session):
+        self._session = session
     def __repr__(self):
         if self._session.alive():
             return "<SshTunnel %s>" % (self._session.proc,)
@@ -246,7 +272,7 @@ class SshMachine(BaseRemoteMachine):
         else:
             self._fqhost = host
         scp_args = []
-        ssh_args = [self._fqhost]
+        ssh_args = []
         if port:
             ssh_args.extend(["-p", port])
             scp_args.extend(["-P", port])
@@ -263,16 +289,34 @@ class SshMachine(BaseRemoteMachine):
     def __str__(self):
         return "ssh://%s" % (self._fqhost,)
 
-    def popen(self, args = (), **kwargs):
-        return self._ssh_command[args].popen(**kwargs)
+    def popen(self, args, ssh_opts = (), **kwargs):
+        cmdline = []
+        cmdline.extend(ssh_opts)
+        cmdline.append(self._fqhost)
+        if args:
+            envdelta = self.env.getdelta()
+            cmdline.extend(["cd", str(self.cwd), "&&"])
+            if envdelta:
+                cmdline.append("env")
+                cmdline.extend("%s=%s" % (k, v) for k, v in envdelta.items())
+            if isinstance(args, (tuple, list)):
+                cmdline.extend(args)
+            else:
+                cmdline.append(args)
+        return self._ssh_command[tuple(cmdline)].popen(**kwargs)
+    
     def session(self, isatty = False):
-        return ShellSession(self.popen(["-tt" if isatty else ""]), self.encoding, isatty)
+        return ShellSession(self.popen((), ["-tt"] if isatty else []), self.encoding, isatty)
+    def tunnel(self, lport, rport, lhost = "localhost", rhost = "localhost"):
+        opts = ["-L", "[%s]:%s:[%s]:%s" % (lhost, lport, rhost, rport)]
+        return SshTunnel(ShellSession(self.popen((), opts), self.encoding))        
+    
     def download(self, src, dst):
         self._scp_command("%s:%s" % (self._fqhost, src), dst)
     def upload(self, src, dst):
         self._scp_command(src, "%s:%s" % (self._fqhost, dst))
-    def tunnel(self, lport, rport, lhost = "localhost", rhost = "localhost"):
-        return SshTunnel(self.popen(["-L", "[%s]:%s:[%s]:%s" % (lhost, lport, rhost, rport)]))
+
+
 
 
 

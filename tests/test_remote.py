@@ -3,8 +3,7 @@ import os
 import socket
 import unittest
 import six
-from plumbum import SshMachine, BG
-import time
+from plumbum import SshMachine, ProcessExecutionError
 #import logging
 #logging.basicConfig(level = logging.DEBUG)
 
@@ -39,10 +38,33 @@ class RemoteMachineTest(unittest.TestCase):
                 self.assertTrue("test_remote.py" in [f.basename for f in rem.cwd // "*.py"])
     
     def test_download_upload(self):
-        pass
+        with SshMachine("localhost") as rem:
+            rem.upload("test_remote.py", "/tmp")
+            r_ls = rem["ls"]
+            r_rm = rem["rm"]
+            self.assertTrue("test_remote.py" in r_ls("/tmp").splitlines())
+            rem.download("/tmp/test_remote.py", "/tmp/test_download.txt")
+            r_rm("/tmp/test_remote.py")
+            r_rm("/tmp/test_download.txt")
     
     def test_session(self):
-        pass
+        with SshMachine("localhost") as rem:
+            sh = rem.session()
+            for _ in range(4):
+                _, out, _ = sh.run("ls -a")
+                self.assertTrue(".bashrc" in out)
+    
+    def test_env(self):
+        with SshMachine("localhost") as rem:
+            self.assertRaises(ProcessExecutionError, rem.python, "-c", 
+                "import os;os.environ['FOOBAR72']")
+            with rem.env(FOOBAR72 = "lala"):
+                with rem.env(FOOBAR72 = "baba"):
+                    out = rem.python("-c", "import os;print(os.environ['FOOBAR72'])")
+                    self.assertEqual(out.strip(), "baba")
+                out = rem.python("-c", "import os;print(os.environ['FOOBAR72'])")
+                self.assertEqual(out.strip(), "lala")
+                    
     
     def test_tunnel(self):
         with SshMachine("localhost") as rem:
@@ -54,7 +76,6 @@ class RemoteMachineTest(unittest.TestCase):
                 raise
 
             with rem.tunnel(12222, port) as tun:
-                time.sleep(0.5)
                 s = socket.socket()
                 s.connect(("localhost", 12222))
                 s.send(six.b("world"))
