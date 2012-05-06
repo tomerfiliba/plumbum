@@ -1,19 +1,25 @@
 The Local Object
 ================
 So far we've only seen running local commands, but there's more to the ``local`` object than
-this; it provides some other useful features. First, you should get acquainted with ``python``,
-which is a command object that points to the current interpreter (i.e., ``sys.executable``) ::
+this; it aims to represent the *local machine*, and it provides several useful APIs. 
+
+First, you should get acquainted with ``python``, which is a command object that points to 
+the current interpreter (i.e., ``sys.executable``) ::
 
     >>> local.python
     <Command c:\python27\python.exe>
     >>> local.python("-c", "import sys;print sys.version")
     '2.7.2 (default, Jun 12 2011, 15:08:59) [MSC v.1500 32 bit (Intel)]\r\n'
 
-Another useful member is ``which``, which performs program name resolution in the executible 
+Another useful member is ``which``, which performs program name resolution in the executable 
 ``PATH`` (returns the first match, or raises an exception if no match is found) ::
 
     >>> local.which("ls")
     <Path C:\Program Files\Git\bin\ls.exe>
+    >>> local.which("nonexistent")
+    Traceback (most recent call last):
+       [...]
+    plumbum.commands.CommandNotFound: ('nonexistent', [...])
 
 Working Directory
 -----------------
@@ -26,17 +32,17 @@ The ``local.cwd`` attribute represents the current working directory. You can ch
     <Workdir d:\workspace\plumbum\docs>
 
 But a much more useful pattern is to use it as a *context manager*, so it behaves like 
-``pushd``-``popd`` ::
+``pushd``/``popd`` ::
 
     >>> with local.cwd("c:\\windows"):
     ...     print "%s:%s" % (local.cwd, (ls | wc["-l"])())
     ...     with local.cwd("c:\\windows\\system32"):
     ...         print "%s:%s" % (local.cwd, (ls | wc["-l"])())
     ...
-    c:\windows:    105
-    c:\windows\system32:   3013
+    c:\windows: 105
+    c:\windows\system32: 3013
     >>> print "%s:%s" % (local.cwd, (ls | wc["-l"])())
-    d:\workspace\plumbum:      9
+    d:\workspace\plumbum: 9
 
 Environment
 -----------
@@ -71,8 +77,8 @@ it's own private copy of the environment ::
              | KeyError: 'FOO'
 
 In order to make cross-platform-ness easier, the ``local.env`` object provides some convenience 
-properties for getting the username (``user``), the home path (``home``), and the executible path
-(``path``). For instance ::
+properties for getting the username (``.user``), the home path (``.home``), and the executable path
+(``path``) as a list. For instance ::
 
     >>> local.env.user
     'sebulba'

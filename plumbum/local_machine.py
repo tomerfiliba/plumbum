@@ -3,7 +3,6 @@ import os
 import glob
 import shutil
 import subprocess
-import functools
 import logging
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
@@ -12,6 +11,7 @@ from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.session import ShellSession
 from types import ModuleType
 import stat
+from tempfile import mkdtemp
 
 
 local_logger = logging.getLogger("plumbum.local")
@@ -22,6 +22,8 @@ IS_WIN32 = os.name == "nt"
 # Local Paths
 #===================================================================================================
 class LocalPath(Path):
+    """The class implementing local-machine paths"""
+    
     __slots__ = ["_path"]
     if IS_WIN32:
         CASE_SENSITIVE = False
@@ -87,13 +89,13 @@ class LocalPath(Path):
         else:
             shutil.copy2(str(self), str(dst))
         return dst
-    def rename(self, newname):
-        self.move(LocalPath(self.dirname, newname))
     def mkdir(self):
         if not self.exists():
             os.makedirs(str(self))
 
 class Workdir(LocalPath):
+    """Working directory manipulator"""
+    
     __slots__ = []
     def __init__(self):
         self._path = os.path.normpath(os.getcwd())
@@ -101,12 +103,22 @@ class Workdir(LocalPath):
         raise TypeError("unhashable type")
     
     def chdir(self, newdir):
+        """Changes the current working directory to the given one
+        
+        :param newdir: The destination director (a string or a ``LocalPath``)
+        """
         os.chdir(str(newdir))
         self._path = os.path.normpath(os.getcwd())
     def getpath(self):
+        """Returns the current working directory as a ``LocalPath`` object"""
         return LocalPath(self)
     @contextmanager
     def __call__(self, newdir):
+        """A context manager used to ``chdir`` into a directory and then ``chdir`` back to
+        the previous location; much like ``pushd``/``popd``.
+        
+        :param newdir: The destination director (a string or a ``LocalPath``)
+        """
         prev = self._path
         self.chdir(newdir)
         try:
@@ -141,6 +153,7 @@ class EnvPathList(list):
 
 
 class BaseEnv(object):
+    """The base class of LocalEnv and RemoteEnv"""
     __slots__ = ["_curr", "_path", "_path_factory"]
     CASE_SENSITIVE = True
 
@@ -153,7 +166,14 @@ class BaseEnv(object):
         self._path.update(self.get("PATH", ""))
 
     @contextmanager
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
+        """A context manager that can be used for temporal modifications of the environment. 
+        Any time you enter the context, a copy of the old environment is stored, and then restored,
+        when the context exits.
+        
+        :param args: Any positional arguments for ``update()``
+        :param kwargs: Any keyword arguments for ``update()``
+        """
         prev = self._curr.copy()
         self.update(**kwargs)
         try:
@@ -208,11 +228,13 @@ class BaseEnv(object):
         self._update_path()
 
     def getdict(self):
+        """Returns the environment as a real dictionary"""
         self._curr["PATH"] = self.path.join()
         return dict((k, str(v)) for k, v in self._curr.items())
 
     @property
     def path(self):
+        """The system's ``PATH`` (as an easy-to-manipulate list)"""
         return self._path
 
     def _get_home(self):
@@ -233,9 +255,11 @@ class BaseEnv(object):
         else:
             self["HOME"] = str(p)
     home = property(_get_home, _set_home)
+    """Get or set the home path"""
     
     @property
     def user(self):
+        """Return the user name, or ``None`` if it is not set"""
         if "USER" in self:
             return self["USER"]
         elif "USERNAME" in self:
@@ -244,6 +268,7 @@ class BaseEnv(object):
 
 
 class LocalEnv(BaseEnv):
+    """The local machine's environment; it exposes a dict-like interface"""
     __slots__ = []
     CASE_SENSITIVE = not IS_WIN32
     
@@ -255,6 +280,14 @@ class LocalEnv(BaseEnv):
             self["HOME"] = self.home
     
     def expand(self, expr):
+        """Expands any environment variables and home shortcuts found in ``expr``
+        
+        :param expr: An expression containing environment variables (as ``$FOO``) or
+                     home shortcuts (as ``~/.bashrc``)
+                     
+        :returns: The expanded string
+        
+        """
         prev = os.environ
         os.environ = self.getdict()
         try:
@@ -310,6 +343,16 @@ class LocalCommand(ConcreteCommand):
 # Local Machine
 #===================================================================================================
 class LocalMachine(object):
+    """The *local machine* (a singleton object). It serves as an entry point to everything
+    related to the local machine, such as working directory and environment manipulation,
+    command creation, etc.
+    
+    Attributes:
+    
+    * ``cwd`` - the local working directory
+    * ``env`` - the local environment
+    * ``encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``) 
+    """
     cwd = Workdir()
     env = LocalEnv()
     encoding = sys.getfilesystemencoding()
@@ -347,16 +390,44 @@ class LocalMachine(object):
     
     @classmethod
     def which(cls, progname):
-        for pn in [progname, progname.replace("_", "-")]:
+        """Looks up a program in the ``PATH``. If the program is not found, raises
+        :class:`plumbum.commands.CommandNotFound`
+        
+        :param progname: The program's name. Note that if underscores (``_``) are present
+                         in the name, and the exact name is not found, they will be replaced 
+                         by hyphens (``-``) and the name will be looked up again
+        
+        :returns: A :class:`plumbum.local_machine.LocalPath`
+        """
+        alternatives = [progname]
+        if "_" in progname:
+            alternatives.append(progname.replace("_", "-"))
+        for pn in alternatives:
             path = cls._which(pn)
             if path:
                 return path
         raise CommandNotFound(progname, list(cls.env.path))
 
     def path(self, *parts):
+        """A factory for :class:`LocalPaths <plumbum.local_machine.LocalPath>`. Usage
+        
+        ::
+        
+            p = local.path("/usr", "lib", "python2.7")
+        """
         return LocalPath(*parts)
 
+#        A factory for :class:`LocalPaths <plumbum.local_machine.LocalPath>`. Here is some more
+#        text maybe this will help. Anyway, Usage ::
+
     def __getitem__(self, cmd):
+        """Returns a `Command` object representing the given program. ``cmd`` can be a string or
+        a :class:`plumbum.local_machine.LocalPath`; if it is a path, a command representing this
+        path will be returned; otherwise, the program name will be looked up in the system's 
+        ``PATH`` (using ``which``). Usage ::
+        
+            ls = local["ls"]
+        """
         if isinstance(cmd, LocalPath):
             return LocalCommand(cmd)
         elif isinstance(cmd, str): 
@@ -370,17 +441,41 @@ class LocalMachine(object):
             raise TypeError("cmd must be a LocalPath or a string: %r" % (cmd,))
 
     def session(self):
+        """Creates a new :class:`plumbum.session.ShellSession` object; this invokes ``/bin/sh``
+        and executes commands on it over stdin/stdout/stderr"""
         return ShellSession(self["sh"].popen())
     
+    @contextmanager
+    def tempdir(self):
+        """A context manager that creates a temporary directory, which is removed when the context
+        exits"""
+        dir = self.path(mkdtemp())
+        try:
+            yield dir
+        finally:
+            dir.delete()
+    
     python = LocalCommand(sys.executable, encoding)
+    """A command that represents the current python interpreter (``sys.executable``)"""
 
 
 local = LocalMachine()
+"""The *local machine* (a singleton object). It serves as an entry point to everything
+related to the local machine, such as working directory and environment manipulation,
+command creation, etc.
+
+Attributes:
+
+* ``cwd`` - the local working directory
+* ``env`` - the local environment
+* ``encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``) 
+"""
 
 #===================================================================================================
 # Module hack: ``from plumbum.cmd import ls``
 #===================================================================================================
 class LocalModule(ModuleType):
+    """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
     def __init__(self, name):
         ModuleType.__init__(self, name, __doc__)
         self.__file__ = None

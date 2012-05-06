@@ -1,6 +1,6 @@
 from __future__ import with_statement
-from plumbum.local_machine import local
 from plumbum.path import Path
+from plumbum.local_machine import local, LocalPath
 
 
 def rm(*paths):
@@ -19,31 +19,44 @@ def mv(src, dst):
         src = local.path(src)
     if not isinstance(dst, Path):
         dst = local.path(dst)
-    if src._location == dst._location:
-        src.move(dst)
+    if isinstance(src, LocalPath):
+        if isinstance(dst, LocalPath):
+            src.move(dst)
+        else:
+            cp(src, dst)
+            rm(src)
     else:
-        cp(src, dst)
-        rm(src)
+        if isinstance(dst, LocalPath):
+            cp(src, dst)
+            rm(src)
+        elif src.remote == dst.remote:
+            src.move(dst)
+        else:
+            cp(src, dst)
+            rm(src)
 
 def cp(src, dst):
+    """
+    Copy (recursively) ``src`` into ``dst``. Here, ``src`` and ``dst`` can be strings or any paths
+    (local or remote ones), the function will take care of the details.
+    """
     if not isinstance(src, Path):
         src = local.path(src)
     if not isinstance(dst, Path):
         dst = local.path(dst)
-    if src._location == dst._location:
-        src.copy(dst)
-    elif src._location == LocalPathLocation:
-        dst._location.sshctx.upload(src, dst)
-    elif dst._location == LocalPathLocation:
-        dst._location.sshctx.download(src, dst)
+    if isinstance(src, LocalPath):
+        if isinstance(dst, LocalPath):
+            src.copy(dst)
+        else:
+            dst.remote.upload(src, dst)
     else:
-        with local.mktemp() as tmp:
-            cp(src, tmp)
-            cp(tmp, dst)
-
-
-
-
-
+        if isinstance(dst, LocalPath):
+            src.remote.dowload(src, dst)
+        elif src.remote == dst.remote:
+            src.copy(dst)
+        else:
+            with local.tempdir() as tmp:
+                cp(src, tmp)
+                cp(tmp, dst)
 
 

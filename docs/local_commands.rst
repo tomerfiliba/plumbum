@@ -7,10 +7,10 @@ and serves as a factory for command objects ::
     >>>
     >>> ls = local["ls"]
     >>> ls
-    <Command C:\Program Files\Git\bin\ls.exe>
+    <LocalCommand C:\Program Files\Git\bin\ls.exe>
     >>> notepad = local["c:\\windows\\notepad.exe"]
     >>> notepad
-    <Command c:\windows\notepad.exe>
+    <LocalCommand c:\windows\notepad.exe>
 
 If you don't specify a full path, the program is searched for in your system's ``PATH`` (and if no
 match is found, an exception is raised). Otherwise, the full path is used as given. Once you have
@@ -23,9 +23,17 @@ a ``Command`` object, you can execute it like a normal function ::
 
 With just a touch of magic, you can *import* commands from the ``local`` object, like so ::
 
-    >>> from plumbum.local import grep, cat
+    >>> from plumbum.cmd import grep, cat
     >>> cat
-    <Command C:\Program Files\Git\bin\cat.exe>
+    <LocalCommand C:\Program Files\Git\bin\cat.exe>
+
+.. note::
+   There's no real module named ``plumbum.cmd``; it's just a dynamically-created "module", 
+   added directly into ``sys.modules``, which enabled the use of ``from plumbum.cmd import foo``.
+   Trying to ``import plumbum.cmd`` is bound to fail.
+   
+Note that underscores (``_``) will be replaced by hyphens (``-``), if the original version
+is not found. Therefore, in order to get ``apt-get``, you can import ``apt_get``, for convenience.
 
 Pipelining
 ----------
@@ -34,15 +42,15 @@ As you've seen, *invoking* commands runs the program; by using square brackets (
 we can create bound commands ::
 
     >>> ls["-l"]
-    BoundCommand(<Command C:\Program Files\Git\bin\ls.exe>, ('-l',))
+    BoundCommand(<LocalCommand C:\Program Files\Git\bin\ls.exe>, ('-l',))
     >>> grep["-v", ".py"]
-    BoundCommand(<Command C:\Program Files\Git\bin\grep.exe>, ('-v', '.py'))
+    BoundCommand(<LocalCommand C:\Program Files\Git\bin\grep.exe>, ('-v', '.py'))
 
 Forming pipelines now is easy and straight-forwards, using ``|`` (bitwise-or) :: 
 
     >>> chain = ls["-l"] | grep[".py"]
     >>> print chain
-    (C:\Program Files\Git\bin\ls.exe '-l' | C:\Program Files\Git\bin\grep.exe '.py')
+    C:\Program Files\Git\bin\ls.exe -l | C:\Program Files\Git\bin\grep.exe .py
     >>>
     >>> chain()
     '-rw-r--r--    1 sebulba  Administ        0 Apr 27 11:54 setup.py\n'

@@ -36,6 +36,8 @@ manipulation. But enough with the talk, let's see some code! ::
 
 There's much more Plumbum can do, so be sure to read on:
 
+Reference
+=========
 .. toctree::
    :maxdepth: 2
    
@@ -44,7 +46,19 @@ There's much more Plumbum can do, so be sure to read on:
    paths
    remote_machine
    cli
-   api
+  
+API Reference
+=============
+.. toctree::
+   :maxdepth: 2
+   
+   api/cli
+   api/commands
+   api/local_machine
+   api/path
+   api/remote_machine
+   api/session
+   api/utils
 
 About
 =====
@@ -66,9 +80,9 @@ of `Andrew Moffat <https://github.com/amoffat>`_,
 and has borrowed some of his ideas (namely treating programs like functions and the
 nice trick for importing commands). However, I felt there was too much magic going on in PBS, 
 and that the syntax wasn't what I had in mind when I came to write shell-like programs. 
-I contacted Andrew, but he wanted to keep PBS this way. Other than that, the two libraries 
-go in different directions.
+I contacted Andrew about these issues, but he wanted to keep PBS this way. Other than that, 
+the two libraries go in different directions, where Plumbum attempts to provide a more
+wholesome approach.
 
-Plumbum pays tribute to `Rotem Yaari <https://github.com/vmalloc/>`_ who suggested a library 
-code-named ``pyplatform`` for that very same purpose, but it had never materialized.
-
+Plumbum also pays tribute to `Rotem Yaari <https://github.com/vmalloc/>`_ who suggested a 
+library code-named ``pyplatform`` for that very same purpose, but which had never materialized.

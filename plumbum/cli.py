@@ -41,12 +41,85 @@ class SwitchInfo(object):
 def switch(names, argtype = None, argname = None, list = False, mandatory = False, requires = (), 
         excludes = (), help = None, overridable = False, group = "Switches"):
     """
-    A decorator that exposes functions as command-line switchs
+    A decorator that exposes functions as command-line switches. Usage ::
     
-    :param names: list of strings
-    :param argtype: any callable object, should raise TypeError, or None  
+        class MyApp(Application):
+            @switch(["-l", "--log-to-file"], argtype = str)
+            def log_to_file(self, filename):
+                handler = logging.FileHandler(filename)
+                logger.addHandler(handler)
+            
+            @switch(["--verbose"], excludes=["--terse"], requires=["--log-to-file"])
+            def set_debug(self):
+                logger.setLevel(logging.DEBUG)
+
+            @switch(["--terse"], excludes=["--verbose"], requires=["--log-to-file"])
+            def set_terse(self):
+                logger.setLevel(logging.WARNING)
     
-    :returns
+    :param names: The name(s) under which the function is reachable; it can be a string
+                  or a list of string, but at least one name is required. There's no need
+                  to prefix the name with ``-`` or ``--`` (this is added automatically),
+                  but it can be used for clarity. Single-letter names are prefixed by ``-``,
+                  while longer names are prefixed by ``--``
+    
+    :param argtype: If this function takes an argument, you need to specify its type. The
+                    default is ``None``, which means the function takes no argument. The type
+                    is more of a "validator" than a real type; it can be any callable object
+                    that raises a ``TypeError`` if the argument is invalid, or returns an
+                    appropriate value on success. If the user provides an invalid value, 
+                    :func:`plumbum.cli.WrongArgumentType`
+    
+    :param argname: The name of the argument; if ``None``, the name will be inferred from the
+                    function's signature
+    
+    :param list: Whether or not this switch can be repeated (e.g. ``gcc -I/lib -I/usr/lib``).
+                 If ``False``, only a single occurrence of the switch is allowed; if ``True``,
+                 it may be repeated indefinitely. The occurrences are collected into a list,
+                 so the function is only called once with the collections. For instance,
+                 for ``gcc -I/lib -I/usr/lib``, the function will be called with 
+                 ``["/lib", "/usr/lib"]``.
+    
+    :param mandatory: Whether or not this switch is mandatory; if a mandatory switch is not
+                      given, :class:`plumbum.cli.MissingMandatorySwitch` is raised. The default
+                      is ``False``.
+    
+    :param requires: A list of switches that this switch depends on ("requires"). This means that 
+                     it's invalid to invoke this switch without also invoking the required ones. 
+                     In the example above, it's illegal to pass ``--verbose`` or ``--terse`` 
+                     without also passing ``--log-to-file``. By default, this list is empty, 
+                     which means the switch has no prerequisites. If an invalid combination
+                     is given, :class:`plumbum.cli.SwitchCombinationError` is raised.
+                     
+                     Note that this list is made of the switch *names*; if a switch has more 
+                     than a single name, any of its names will do.
+                     
+                     .. note::
+                        There is no guarantee on the (topological) order in which the actual 
+                        switch functions will be invoked, as the dependency graph might contain
+                        cycles.
+    
+    :param excludes: A list of switches that this switch forbids ("excludes"). This means that 
+                     it's invalid to invoke this switch if any of the excluded ones are given. 
+                     In the example above, it's illegal to pass ``--verbose`` along with 
+                     ``--terse``, as it will result in a contradiction. By default, this list 
+                     is empty, which means the switch has no prerequisites. If an invalid 
+                     combination is given, :class:`plumbum.cli.SwitchCombinationError` is raised.
+                     
+                     Note that this list is made of the switch *names*; if a switch has more 
+                     than a single name, any of its names will do.
+    
+    :param help: The help message (description) for this switch; this description is used when
+                 ``--help`` is given. If ``None``, the function's docstring will be used.
+    
+    :param overridable: Whether or not the names of this switch are overridable by other switches.
+                        If ``False`` (the default), having another switch function with the same 
+                        name(s) will cause an exception. If ``True``, this is silently ignored.
+    
+    :param group: The switch's *group*; this is a string that is used to group related switches
+                  together when ``--help`` is given. The default group is ``Switches``.
+    
+    :returns: The decorated function (with a ``_switch_info`` attribute)
     """
     if isinstance(names, str):
         names = [names]
@@ -72,13 +145,28 @@ def switch(names, argtype = None, argname = None, list = False, mandatory = Fals
         return func
     return deco
 
+#===================================================================================================
+# Switch Attributes
+#===================================================================================================
 class SwitchAttr(object):
     """
-    A switch class attribute (descriptor)
+    A switch that stores its result in an attribute (descriptor). Usage ::
+    
+        class MyApp(Application):
+            logfile = SwitchAttr(["-f", "--log-file"], str)
+            
+            def main(self):
+                if self.logfile:
+                    open(self.logfile, "w")
+    
+    :param names: The switch names
+    :param argtype: The switch argument's (and attribute's) type
+    :param default: The attribute's default value (``None``)
+    :param kwargs: Any of the keyword arguments accepted by :func:`plumbum.cli.switch`
     """
-    def __init__(self, names, argtype, **kwargs):
+    def __init__(self, names, argtype, default = None, **kwargs):
         switch(names, argtype = argtype, argname = "VALUE", **kwargs)(self)
-        self._value = None
+        self._value = default
     def __call__(self, _, val):
         self._value = val
     def __get__(self, cls, inst):
@@ -92,41 +180,56 @@ class SwitchAttr(object):
         else:
             self._value = val
 
-class ToggleAttr(SwitchAttr):
-    """ """
+class Flag(SwitchAttr):
+    """A specialized :class:`plumbum.cli.SwitchAttr` for boolean flags. If the flag is not
+    given, the value of this attribute is the ``default``; if it is given, the value changes
+    to ``not default``. Usage ::
+    
+        class MyApp(Application):
+            verbose = Flag(["-v", "--verbose"], help = "If given, I'll be very talkative")
+
+    :param names: The switch names
+    :param default: The attribute's initial value (``False`` by default)
+    :param kwargs: Any of the keyword arguments accepted by :func:`plumbum.cli.switch`,
+                   except for ``list`` and ``argtype``.
+    """
     def __init__(self, names, default = False, **kwargs):
-        SwitchAttr.__init__(self, names, argtype = None, **kwargs)
-        self._value = default
+        SwitchAttr.__init__(self, names, argtype = None, default = default, list = False, **kwargs)
     def __call__(self, _, v):
         self._value = not self._value
 
-def Flag(names, default = False, help = None):
-    """
-    A synonym for :class:`plumbum.cli.ToggleAttr`
-    """
-    return ToggleAttr(names, default, help = help)
-
 class CountAttr(SwitchAttr):
-    """A special `SwitchAttr` that counts the number of occurrences of the switch in 
-    the command line. For instance, if `verbosity = CountAttr("-v")`, 
-    passing `["-v", "-v", "-vv"]` in the command-line would result in `verbosity = 4`
+    """A specialized `SwitchAttr` that counts the number of occurrences of the switch in 
+    the command line. Usage ::
+
+        class MyApp(Application):
+            verbosity = CountAttr(["-v", "--verbose"], help = "The more, the merrier")
+            
+    If ``-v -v -vv`` is given in the command-line, it will result in ``verbosity = 4``.
     
-    :param names: The switch names (a string or a list of strings)
+    :param names: The switch names
     :param default: The default value (0)
-    :param kwargs: any keyword-arguments passed to :class:`plumbum.cli.SwitchAttr`
+    :param kwargs: Any of the keyword arguments accepted by :func:`plumbum.cli.switch`,
+                   except for ``list`` and ``argtype``.
     """
     def __init__(self, names, default = 0, **kwargs):
-        SwitchAttr.__init__(self, names, argtype = None, list = True, **kwargs)
-        self._value = default
+        SwitchAttr.__init__(self, names, argtype = None, default = default, list = True, **kwargs)
     def __call__(self, _, v):
         self._value = len(v)
 
 #===================================================================================================
-# switch type validators
+# Switch type validators
 #===================================================================================================
 class Range(object):
     """
-    A switch-type validator that checks for the inclusion of a value in a certain range
+    A switch-type validator that checks for the inclusion of a value in a certain range. 
+    Usage ::
+    
+        class MyApp(Application):
+            age = SwitchAttr(["--age"], Range(18, 120))
+    
+    :param start: The minimal value
+    :param end: The maximal value
     """
     def __init__(self, start, end):
         self.start = start
@@ -141,16 +244,29 @@ class Range(object):
 
 class Set(object):
     """
-    A switch-type validator that checks that the given value is contained in this set of options
+    A switch-type validator that checks that the value is contained in a defined 
+    set of values. Usage ::
+    
+        class MyApp(Application):
+            mode = SwitchAttr(["--mode"], Set("TCP", "UDP", case_insensitive = False))
+    
+    :param values: The set of values (strings)
+    :param case_insensitive: A keyword argument that indicates whether to use case-sensitive
+                             comparison or not. The default is ``True``
     """
-    def __init__(self, *values):
-        self.values = values
+    def __init__(self, *values, **kwargs):
+        self.case_insensitive = kwargs.pop("case_insensitive", True)
+        if kwargs:
+            raise TypeError("got unexpected keyword argument(s)", kwargs.keys())
+        self.values = dict(((v if self.case_insensitive else v.lower()), v) for v in values)
     def __repr__(self):
         return "Set(%s)" % (", ".join(repr(v) for v in self.values))
     def __call__(self, obj):
+        if not self.case_insensitive:
+            obj = obj.lower()
         if obj not in self.values:
-            raise ValueError("Expected one of %r" % (self.values,))
-        return obj
+            raise ValueError("Expected one of %r" % (list(self.values.values()),))
+        return self.values[obj]
 
 
 #===================================================================================================
@@ -158,8 +274,44 @@ class Set(object):
 #===================================================================================================
 class Application(object):
     """
-    The base class for CLI applications.
-    Override ``main``, define switches or switch attributes
+    The base class for CLI applications; your "entry point" class should derive from it,
+    define the relevant switch functions and attributes, and the ``main()`` function. 
+    The class defines two overridable "meta switches" for version (``-v``, ``--version``) 
+    and help (``-h``, ``--help``). 
+    
+    The signature of the main function matters: any positional arguments (e.g., non-switch 
+    arguments) given on the command line are passed to the ``main()`` function; if you wish
+    to allow unlimited number of positional arguments, use varargs (``*args``). The names
+    of the arguments will be shown in the help message.
+    
+    The classmethod ``run`` serves as the entry point of the class. It parses the command-line
+    arguments, invokes switch functions and enter ``main``. You should **not override** this 
+    method.
+    
+    Usage ::
+    
+        class FileCopier(Application):
+            stat = Flag("p", "copy stat info as well")
+            
+            def main(self, src, dst):
+                if self.stat:
+                    shutil.copy2(src, dst)
+                else:
+                    shutil.copy(src, dst)
+        
+        if __name__ == "__main__":
+            FileCopier.run()
+    
+    There are several class-level attributes you may set:
+    
+    * ``PROGNAME`` - the name of the program; if ``None`` (the default), it is set to the
+      name of the executable (``argv[0]``)
+
+    * ``VERSION`` - the program's version (defaults to ``1.0``)
+    
+    * ``DESCRIPTION`` - a short description of your program (shown in help)
+    
+    * ``USAGE`` - the usage line (shown in help)
     """
     
     PROGNAME = None
@@ -337,6 +489,7 @@ class Application(object):
         sys.exit(retcode)
     
     def main(self):
+        """Override me"""
         pass
     
     @switch(["-h", "--help"], overridable = True, group = "Meta-switches")

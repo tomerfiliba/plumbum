@@ -1,10 +1,10 @@
 Command-Line Interface (CLI)
 ============================
 
-The mirror image of executing programs with ease is writing CLI applications with ease. 
-Python scripts normally work with ``optparse`` and the more recent ``argparse``, but they 
-both offer a quite-limited and a very unintuitive/unpythonic way to work with command-line 
-arguments.
+The other side of the coin of *executing programs* with ease is *writing CLI applications* 
+with ease. Python scripts normally work with ``optparse`` and the more recent ``argparse``, 
+but they both offer a quite-limited and a very unintuitive/unpythonic way to work with 
+command-line arguments.
 
 ``plumbum.cli`` offers a different solution: instead of building parser objects and adding
 switches to them imperatively, you write a class, where methods or attributes correspond 
@@ -41,8 +41,8 @@ Interdependencies
 Switch Groups
 -------------
 
-Tail Arguments
---------------
+Positional Arguments
+--------------------
 
 
 Attributes
