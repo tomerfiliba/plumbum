@@ -11,6 +11,7 @@ from plumbum.path import Path
 from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.session import ShellSession
 from types import ModuleType
+import stat
 
 
 local_logger = logging.getLogger("plumbum.local")
@@ -295,7 +296,7 @@ class LocalCommand(ConcreteCommand):
         argv = self.formulate(0, args)
         local_logger.debug("Running %r", argv)
         proc = Popen(argv, executable = str(self.executable), stdin = stdin, stdout = stdout, 
-            stderr = stderr, cwd = str(cwd), env = env, **kwargs)
+            stderr = stderr, cwd = str(cwd), env = env, **kwargs) #bufsize = 4096
         proc.encoding = self.encoding
         proc.argv = argv
         return proc
@@ -333,7 +334,10 @@ class LocalMachine(object):
                 except OSError:
                     continue
                 if progname in filelist:
-                    return filelist[progname]
+                    f = filelist[progname]
+                    if not IS_WIN32 and not (f.stat().st_mode & stat.S_IXUSR):
+                        continue
+                    return f
             return None
     
     @classmethod

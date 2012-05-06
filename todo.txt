@@ -1,12 +1,8 @@
-* local.which: look only for +x bit
 * remote.env: propagate to session and popen
-* python 3
-    * encoding issues
-    * shell session gets stuck
 * tests
-    * finish cli
+    * cli
     * remote
     * utils
 * docs
+    * docstrings
     * tutorial
-    * add docstrings

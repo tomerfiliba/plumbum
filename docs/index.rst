@@ -40,11 +40,10 @@ There's much more Plumbum can do, so be sure to read on:
    :maxdepth: 2
    
    local_commands
-   local_object
-   local_path
-   ssh
-   remote_commands
-   remote_path
+   local_machine
+   paths
+   remote_machine
+   cli
    api
 
 About

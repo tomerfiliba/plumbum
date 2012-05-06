@@ -33,10 +33,14 @@ class RemotePath(Path):
     
     @property
     def basename(self):
-        return str(self).rsplit("/", 1)[0]
+        if not "/" in str(self):
+            return str(self)
+        return str(self).rsplit("/", 1)[1]
     @property
     def dirname(self):
-        raise NotImplementedError()
+        if not "/" in str(self):
+            return str(self)
+        return str(self).rsplit("/", 1)[0]
     
     def _get_info(self):
         return (self.remote, self._path)

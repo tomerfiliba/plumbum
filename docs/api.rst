@@ -1,14 +1,19 @@
 API Reference
 =============
 
-plumbum.localcmd
-----------------
-.. automodule:: plumbum.localcmd
+plumbum.cli
+-----------
+.. automodule:: plumbum.cli
    :members:
 
-plumbum.base
-------------
-.. automodule:: plumbum.base
+plumbum.commands
+----------------
+.. automodule:: plumbum.commands
+   :members:
+
+plumbum.local_machine
+---------------------
+.. automodule:: plumbum.local_machine
    :members:
 
 plumbum.path
@@ -16,13 +21,18 @@ plumbum.path
 .. automodule:: plumbum.path
    :members:
 
-plumbum.ssh
------------
-.. automodule:: plumbum.ssh
+plumbum.remote_machine
+----------------------
+.. automodule:: plumbum.remote_machine
    :members:
 
-plumbum.remotecmd
------------------
-.. automodule:: plumbum.remotecmd
+plumbum.session
+---------------
+.. automodule:: plumbum.session
+   :members:
+
+plumbum.utils
+---------------
+.. automodule:: plumbum.utils
    :members:
 

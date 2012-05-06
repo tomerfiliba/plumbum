@@ -19,15 +19,19 @@ class MarkedPipe(object):
     def __init__(self, pipe, marker):
         self.pipe = pipe
         self.marker = marker
+        if six.PY3:
+            self.marker = bytes(self.marker, "ascii")
     def close(self):
-        pass
+        self.pipe = None
     def readline(self):
+        if self.pipe is None:
+            return six.b("")
         line = self.pipe.readline()
-        print ("!!", repr(line))
         if not line:
             raise EOFError()
         if line.strip() == self.marker:
-            return six.b("")
+            self.pipe = None
+            line = six.b("")
         return line
 
 class SessionPopen(object):
@@ -60,6 +64,7 @@ class SessionPopen(object):
             if input:
                 chunk = input[:1000]
                 self.stdin.write(chunk)
+                self.stdin.flush()
                 input = input[1000:]
             i = (i + 1) % len(sources)
             name, coll, pipe = sources[i]
@@ -108,10 +113,15 @@ class ShellSession(object):
             return
         try:
             self.proc.stdin.write(six.b("\nexit\n\n\nexit\n\n"))
-            self.proc.stdin.close()
+            self.proc.stdin.flush()
             time.sleep(0.05)
         except (ValueError, EnvironmentError):
             pass
+        for p in [self.proc.stdin, self.proc.stdout, self.proc.stderr]:
+            try:
+                p.close()
+            except Exception:
+                pass
         try:
             self.proc.kill()
         except EnvironmentError:
@@ -126,18 +136,19 @@ class ShellSession(object):
             full_cmd = cmd.formulate(1)
         else:
             full_cmd = cmd
-        marker = six.b("--.END%s.--" % (time.time() * random.random(),))
+        marker = "--.END%s.--" % (time.time() * random.random(),)
         if full_cmd.strip():
             full_cmd += " ; "
         else:
-            full_cmd = "echo -n ; "
-        full_cmd += "echo $? ; echo %s" % (marker,)
+            full_cmd = "true ; "
+        full_cmd += "echo $? ; echo '%s'" % (marker,)
         if not self.isatty:
-            full_cmd += " ; echo %s 1>&2" % (marker,)
+            full_cmd += " ; echo '%s' 1>&2" % (marker,)
         if self.encoding:
             full_cmd = full_cmd.encode(self.encoding)
         shell_logger.debug("Running %r", full_cmd)
         self.proc.stdin.write(full_cmd + six.b("\n"))
+        self.proc.stdin.flush()
         self._current = SessionPopen(full_cmd, self.isatty, self.proc.stdin, 
             MarkedPipe(self.proc.stdout, marker), MarkedPipe(self.proc.stderr, marker),
             self.encoding)

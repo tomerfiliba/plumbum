@@ -1,6 +1,6 @@
 import sys
-import inspect
 import six
+import inspect
 
 
 class SwitchError(Exception):
@@ -31,7 +31,7 @@ class SwitchInfo(object):
             setattr(self, k, v)
 
 def switch(names, argtype = None, argname = None, list = False, mandatory = False, requires = (), 
-        excludes = (), help = None, overridable = False, group = None):
+        excludes = (), help = None, overridable = False, group = "Switches"):
     if isinstance(names, str):
         names = [names]
     names = [n.lstrip("-") for n in names]
@@ -105,11 +105,11 @@ class Range(object):
             raise ValueError("Not in range [%d..%d]" % (self.start, self.end))
         return obj
 
-class Enum(object):
+class Set(object):
     def __init__(self, *values):
         self.values = values
     def __repr__(self):
-        return "Enum(%s)" % (", ".join(self.values))
+        return "Set(%s)" % (", ".join(repr(v) for v in self.values))
     def __call__(self, obj):
         if obj not in self.values:
             raise ValueError("Expected one of %r" % (self.values,))
@@ -122,7 +122,7 @@ class Enum(object):
 class Application(object):
     PROGNAME = None
     DESCRIPTION = None
-    VERSION = "0.1"
+    VERSION = "1.0"
     USAGE = "Usage: %(executable)s [SWITCHES] %(tailargs)s"
     
     def __init__(self, executable):
@@ -261,29 +261,35 @@ class Application(object):
         return swfuncs, tailargs
     
     @classmethod
-    def run(cls, argv = sys.argv):
+    def _run(cls, argv):
         argv = list(argv)
         inst = cls(argv.pop(0))
         try:
             swfuncs, tailargs = inst._parse_args(list(argv))
         except ShowHelp:
             inst.help()
-            sys.exit(0)
+            return 0
         except ShowVersion:
             inst.version()
-            sys.exit(0)
+            return 0
         except SwitchError:
             ex = sys.exc_info()[1] # compat
             print(ex)
             print()
             inst.help()
-            sys.exit(1)
+            return 1
+        
         for f, (_, a) in swfuncs.items():
             if a is None:
                 f(inst)
             else:
                 f(inst, a)
         retcode = inst.main(*tailargs)
+        return inst, retcode
+    
+    @classmethod
+    def run(cls, argv = sys.argv):
+        _, retcode = cls._run(argv)
         sys.exit(retcode)
     
     def main(self):
@@ -316,10 +322,7 @@ class Application(object):
             by_groups[si.group].append(si)
         
         for grp, swinfos in sorted(by_groups.items(), key = lambda item: item[0]):
-            if grp is None:
-                print("Switches:")
-            if grp is not None:
-                print("%s:" % (grp,))
+            print("%s:" % (grp,))
             
             for si in sorted(swinfos, key = lambda si: si.names):
                 swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names 

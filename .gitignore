@@ -3,7 +3,6 @@
 *.pyc
 __pycache__
 .settings/
-
 /dist
 /plumbum.egg-info
 /build

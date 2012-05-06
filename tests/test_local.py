@@ -4,9 +4,6 @@ import unittest
 from plumbum import local, FG, BG, ERROUT
 from plumbum import CommandNotFound, ProcessExecutionError
 
-#import logging
-#logging.basicConfig(level=logging.DEBUG)
-
 
 class LocalMachineTest(unittest.TestCase):
     def test_imports(self):
