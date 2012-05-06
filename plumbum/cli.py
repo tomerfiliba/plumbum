@@ -4,18 +4,26 @@ import inspect
 
 
 class SwitchError(Exception):
+    """A general switch related-error (base class of all other switch errors)"""
     pass
 class PositionalArgumentsError(SwitchError):
+    """Raised when an invalid number of positional arguments has been given"""
     pass
 class SwitchCombinationError(SwitchError):
+    """Raised when an invalid combination of switches has been given"""
     pass
 class UnknownSwitch(SwitchError):
+    """Raised when an unrecognized switch has been given"""
     pass
 class MissingArgument(SwitchError):
+    """Raised when a switch requires an argument, but one was not provided"""
     pass
 class MissingMandatorySwitch(SwitchError):
+    """Raised when a mandatory switch has not been given"""
     pass
 class WrongArgumentType(SwitchError):
+    """Raised when a switch expected an argument of some type, but an argument of a wrong
+    type has been given"""
     pass
 class ShowHelp(SwitchError):
     pass
@@ -32,6 +40,14 @@ class SwitchInfo(object):
 
 def switch(names, argtype = None, argname = None, list = False, mandatory = False, requires = (), 
         excludes = (), help = None, overridable = False, group = "Switches"):
+    """
+    A decorator that exposes functions as command-line switchs
+    
+    :param names: list of strings
+    :param argtype: any callable object, should raise TypeError, or None  
+    
+    :returns
+    """
     if isinstance(names, str):
         names = [names]
     names = [n.lstrip("-") for n in names]
@@ -57,6 +73,9 @@ def switch(names, argtype = None, argname = None, list = False, mandatory = Fals
     return deco
 
 class SwitchAttr(object):
+    """
+    A switch class attribute (descriptor)
+    """
     def __init__(self, names, argtype, **kwargs):
         switch(names, argtype = argtype, argname = "VALUE", **kwargs)(self)
         self._value = None
@@ -74,6 +93,7 @@ class SwitchAttr(object):
             self._value = val
 
 class ToggleAttr(SwitchAttr):
+    """ """
     def __init__(self, names, default = False, **kwargs):
         SwitchAttr.__init__(self, names, argtype = None, **kwargs)
         self._value = default
@@ -81,9 +101,20 @@ class ToggleAttr(SwitchAttr):
         self._value = not self._value
 
 def Flag(names, default = False, help = None):
+    """
+    A synonym for :class:`plumbum.cli.ToggleAttr`
+    """
     return ToggleAttr(names, default, help = help)
 
 class CountAttr(SwitchAttr):
+    """A special `SwitchAttr` that counts the number of occurrences of the switch in 
+    the command line. For instance, if `verbosity = CountAttr("-v")`, 
+    passing `["-v", "-v", "-vv"]` in the command-line would result in `verbosity = 4`
+    
+    :param names: The switch names (a string or a list of strings)
+    :param default: The default value (0)
+    :param kwargs: any keyword-arguments passed to :class:`plumbum.cli.SwitchAttr`
+    """
     def __init__(self, names, default = 0, **kwargs):
         SwitchAttr.__init__(self, names, argtype = None, list = True, **kwargs)
         self._value = default
@@ -94,6 +125,9 @@ class CountAttr(SwitchAttr):
 # switch type validators
 #===================================================================================================
 class Range(object):
+    """
+    A switch-type validator that checks for the inclusion of a value in a certain range
+    """
     def __init__(self, start, end):
         self.start = start
         self.end = end
@@ -106,6 +140,9 @@ class Range(object):
         return obj
 
 class Set(object):
+    """
+    A switch-type validator that checks that the given value is contained in this set of options
+    """
     def __init__(self, *values):
         self.values = values
     def __repr__(self):
@@ -120,6 +157,11 @@ class Set(object):
 # CLI Application base class
 #===================================================================================================
 class Application(object):
+    """
+    The base class for CLI applications.
+    Override ``main``, define switches or switch attributes
+    """
+    
     PROGNAME = None
     DESCRIPTION = None
     VERSION = "1.0"
@@ -273,7 +315,7 @@ class Application(object):
             inst.version()
             return 0
         except SwitchError:
-            ex = sys.exc_info()[1] # compat
+            ex = sys.exc_info()[1] # compatibility with python 2.5
             print(ex)
             print()
             inst.help()
@@ -289,6 +331,8 @@ class Application(object):
     
     @classmethod
     def run(cls, argv = sys.argv):
+        """Runs the application, taking the arguments from ``sys.argv``, and exiting with the
+        appropriate exit code; this function does not return"""
         _, retcode = cls._run(argv)
         sys.exit(retcode)
     
