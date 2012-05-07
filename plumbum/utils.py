@@ -51,12 +51,12 @@ def cp(src, dst):
             dst.remote.upload(src, dst)
     else:
         if isinstance(dst, LocalPath):
-            src.remote.dowload(src, dst)
+            src.remote.download(src, dst)
         elif src.remote == dst.remote:
             src.copy(dst)
         else:
             with local.tempdir() as tmp:
                 cp(src, tmp)
-                cp(tmp, dst)
+                cp(tmp / src.basename, dst)
 
 

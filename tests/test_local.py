@@ -146,6 +146,17 @@ class LocalMachineTest(unittest.TestCase):
         cmd = ssh["localhost", "cd", "/usr", "&&", ssh["localhost", "cd", "/", "&&", 
             ssh["localhost", "cd", "/bin", "&&", pwd]]]
         self.assertTrue("\"'&&'\"" in " ".join(cmd.formulate(0)))
+    
+    def test_tempdir(self):
+        from plumbum.cmd import cat
+        with local.tempdir() as dir:
+            self.assertTrue(dir.isdir())
+            with open(str(dir / "test.txt"), "w") as f:
+                f.write("hello world")
+            with open(str(dir / "test.txt"), "r") as f:
+                self.assertEqual(f.read(), "hello world")
+        
+        self.assertFalse(dir.exists())
 
 
 if __name__ == "__main__":

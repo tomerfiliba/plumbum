@@ -7,7 +7,7 @@ First, you should get acquainted with ``python``, which is a command object that
 the current interpreter (i.e., ``sys.executable``) ::
 
     >>> local.python
-    <Command c:\python27\python.exe>
+    <LocalCommand c:\python27\python.exe>
     >>> local.python("-c", "import sys;print sys.version")
     '2.7.2 (default, Jun 12 2011, 15:08:59) [MSC v.1500 32 bit (Intel)]\r\n'
 
@@ -15,11 +15,14 @@ Another useful member is ``which``, which performs program name resolution in th
 ``PATH`` (returns the first match, or raises an exception if no match is found) ::
 
     >>> local.which("ls")
-    <Path C:\Program Files\Git\bin\ls.exe>
+    <LocalPath C:\Program Files\Git\bin\ls.exe>
     >>> local.which("nonexistent")
     Traceback (most recent call last):
        [...]
     plumbum.commands.CommandNotFound: ('nonexistent', [...])
+
+Yet another is ``tempdir``
+
 
 Working Directory
 -----------------

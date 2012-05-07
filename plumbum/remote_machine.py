@@ -49,14 +49,21 @@ class RemotePath(Path):
     def list(self):
         if not self.isdir():
             return []
-        return [self.join(fn) for fn in self.remote._session.run("ls -a %s" % (self,))[1].splitlines()]
+        files = self.remote._session.run("ls -a %s" % (self,))[1].splitlines()
+        files.remove(".")
+        files.remove("..")
+        return [self.join(fn) for fn in files]
     
     def isdir(self):
-        mode, _ = self._stat()
-        return mode in ("directory")
+        res = self._stat()
+        if not res:
+            return False
+        return res[0] in ("directory")
     def isfile(self):
-        mode, _ = self._stat()
-        return mode in ("regular file", "regular empty file")
+        res = self._stat()
+        if not res:
+            return False
+        return res[0] in ("regular file", "regular empty file")
     def exists(self):
         return self._stat() is not None
     
@@ -92,10 +99,11 @@ class RemotePath(Path):
             raise TypeError("dst must be a string or a RemotePath (to the same remote machine)")
         self.remote._session.run("mv %s %s" % (shquote(self), shquote(dst)))
     def copy(self, dst, override = False):
-        if isinstance(dst, RemotePath) and dst.remote is not self.remote:
-            raise TypeError("dst points to a different remote machine")
+        if isinstance(dst, RemotePath):
+            if dst.remote is not self.remote:
+                raise TypeError("dst points to a different remote machine")
         elif not isinstance(dst, str):
-            raise TypeError("dst must be a string or a RemotePath (to the same remote machine)")
+            raise TypeError("dst must be a string or a RemotePath (to the same remote machine)", repr(dst))
         if override:
             if isinstance(dst, str):
                 dst = RemotePath(self.remote, dst)
@@ -243,6 +251,15 @@ class BaseRemoteMachine(object):
     def popen(self, args = (), **kwargs):
         raise NotImplementedError
 
+    @contextmanager
+    def tempdir(self):
+        _, out, _ = self._session.run("mktemp -d")
+        dir = self.path(out.strip())
+        try:
+            yield dir
+        finally:
+            dir.delete()
+
 
 class SshTunnel(object):
     __slots__ = ["_session"]
@@ -315,7 +332,6 @@ class SshMachine(BaseRemoteMachine):
         self._scp_command("%s:%s" % (self._fqhost, src), dst)
     def upload(self, src, dst):
         self._scp_command(src, "%s:%s" % (self._fqhost, dst))
-
 
 
 

@@ -256,10 +256,15 @@ class BaseRedirection(BaseCommand):
     def formulate(self, level = 0, args = ()):
         return self.cmd.formulate(level + 1, args) + [self.SYM, shquote(getattr(self.file, "name", self.file))]
     def popen(self, args = (), **kwargs):
+        from plumbum.local_machine import LocalPath
+        from plumbum.remote_machine import RemotePath
+        
         if self.KWARG in kwargs and kwargs[self.KWARG] not in (PIPE, None):
             raise RedirectionError("%s is already redirected" % (self.KWARG,))
-        if isinstance(self.file, str):
-            f = kwargs[self.KWARG] = open(self.file, self.MODE)
+        if isinstance(self.file, (str, LocalPath)):
+            f = kwargs[self.KWARG] = open(str(self.file), self.MODE)
+        elif isinstance(self.file, RemotePath):
+            raise TypeError("Cannot redirect to/from remote paths")
         else:
             kwargs[self.KWARG] = self.file
             f = None
