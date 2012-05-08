@@ -178,7 +178,7 @@ class Workdir(RemotePath):
         the previous location; much like ``pushd``/``popd``.
         
         :param newdir: The destination director (a string or a 
-        :class:`RemotePath <plumbum.remote_machine.RemotePath>`)
+                       :class:`RemotePath <plumbum.remote_machine.RemotePath>`)
         """
         prev = self._path
         self.chdir(newdir)

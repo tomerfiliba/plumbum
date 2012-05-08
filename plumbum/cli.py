@@ -471,7 +471,7 @@ class Application(object):
         except SwitchError:
             ex = sys.exc_info()[1] # compatibility with python 2.5
             print(ex)
-            print()
+            print("")
             inst.help()
             return inst, 1
         

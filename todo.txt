@@ -1,5 +1,4 @@
 * tests
     * cli (finish)
 * docs
-    * docstrings
     * tutorial
