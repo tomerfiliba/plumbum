@@ -85,7 +85,16 @@ class RemoteMachineTest(unittest.TestCase):
             
             p.communicate()
 
-
+    def test_read_write(self):
+        with SshMachine("localhost") as rem:
+            with rem.tempdir() as dir:
+                self.assertTrue(dir.isdir())
+                data = "hello world"
+                (dir / "foo.txt").write(data)
+                self.assertEqual((dir / "foo.txt").read(), data)
+        
+            self.assertFalse(dir.exists())
+    
 
 if __name__ == "__main__":
     unittest.main()

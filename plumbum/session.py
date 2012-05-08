@@ -1,11 +1,13 @@
 import time
 import random
 import logging
-from plumbum.commands import BaseCommand, run_proc
 import six
+from plumbum.commands import BaseCommand, run_proc
 
 
 class ShellSessionError(Exception):
+    """Raises when something goes wrong when calling 
+    :func:`ShellSession.popen <plumbum.session.ShellSession.popen>`"""
     pass
 
 shell_logger = logging.getLogger("plumbum.shell")
@@ -15,6 +17,8 @@ shell_logger = logging.getLogger("plumbum.shell")
 # Shell Session Popen
 #===================================================================================================
 class MarkedPipe(object):
+    """A pipe-like object from which you can read lines; the pipe will return report EOF (the 
+    empty string) when a special marker is detected"""
     __slots__ = ["pipe", "marker"]
     def __init__(self, pipe, marker):
         self.pipe = pipe
@@ -22,8 +26,14 @@ class MarkedPipe(object):
         if six.PY3:
             self.marker = bytes(self.marker, "ascii")
     def close(self):
+        """'Closes' the marked pipe; following calls to ``readline`` will return """""
+        # consume everything
+        while self.readline():
+            pass 
         self.pipe = None
     def readline(self):
+        """Reads the next line from the pipe; returns "" when the special marker is reached.
+        Raises ``EOFError`` if the underlying pipe has closed"""
         if self.pipe is None:
             return six.b("")
         line = self.pipe.readline()
@@ -34,7 +44,10 @@ class MarkedPipe(object):
             line = six.b("")
         return line
 
+
 class SessionPopen(object):
+    """A shell-session-based ``Popen``-like object (has the following attributes: ``stdin``,
+    ``stdout``, ``stderr``, ``returncode``)"""
     def __init__(self, argv, isatty, stdin, stdout, stderr, encoding):
         self.argv = argv
         self.isatty = isatty
@@ -45,14 +58,21 @@ class SessionPopen(object):
         self.returncode = None
         self._done = False
     def poll(self):
+        """Returns the process' exit code or ``None`` if it's still running"""
         if self._done:
             return self.returncode
         else:
             return None
     def wait(self):
+        """Waits for the process to terminate and returns its exit code"""
         self.communicate()
         return self.returncode
     def communicate(self, input = None):
+        """Consumes the process' stdout and stderr until the it terminates. 
+        
+        :param input: An optional bytes/buffer object to send to the process over stdin
+        :returns: A tuple of (stdout, stderr)
+        """
         stdout = []
         stderr = []
         sources = [("1", stdout, self.stdout)]
@@ -87,6 +107,23 @@ class SessionPopen(object):
 
 
 class ShellSession(object):
+    """An abstraction layer over *shell sessions*. A shell session is the execution of an
+    interactive shell (``/bin/sh`` or something compatible), over which you may run commands
+    (sent over stdin). The output of is then read from stdout and stderr. Shell sessions are
+    less "robust" than executing a process on its own, and they are susseptible to all sorts
+    of malformatted-strings attacks, and there is little benefit from using them locally. 
+    However, they can greatly speed up remote connections, and are required for the implementation
+    of :class:`SshMachine <plumbum.remote_machine.SshMachine>`, as they allow us to send multiple
+    commands over a single SSH connection (setting up separate SSH connections incurs a high
+    overhead). Try to avoid using shell sessions, unless you know what you're doing. 
+    
+    Instances of this class may be used as *context-managers*.
+    
+    :param proc: The underlying shell process (with open stdin, stdout and stderr)
+    :param encoding: The encoding to use for the shell session. If ``"auto"``, the underlying
+                     process' encoding is used.
+    :param isatty: If true, assume the shell has a TTY and that stdout and stderr are unified 
+    """
     def __init__(self, proc, encoding = "auto", isatty = False):
         self.proc = proc
         self.encoding = proc.encoding if encoding == "auto" else encoding  
@@ -105,10 +142,11 @@ class ShellSession(object):
             pass
     
     def alive(self):
-        """returns True if the ``ssh`` process is alive, False otherwise"""
+        """Returns ``True`` if the underlying shell process is alive, ``False`` otherwise"""
         return self.proc and self.proc.poll() is None
     
     def close(self):
+        """Closes (terminates) the shell session"""
         if not self.alive():
             return
         try:
@@ -128,7 +166,16 @@ class ShellSession(object):
             pass
         self.proc = None
     
-    def popen(self, cmd, retcode = 0):
+    def popen(self, cmd):
+        """Runs the given command in the shell, adding some decoration around it. Only a single
+        command can be executed at any given time.
+        
+        :param cmd: The command (string or :class:`Command <plumbum.commands.BaseCommand>` object)
+                    to run
+        :returns: An :class:`SessionPopen <plumbum.session.SessionPopen>` instance
+        """
+        if self.proc is None:
+            raise ShellSessionError("Shell session has already been closed")
         if self._current and not self._current._done:
             raise ShellSessionError("Each shell may start only one process at a time")
         
@@ -155,5 +202,13 @@ class ShellSession(object):
         return self._current
     
     def run(self, cmd, retcode = 0):
+        """Runs the given command 
+        
+        :param cmd: The command (string or :class:`Command <plumbum.commands.BaseCommand>` object)
+                    to run
+        :param retcode: The expected return code (0 by default). Set to ``None`` in order to 
+                        ignore erroneous return codes
+        :returns: A tuple of (return code, stdout, stderr)
+        """
         return run_proc(self.popen(cmd), retcode)
 

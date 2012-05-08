@@ -4,14 +4,15 @@ import glob
 import shutil
 import subprocess
 import logging
+import stat
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
 from plumbum.path import Path
 from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.session import ShellSession
 from types import ModuleType
-import stat
 from tempfile import mkdtemp
+from plumbum.lib import setdoc
 
 
 local_logger = logging.getLogger("plumbum.local")
@@ -45,27 +46,44 @@ class LocalPath(Path):
         return self._path
 
     @property
+    @setdoc(Path)
     def basename(self):
         return os.path.basename(str(self))
+    
     @property
+    @setdoc(Path)
     def dirname(self):
         return os.path.dirname(str(self))
 
+    @setdoc(Path)
     def join(self, *parts):
         return LocalPath(self, *parts)
+    
+    @setdoc(Path)
     def list(self):
         return [self.join(fn) for fn in os.listdir(str(self))]
+    
+    @setdoc(Path)
     def isdir(self):
         return os.path.isdir(str(self))
+    
+    @setdoc(Path)
     def isfile(self):
         return os.path.isfile(str(self))
+    
+    @setdoc(Path)
     def exists(self):
         return os.path.exists(str(self))
+    
+    @setdoc(Path)
     def stat(self):
         return os.stat(str(self))
+    
+    @setdoc(Path)
     def glob(self, pattern):
         return [LocalPath(fn) for fn in glob.glob(str(self.join(pattern)))] 
 
+    @setdoc(Path)
     def delete(self):
         if not self.exists():
             return
@@ -73,11 +91,15 @@ class LocalPath(Path):
             shutil.rmtree(str(self))
         else:
             os.remove(str(self))
+    
+    @setdoc(Path)
     def move(self, dst):
         if not isinstance(dst, (str, LocalPath)):
             raise TypeError("dst must be a string or a LocalPath")
         shutil.move(str(self), str(dst))
         return LocalPath(dst)
+    
+    @setdoc(Path)
     def copy(self, dst, override = False):
         if not isinstance(dst, (str, LocalPath)):
             raise TypeError("dst must be a string or a LocalPath")
@@ -89,9 +111,26 @@ class LocalPath(Path):
         else:
             shutil.copy2(str(self), str(dst))
         return dst
+    
+    @setdoc(Path)
     def mkdir(self):
         if not self.exists():
             os.makedirs(str(self))
+    
+    @setdoc(Path)
+    def open(self, mode = "r"):
+        return open(str(self), mode)
+    
+    @setdoc(Path)
+    def read(self):
+        with self.open() as f:
+            return f.read()
+    
+    @setdoc(Path)
+    def write(self, data):
+        with self.open("w") as f:
+            f.write(data)
+
 
 class Workdir(LocalPath):
     """Working directory manipulator"""
@@ -107,6 +146,9 @@ class Workdir(LocalPath):
         
         :param newdir: The destination director (a string or a ``LocalPath``)
         """
+        if not isinstance(newdir, (str, LocalPath)):
+            raise TypeError("newdir must be a string or a LocalPath, not %r" % (newdir,))
+        local_logger.debug("Chdir to %s", newdir)
         os.chdir(str(newdir))
         self._path = os.path.normpath(os.getcwd())
     def getpath(self):
@@ -183,44 +225,59 @@ class BaseEnv(object):
             self._update_path()
 
     def __iter__(self):
+        """Returns an iterator over the items ``(key, value)`` of current environment 
+        (like dict.items)"""
         return iter(self._curr.items())
     def __hash__(self):
         raise TypeError("unhashable type")
     def __len__(self):
+        """Returns the number of elements of the current environment"""
         return len(self._curr)
     def __contains__(self, name):
+        """Tests whether an environment variable exists in the current environment"""
         return (name if self.CASE_SENSITIVE else name.upper()) in self._curr
     def __getitem__(self, name):
+        """Returns the value of the given environment variable from current environment,
+        raising a ``KeyError`` if it does not exist"""
         return self._curr[name if self.CASE_SENSITIVE else name.upper()]
     def keys(self):
+        """Returns the keys of the current environment (like dict.keys)"""
         return self._curr.keys()
     def items(self):
+        """Returns the items of the current environment (like dict.items)"""
         return self._curr.items()
     def values(self):
+        """Returns the values of the current environment (like dict.values)"""
         return self._curr.values()
     def get(self, name, *default):
+        """Returns the keys of the current environment (like dict.keys)"""
         return self._curr.get((name if self.CASE_SENSITIVE else name.upper()), *default)
 
     def __delitem__(self, name):
+        """Deletes an environment variable from the current environment"""
         name = name if self.CASE_SENSITIVE else name.upper()
         del self._curr[name]
         if name == "PATH":
             self._update_path()
     def __setitem__(self, name, value):
+        """Sets/replaces an environment variable's value in the current environment"""
         name = name if self.CASE_SENSITIVE else name.upper()
         self._curr[name] = value
         if name == "PATH":
             self._update_path()    
     def pop(self, name, *default):
+        """Pops an element from the current environment (like dict.pop)"""
         name = name if self.CASE_SENSITIVE else name.upper()
         res = self._curr.pop(name, *default)
         if name == "PATH":
             self._update_path()
         return res
     def clear(self):
+        """Clears the current environment (like dict.clear)"""
         self._curr.clear()
         self._update_path()
     def update(self, *args, **kwargs):
+        """Updates the current environment (like dict.update)"""
         self._curr.update(*args, **kwargs)
         if not self.CASE_SENSITIVE:
             for k, v in list(self._curr.items()):
@@ -268,7 +325,7 @@ class BaseEnv(object):
 
 
 class LocalEnv(BaseEnv):
-    """The local machine's environment; it exposes a dict-like interface"""
+    """The local machine's environment; exposes a dict-like interface"""
     __slots__ = []
     CASE_SENSITIVE = not IS_WIN32
     
@@ -281,13 +338,12 @@ class LocalEnv(BaseEnv):
     
     def expand(self, expr):
         """Expands any environment variables and home shortcuts found in ``expr``
+        (like ``os.path.expanduser`` combined with ``os.path.expandvars``)
         
         :param expr: An expression containing environment variables (as ``$FOO``) or
                      home shortcuts (as ``~/.bashrc``)
                      
-        :returns: The expanded string
-        
-        """
+        :returns: The expanded string"""
         prev = os.environ
         os.environ = self.getdict()
         try:
@@ -391,13 +447,13 @@ class LocalMachine(object):
     @classmethod
     def which(cls, progname):
         """Looks up a program in the ``PATH``. If the program is not found, raises
-        :class:`plumbum.commands.CommandNotFound`
+        :class:`CommandNotFound <plumbum.commands.CommandNotFound>`
         
         :param progname: The program's name. Note that if underscores (``_``) are present
                          in the name, and the exact name is not found, they will be replaced 
                          by hyphens (``-``) and the name will be looked up again
         
-        :returns: A :class:`plumbum.local_machine.LocalPath`
+        :returns: A :class:`LocalPath <plumbum.local_machine.LocalPath>`
         """
         alternatives = [progname]
         if "_" in progname:
@@ -417,14 +473,11 @@ class LocalMachine(object):
         """
         return LocalPath(*parts)
 
-#        A factory for :class:`LocalPaths <plumbum.local_machine.LocalPath>`. Here is some more
-#        text maybe this will help. Anyway, Usage ::
-
     def __getitem__(self, cmd):
         """Returns a `Command` object representing the given program. ``cmd`` can be a string or
-        a :class:`plumbum.local_machine.LocalPath`; if it is a path, a command representing this
-        path will be returned; otherwise, the program name will be looked up in the system's 
-        ``PATH`` (using ``which``). Usage ::
+        a :class:`LocalPath <plumbum.local_machine.LocalPath>`; if it is a path, a command 
+        representing this path will be returned; otherwise, the program name will be looked up 
+        in the system's ``PATH`` (using ``which``). Usage::
         
             ls = local["ls"]
         """
@@ -441,8 +494,8 @@ class LocalMachine(object):
             raise TypeError("cmd must be a LocalPath or a string: %r" % (cmd,))
 
     def session(self):
-        """Creates a new :class:`plumbum.session.ShellSession` object; this invokes ``/bin/sh``
-        and executes commands on it over stdin/stdout/stderr"""
+        """Creates a new :class:`ShellSession <plumbum.session.ShellSession>` object; this 
+        invokes ``/bin/sh`` and executes commands on it over stdin/stdout/stderr"""
         return ShellSession(self["sh"].popen())
     
     @contextmanager

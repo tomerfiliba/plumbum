@@ -157,6 +157,12 @@ class LocalMachineTest(unittest.TestCase):
                 self.assertEqual(f.read(), "hello world")
         
         self.assertFalse(dir.exists())
+    
+    def test_read_write(self):
+        with local.tempdir() as tmp:
+            data = "hello world"
+            (tmp / "foo.txt").write(data)
+            self.assertEqual((tmp / "foo.txt").read(), data)
 
 
 if __name__ == "__main__":

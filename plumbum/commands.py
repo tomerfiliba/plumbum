@@ -12,9 +12,9 @@ if not six.PY3:
 #===================================================================================================
 class ProcessExecutionError(Exception):
     """Represents the failure of a process. When the exit code of a terminated process does not
-    match the expected result, this exception is raised by :func:`plumbum.commands.run_proc`.
-    It contains the process' return code, stdout, and stderr, as well as the command line
-    used to create the process (``argv``)
+    match the expected result, this exception is raised by :func:`run_proc 
+    <plumbum.commands.run_proc>`. It contains the process' return code, stdout, and stderr, as 
+    well as the command line used to create the process (``argv``)
     """
     def __init__(self, argv, retcode, stdout, stderr):
         Exception.__init__(self, argv, retcode, stdout, stderr)
@@ -37,9 +37,9 @@ class ProcessExecutionError(Exception):
         return "\n".join(lines)
 
 class CommandNotFound(Exception):
-    """Raised by :func:`plumbum.local_machine.LocalMachine.which` and 
-    :func:`plumbum.remote_machine.RemoteMachine.which` when a command was not found in the
-    system's ``PATH``"""
+    """Raised by :func:`local.which <plumbum.local_machine.LocalMachine.which>` and 
+    :func:`RemoteMachine.which <plumbum.remote_machine.RemoteMachine.which>` when a 
+    command was not found in the system's ``PATH``"""
     def __init__(self, program, path):
         Exception.__init__(self, program, path)
         self.program = program
@@ -172,8 +172,9 @@ class BaseCommand(object):
     
     def run(self, args = (), **kwargs):
         """Runs the given command (equivalent to popen() followed by 
-        :func:`plumbum.commands.run_proc`). If the exit code of the process does
-        not match the expected one, :class:`plumbum.commands.ProcessExecutionError` is raised.
+        :func:`run_proc <plumbum.commands.run_proc>`). If the exit code of the process does
+        not match the expected one, :class:`ProcessExecutionError 
+        <plumbum.commands.ProcessExecutionError>` is raised.
         
         :param args: Any arguments to be passed to the process (a tuple)
         
@@ -416,7 +417,7 @@ class Future(object):
 class BG(ExecutionModifier):
     """
     An execution modifier that runs the given command in the background, returning a 
-    :class:`plumbum.commands.Future` object. In order to mimic shell syntax, it applies
+    :class:`Future <plumbum.commands.Future>` object. In order to mimic shell syntax, it applies
     when you right-and it with a command. If you wish to expect a different return code
     (other than the normal success indicate by 0), use ``BG(retcode)``. Example::
        
@@ -430,7 +431,7 @@ class BG(ExecutionModifier):
 BG = BG()
 """
 An execution modifier that runs the given command in the background, returning a 
-:class:`plumbum.commands.Future` object. In order to mimic shell syntax, it applies
+:class:`Future <plumbum.commands.Future>` object. In order to mimic shell syntax, it applies
 when you right-and it with a command. If you wish to expect a different return code
 (other than the normal success indicate by 0), use ``BG(retcode)``. Example::
    

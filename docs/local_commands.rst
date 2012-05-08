@@ -1,7 +1,7 @@
 Local Commands
 ==============
 Plumbum exposes a special singleton object named ``local``, which represents your local machine
-and serves as a factory for command objects ::
+and serves as a factory for command objects::
 
     >>> from plumbum import local
     >>>
@@ -14,14 +14,14 @@ and serves as a factory for command objects ::
 
 If you don't specify a full path, the program is searched for in your system's ``PATH`` (and if no
 match is found, an exception is raised). Otherwise, the full path is used as given. Once you have
-a ``Command`` object, you can execute it like a normal function ::
+a ``Command`` object, you can execute it like a normal function::
 
     >>> ls()
     'README.rst\nplumbum\nsetup.py\ntests\ntodo.txt\n'
     >>> ls("-a")
     '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\n[...]'
 
-With just a touch of magic, you can *import* commands from the ``local`` object, like so ::
+With just a touch of magic, you can *import* commands from the ``local`` object, like so::
 
     >>> from plumbum.cmd import grep, cat
     >>> cat
@@ -39,14 +39,14 @@ Pipelining
 ----------
 In order to form pipelines and other chains, we must first learn to *bind arguments* to commands.
 As you've seen, *invoking* commands runs the program; by using square brackets (``__getitem__``),
-we can create bound commands ::
+we can create bound commands::
 
     >>> ls["-l"]
     BoundCommand(<LocalCommand C:\Program Files\Git\bin\ls.exe>, ('-l',))
     >>> grep["-v", ".py"]
     BoundCommand(<LocalCommand C:\Program Files\Git\bin\grep.exe>, ('-v', '.py'))
 
-Forming pipelines now is easy and straight-forwards, using ``|`` (bitwise-or) :: 
+Forming pipelines now is easy and straight-forwards, using ``|`` (bitwise-or):: 
 
     >>> chain = ls["-l"] | grep[".py"]
     >>> print chain
@@ -60,7 +60,7 @@ Output/Input Redirection
 We can also use redirection into files (or any object that exposes a real ``fileno()``). 
 If a string is given, it is assumed to be a file name, and a file with that name is opened 
 for you. In this example, we're reading from ``stdin`` into ``grep world``, and redirect 
-the output to a file named ``tmp.txt`` ::
+the output to a file named ``tmp.txt``::
     
     >>> import sys
     >>> ((grep["world"] < sys.stdin) > "tmp.txt")()
@@ -76,20 +76,20 @@ the output to a file named ``tmp.txt`` ::
 
 Right after ``foo``, Ctrl+D was pressed, which caused ``grep`` to finish. The empty string
 at the end is the command's ``stdout`` (and it's empty because it actually went to a file).
-Lo and behold, the file was created ::
+Lo and behold, the file was created::
 
     >>> cat("tmp.txt")
     'hello world\nwhat has the world become?\n'
 
 If you need to send input into a program (through its ``stdin``), instead of writing the data 
-to a file and redirecting this file into ``stdin``, you can use the shortcut ``<<`` (shift-left) ::
+to a file and redirecting this file into ``stdin``, you can use the shortcut ``<<`` (shift-left)::
 
     >>> (cat << "hello world\nfoo\nbar\spam" | grep["oo"]) ()
     'foo\n'
 
 Exit Codes
 ----------
-If the command we're running fails (returns a non-zero exit code), we'll get an exception ::
+If the command we're running fails (returns a non-zero exit code), we'll get an exception::
 
     >>> cat("non/existing.file")
     Traceback (most recent call last):
@@ -101,7 +101,7 @@ If the command we're running fails (returns a non-zero exit code), we'll get an 
 In order to avoid such exceptions, or when a different exit code is expected, just pass  
 ``retcode = xxx`` as a keyword argument. If ``retcode`` is ``None``, no exception checking 
 is performed (any exit code is accepted); otherwise, the exit code is expected to match the 
-one you passed ::
+one you passed::
 
     >>> cat("non/existing.file", retcode = None)
     '' 
@@ -116,13 +116,13 @@ Run and Popen
 -------------
 Notice that calling commands (or chained-commands) only returns their ``stdout``. In order to
 get hold of the exit code or ``stderr``, you'll need to use the ``run()`` method, which returns 
-a 3-tuple of the exit code, ``stdout``, and ``stderr`` ::
+a 3-tuple of the exit code, ``stdout``, and ``stderr``::
 
     >>> ls.run("-a")
     (0, '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\nplumbum\[...]', '')
 
 And, if you want to want to execute commands in the background (i.e., not wait for them to 
-finish), you can use the ``popen`` method, which returns a normal ``subprocess.Popen`` object ::
+finish), you can use the ``popen`` method, which returns a normal ``subprocess.Popen`` object::
 
     >>> p = ls.popen("-a")
     >>> p.communicate()

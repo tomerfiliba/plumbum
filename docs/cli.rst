@@ -9,7 +9,7 @@ command-line arguments.
 ``plumbum.cli`` offers a different solution: instead of building parser objects and adding
 switches to them imperatively, you write a class, where methods or attributes correspond 
 to switches, and the ``main`` method is the entry-point of the program. A simple program
-might look like so ::
+might look like so::
 
     from plumbum import cli
     

@@ -21,12 +21,16 @@ class TestApp(cli.Application):
 
 class CLITest(unittest.TestCase):
     def test_meta_switches(self):
-        self.assertRaises(SystemExit, TestApp.run, ["foo", "-h"])
-        self.assertRaises(SystemExit, TestApp.run, ["foo", "--version"])
+        _, rc = TestApp._run(["foo", "-h"])
+        self.assertEqual(rc, 0)
+        _, rc = TestApp._run(["foo", "--version"])
+        self.assertEqual(rc, 0)
     
     def test_okay(self):
-        self.assertRaises(SystemExit, TestApp.run, 
-            ["foo", "--bacon=81", "-a", "-v", "-e", "7", "-vv", "--", "lala", "-e", "7"])
+        inst, rc = TestApp._run(["foo", "--bacon=81", "-a", "-v", "-e", "7", "-vv", 
+            "--", "lala", "-e", "7"])
+        self.assertEqual(rc, 0)
+        
 
 
 

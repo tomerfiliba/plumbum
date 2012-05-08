@@ -2,7 +2,7 @@ r"""
 Plumbum Shell Combinators
 -------------------------
 A wrist-handy library for writing shell-like scripts in Python, that can serve 
-as a ``Popen`` replacement, and much more ::
+as a ``Popen`` replacement, and much more::
 
     >>> from plumbum.cmd import ls, grep, wc, cat
     >>> ls()
@@ -27,8 +27,8 @@ as a ``Popen`` replacement, and much more ::
     >>> f.stdout    # will wait for the process to terminate
     u'9\n'
 
-Plumbum includes path abstraction, working directory and environment manipulation,
-process execution, remote process execution over SSH, tunneling, 
+Plumbum includes local/remote path abstraction, working directory and environment 
+manipulation, process execution, remote process execution over SSH, tunneling, 
 SCP-based upload/download, and a {arg|opt}parse replacement for the easy creation 
 of command-line interface (CLI) programs.
 
@@ -38,7 +38,6 @@ from plumbum.commands import FG, BG, ERROUT, ProcessExecutionError, CommandNotFo
 from plumbum.path import Path
 from plumbum.local_machine import local, LocalPath
 from plumbum.remote_machine import SshMachine, RemotePath
-from plumbum.utils import rm, cp, mv
 from plumbum.version import version as __version__
 
 __author__ = "Tomer Filiba (tomerfiliba@gmail.com)"

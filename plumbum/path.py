@@ -1,7 +1,7 @@
 class Path(object):
     """An abstraction over file system paths. This class is abstract, and the two implementations
-    are :class:`plumbum.local_machine.LocalPath` and :class:`plumbum.remote_machine.RemotePath`.
-    
+    are :class:`LocalPath <plumbum.local_machine.LocalPath>` and 
+    :class:`RemotePath <plumbum.remote_machine.RemotePath>`.
     """
     
     __slots__ = []
@@ -105,7 +105,15 @@ class Path(object):
     def mkdir(self):
         """Creates a directory at this path; if the directory already exists, silently ignore"""
         raise NotImplementedError()
-
+    def open(self, mode = "r"):
+        """opens this path as a file"""
+        raise NotImplementedError()
+    def read(self):
+        """returns the contents of this file"""
+        raise NotImplementedError()
+    def write(self, data):
+        """writes the given data to this file"""
+        raise NotImplementedError()
 
 
 

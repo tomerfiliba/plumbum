@@ -4,7 +4,7 @@ So far we've only seen running local commands, but there's more to the ``local``
 this; it aims to represent the *local machine*, and it provides several useful APIs. 
 
 First, you should get acquainted with ``python``, which is a command object that points to 
-the current interpreter (i.e., ``sys.executable``) ::
+the current interpreter (i.e., ``sys.executable``)::
 
     >>> local.python
     <LocalCommand c:\python27\python.exe>
@@ -12,7 +12,7 @@ the current interpreter (i.e., ``sys.executable``) ::
     '2.7.2 (default, Jun 12 2011, 15:08:59) [MSC v.1500 32 bit (Intel)]\r\n'
 
 Another useful member is ``which``, which performs program name resolution in the executable 
-``PATH`` (returns the first match, or raises an exception if no match is found) ::
+``PATH`` (returns the first match, or raises an exception if no match is found)::
 
     >>> local.which("ls")
     <LocalPath C:\Program Files\Git\bin\ls.exe>
@@ -26,7 +26,7 @@ Yet another is ``tempdir``
 
 Working Directory
 -----------------
-The ``local.cwd`` attribute represents the current working directory. You can change it like so ::
+The ``local.cwd`` attribute represents the current working directory. You can change it like so::
 
     >>> local.cwd
     <Workdir d:\workspace\plumbum>
@@ -35,7 +35,7 @@ The ``local.cwd`` attribute represents the current working directory. You can ch
     <Workdir d:\workspace\plumbum\docs>
 
 But a much more useful pattern is to use it as a *context manager*, so it behaves like 
-``pushd``/``popd`` ::
+``pushd``/``popd``::
 
     >>> with local.cwd("c:\\windows"):
     ...     print "%s:%s" % (local.cwd, (ls | wc["-l"])())
@@ -50,14 +50,14 @@ But a much more useful pattern is to use it as a *context manager*, so it behave
 Environment
 -----------
 Similarly to ``cwd``, ``local.env`` represents the local environment. It is a dictionary-like 
-object that holds the environment variables, which you can get/set intuitively ::
+object that holds the environment variables, which you can get/set intuitively::
 
     >>> local.env["JAVA_HOME"]
     'C:\\Program Files\\Java\\jdk1.6.0_20'
     >>> local.env["JAVA_HOME"] = "foo"
 
 And like ``cwd`` again, you can work with ``env`` as a context manager; each level would have
-it's own private copy of the environment ::
+it's own private copy of the environment::
 
     >>> with local.env(FOO="BAR"):
     ...     local.python("-c", "import os;print os.environ['FOO']")
@@ -81,7 +81,7 @@ it's own private copy of the environment ::
 
 In order to make cross-platform-ness easier, the ``local.env`` object provides some convenience 
 properties for getting the username (``.user``), the home path (``.home``), and the executable path
-(``path``) as a list. For instance ::
+(``path``) as a list. For instance::
 
     >>> local.env.user
     'sebulba'

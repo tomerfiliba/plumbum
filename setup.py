@@ -23,7 +23,7 @@ setup(name = "plumbum",
     #zip_safe = True,
     long_description = open(os.path.join(HERE, "README.rst"), "r").read(),
     classifiers = [
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 2.5",
         "Programming Language :: Python :: 2.6",
