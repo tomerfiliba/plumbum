@@ -23,24 +23,28 @@ a ``Command`` object, you can execute it like a normal function::
     >>> ls("-a")
     '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\n[...]'
 
-With just a touch of magic, you can *import* commands from the ``local`` object, like so::
+With just a touch of magic, you can *import* commands from the mock module ``cmd``, like so::
 
     >>> from plumbum.cmd import grep, cat
     >>> cat
     <LocalCommand C:\Program Files\Git\bin\cat.exe>
 
 .. note::
-   There's no real module named ``plumbum.cmd``; it's just a dynamically-created "module", 
-   added directly into ``sys.modules``, which enabled the use of ``from plumbum.cmd import foo``.
-   Trying to ``import plumbum.cmd`` is bound to fail.
+   There's no real module named ``plumbum.cmd``; it's a dynamically-created "module", injected 
+   into ``sys.modules``, which enabled the use of ``from plumbum.cmd import foo``. Trying to 
+   ``import plumbum.cmd`` is bound to fail.
    
-Note that underscores (``_``) will be replaced by hyphens (``-``), if the original version
-is not found. Therefore, in order to get ``apt-get``, you can import ``apt_get``, for convenience.
+   It is important to stress that ``from plumbum.cmd import foo`` translates to ``local["foo"]``
+   behind the scenes.
+
+If underscores (``_``) appear in the name, and the name cannot be found in the path as-is, 
+the underscores will be replaced by hyphens (``-``) and the name will be looked up again.
+This allows you to import ``apt_get`` for ``apt-get``.
 
 Pipelining
 ----------
 In order to form pipelines and other chains, we must first learn to *bind arguments* to commands.
-As you've seen, *invoking* commands runs the program; by using square brackets (``__getitem__``),
+As you've seen, *invoking* a command runs the program; by using square brackets (``__getitem__``),
 we can create bound commands::
 
     >>> ls["-l"]
@@ -48,7 +52,12 @@ we can create bound commands::
     >>> grep["-v", ".py"]
     BoundCommand(<LocalCommand C:\Program Files\Git\bin\grep.exe>, ('-v', '.py'))
 
-Forming pipelines now is easy and straight-forwards, using ``|`` (bitwise-or):: 
+You can think of bound commands as commands that "remember" their arguments. Creating a bound
+command does not run the program; in order to run it, you'll need to call (invoke) it,
+like so: ``ls["-l"]()`` (in fact, ``ls["-l"]()`` is equivalent to ``ls("-l")``).
+
+Now that we can bind arguments to commands, forming pipelines is easy and straight-forwards, 
+using ``|`` (bitwise-or):: 
 
     >>> chain = ls["-l"] | grep[".py"]
     >>> print chain
@@ -57,11 +66,11 @@ Forming pipelines now is easy and straight-forwards, using ``|`` (bitwise-or)::
     >>> chain()
     '-rw-r--r--    1 sebulba  Administ        0 Apr 27 11:54 setup.py\n'
 
-Output/Input Redirection
+Input/Output Redirection
 ------------------------
 We can also use redirection into files (or any object that exposes a real ``fileno()``). 
 If a string is given, it is assumed to be a file name, and a file with that name is opened 
-for you. In this example, we're reading from ``stdin`` into ``grep world``, and redirect 
+for you. In this example, we're reading from ``stdin`` into ``grep world``, and redirecting
 the output to a file named ``tmp.txt``::
     
     >>> import sys
@@ -69,7 +78,7 @@ the output to a file named ``tmp.txt``::
     hello
     hello world
     what has the world become?
-    foo                                    
+    foo                                    # Ctrl+D pressed
     ''
 
 .. note::
@@ -114,6 +123,10 @@ one you passed::
     Exit code: 1
     Stderr:  | "C:/Program Files/Git/bin/cat.exe": non/existing.file: No such file or directory
 
+.. note::
+   If you wish to accept several valid exit codes, ``retcode`` may be a tuple or a list. 
+   For instance, ``grep("foo", "myfile.txt", retcode = (0, 2))``   
+
 Run and Popen
 -------------
 Notice that calling commands (or chained-commands) only returns their ``stdout``. In order to
@@ -123,12 +136,16 @@ a 3-tuple of the exit code, ``stdout``, and ``stderr``::
     >>> ls.run("-a")
     (0, '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\nplumbum\[...]', '')
 
-And, if you want to want to execute commands in the background (i.e., not wait for them to 
+You can also pass ``retcode`` as a keyword argument to ``run`` in the same way discussed above. 
+
+And, if you want to want to execute commands "in the background" (i.e., not wait for them to 
 finish), you can use the ``popen`` method, which returns a normal ``subprocess.Popen`` object::
 
     >>> p = ls.popen("-a")
     >>> p.communicate()
     ('.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\nplumbum\n[...]', '')
+
+You can read from its ``stdout``, ``wait()`` for it, ``terminate()`` it, etc.
 
 Background and Foreground
 -------------------------
@@ -136,8 +153,8 @@ In order to make programming easier, there are two special objects called ``FG``
 which are there to help you. ``FG`` runs programs in the foreground (they receive the parent's 
 ``stdin``, ``stdout`` and ``stderr``), and ``BG`` runs programs in the background (much like 
 ``popen`` above, but it returns a ``Future`` object, instead of a ``subprocess.Popen`` one). 
-``FG`` is especially useful for interactive programs like editors, etc., that require a ``TTY``. 
-::
+``FG`` is especially useful for interactive programs like editors, etc., that require a ``TTY``
+or input from the user. :: 
 
     >>> from plumbum import FG, BG
     >>> ls["-l"] & FG
@@ -149,7 +166,7 @@ which are there to help you. ``FG`` runs programs in the foreground (they receiv
     -rw-r--r--    1 sebulba  Administ       18 Apr 27 11:54 todo.txt
     
 .. note:: 
-   Note that the output of ``ls`` went straight to the screen
+   The output of ``ls`` went straight to the screen
 
 ::
 
@@ -162,4 +179,39 @@ which are there to help you. ``FG`` runs programs in the foreground (they receiv
     >>> f.stdout
     '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\nplumbum\n[...]'
 
+Nesting Commands
+----------------
+The arguments of commands can be strings (or any object that can convert to a string), 
+as we've seen above, but they can also be **commands**! This allows for nesting commands into
+one another, forming complex command objects. The classic example is ``sudo``::
+
+    >>> from plumbum.cmd import sudo
+    >>> print sudo[ls["-l", "-a"]]
+    /usr/bin/sudo /bin/ls -l -a
+    u'total 22\ndrwxr-xr-x    8 sebulba  Administ     4096 May  9 20:46 .\n[...]'
+
+In fact, you can nest even command-chains (i.e., pipes and redirections), e.g., 
+``sudo[ls | grep["\\.py"]]``; however, that would require that the top-level program be able to 
+handle these shell operators, and this is not the case for ``sudo``. ``sudo`` expects its argument 
+to be an executable program, and it would complain about ``|`` not being one. So, there's
+a inherent differnce between between ``sudo[ls] | grep["\\.py"]`` and 
+``sudo[ls | grep["\\.py"]]`` -- the first one would fail, the second would work.
+
+Some programs, mostly shells, will be able to handle pipes and redirections -- an example of
+such a program is ``ssh``. For instance, you could run ``ssh["somehost", ls | grep["\\.py"]]()``;
+here, both ``ls`` and ``grep`` would run on ``somehost``, and only the filtered output would be
+sent (over SSH) to our machine. On the other hand, an invocation such as
+``(ssh["somehost", ls] | grep["\\.py"])()`` would run ``ls`` on ``somehost``, send its output to
+our machine, and ``grep`` would filter it locally. 
+
+We'll learn more about remote command execution :ref:`later <guide-remote-commands>`. In the 
+meanwhile, it's more useful to learn that command nesting works by *shell-quoting* (or 
+*shell-escaping*) the nested command. Quoting normally takes place from the second level of 
+nesting::
+
+    >>> print ssh["somehost", ssh["anotherhost", ls | grep["\\.py"]]]
+    /bin/ssh somehost /bin/ssh anotherhost /bin/ls '|' /bin/grep "'\\.py'"
+
+As you can see, ``|`` and the backslashes have been quoted, to prevent them from executing on
+the first-level shell; this way, they would safey get to the second-level shell.
 

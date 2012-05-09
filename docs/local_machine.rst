@@ -3,18 +3,10 @@
 The Local Object
 ================
 So far we've only seen running local commands, but there's more to the ``local`` object than
-this; it aims to represent the *local machine*, and it provides several useful APIs. 
+this; it aims to "fully represent" the *local machine*. 
 
-First, you should get acquainted with ``python``, which is a command object that points to 
-the current interpreter (i.e., ``sys.executable``)::
-
-    >>> local.python
-    <LocalCommand c:\python27\python.exe>
-    >>> local.python("-c", "import sys;print sys.version")
-    '2.7.2 (default, Jun 12 2011, 15:08:59) [MSC v.1500 32 bit (Intel)]\r\n'
-
-Another useful member is ``which``, which performs program name resolution in the executable 
-``PATH`` (returns the first match, or raises an exception if no match is found)::
+First, you should get acquainted with ``which``, which performs program name resolution in 
+the system ``PATH`` and returns the first match (or raises an exception if no match is found)::
 
     >>> local.which("ls")
     <LocalPath C:\Program Files\Git\bin\ls.exe>
@@ -23,8 +15,13 @@ Another useful member is ``which``, which performs program name resolution in th
        [...]
     plumbum.commands.CommandNotFound: ('nonexistent', [...])
 
-Yet another is ``tempdir``
+Another member is ``python``, which is a command object that points to the current interpreter 
+(``sys.executable``)::
 
+    >>> local.python
+    <LocalCommand c:\python27\python.exe>
+    >>> local.python("-c", "import sys;print sys.version")
+    '2.7.2 (default, Jun 12 2011, 15:08:59) [MSC v.1500 32 bit (Intel)]\r\n'
 
 Working Directory
 -----------------
@@ -51,14 +48,14 @@ But a much more useful pattern is to use it as a *context manager*, so it behave
 
 Environment
 -----------
-Similarly to ``cwd``, ``local.env`` represents the local environment. It is a dictionary-like 
-object that holds the environment variables, which you can get/set intuitively::
+Much like ``cwd``, ``local.env`` represents the *local environment*. It is a dictionary-like 
+object that holds **environment variables**, which you can get/set intuitively::
 
     >>> local.env["JAVA_HOME"]
     'C:\\Program Files\\Java\\jdk1.6.0_20'
     >>> local.env["JAVA_HOME"] = "foo"
 
-And like ``cwd`` again, you can work with ``env`` as a context manager; each level would have
+And similarity to ``cwd`` is the context-manager nature of ``env``; each level would have
 it's own private copy of the environment::
 
     >>> with local.env(FOO="BAR"):
@@ -97,3 +94,43 @@ properties for getting the username (``.user``), the home path (``.home``), and 
     >>> local.env.path.insert(0, "c:\\python32")
     >>> local.which("python")
     <Path c:\python32\python.exe>
+
+.. _guide-paths:
+
+Local Paths
+===========
+Apart from commands, Plumbum provides an easy to use path class that represents file system paths.
+You've already seen paths; for instance, ``local.cwd`` is one, and so is the result of 
+``local.which``. Paths are created by :func:`local.path() <platform.local_machine.LocalMachine.path>`,
+and you can join paths using ``/`` (division), perform globbing using ``//`` (floor division), 
+iterate over the files and subdirectories contained in a directory, read and write file contents, 
+etc. ::
+
+    >>> p = local.path("c:\\windows")
+    >>> p.exists()
+    True
+    >>> p.isdir()
+    True
+    >>> p.isfile()
+    False
+    >>> p / "notepad.exe"
+    <LocalPath c:\windows\notepad.exe>
+    >>> (p / "notepad.exe").isfile()
+    True
+    >>> for p2, _ in zip(p, range(3)):
+    ...     print p2
+    ...
+    c:\windows\addins
+    c:\windows\appcompat
+    c:\windows\apppatch
+    >>> p // "*.dll"
+    [<LocalPath c:\windows\masetupcaller.dll>, ...] 
+    >>> p // "*/*.dll"
+    [<LocalPath c:\windows\apppatch\acgenral.dll>, ...]
+    >>> local.cwd / "docs" // "*.rst"
+    [<LocalPath d:\workspace\plumbum\docs\cli.rst>, ...]
+
+If you need to **copy**, **move**, or **delete** paths, see the :ref:`utils modules <guide-utils>`
+
+
+
