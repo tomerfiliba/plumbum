@@ -79,8 +79,10 @@ def run_proc(proc, retcode):
     
     :param proc: a running Popen-like object
     
-    :param retcode: the expected return (exit) code. 0 is the convention for success.
-                    pass ``None`` in order to ignore the return code
+    :param retcode: the expected return (exit) code of the process. It defaults to 0 (the 
+                    convention for success). If ``None``, the return code is ignored.
+                    It may also be a tuple (or any object that supports ``__contains__``) 
+                    of expected return codes. 
 
     :returns: A tuple of (return code, stdout, stderr)
     """
@@ -93,9 +95,14 @@ def run_proc(proc, retcode):
         stdout = stdout.decode(proc.encoding, "ignore")
         stderr = stderr.decode(proc.encoding, "ignore")
     
-    if retcode is not None and proc.returncode != retcode:
-        raise ProcessExecutionError(getattr(proc, "argv", None), 
-            proc.returncode, stdout, stderr)
+    if retcode is not None:
+        if hasattr(retcode, "__contains__"):
+            if proc.returncode not in retcode:
+                raise ProcessExecutionError(getattr(proc, "argv", None), 
+                    proc.returncode, stdout, stderr)
+        elif proc.returncode != retcode:
+            raise ProcessExecutionError(getattr(proc, "argv", None), 
+                proc.returncode, stdout, stderr)
     return proc.returncode, stdout, stderr
 
 #===================================================================================================
@@ -179,8 +186,10 @@ class BaseCommand(object):
         :param args: Any arguments to be passed to the process (a tuple)
         
         :param retcode: The expected return code of this process (defaults to 0).
-                        In order to disable exit-code validation, pass ``None``. 
-                        Note: this argument must be passed as a keyword argument.
+                        In order to disable exit-code validation, pass ``None``. It may also
+                        be a tuple (or any iterable) of expected exit codes.
+                        
+                        .. note:: this argument must be passed as a keyword argument.
         
         :param kwargs: Any keyword-arguments to be passed to the ``Popen`` constructor
         

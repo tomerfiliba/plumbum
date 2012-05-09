@@ -1,3 +1,5 @@
+.. _guide-cli:
+
 Command-Line Interface (CLI)
 ============================
 

@@ -1,3 +1,5 @@
+.. _guide-local-machine:
+
 The Local Object
 ================
 So far we've only seen running local commands, but there's more to the ``local`` object than

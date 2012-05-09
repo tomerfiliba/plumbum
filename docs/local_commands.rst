@@ -1,3 +1,5 @@
+.. _guide-local-commands:
+
 Local Commands
 ==============
 Plumbum exposes a special singleton object named ``local``, which represents your local machine
