@@ -179,39 +179,43 @@ or input from the user. ::
     >>> f.stdout
     '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\nplumbum\n[...]'
 
-Nesting Commands
-----------------
-The arguments of commands can be strings (or any object that can convert to a string), 
-as we've seen above, but they can also be **commands**! This allows for nesting commands into
+Command Nesting
+---------------
+The arguments of commands can be strings (or any object that can meaningfully-convert to a string), 
+as we've seen above, but they can also be other **commands**! This allows nesting commands into
 one another, forming complex command objects. The classic example is ``sudo``::
 
     >>> from plumbum.cmd import sudo
     >>> print sudo[ls["-l", "-a"]]
     /usr/bin/sudo /bin/ls -l -a
+    
+    >>> sudo[ls["-l", "-a"]]()
     u'total 22\ndrwxr-xr-x    8 sebulba  Administ     4096 May  9 20:46 .\n[...]'
 
 In fact, you can nest even command-chains (i.e., pipes and redirections), e.g., 
-``sudo[ls | grep["\\.py"]]``; however, that would require that the top-level program be able to 
-handle these shell operators, and this is not the case for ``sudo``. ``sudo`` expects its argument 
-to be an executable program, and it would complain about ``|`` not being one. So, there's
-a inherent differnce between between ``sudo[ls] | grep["\\.py"]`` and 
-``sudo[ls | grep["\\.py"]]`` -- the first one would fail, the second would work.
+``sudo[ls | grep["\\.py"]]``; however, that would require that the top-level program be able 
+to handle these shell operators, and this is not the case for ``sudo``. ``sudo`` expects its 
+argument to be an executable program, and it would complain about ``|`` not being one. 
+So, there's a inherent differnce between between ``sudo[ls | grep["\\.py"]]``
+and ``sudo[ls] | grep["\\.py"]`` (where the pipe is unnested) -- the first would fail, 
+the latter would work as expected.
 
-Some programs, mostly shells, will be able to handle pipes and redirections -- an example of
+Some programs (mostly shells) will be able to handle pipes and redirections -- an example of
 such a program is ``ssh``. For instance, you could run ``ssh["somehost", ls | grep["\\.py"]]()``;
 here, both ``ls`` and ``grep`` would run on ``somehost``, and only the filtered output would be
 sent (over SSH) to our machine. On the other hand, an invocation such as
-``(ssh["somehost", ls] | grep["\\.py"])()`` would run ``ls`` on ``somehost``, send its output to
-our machine, and ``grep`` would filter it locally. 
+``(ssh["somehost", ls] | grep["\\.py"])()`` would run ``ls`` on ``somehost``, send its entire
+output to our machine, and ``grep`` would filter it locally. 
 
 We'll learn more about remote command execution :ref:`later <guide-remote-commands>`. In the 
-meanwhile, it's more useful to learn that command nesting works by *shell-quoting* (or 
-*shell-escaping*) the nested command. Quoting normally takes place from the second level of 
-nesting::
+meanwhile, we should learn that command nesting works by *shell-quoting* (or *shell-escaping*) 
+the nested command. Quoting normally takes place from the second level of nesting::
 
     >>> print ssh["somehost", ssh["anotherhost", ls | grep["\\.py"]]]
     /bin/ssh somehost /bin/ssh anotherhost /bin/ls '|' /bin/grep "'\\.py'"
 
-As you can see, ``|`` and the backslashes have been quoted, to prevent them from executing on
-the first-level shell; this way, they would safey get to the second-level shell.
+In this example, we first ssh to ``somehost``, from it we ssh to ``anotherhost``, and on that host
+we run the command chain. As you can see, ``|`` and the backslashes have been quoted, to prevent 
+them from executing on the first-level shell; this way, they would safey get to the 
+second-level shell.
 

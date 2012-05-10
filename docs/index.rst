@@ -1,21 +1,21 @@
-Plumbum: Shell Combinators
-==========================
+Plumbum: Shell Combinators and More
+===================================
 
 Ever wished the wrist-handiness of shell scripts be put into a **real** programming language? 
 Say hello to *Plumbum Shell Combinators*. Plumbum (Latin for *lead*, which was used to create 
 pipes back in the day) is a small yet feature-rich library for shell script-like programs in Python. 
 The motto of the library is **"Never write shell scripts again"**, and thus it attempts to mimic 
-the **shell syntax** ("shell combinators") where it makes sense, while keeping it all **pythonic 
+the **shell syntax** (*shell combinators*) where it makes sense, while keeping it all **pythonic 
 and cross-platform**.
  
 Apart from :ref:`shell-like syntax <guide-local-commands>` and :ref:`handy shortcuts <guide-utils>`, 
-the library provides local and :ref:`remote <guide-remote-machines>` command execution (over SSH), 
+the library provides local and :ref:`remote <guide-remote-commands>` command execution (over SSH), 
 local and remote file-system :ref:`paths <guide-paths>`, easy working-directory and 
 environment :ref:`manipulation <guide-local-machine>`, and a programmatic 
 :ref:`guide-cli` application toolkit. Now let's see some code!
 
 Cheat Sheet
------------
+===========
 
 **Basics** ::
 
@@ -73,7 +73,7 @@ Cheat Sheet
 **Remote commands (over SSH)** ::
     
     >>> from plumbum import SshMachine
-    >>> remote = SshMachine("your-host.com")
+    >>> remote = SshMachine("somehost", user = "john", keyfile = "/path/to/idrsa")
     >>> r_ls = remote["ls"]
     >>> with remote.cwd("/lib"):
     ...     (r_ls | grep["0.so.0"])()
@@ -90,36 +90,40 @@ you encounter or to request features. The library is released under the permissi
 <https://github.com/tomerfiliba/plumbum/blob/master/LICENSE>`_.
 
 Plumbum supports **Python 2.5-3.2** (requires `six <http://pypi.python.org/pypi/six>`_) and has been 
-tested on **Linux** and **Windows** machines. Any \*nix should work fine, but on Windows, 
-you'll probably want to install a decent **binutils environment** and add it to your ``PATH``, 
-such as `cygwin <http://www.cygwin.com/>`_ or `mingw <http://mingw.org/>`_ (comes bundled with
-`Git for Windows <http://msysgit.github.com/>`_). Note that for remote command execution,
-an openSSH-compatible client is required (bundled with *Git for Windows*), and a binutils 
-environment is also expected on the host machine (namely commands like ``which``, ``ls``, etc.)
+tested on **Linux** and **Windows** machines. Any Unix-like machine should work fine out of the box,
+but on Windows, you'll probably want to install a decent `coreutils <http://en.wikipedia.org/wiki/Coreutils>`_ 
+environment and add it to your ``PATH``. I can recommend `mingw <http://mingw.org/>`_ (which comes 
+bundled with `Git for Windows <http://msysgit.github.com/>`_), but `cygwin <http://www.cygwin.com/>`_ 
+should work too. If you only wish to use Plumbum as a Popen-replacement to run Windows programs, 
+then there's no need for the Unix tools.
 
-You can **download** the library from `PyPI <http://pypi.python.org/pypi/plumbum>`_ (in a variety
-of formats), or ``easy-install`` / ``pip install`` it directly. 
+Note that for remote command execution, an **openSSH-compatible** client is required (also bundled 
+with *Git for Windows*), and a ``bash``-compatible shell and a coreutils environment is also 
+expected on the host machine.
+
+You can **download** the library from the `Python Package Index <http://pypi.python.org/pypi/plumbum>`_ 
+(in a variety of formats), or ``easy-install plumbum`` / ``pip install plumbum`` directly. 
 
 User Guide
 ==========
 The user guide covers most of the features of Plumbum, with lots of code-snippets to get you 
-swimming in no time. It introduces the concepts and the "syntax" gradually, so it's recommended 
-to read it in order.
+swimming in no time. It introduces the concepts and "syntax" gradually, so it's recommended 
+you read it in order.
 
 .. toctree::
    :maxdepth: 2
    
    local_commands
    local_machine
-   remote_machine
+   remote
    utils
    cli
 
 API Reference
 =============
 The API reference (generated from the *docstrings* within the library) covers all of the 
-exposed APIs of the library. Note that some "advance" features or function parameters are missing 
-from the guide, so you might want to consult with the API reference in this cases. 
+exposed APIs of the library. Note that some "advance" features and some function parameters are 
+missing from the guide, so you might want to consult with the API reference in these cases. 
 
 .. toctree::
    :maxdepth: 2

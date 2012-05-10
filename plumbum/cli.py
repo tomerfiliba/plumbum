@@ -197,7 +197,7 @@ class Flag(SwitchAttr):
     """
     def __init__(self, names, default = False, **kwargs):
         SwitchAttr.__init__(self, names, argtype = None, default = default, list = False, **kwargs)
-    def __call__(self, _, v):
+    def __call__(self, _):
         self._value = not self._value
 
 class CountAttr(SwitchAttr):
