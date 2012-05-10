@@ -1,8 +1,9 @@
 from plumbum import cli
 
 class MyApp(cli.Application):
-    PROGNAME = "Foobar"
-    VERSION = "7.3"
+    def main(self, src, dst, *eggs):
+        print src, dst, eggs
+
 
 if __name__ == "__main__":
     MyApp.run(["", "-h"])

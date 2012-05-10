@@ -81,12 +81,12 @@ CLI toolkit; it exposes methods of your CLI application as CLI-switches, allowin
 invoked from the command line. Let's examine the following toy application::
 
     class MyApp(cli.Application):
-        @switch("--log-to-file", str)
+        @cli.switch("--log-to-file", str)
         def log_to_file(self, filename):
             """Sets the file into which logs will be emitted"""
             logger.addHandler(FileHandle(filename))
     
-        @switch(["-r", "--root"])
+        @cli.switch(["-r", "--root"])
         def allow_as_root(self):
             """If given, allow running as root"""
             self._allow_root = True
@@ -100,47 +100,233 @@ for instance, ``$ ./myapp.py --log-to-file=/tmp/log`` would translate to a call 
 ``app.log_to_file("/tmp/log")``. After all switches were processed, control passes to ``main``.
 
 .. note::
-    Methods' docstrings and argument names will be used to render the help message, keeping your
-    code as `DRY <http://en.wikipedia.org/wiki/Don't_repeat_yourself>`_ as possible
+   Methods' docstrings and argument names will be used to render the help message, keeping your
+   code as `DRY <http://en.wikipedia.org/wiki/Don't_repeat_yourself>`_ as possible.
+   
+   There's also :func:`autoswitch <plumbum.cli.autoswitch>`, which infers the name of the switch
+   from the function's name, e.g. ::
+        
+        @cli.autoswitch(str)
+        def log_to_file(self, filename):
+            pass
+   
+   Will bind the add the switch function to ``--log-to-file``.
 
 Arguments
 ^^^^^^^^^
-As seen in the example above, switch functions may take a single argument. 
+As demonstrated in the example above, switch functions may take no arguments (not counting 
+``self``) or a single argument argument. If a switch function accepts an argument, it must 
+specify the argument's *type*. If you require no special validation, simply pass ``str``; 
+otherwise, you may pass any type (or any callable, in fact) that will take a string and convert 
+it to a meaningful object. If conversion is not possible, the type (or callable) is expected to
+raise either ``TypeError` or ``ValueError``.
 
-* Range
-* Set
+For instance ::
 
-List
-^^^^
+    class MyApp(cli.Application):
+        _port = 8080
+        
+        @cli.switch(["-p"], int)
+        def server_port(self, port):
+            self._port = port
+        
+        def main(self):
+            print self._port
+
+::
+
+    $ ./example.py -p 17
+    17
+    $ ./example.py -p foo
+    Argument of -p expected to be <type 'int'>, not 'foo':
+        ValueError("invalid literal for int() with base 10: 'foo'",)    
+
+The toolkit includes two additional "types" (or rather, *validators*): ``Range`` and ``Set``.
+``Range`` takes a minimal value and a maximal value and expects an integer in that range 
+(inclusive). ``Set`` takes a set of allowed values, and expects the argument to match one of 
+these values. Here's an example ::  
+
+    class MyApp(cli.Application):
+        _port = 8080
+        _mode = "TCP"
+        
+        @cli.switch("-p", cli.Range(1024,65535))
+        def server_port(self, port):
+            self._port = port
+        
+        @cli.switch("-m", cli.Set("TCP", "UDP", case_sensitive = False))
+        def server_mode(self, mode):
+            self._mode = mode
+        
+        def main(self):
+            print self._port, self._mode
+
+::
+
+    $ ./example.py -p 17
+    Argument of -p expected to be [1024..65535], not '17':
+        ValueError('Not in range [1024..65535]',)
+    $ ./example.py -m foo
+    Argument of -m expected to be Set('udp', 'tcp'), not 'foo':
+        ValueError("Expected one of ['UDP', 'TCP']",)
+
+Repeatable Switches
+^^^^^^^^^^^^^^^^^^^
+Many times, you would like to allow a certain switch to be given multiple times. For instance,
+in ``gcc``, you may give several include directories using ``-I``. By default, switches may
+only be given once, unless you allow multiple occurrences by passing ``list = True`` to the
+``switch`` decorator ::
+
+    class MyApp(cli.Application):
+        _dirs = []
+        
+        @cli.switch("-I", str, list = True)
+        def include_dirs(self, dirs):
+            self._dirs = dirs
+        
+        def main(self):
+            print self._dirs
+
+::
+
+    $ ./example.py -I/foo/bar -I/usr/include
+    ['/foo/bar', '/usr/include']
+
+.. note::
+   The switch function will be called **only once**, and its argument will be a list of items
 
 Mandatory Switches
 ^^^^^^^^^^^^^^^^^^
+If a certain switch is required, you can specify this by passing ``mandatory = True`` to the 
+``switch`` decorator. The user will not be able to run the program without specifying a value
+for this switch.
 
 Dependencies
 ^^^^^^^^^^^^
+Many time, the occurrence of a certain switch depends on the occurrence of another, e..g, it 
+may not be possible to give ``-x`` without also giving ``-y``. This constraint can be achieved
+by specifying the ``requires`` keyword argument to the ``switch`` decorator; it is a list
+of switch names that this switch depends on. If the required switches are missing, the user
+will not be able to run the program. :: 
+
+    class MyApp(cli.Application):
+        @cli.switch("--log-to-file", str)
+        def log_to_file(self, filename):
+            logger.addHandler(logging.FileHandler(filename))
+    
+        @cli.switch("--verbose", requires = ["--log-to-file"])
+        def verbose(self):
+            logger.setLevel(logging.DEBUG)
+
+::
+
+    $ ./example --verbose
+    Given --verbose, the following are missing ['log-to-file']
+
+.. warning::
+   Currently, the toolkit doesn't go as far as computing a topological order on the switches given;
+   it invokes the switch functions at an arbitrary order. This will change in future releases.
 
 Mutual Exclusion
 ^^^^^^^^^^^^^^^^^
+Just as some switches may depend on others, some switches mutually-exclude others. For instance,
+it does not make sense to allow ``--verbose`` and ``--terse``. For this purpose, you can set the
+``excludes`` list in the ``switch`` decorator. ::
+
+    class MyApp(cli.Application):
+        @cli.switch("--log-to-file", str)
+        def log_to_file(self, filename):
+            logger.addHandler(logging.FileHandler(filename))
+    
+        @cli.switch("--verbose", requires = ["--log-to-file"], excludes = ["--terse"])
+        def verbose(self):
+            logger.setLevel(logging.DEBUG)
+        
+        @cli.switch("--terse", requires = ["--log-to-file"], excludes = ["--verbose"])
+        def terse(self):
+            logger.setLevel(logging.WARNING)
+
+::
+
+    $ ./example --log-to-file=log.txt --verbose --terse
+    Given --verbose, the following are invalid ['--terse']
 
 Grouping
 ^^^^^^^^
+If you wish to group certain switches together in the help message, you can specify 
+``group = "Group Name"``, where ``Group Name`` is any string. When the help message is rendered,
+all the switches that belong to the same group will be grouped together. Note that grouping has
+no other effects on the way switches are processed, but it can help improve the readability of
+the help message.
 
 Switch Attributes
 -----------------
-* SwitchAttr
-* Flag
-* CountAttr
+Many times it's desired to simply store a switch's argument in an attribute, or set a flag if 
+a certain switch is given. For this purpose, the toolkit provides 
+:class:`SwitchAttr <plumbum.cli.SwitchAttr>`, which is `data descriptor 
+<http://docs.python.org/howto/descriptor.html>`_ that stores the argument in an instance attribute.
+There are two additional "flavors" of ``SwitchAttr``: ``Flag`` (which toggles its default value
+if the switch is given) and ``CountingAttr`` (which counts the number of occurrences of the switch)
+::
+
+    class MyApp(cli.Application):
+        log_file = cli.SwitchAttr("--log-file", str, default = None)
+        enable_logging = cli.Flag("--no-log", default = True)
+        verbosity_level = cli.CountingAttr("-v")
+        
+        def main(self):
+            print self.log_file, self.enable_logging, self.verbosity_level
+
+::
+
+    $ ./example.py -v --log-file=log.txt -v --no-log -vvv
+    log.txt False 5
 
 Main
 ----
 
-* arguments
-* varargs
+The ``main()`` method is takes control once all the command-line switches have been processed.
+It may take any number of *positional argument*; for instance, in ``cp -r /foo /bar``,
+``/foo`` and ``/bar`` are the *positional arguments*. The number of positional arguments
+that the program would accept depends on the signature of the method: if the method takes 5 
+arguments, 2 of which have default values, then at least 3 positional arguments must be supplied
+by the user and at most 5. If the method also takes varargs (``*args``), the number of
+arguments that may be given is unbound ::
 
+    class MyApp(cli.Application):
+        def main(self, src, dst, mode = "normal"):
+            print src, dst, mode
 
+::
 
+    $ ./example.py /foo /bar
+    /foo /bar normal
+    $ ./example.py /foo /bar spam
+    /foo /bar spam
+    $ ./example.py /foo
+    Expected at least 2 positional arguments, got ['/foo']
+    $ ./example.py /foo /bar spam bacon
+    Expected at most 3 positional arguments, got ['/foo', '/bar', 'spam', 'bacon']
 
+.. note::
+   The method's signature is also used to generate the help message, e.g. ::
+    
+        Usage:  [SWITCHES] src dst [mode='normal']
 
+With varargs::
 
+    class MyApp(cli.Application):
+        def main(self, src, dst, *eggs):
+            print src, dst, eggs
+
+::
+
+    $ ./example.py a b c d
+    a b ('c', 'd')
+    $ ./example.py --help
+    Usage:  [SWITCHES] src dst eggs...
+    Meta-switches:
+        -h, --help                 Prints this help message and quits
+        -v, --version              Prints the program's version and quits
 
 

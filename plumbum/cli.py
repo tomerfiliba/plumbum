@@ -147,6 +147,14 @@ def switch(names, argtype = None, argname = None, list = False, mandatory = Fals
         return func
     return deco
 
+def autoswitch(*args, **kwargs):
+    """A decorator that exposes a function as a switch, "inferring" the name of the switch
+    from the function's name (converting to lower-case, and replacing underscores by hyphens).
+    The arguments are the same as for :func:`switch <plumbum.cli.switch>`."""
+    def deco(func):
+        return switch(func.__name__.replace("_", "-"), *args, **kwargs)(func)
+    return deco
+
 #===================================================================================================
 # Switch Attributes
 #===================================================================================================
@@ -200,12 +208,12 @@ class Flag(SwitchAttr):
     def __call__(self, _):
         self._value = not self._value
 
-class CountAttr(SwitchAttr):
+class CountingAttr(SwitchAttr):
     """A specialized `SwitchAttr` that counts the number of occurrences of the switch in 
     the command line. Usage::
 
         class MyApp(Application):
-            verbosity = CountAttr(["-v", "--verbose"], help = "The more, the merrier")
+            verbosity = CountingAttr(["-v", "--verbose"], help = "The more, the merrier")
             
     If ``-v -v -vv`` is given in the command-line, it will result in ``verbosity = 4``.
     
@@ -257,14 +265,14 @@ class Set(object):
                              comparison or not. The default is ``True``
     """
     def __init__(self, *values, **kwargs):
-        self.case_insensitive = kwargs.pop("case_insensitive", True)
+        self.case_sensitive = kwargs.pop("case_sensitive", False)
         if kwargs:
             raise TypeError("got unexpected keyword argument(s)", kwargs.keys())
-        self.values = dict(((v if self.case_insensitive else v.lower()), v) for v in values)
+        self.values = dict(((v if self.case_sensitive else v.lower()), v) for v in values)
     def __repr__(self):
-        return "Set(%s)" % (", ".join(repr(v) for v in self.values))
+        return "Set(%s)" % (", ".join(repr(v) for v in self.values.values()))
     def __call__(self, obj):
-        if not self.case_insensitive:
+        if not self.case_sensitive:
             obj = obj.lower()
         if obj not in self.values:
             raise ValueError("Expected one of %r" % (list(self.values.values()),))
@@ -435,14 +443,14 @@ class Application(object):
         
         gotten = set(swfuncs.keys())
         for func in gotten:
-            missing = requirements[func] - gotten
+            missing = set(f.func for f in requirements[func]) - gotten
             if missing:
                 raise SwitchCombinationError("Given %s, the following are missing %r" % 
-                    (swfuncs[func][0], [swfuncs[f] for f in missing]))
-            invalid = exclusions[func] & gotten
+                    (swfuncs[func][0], [self._switches_by_func[f].names[0] for f in missing]))
+            invalid = set(f.func for f in exclusions[func]) & gotten
             if invalid:
                 raise SwitchCombinationError("Given %s, the following are invalid %r" % 
-                    (swfuncs[func][0], [swfuncs[f] for f in invalid]))
+                    (swfuncs[func][0], [swfuncs[f][0] for f in invalid]))
         
         m_args, m_varargs, _, m_defaults = inspect.getargspec(self.main)
         max_args = six.MAXSIZE if m_varargs else len(m_args) - 1
@@ -506,8 +514,8 @@ class Application(object):
         m_args, m_varargs, _, m_defaults = inspect.getargspec(self.main)
         tailargs = m_args[1:] # skip self
         if m_defaults:
-            for d, i in enumerate(reversed(m_defaults)):
-                tailargs[-i] = "[%s=%r]" % (tailargs[-i], d)
+            for i, d in enumerate(reversed(m_defaults)):
+                tailargs[-i - 1] = "[%s=%r]" % (tailargs[-i - 1], d)
         if m_varargs:
             tailargs.append("%s..." % (m_varargs,))
         tailargs = " ".join(tailargs)
