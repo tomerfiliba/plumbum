@@ -1,6 +1,7 @@
 import sys
 import six
 import inspect
+from plumbum import local
 
 
 class SwitchError(Exception):
@@ -175,6 +176,7 @@ class SwitchAttr(object):
     :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switch>`
     """
     def __init__(self, names, argtype, default = None, **kwargs):
+        self.__doc__ = "Sets an attribute" # to prevent the help message from showing SwitchAttr's docstring
         switch(names, argtype = argtype, argname = "VALUE", **kwargs)(self)
         self._value = default
     def __call__(self, _, val):
@@ -209,8 +211,8 @@ class Flag(SwitchAttr):
         self._value = not self._value
 
 class CountingAttr(SwitchAttr):
-    """A specialized `SwitchAttr` that counts the number of occurrences of the switch in 
-    the command line. Usage::
+    """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` that counts the number of 
+    occurrences of the switch in the command line. Usage::
 
         class MyApp(Application):
             verbosity = CountingAttr(["-v", "--verbose"], help = "The more, the merrier")
@@ -278,10 +280,44 @@ class Set(object):
             raise ValueError("Expected one of %r" % (list(self.values.values()),))
         return self.values[obj]
 
+class Predicate(object):
+    def __str__(self):
+        return self.__class__.__name__
+
+class ExistingDirectory(Predicate):
+    """A switch-type validator that ensures that the given argument is an existing directory"""
+    def __call__(self, val):
+        p = local.path(val)
+        if not p.isdir():
+            raise ValueError("%r is not a directory" % (val,))
+        return p
+ExistingDirectory = ExistingDirectory()
+
+class ExistingFile(Predicate):
+    """A switch-type validator that ensures that the given argument is an existing file"""
+    def __call__(self, val):
+        p = local.path(val)
+        if not p.isfile():
+            raise ValueError("%r is not a file" % (val,))
+        return p
+ExistingFile = ExistingFile()
+
+class NonexistentPath(Predicate):
+    """A switch-type validator that ensures that the given argument is an nonexistent path"""
+    def __call__(self, val):
+        p = local.path(val)
+        if not p.exists():
+            raise ValueError("%r already exists" % (val,))
+        return p
+NonexistentPath = NonexistentPath()
+
 
 #===================================================================================================
 # CLI Application base class
 #===================================================================================================
+class NoArg(object):
+    pass
+
 class Application(object):
     """
     The base class for CLI applications; your "entry point" class should derive from it,
@@ -335,7 +371,7 @@ class Application(object):
         self.executable = executable
         self._switches_by_name = {}
         self._switches_by_func = {}
-        for cls in reversed(self.__class__.mro()):
+        for cls in reversed(type(self).mro()):
             for obj in cls.__dict__.values():
                 swinfo = getattr(obj, "_switch_info", None)
                 if not swinfo:
@@ -349,7 +385,9 @@ class Application(object):
     def _parse_args(self, argv):
         tailargs = []
         swfuncs = {}
+        index = 0
         while argv:
+            index += 1
             a = argv.pop(0)
             if a == "--":
                 # end of options, treat the rest as tailargs
@@ -382,7 +420,7 @@ class Application(object):
                             val = argv.pop(0)
                     else:
                         val = a
-                
+            
             elif a.startswith("-") and len(a) >= 2:
                 # [-a], [-a, XXX], [-aXXX], [-abc]
                 name = a[1]
@@ -415,7 +453,8 @@ class Application(object):
                     raise WrongArgumentType("Argument of %s expected to be %r, not %r:\n    %r" % (
                         swname, swinfo.argtype, val, ex))
             else:
-                val = None
+                val = NoArg
+            
             if swinfo.func in swfuncs:
                 if swinfo.list:
                     swfuncs[swinfo.func][1].append(val)
@@ -423,9 +462,9 @@ class Application(object):
                     raise SwitchError("cannot repeat %r")
             else:
                 if swinfo.list:
-                    swfuncs[swinfo.func] = (swname, [val])
+                    swfuncs[swinfo.func] = (swname, [val], index)
                 else:
-                    swfuncs[swinfo.func] = (swname, val)
+                    swfuncs[swinfo.func] = (swname, val, index)
         
         if six.get_method_function(self.help) in swfuncs:
             raise ShowHelp()
@@ -440,6 +479,8 @@ class Application(object):
                     ("/".join(("-" if len(n) == 1 else "--") + n for n in swinfo.names),))
             requirements[swinfo.func] = set(self._switches_by_name[req] for req in swinfo.requires)
             exclusions[swinfo.func] = set(self._switches_by_name[exc] for exc in swinfo.excludes)
+        
+        # TODO: compute topological order
         
         gotten = set(swfuncs.keys())
         for func in gotten:
@@ -462,14 +503,17 @@ class Application(object):
             raise PositionalArgumentsError("Expected at most %d positional arguments, got %r" % 
                 (max_args, tailargs))
         
-        return swfuncs, tailargs
+        ordered = [x for _, x in sorted(
+                (index, (f, () if a is NoArg else (a,))) 
+                    for f, (_, a, index) in swfuncs.items())]
+        return ordered, tailargs
     
     @classmethod
     def _run(cls, argv):
         argv = list(argv)
         inst = cls(argv.pop(0))
         try:
-            swfuncs, tailargs = inst._parse_args(list(argv))
+            ordered, tailargs = inst._parse_args(list(argv))
         except ShowHelp:
             inst.help()
             return inst, 0
@@ -483,11 +527,8 @@ class Application(object):
             inst.help()
             return inst, 1
         
-        for f, (_, a) in swfuncs.items():
-            if a is None:
-                f(inst)
-            else:
-                f(inst, a)
+        for f, a in ordered:
+            f(inst, *a)
         retcode = inst.main(*tailargs)
         if retcode is None:
             retcode = 0

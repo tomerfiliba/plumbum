@@ -170,6 +170,13 @@ these values. Here's an example ::
     Argument of -m expected to be Set('udp', 'tcp'), not 'foo':
         ValueError("Expected one of ['UDP', 'TCP']",)
 
+.. note::
+   The toolkit also provides some other useful validators: `ExistingFile` (ensures the given 
+   argument is an existing file), `ExistingDirectory` (ensures the given argument is an existing 
+   directory), and `NonexistentPath` (ensures the given argument is not an existing path).
+   All of these convert the argument to a :ref:`local path <guide-paths>`.
+
+
 Repeatable Switches
 ^^^^^^^^^^^^^^^^^^^
 Many times, you would like to allow a certain switch to be given multiple times. For instance,
@@ -224,8 +231,9 @@ will not be able to run the program. ::
     Given --verbose, the following are missing ['log-to-file']
 
 .. warning::
-   Currently, the toolkit doesn't go as far as computing a topological order on the switches given;
-   it invokes the switch functions at an arbitrary order. This will change in future releases.
+   The toolkit invokes the switch functions in the same order in which the switches were given
+   on the command line. It doesn't go as far as computing a topological order on the, but
+   this will change in the future.
 
 Mutual Exclusion
 ^^^^^^^^^^^^^^^^^

@@ -1,4 +1,13 @@
-* tests
-    * cli (finish)
-* docs
-    * tutorial
+v 1.0
+=====
+
+* CLI:
+    * compute topological order, resolve cycles according to relative order in the command line
+    * finish tests
+    * beautify code (_parse_args is a monster, less use of tuples)
+
+* Core:
+    * add timeout to run_proc
+
+* Docs:
+    * finish remote

@@ -13,8 +13,8 @@ class TestApp(cli.Application):
         print ("!!b", param)
     
     eggs = cli.SwitchAttr(["e"], str, help = "sets the eggs attribute")
-    verbose = cli.CountAttr(["v"], help = "increases the verbosity level")
-    
+    verbose = cli.CountingAttr(["v"], help = "increases the verbosity level")
+
     def main(self, *args):
         self.tailargs = args
 
@@ -30,7 +30,7 @@ class CLITest(unittest.TestCase):
         inst, rc = TestApp._run(["foo", "--bacon=81", "-a", "-v", "-e", "7", "-vv", 
             "--", "lala", "-e", "7"])
         self.assertEqual(rc, 0)
-        
+        self.assertEqual(inst.eggs, "7")
 
 
 
