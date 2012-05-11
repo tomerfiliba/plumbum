@@ -8,6 +8,9 @@ class BuildProject(cli.Application):
     
     def main(self):
         delete(local.cwd // "*.egg-info", "build", "dist")
+
+        if self.upload:
+            local.python("setup.py", "register")
         
         local.python("setup.py", "sdist", "--formats=zip,gztar", 
             "upload" if self.upload else "")
