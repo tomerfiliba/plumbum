@@ -3,13 +3,17 @@
     <div style="float:right; margin:1em; padding-top: 1em; padding-bottom: 1em; 
         padding-right: 2em; padding-left: 2em; background-color: #efefef; 
         border-radius: 5px; border-width: thin; border-style: dotted; border-color: #0C3762">
-    <b>Quick Links</b><br/>
+    <strong>Quick Links</strong><br/>
     <ul>
     <li><a href="#requirements" title="Jump to download">Download</a></li>
     <li><a href="#user-guide" title="Jump to user guide">User Guide</a></li>
     <li><a href="#api-reference" title="Jump to API reference">API Reference</a></li>
     <li><a href="#about" title="Jump to user guide">About</a></li>
     </ul>
+    <hr/>
+    <a href="http://tomerfiliba.com">
+    <img style="display: block; margin-left: auto; margin-right: auto" 
+    src="_static/fish-text-black.png" title="Tomer's Blog"/></a>
     </div>
 
 Plumbum: Shell Combinators and More
