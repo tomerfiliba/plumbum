@@ -1,3 +1,17 @@
+.. raw:: html
+
+    <div style="float:right; margin:1em; padding-top: 1em; padding-bottom: 1em; 
+        padding-right: 2em; padding-left: 2em; background-color: #efefef; 
+        border-radius: 5px; border-width: thin; border-style: dotted; border-color: #0C3762">
+    <b>Quick Links</b><br/>
+    <ul>
+    <li><a href="#requirements" title="Jump to download">Download</a></li>
+    <li><a href="#user-guide" title="Jump to user guide">User Guide</a></li>
+    <li><a href="#api-reference" title="Jump to API reference">API Reference</a></li>
+    <li><a href="#about" title="Jump to user guide">About</a></li>
+    </ul>
+    </div>
+
 Plumbum: Shell Combinators and More
 ===================================
 
@@ -7,7 +21,7 @@ pipes back in the day) is a small yet feature-rich library for shell script-like
 The motto of the library is **"Never write shell scripts again"**, and thus it attempts to mimic 
 the **shell syntax** (*shell combinators*) where it makes sense, while keeping it all **pythonic 
 and cross-platform**.
- 
+
 Apart from :ref:`shell-like syntax <guide-local-commands>` and :ref:`handy shortcuts <guide-utils>`, 
 the library provides local and :ref:`remote <guide-remote-commands>` command execution (over SSH), 
 local and remote file-system :ref:`paths <guide-paths>`, easy working-directory and 
@@ -19,13 +33,23 @@ Cheat Sheet
 
 **Basics** ::
 
-    >>> from plumbum import local, FG, BG
-    >>> from plumbum.cmd import ls, grep, wc, cat, head
+    >>> from plumbum import local
+    >>> ls = local["ls"]
     >>> ls
     LocalCommand(<LocalPath /bin/ls>)
     >>> ls()
     u'build.py\ndist\ndocs\nLICENSE\nplumbum\nREADME.rst\nsetup.py\ntests\ntodo.txt\n'
+    >>> notepad = local["c:\\windows\\notepad.exe"]
+    >>> notepad()                                   # Notepad window pops up
+    u''
+
+Instead of the writing ``xxx = local["xxx"]`` for every program you wish to use, you can 
+also :ref:`import commands <import-hack>`:
     
+    >>> from plumbum.cmd import grep, wc, cat, head
+    >>> grep
+    LocalCommand(<LocalPath /bin/grep>)
+
 **Piping** ::
     
     >>> chain = ls["-a"] | grep["-v", "\\.py"] | wc["-l"]
@@ -54,6 +78,7 @@ Cheat Sheet
     
 **Foreground and background execution** ::
 
+    >>> from plumbum import FG, BG
     >>> (ls["-a"] | grep["\\.py"]) & FG         # The output is printed to stdout directly
     build.py
     .pydevproject
@@ -89,6 +114,9 @@ built-in `issue tracker <https://github.com/tomerfiliba/plumbum/issues>`_ to rep
 you encounter or to request features. The library is released under the permissive `MIT license 
 <https://github.com/tomerfiliba/plumbum/blob/master/LICENSE>`_.
 
+Requirements
+------------
+
 Plumbum supports **Python 2.5-3.2** (requires `six <http://pypi.python.org/pypi/six>`_) and has been 
 tested on **Linux** and **Windows** machines. Any Unix-like machine should work fine out of the box,
 but on Windows, you'll probably want to install a decent `coreutils <http://en.wikipedia.org/wiki/Coreutils>`_ 
@@ -101,7 +129,10 @@ Note that for remote command execution, an **openSSH-compatible** client is requ
 with *Git for Windows*), and a ``bash``-compatible shell and a coreutils environment is also 
 expected on the host machine.
 
-You can **download** the library from the `Python Package Index <http://pypi.python.org/pypi/plumbum>`_ 
+Download
+--------
+
+You can **download** the library from the `Python Package Index <http://pypi.python.org/pypi/plumbum#downloads>`_ 
 (in a variety of formats), or ``easy-install plumbum`` / ``pip install plumbum`` directly. 
 
 User Guide

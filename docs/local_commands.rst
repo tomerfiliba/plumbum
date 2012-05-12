@@ -23,6 +23,8 @@ a ``Command`` object, you can execute it like a normal function::
     >>> ls("-a")
     '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\n[...]'
 
+.. _import-hack:
+
 With just a touch of magic, you can *import* commands from the mock module ``cmd``, like so::
 
     >>> from plumbum.cmd import grep, cat
