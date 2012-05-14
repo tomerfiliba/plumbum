@@ -7,7 +7,7 @@ from plumbum.session import ShellSession
 from plumbum.local_machine import local, BaseEnv
 from tempfile import NamedTemporaryFile
 from plumbum.local_machine import LocalPath
-from plumbum.lib import setdoc
+from plumbum.lib import _setdoc
 
 
 class RemotePath(Path):
@@ -37,14 +37,14 @@ class RemotePath(Path):
         return self._path
     
     @property
-    @setdoc(Path)
+    @_setdoc(Path)
     def basename(self):
         if not "/" in str(self):
             return str(self)
         return str(self).rsplit("/", 1)[1]
 
     @property
-    @setdoc(Path)
+    @_setdoc(Path)
     def dirname(self):
         if not "/" in str(self):
             return str(self)
@@ -53,11 +53,11 @@ class RemotePath(Path):
     def _get_info(self):
         return (self.remote, self._path)
 
-    @setdoc(Path)
+    @_setdoc(Path)
     def join(self, *parts):
         return RemotePath(self.remote, self, *parts)
 
-    @setdoc(Path)
+    @_setdoc(Path)
     def list(self):
         if not self.isdir():
             return []
@@ -66,21 +66,21 @@ class RemotePath(Path):
         files.remove("..")
         return [self.join(fn) for fn in files]
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def isdir(self):
         res = self._stat()
         if not res:
             return False
         return res[0] in ("directory")
 
-    @setdoc(Path)
+    @_setdoc(Path)
     def isfile(self):
         res = self._stat()
         if not res:
             return False
         return res[0] in ("regular file", "regular empty file")
 
-    @setdoc(Path)
+    @_setdoc(Path)
     def exists(self):
         return self._stat() is not None
     
@@ -93,27 +93,27 @@ class RemotePath(Path):
         mode = statres.pop(0).lower()
         return mode, os.stat_result(statres)
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def stat(self):
         res = self._stat()
         if res is None:
             raise OSError(errno.ENOENT)
         return res[1]
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def glob(self, pattern):
         matches = self.remote._session.run("for fn in %s/%s; do echo $fn; done" % (self, pattern))[1].splitlines()
         if len(matches) == 1 and not self._stat(matches[0]):
             return [] # pattern expansion failed
         return [RemotePath(self.remote, m) for m in matches]
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def delete(self):
         if not self.exists():
             return
         self.remote._session.run("rm -rf %s" % (shquote(self),))
 
-    @setdoc(Path)
+    @_setdoc(Path)
     def move(self, dst):
         if isinstance(dst, RemotePath) and dst.remote is not self.remote:
             raise TypeError("dst points to a different remote machine")
@@ -121,7 +121,7 @@ class RemotePath(Path):
             raise TypeError("dst must be a string or a RemotePath (to the same remote machine)")
         self.remote._session.run("mv %s %s" % (shquote(self), shquote(dst)))
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def copy(self, dst, override = False):
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
@@ -134,15 +134,15 @@ class RemotePath(Path):
             dst.remove()
         self.remote._session.run("cp -r %s %s" % (shquote(self), shquote(dst)))
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def mkdir(self):
         self.remote._session.run("mkdir -p %s" % (shquote(self),))
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def read(self):
         return self.remote["cat"](self)
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def write(self, data):
         if self.remote.encoding and isinstance(data, str) and not isinstance(data, bytes):
             data = data.encode(self.remote.encoding)
@@ -197,19 +197,19 @@ class RemoteEnv(BaseEnv):
         self._orig = self._curr.copy()
         BaseEnv.__init__(self, self.remote.path)
 
-    @setdoc(BaseEnv)
+    @_setdoc(BaseEnv)
     def __delitem__(self, name):
         BaseEnv.__delitem__(self, name)
         self.remote._session.run("unset %s" % (name,))
-    @setdoc(BaseEnv)
+    @_setdoc(BaseEnv)
     def __setitem__(self, name, value):
         BaseEnv.__setitem__(self, name, value)
         self.remote._session.run("export %s=%s" % (name, shquote(value)))
-    @setdoc(BaseEnv)
+    @_setdoc(BaseEnv)
     def pop(self, name, *default):
         BaseEnv.pop(self, name, *default)
         self.remote._session.run("unset %s" % (name,))
-    @setdoc(BaseEnv)
+    @_setdoc(BaseEnv)
     def update(self, *args, **kwargs):
         BaseEnv.update(self, *args, **kwargs)
         self.remote._session.run("export " + 
@@ -470,7 +470,7 @@ class SshMachine(BaseRemoteMachine):
     def __str__(self):
         return "ssh://%s" % (self._fqhost,)
 
-    @setdoc(BaseRemoteMachine)
+    @_setdoc(BaseRemoteMachine)
     def popen(self, args, ssh_opts = (), **kwargs):
         cmdline = []
         cmdline.extend(ssh_opts)
@@ -487,7 +487,7 @@ class SshMachine(BaseRemoteMachine):
                 cmdline.append(args)
         return self._ssh_command[tuple(cmdline)].popen(**kwargs)
     
-    @setdoc(BaseRemoteMachine)
+    @_setdoc(BaseRemoteMachine)
     def session(self, isatty = False):
         return ShellSession(self.popen((), ["-tt"] if isatty else []), self.encoding, isatty)
     
@@ -541,7 +541,7 @@ class SshMachine(BaseRemoteMachine):
         opts = ["-L", "[%s]:%s:[%s]:%s" % (lhost, lport, dhost, dport)]
         return SshTunnel(ShellSession(self.popen((), opts), self.encoding))        
 
-    @setdoc(BaseRemoteMachine)
+    @_setdoc(BaseRemoteMachine)
     def download(self, src, dst):
         if not isinstance(src, (str, RemotePath)):
             raise TypeError("src must be a string or a RemotePath, not %r" % (src,))
@@ -551,7 +551,7 @@ class SshMachine(BaseRemoteMachine):
             raise TypeError("dst must be a string or a LocalPath, not %r" % (src,))
         self._scp_command("%s:%s" % (self._fqhost, src), dst)
 
-    @setdoc(BaseRemoteMachine)
+    @_setdoc(BaseRemoteMachine)
     def upload(self, src, dst):
         if not isinstance(src, (str, LocalPath)):
             raise TypeError("src must be a string or a LocalPath, not %r" % (src,))

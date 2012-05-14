@@ -12,10 +12,10 @@ from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.session import ShellSession
 from types import ModuleType
 from tempfile import mkdtemp
-from plumbum.lib import setdoc
+from plumbum.lib import _setdoc
 
 
-local_logger = logging.getLogger("plumbum.local")
+logger = logging.getLogger("plumbum.local")
 
 IS_WIN32 = os.name == "nt"
 
@@ -26,19 +26,17 @@ class LocalPath(Path):
     """The class implementing local-machine paths"""
     
     __slots__ = ["_path"]
-    if IS_WIN32:
-        CASE_SENSITIVE = False
+    CASE_SENSITIVE = not IS_WIN32
     
-    def __init__(self, *parts):
-        for p in parts:
-            if not isinstance(p, (str, LocalPath)):
-                raise TypeError("LocalPath can be constructed only from strings or other LocalPaths")
-        self._path = os.path.normpath(os.path.join(os.getcwd(), *(str(p) for p in parts)))
-        if IS_WIN32:
+    def __init__(self, path):
+        if not isinstance(path, (str, LocalPath)):
+            raise TypeError("LocalPath can be constructed only from strings or other LocalPaths")
+        self._path = os.path.normpath(str(path))
+        if not self.CASE_SENSITIVE:
             self._path = self._path.lower()
-    def __new__(cls, *parts):
-        if len(parts) == 1 and isinstance(parts[0], cls):
-            return parts[0]
+    def __new__(cls, path):
+        if isinstance(path, cls):
+            return path
         return object.__new__(cls)
     def __str__(self):
         return self._path
@@ -46,44 +44,46 @@ class LocalPath(Path):
         return self._path
 
     @property
-    @setdoc(Path)
+    @_setdoc(Path)
     def basename(self):
         return os.path.basename(str(self))
     
     @property
-    @setdoc(Path)
+    @_setdoc(Path)
     def dirname(self):
         return os.path.dirname(str(self))
 
-    @setdoc(Path)
-    def join(self, *parts):
-        return LocalPath(self, *parts)
+    @_setdoc(Path)
+    def join(self, other):
+        if not isinstance(other, (str, LocalPath)):
+            raise TypeError("Can only join with another string or LocalPath")
+        return LocalPath(os.path.join(str(self), str(other)))
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def list(self):
-        return [self.join(fn) for fn in os.listdir(str(self))]
+        return [self / fn for fn in os.listdir(str(self))]
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def isdir(self):
         return os.path.isdir(str(self))
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def isfile(self):
         return os.path.isfile(str(self))
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def exists(self):
         return os.path.exists(str(self))
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def stat(self):
         return os.stat(str(self))
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def glob(self, pattern):
-        return [LocalPath(fn) for fn in glob.glob(str(self.join(pattern)))] 
+        return [LocalPath(fn) for fn in glob.glob(str(self / pattern))] 
 
-    @setdoc(Path)
+    @_setdoc(Path)
     def delete(self):
         if not self.exists():
             return
@@ -92,14 +92,14 @@ class LocalPath(Path):
         else:
             os.remove(str(self))
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def move(self, dst):
         if not isinstance(dst, (str, LocalPath)):
             raise TypeError("dst must be a string or a LocalPath")
         shutil.move(str(self), str(dst))
         return LocalPath(dst)
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def copy(self, dst, override = False):
         if not isinstance(dst, (str, LocalPath)):
             raise TypeError("dst must be a string or a LocalPath")
@@ -112,21 +112,21 @@ class LocalPath(Path):
             shutil.copy2(str(self), str(dst))
         return dst
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def mkdir(self):
         if not self.exists():
             os.makedirs(str(self))
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def open(self, mode = "r"):
         return open(str(self), mode)
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def read(self):
         with self.open() as f:
             return f.read()
     
-    @setdoc(Path)
+    @_setdoc(Path)
     def write(self, data):
         with self.open("w") as f:
             f.write(data)
@@ -137,9 +137,11 @@ class Workdir(LocalPath):
     
     __slots__ = []
     def __init__(self):
-        self._path = os.path.normpath(os.getcwd())
+        LocalPath.__init__(self, os.getcwd())
     def __hash__(self):
         raise TypeError("unhashable type")
+    def __new__(cls):
+        return object.__new__(cls)
     
     def chdir(self, newdir):
         """Changes the current working directory to the given one
@@ -148,7 +150,7 @@ class Workdir(LocalPath):
         """
         if not isinstance(newdir, (str, LocalPath)):
             raise TypeError("newdir must be a string or a LocalPath, not %r" % (newdir,))
-        local_logger.debug("Chdir to %s", newdir)
+        logger.debug("Chdir to %s", newdir)
         os.chdir(str(newdir))
         self._path = os.path.normpath(os.getcwd())
     def getpath(self):
@@ -352,6 +354,19 @@ class LocalEnv(BaseEnv):
             os.environ = prev
         return output
 
+    def expanduser(self, expr):
+        """Expand home shortcuts (e.g., ``~/foo/bar`` or ``~john/foo/bar``)
+        
+        :param expr: An expression containing home shortcuts
+        
+        :returns: The expanded string"""
+        prev = os.environ
+        os.environ = self.getdict()
+        try:
+            output = os.path.expanduser(expr)
+        finally:
+            os.environ = prev
+        return output
 
 #===================================================================================================
 # Local Commands
@@ -367,33 +382,12 @@ class LocalCommand(ConcreteCommand):
     def __repr__(self):
         return "LocalCommand(%r)" % (self.executable,)
     
-    def popen(self, args = (), stdin = PIPE, stdout = PIPE, stderr = PIPE, cwd = None, 
-            env = None, **kwargs):
+    def popen(self, args = (), cwd = None, env = None, **kwargs):
         if isinstance(args, str):
             args = (args,)
-        if subprocess.mswindows and "startupinfo" not in kwargs and stdin not in (sys.stdin, None):
-            kwargs["startupinfo"] = subprocess.STARTUPINFO()
-            kwargs["startupinfo"].dwFlags |= subprocess.STARTF_USESHOWWINDOW  #@UndefinedVariable
-            kwargs["startupinfo"].wShowWindow = subprocess.SW_HIDE  #@UndefinedVariable
-        if cwd is None:
-            cwd = getattr(self, "cwd", None)
-        if cwd is None:
-            cwd = local.cwd
-
-        if env is None:
-            env = getattr(self, "env", None)
-        if env is None:
-            env = local.env
-        if hasattr(env, "getdict"):
-            env = env.getdict()
-        
-        argv = self.formulate(0, args)
-        local_logger.debug("Running %r", argv)
-        proc = Popen(argv, executable = str(self.executable), stdin = stdin, stdout = stdout, 
-            stderr = stderr, cwd = str(cwd), env = env, **kwargs) #bufsize = 4096
-        proc.encoding = self.encoding
-        proc.argv = argv
-        return proc
+        return local._popen(self.executable, self.formulate(0, args),
+            cwd = self.cwd if cwd is None else cwd, env = self.env if env is None else env,
+            **kwargs)
 
 #===================================================================================================
 # Local Machine
@@ -439,7 +433,7 @@ class LocalMachine(object):
                     continue
                 if progname in filelist:
                     f = filelist[progname]
-                    if not IS_WIN32 and not (f.stat().st_mode & stat.S_IXUSR):
+                    if f.stat().st_mode & stat.S_IXUSR:
                         continue
                     return f
             return None
@@ -471,7 +465,12 @@ class LocalMachine(object):
         
             p = local.path("/usr", "lib", "python2.7")
         """
-        return LocalPath(*parts)
+        parts2 = [str(self.cwd)]
+        for p in parts:
+            if not isinstance(p, (str, LocalPath)):
+                raise TypeError("Cannot construct LocalPaths only from strings or other LocalPaths")
+            parts2.append(self.env.expanduser(str(p)))
+        return LocalPath(os.path.join(*parts2))
 
     def __getitem__(self, cmd):
         """Returns a `Command` object representing the given program. ``cmd`` can be a string or
@@ -492,6 +491,26 @@ class LocalMachine(object):
                 return LocalCommand(self.which(cmd))
         else:
             raise TypeError("cmd must be a LocalPath or a string: %r" % (cmd,))
+
+    def _popen(self, executable, argv, stdin = PIPE, stdout = PIPE, stderr = PIPE, 
+            cwd = None, env = None, **kwargs):
+        if subprocess.mswindows and "startupinfo" not in kwargs and stdin not in (sys.stdin, None):
+            kwargs["startupinfo"] = sui = subprocess.STARTUPINFO()
+            sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW  #@UndefinedVariable
+            sui.wShowWindow = subprocess.SW_HIDE  #@UndefinedVariable
+        if cwd is None:
+            cwd = self.cwd
+        if env is None:
+            env = self.env
+        if isinstance(env, BaseEnv):
+            env = env.getdict()
+
+        logger.debug("Running %r", argv)
+        proc = Popen(argv, executable = str(executable), stdin = stdin, stdout = stdout, 
+            stderr = stderr, cwd = str(cwd), env = env, **kwargs) # bufsize = 4096
+        proc.encoding = self.encoding
+        proc.argv = argv
+        return proc
 
     def session(self):
         """Creates a new :class:`ShellSession <plumbum.session.ShellSession>` object; this 

@@ -34,7 +34,8 @@ of command-line interface (CLI) programs.
 
 See http://plumbum.readthedocs.org for full details
 """
-from plumbum.commands import FG, BG, ERROUT, ProcessExecutionError, CommandNotFound
+from plumbum.commands import FG, BG, ERROUT
+from plumbum.commands import ProcessExecutionError, CommandNotFound, ProcessTimedOut
 from plumbum.path import Path
 from plumbum.local_machine import local, LocalPath
 from plumbum.remote_machine import SshMachine, RemotePath

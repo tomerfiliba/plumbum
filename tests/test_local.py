@@ -2,7 +2,7 @@ from __future__ import with_statement
 import os
 import unittest
 from plumbum import local, FG, BG, ERROUT
-from plumbum import CommandNotFound, ProcessExecutionError
+from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 
 
 class LocalMachineTest(unittest.TestCase):
@@ -119,6 +119,11 @@ class LocalMachineTest(unittest.TestCase):
         
         rc, out, err = (ls | grep["non_exist1N9"]).run(retcode = 1)
         self.assertEqual(rc, 1)
+
+    def test_timeout(self):
+        from plumbum.cmd import sleep
+        self.assertRaises(ProcessTimedOut, sleep, 10, timeout = 5)
+        
     
     def test_modifiers(self):
         from plumbum.cmd import ls, grep

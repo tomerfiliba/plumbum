@@ -1,7 +1,10 @@
 import six
+import subprocess
+import time
 from tempfile import TemporaryFile
 from subprocess import PIPE
-import subprocess
+from threading import Thread
+from plumbum.lib import MinHeap
 
 if not six.PY3:
     bytes = str #@ReservedAssignment
@@ -35,6 +38,13 @@ class ProcessExecutionError(Exception):
         if stderr:
             lines.append("Stderr:  | %s" % (stderr,))
         return "\n".join(lines)
+
+class ProcessTimedOut(Exception):
+    """Raises by :func:`run_proc <plumbum.commands.run_proc>` when a ``timeout`` has been 
+    specified and it has elapsed before the process terminated"""
+    def __init__(self, msg, argv):
+        Exception.__init__(self, msg, argv)
+        self.argv = argv
 
 class CommandNotFound(Exception):
     """Raised by :func:`local.which <plumbum.local_machine.LocalMachine.which>` and 
@@ -74,7 +84,40 @@ def shquote(text):
 def shquote_list(seq):
     return [shquote(item) for item in seq]
 
-def run_proc(proc, retcode):
+queue = six.moves.queue
+_timeout_queue = queue.Queue()
+
+def _timeout_thread():
+    waiting = MinHeap()
+    while True:
+        if waiting:
+            ttk, _ = waiting.peek()
+            timeout = max(0, ttk - time.time())
+        else:
+            timeout = None
+        try:
+            proc, time_to_kill = _timeout_queue.get(timeout = timeout)
+            waiting.push((time_to_kill, proc))
+        except queue.Empty:
+            pass
+        now = time.time()
+        while waiting:
+            ttk, proc = waiting.peek()
+            if ttk > now:
+                break
+            waiting.pop()
+            try:
+                if proc.poll() is None:
+                    proc.kill()
+                    proc._timed_out = True
+            except EnvironmentError:
+                pass
+
+thd = Thread(target = _timeout_thread)
+thd.setDaemon(True)
+thd.start()
+
+def run_proc(proc, retcode, timeout = None):
     """Waits for the given process to terminate, with the expected exit code
     
     :param proc: a running Popen-like object
@@ -84,8 +127,16 @@ def run_proc(proc, retcode):
                     It may also be a tuple (or any object that supports ``__contains__``) 
                     of expected return codes. 
 
+    :param timeout: the number of seconds (a ``float``) to allow the process to run, before 
+                    forcefully terminating it. If ``None``, not timeout is imposed; otherwise
+                    the process is expected to terminate within that timeout value, or it will
+                    be killed and :class:`ProcessTimedOut <plumbum.cli.ProcessTimedOut>` 
+                    will be raised 
+
     :returns: A tuple of (return code, stdout, stderr)
     """
+    if timeout is not None:
+        _timeout_queue.put((proc, time.time() + timeout))
     stdout, stderr = proc.communicate()
     if not stdout:
         stdout = six.b("")
@@ -95,14 +146,18 @@ def run_proc(proc, retcode):
         stdout = stdout.decode(proc.encoding, "ignore")
         stderr = stderr.decode(proc.encoding, "ignore")
     
+    if getattr(proc, "_timed_out", False):
+        raise ProcessTimedOut("Process did not terminate within %s seconds" % (timeout,), 
+            getattr(proc, "argv", None))
+    
     if retcode is not None:
         if hasattr(retcode, "__contains__"):
             if proc.returncode not in retcode:
-                raise ProcessExecutionError(getattr(proc, "argv", None), 
-                    proc.returncode, stdout, stderr)
+                raise ProcessExecutionError(getattr(proc, "argv", None), proc.returncode, 
+                    stdout, stderr)
         elif proc.returncode != retcode:
-            raise ProcessExecutionError(getattr(proc, "argv", None), 
-                proc.returncode, stdout, stderr)
+            raise ProcessExecutionError(getattr(proc, "argv", None), proc.returncode, 
+                stdout, stderr)
     return proc.returncode, stdout, stderr
 
 #===================================================================================================
@@ -191,14 +246,20 @@ class BaseCommand(object):
                         
                         .. note:: this argument must be passed as a keyword argument.
         
+        :param timeout: The maximal amount of time (in seconds) to allow the process to run.
+                       ``None`` means no timeout is imposed; otherwise, if the process hasn't
+                       terminated after that many seconds, the process will be forcefully 
+                       terminated an exception will be raised
+        
         :param kwargs: Any keyword-arguments to be passed to the ``Popen`` constructor
         
         :returns: A tuple of (return code, stdout, stderr)
         """
         retcode = kwargs.pop("retcode", 0)
+        timeout = kwargs.pop("timeout", None)
         p = self.popen(args, **kwargs)
         try:
-            return run_proc(p, retcode)
+            return run_proc(p, retcode, timeout)
         finally:
             for f in [p.stdin, p.stdout, p.stderr]:
                 try:
@@ -344,6 +405,8 @@ class ConcreteCommand(BaseCommand):
     def __init__(self, executable, encoding):
         self.executable = executable
         self.encoding = encoding
+        self.cwd = None
+        self.env = None
     def __str__(self):
         return str(self.executable)
     def _get_encoding(self):
@@ -386,9 +449,10 @@ class Future(object):
     object and the expected exit code, and provides poll(), wait(), returncode, stdout,
     and stderr.
     """
-    def __init__(self, proc, expected_retcode):
+    def __init__(self, proc, expected_retcode, timeout = None):
         self.proc = proc
         self._expected_retcode = expected_retcode
+        self._timeout = timeout
         self._returncode = None
         self._stdout = None
         self._stderr = None
@@ -406,7 +470,8 @@ class Future(object):
         :class:`plumbum.commands.ProcessExecutionError` in case of failure"""
         if self._returncode is not None:
             return
-        self._returncode, self._stdout, self._stderr = run_proc(self.proc, self._expected_retcode)
+        self._returncode, self._stdout, self._stderr = run_proc(self.proc, 
+            self._expected_retcode, self._timeout)
     @property
     def stdout(self):
         """The process' stdout; accessing this property will wait for the process to finish"""

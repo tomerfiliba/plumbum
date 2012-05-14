@@ -2,12 +2,15 @@ v 1.0
 =====
 
 * CLI:
-    * compute topological order, resolve cycles according to relative order in the command line
     * finish tests
     * beautify code (_parse_args is a monster, less use of tuples)
 
 * Core:
-    * add timeout to run_proc
+    * make local.cwd, local.env thread-safe? does it make sense to emulate a separate cwd/env
+      each thread?
+    * remote: handle ~ shortcuts in remote paths too?
+    * remote: piping doesn't work as expected (it happens on the local host).
+      need a way to convert ``foo | bar`` to ``rem[foo | bar]``
 
 * Docs:
     * finish remote

@@ -11,7 +11,7 @@ class Path(object):
         return "<%s %s>" % (self.__class__.__name__, str(self))
     def __div__(self, other):
         """Joins two paths"""
-        return self.join(self, other)
+        return self.join(other)
     __truediv__ = __div__
     def __floordiv__(self, expr):
         """Returns a (possibly empty) list of paths that matched the glob-pattern under this path"""
@@ -47,7 +47,7 @@ class Path(object):
     
     def up(self, count = 1):
         """Go up in ``count`` directories (the default is 1)"""
-        return self.join(*([".."] * count))
+        return self.join("../" * count)
     def walk(self, filter = lambda p: True): #@ReservedAssignment
         """traverse all (recursive) sub-elements under this directory, that match the given filter.
         By default, the filter accepts everything; you can provide a custom filter function that
