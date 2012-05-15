@@ -16,6 +16,9 @@ class TestApp(cli.Application):
     verbose = cli.CountingAttr(["v"], help = "increases the verbosity level")
 
     def main(self, *args):
+        old = self.eggs
+        self.eggs = "lalala"
+        self.eggs = old
         self.tailargs = args
 
 

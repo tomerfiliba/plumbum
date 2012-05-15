@@ -189,7 +189,7 @@ class SwitchAttr(object):
             return self
         else:
             return self._value
-    def __set__(self, cls, inst, val):
+    def __set__(self, inst, val):
         if inst is None:
             raise AttributeError("cannot set an unbound SwitchAttr")
         else:
