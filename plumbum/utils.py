@@ -1,7 +1,6 @@
 from __future__ import with_statement
 from plumbum.path import Path
 from plumbum.local_machine import local, LocalPath
-from plumbum.cmd import mount
 
 def delete(*paths):
     """Deletes the given paths. The arguments can be either strings, 
@@ -77,9 +76,3 @@ def copy(src, dst):
                 copy(src, tmp)
                 copy(tmp / src.basename, dst)
             return dst
-
-def mounted(fs):
-    """
-    Returns True if a the given filesystem is currently mounted.
-    """
-    return mount().find(fs) != -1
