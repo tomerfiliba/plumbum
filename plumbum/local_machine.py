@@ -433,7 +433,7 @@ class LocalMachine(object):
                     continue
                 if progname in filelist:
                     f = filelist[progname]
-                    if f.stat().st_mode & stat.S_IXUSR:
+                    if not f.stat().st_mode & stat.S_IXUSR:
                         continue
                     return f
             return None
