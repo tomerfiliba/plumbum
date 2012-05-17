@@ -2,7 +2,6 @@ from __future__ import with_statement
 from plumbum.path import Path
 from plumbum.local_machine import local, LocalPath
 
-
 def delete(*paths):
     """Deletes the given paths. The arguments can be either strings, 
     :class:`local paths <plumbum.local_machine.LocalPath>`, 
@@ -77,6 +76,3 @@ def copy(src, dst):
                 copy(src, tmp)
                 copy(tmp / src.basename, dst)
             return dst
-
-
-
