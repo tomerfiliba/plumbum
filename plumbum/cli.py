@@ -2,6 +2,7 @@ import sys
 import six
 import inspect
 from plumbum import local
+from textwrap import TextWrapper
 
 
 class SwitchError(Exception):
@@ -512,37 +513,46 @@ class Application(object):
         return ordered, tailargs
     
     @classmethod
-    def _run(cls, argv):
+    def run(cls, argv = sys.argv, exit = True): #@ReservedAssignment
+        """
+        Runs the application, taking the arguments from ``sys.argv`` by default. If ``exit`` is 
+        ``True`` (the default), the function will exit with the appropriate return code; 
+        otherwise it will return a tuple of ``(inst, retcode)``, where ``inst`` is the 
+        application instance created internally by this function and ``retcode`` is the 
+        exit code of the application. 
+        
+        .. note::
+           Setting ``exit`` to ``False`` is intendend for testing/debugging purposes only -- do 
+           not override it other situations.
+        """
         argv = list(argv)
         inst = cls(argv.pop(0))
+        retcode = 0
         try:
             ordered, tailargs = inst._parse_args(list(argv))
         except ShowHelp:
             inst.help()
-            return inst, 0
         except ShowVersion:
             inst.version()
-            return inst, 0
         except SwitchError:
             ex = sys.exc_info()[1] # compatibility with python 2.5
             print(ex)
             print("")
             inst.help()
-            return inst, 1
-        
-        for f, a in ordered:
-            f(inst, *a)
-        retcode = inst.main(*tailargs)
-        if retcode is None:
-            retcode = 0
-        return inst, retcode
-    
-    @classmethod
-    def run(cls, argv = sys.argv):
-        """Runs the application, taking the arguments from ``sys.argv``, and exiting with the
-        appropriate exit code; this function does not return"""
-        _, retcode = cls._run(argv)
-        sys.exit(retcode)
+            retcode = 2
+        else:
+            for f, a in ordered:
+                f(inst, *a)
+            retcode = inst.main(*tailargs)
+            if retcode is None:
+                retcode = 0
+            #elif not isinstance(retcode, int):
+            #    retcode = 1
+
+        if exit:
+            sys.exit(retcode)
+        else:
+            return inst, retcode
     
     def main(self):
         """Override me"""
@@ -574,6 +584,8 @@ class Application(object):
                 by_groups[si.group] = []
             by_groups[si.group].append(si)
         
+        wrapper = TextWrapper(width = 80, initial_indent = " " * 31, subsequent_indent = " " * 31)
+        
         for grp, swinfos in sorted(by_groups.items(), key = lambda item: item[0]):
             print("%s:" % (grp,))
             
@@ -597,7 +609,8 @@ class Application(object):
                     help += "; requires %s" % (", ".join(si.requires))
                 if si.excludes:
                     help += "; excludes %s" % (", ".join(si.excludes))
-                print("    %-25s  %s" % (swnames + argtype, help))
+                help = wrapper.fill(" ".join(l.strip() for l in help.splitlines())) #@ReservedAssignment
+                print("    %-25s  %s" % (swnames + argtype, help.strip()))
             print ("")
     
     @switch(["-v", "--version"], overridable = True, group = "Meta-switches")

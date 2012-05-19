@@ -14,6 +14,9 @@ class TestApp(cli.Application):
     
     eggs = cli.SwitchAttr(["e"], str, help = "sets the eggs attribute")
     verbose = cli.CountingAttr(["v"], help = "increases the verbosity level")
+    benedict = cli.CountingAttr(["--benedict"], help = """a very long help message with lots of 
+        useless information that nobody would ever want to read, but heck, we need to test 
+        text wrapping in help messages as well""")
 
     def main(self, *args):
         old = self.eggs
@@ -24,14 +27,14 @@ class TestApp(cli.Application):
 
 class CLITest(unittest.TestCase):
     def test_meta_switches(self):
-        _, rc = TestApp._run(["foo", "-h"])
+        _, rc = TestApp.run(["foo", "-h"], exit = False)
         self.assertEqual(rc, 0)
-        _, rc = TestApp._run(["foo", "--version"])
+        _, rc = TestApp.run(["foo", "--version"], exit = False)
         self.assertEqual(rc, 0)
     
     def test_okay(self):
-        inst, rc = TestApp._run(["foo", "--bacon=81", "-a", "-v", "-e", "7", "-vv", 
-            "--", "lala", "-e", "7"])
+        inst, rc = TestApp.run(["foo", "--bacon=81", "-a", "-v", "-e", "7", "-vv", 
+            "--", "lala", "-e", "7"], exit = False)
         self.assertEqual(rc, 0)
         self.assertEqual(inst.eggs, "7")
 
