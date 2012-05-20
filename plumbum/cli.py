@@ -319,8 +319,13 @@ NonexistentPath = NonexistentPath()
 #===================================================================================================
 # CLI Application base class
 #===================================================================================================
-class NoArg(object):
-    pass
+class SwitchParseInfo(object):
+    __slots__ = ["swname", "val", "index"]
+    def __init__(self, swname, val, index):
+        self.swname = swname
+        self.val = val
+        self.index = index
+
 
 class Application(object):
     """
@@ -457,19 +462,28 @@ class Application(object):
                     raise WrongArgumentType("Argument of %s expected to be %r, not %r:\n    %r" % (
                         swname, swinfo.argtype, val, ex))
             else:
-                val = NoArg
+                val = NotImplemented
             
             if swinfo.func in swfuncs:
                 if swinfo.list:
-                    swfuncs[swinfo.func][1].append(val)
+                    swfuncs[swinfo.func].val[0].append(val)
                 else:
-                    raise SwitchError("cannot repeat %r")
+                    if swfuncs[swinfo.func].swname == swname:
+                        raise SwitchError("Switch %r already given" % (swname,))
+                    else:
+                        raise SwitchError("Switch %r already given (%r is equivalent)" % (
+                            swfuncs[swinfo.func].swname, swname))
             else:
                 if swinfo.list:
-                    swfuncs[swinfo.func] = (swname, [val], index)
+                    swfuncs[swinfo.func] = SwitchParseInfo(swname, ([val],), index)
+                elif val is NotImplemented:
+                    swfuncs[swinfo.func] = SwitchParseInfo(swname, (), index)
                 else:
-                    swfuncs[swinfo.func] = (swname, val, index)
+                    swfuncs[swinfo.func] = SwitchParseInfo(swname, (val,), index)
         
+        return swfuncs, tailargs
+    
+    def _validate_args(self, swfuncs, tailargs):
         if six.get_method_function(self.help) in swfuncs:
             raise ShowHelp()
         if six.get_method_function(self.version) in swfuncs:
@@ -491,11 +505,11 @@ class Application(object):
             missing = set(f.func for f in requirements[func]) - gotten
             if missing:
                 raise SwitchCombinationError("Given %s, the following are missing %r" % 
-                    (swfuncs[func][0], [self._switches_by_func[f].names[0] for f in missing]))
+                    (swfuncs[func].swname, [self._switches_by_func[f].names[0] for f in missing]))
             invalid = set(f.func for f in exclusions[func]) & gotten
             if invalid:
                 raise SwitchCombinationError("Given %s, the following are invalid %r" % 
-                    (swfuncs[func][0], [swfuncs[f][0] for f in invalid]))
+                    (swfuncs[func].swname, [swfuncs[f].swname for f in invalid]))
         
         m_args, m_varargs, _, m_defaults = inspect.getargspec(self.main)
         max_args = six.MAXSIZE if m_varargs else len(m_args) - 1
@@ -507,9 +521,8 @@ class Application(object):
             raise PositionalArgumentsError("Expected at most %d positional arguments, got %r" % 
                 (max_args, tailargs))
         
-        ordered = [x for _, x in sorted(
-                (index, (f, () if a is NoArg else (a,))) 
-                    for f, (_, a, index) in swfuncs.items())]
+        ordered = [(f, a) for _, f, a in 
+            sorted([(sf.index, f, sf.val) for f, sf in swfuncs.items()])]
         return ordered, tailargs
     
     @classmethod
@@ -529,7 +542,8 @@ class Application(object):
         inst = cls(argv.pop(0))
         retcode = 0
         try:
-            ordered, tailargs = inst._parse_args(list(argv))
+            swfuncs, tailargs = inst._parse_args(argv)
+            ordered, tailargs = inst._validate_args(swfuncs, tailargs)
         except ShowHelp:
             inst.help()
         except ShowVersion:
