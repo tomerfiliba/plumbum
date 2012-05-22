@@ -293,7 +293,7 @@ if the switch is given) and ``CountingAttr`` (which counts the number of occurre
 Main
 ----
 
-The ``main()`` method is takes control once all the command-line switches have been processed.
+The ``main()`` method takes control once all the command-line switches have been processed.
 It may take any number of *positional argument*; for instance, in ``cp -r /foo /bar``,
 ``/foo`` and ``/bar`` are the *positional arguments*. The number of positional arguments
 that the program would accept depends on the signature of the method: if the method takes 5 
