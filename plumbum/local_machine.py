@@ -496,8 +496,8 @@ class LocalMachine(object):
             cwd = None, env = None, **kwargs):
         if subprocess.mswindows and "startupinfo" not in kwargs and stdin not in (sys.stdin, None):
             kwargs["startupinfo"] = sui = subprocess.STARTUPINFO()
-            sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW  #@UndefinedVariable
-            sui.wShowWindow = subprocess.SW_HIDE  #@UndefinedVariable
+            sui.dwFlags |= subprocess._subprocess.STARTF_USESHOWWINDOW  #@UndefinedVariable
+            sui.wShowWindow = subprocess._subprocess.SW_HIDE  #@UndefinedVariable
         if cwd is None:
             cwd = self.cwd
         if env is None:
