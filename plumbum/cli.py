@@ -178,6 +178,8 @@ class SwitchAttr(object):
     """
     def __init__(self, names, argtype = str, default = None, list = False, **kwargs):
         self.__doc__ = "Sets an attribute" # to prevent the help message from showing SwitchAttr's docstring
+        if "help" in kwargs and default:
+            kwargs["help"] += "; the default is %r" % (default,)
         switch(names, argtype = argtype, argname = "VALUE", list = list, **kwargs)(self)
         if list:
             self._value = [default]
@@ -214,12 +216,12 @@ class Flag(SwitchAttr):
     def __call__(self, _):
         self._value = not self._value
 
-class CountingAttr(SwitchAttr):
+class CountOf(SwitchAttr):
     """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` that counts the number of 
     occurrences of the switch in the command line. Usage::
 
         class MyApp(Application):
-            verbosity = CountingAttr(["-v", "--verbose"], help = "The more, the merrier")
+            verbosity = CountOf(["-v", "--verbose"], help = "The more, the merrier")
             
     If ``-v -v -vv`` is given in the command-line, it will result in ``verbosity = 4``.
     
@@ -276,7 +278,7 @@ class Set(object):
             raise TypeError("got unexpected keyword argument(s)", kwargs.keys())
         self.values = dict(((v if self.case_sensitive else v.lower()), v) for v in values)
     def __repr__(self):
-        return "Set(%s)" % (", ".join(repr(v) for v in self.values.values()))
+        return "{%s}" % (", ".join(repr(v) for v in self.values.values()))
     def __call__(self, obj):
         if not self.case_sensitive:
             obj = obj.lower()
@@ -598,8 +600,6 @@ class Application(object):
                 by_groups[si.group] = []
             by_groups[si.group].append(si)
         
-        wrapper = TextWrapper(width = 80, initial_indent = " " * 31, subsequent_indent = " " * 31)
-        
         for grp, swinfos in sorted(by_groups.items(), key = lambda item: item[0]):
             print("%s:" % (grp,))
             
@@ -623,8 +623,11 @@ class Application(object):
                     help += "; requires %s" % (", ".join(si.requires))
                 if si.excludes:
                     help += "; excludes %s" % (", ".join(si.excludes))
+                prefix = swnames + argtype
+                wrapper = TextWrapper(width = int(local.env.get("COLUMNS", 80)), 
+                    initial_indent = " " * min(max(31, len(prefix)), 50), subsequent_indent = " " * 31)
                 help = wrapper.fill(" ".join(l.strip() for l in help.splitlines())) #@ReservedAssignment
-                print("    %-25s  %s" % (swnames + argtype, help.strip()))
+                print("    %-25s  %s" % (prefix, help.strip()))
             print ("")
     
     @switch(["-v", "--version"], overridable = True, group = "Meta-switches")
