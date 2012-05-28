@@ -13,8 +13,8 @@ class TestApp(cli.Application):
         print ("!!b", param)
     
     eggs = cli.SwitchAttr(["e"], str, help = "sets the eggs attribute")
-    verbose = cli.CountingAttr(["v"], help = "increases the verbosity level")
-    benedict = cli.CountingAttr(["--benedict"], help = """a very long help message with lots of 
+    verbose = cli.CountOf(["v"], help = "increases the verbosity level")
+    benedict = cli.CountOf(["--benedict"], help = """a very long help message with lots of 
         useless information that nobody would ever want to read, but heck, we need to test 
         text wrapping in help messages as well""")
 

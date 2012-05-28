@@ -9,15 +9,19 @@ from plumbum import SshMachine, ProcessExecutionError
 
 
 tunnel_prog = r"""
-import sys, six, socket
+import sys, socket
 s = socket.socket()
+if sys.version_info[0] < 3:
+    b = lambda x: x
+else:
+    b = lambda x: bytes(x, "utf8")
 s.bind(("", 0))
 s.listen(1)
-sys.stdout.write(six.b("%s\n" % (s.getsockname()[1],)))
+sys.stdout.write(b("%s\n" % (s.getsockname()[1],)))
 sys.stdout.flush()
 s2, _ = s.accept()
 data = s2.recv(100)
-s2.send(six.b("hello ") + data)
+s2.send(b("hello ") + data)
 s2.close()
 s.close()
 """

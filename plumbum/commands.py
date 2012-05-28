@@ -2,13 +2,25 @@ import six
 import subprocess
 import time
 from tempfile import TemporaryFile
-from subprocess import PIPE
+from subprocess import Popen, PIPE
 from threading import Thread
 from plumbum.lib import MinHeap
 
 if not six.PY3:
     bytes = str #@ReservedAssignment
     ascii = repr
+
+if not hasattr(Popen, "kill"):
+    # python 2.5 compatibility
+    import os
+    import signal
+    def _Popen_kill(self):
+        os.kill(self.pid, signal.SIGTERM)
+    def _Popen_send_signal(self, sig):
+        os.kill(self.pid, sig)
+    Popen.kill = _Popen_kill
+    Popen.terminate = _Popen_kill
+    Popen.send_signal = _Popen_send_signal
 
 #===================================================================================================
 # Exceptions

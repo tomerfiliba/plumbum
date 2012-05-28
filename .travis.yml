@@ -7,4 +7,18 @@ python:
     - "3.2"
 
 install: pip install six
-script: nosetests
+
+before_script:
+    - "echo NoHostAuthenticationForLocalhost yes >> ~/.ssh/config"
+    - "echo StrictHostKeyChecking no >> ~/.ssh/config"
+    - "ssh-keygen -q -f ~/.ssh/id_rsa -N ''"
+    - "cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys"
+    - "export PYTHONPATH=$PYTHONPATH:`pwd`"
+    - "cd tests"
+
+script: nosetests -vv
+
+notifications:
+    email:
+        on_success: change
+        on_failure: change
