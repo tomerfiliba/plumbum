@@ -1,3 +1,4 @@
+from __future__ import with_statement
 import unittest
 from plumbum import local, SshMachine
 from plumbum.utils import copy, delete, move

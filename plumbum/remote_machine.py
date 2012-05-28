@@ -1,3 +1,4 @@
+from __future__ import with_statement
 from contextlib import contextmanager
 from plumbum.remote_path import RemotePath
 from plumbum.commands import CommandNotFound, shquote, ConcreteCommand
