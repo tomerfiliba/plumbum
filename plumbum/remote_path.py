@@ -3,6 +3,8 @@ import errno
 from tempfile import NamedTemporaryFile
 from plumbum.path import Path
 from plumbum.lib import _setdoc
+from plumbum.commands import shquote
+
 
 class RemotePath(Path):
     """The class implementing remote-machine paths"""
@@ -62,25 +64,25 @@ class RemotePath(Path):
 
     @_setdoc(Path)
     def isdir(self):
-        res = self._stat()
+        res = self._stat(self)
         if not res:
             return False
         return res[0] in ("directory")
 
     @_setdoc(Path)
     def isfile(self):
-        res = self._stat()
+        res = self._stat(self)
         if not res:
             return False
         return res[0] in ("regular file", "regular empty file")
 
     @_setdoc(Path)
     def exists(self):
-        return self._stat() is not None
+        return self._stat(self) is not None
 
-    def _stat(self):
+    def _stat(self, path):
         rc, out, _ = self.remote._session.run(
-            "stat -c '%F,%f,%i,%d,%h,%u,%g,%s,%X,%Y,%Z' " + shquote(self), retcode = None)
+            "stat -c '%F,%f,%i,%d,%h,%u,%g,%s,%X,%Y,%Z' " + shquote(path), retcode = None)
         if rc != 0:
             return None
         statres = out.strip().split(",")
@@ -89,7 +91,7 @@ class RemotePath(Path):
 
     @_setdoc(Path)
     def stat(self):
-        res = self._stat()
+        res = self._stat(self)
         if res is None:
             raise OSError(errno.ENOENT)
         return res[1]
