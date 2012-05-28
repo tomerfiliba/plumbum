@@ -1,8 +1,7 @@
 .. raw:: html
 
-    <div style="float:right; margin:1em; padding-top: 1em; padding-bottom: 1em; 
-        padding-right: 2em; padding-left: 2em; background-color: #efefef; 
-        border-radius: 5px; border-width: thin; border-style: dotted; border-color: #0C3762">
+    <div style="float:right; margin:1em; padding: 1em 2em 1em 2em; background-color: #efefef;
+        border-radius: 5px; border-width: thin; border-style: dotted; border-color: #0C3762;">
     <strong>Quick Links</strong><br/>
     <ul>
     <li><a href="#requirements" title="Jump to download">Download</a></li>
@@ -31,6 +30,13 @@ the library provides local and :ref:`remote <guide-remote-commands>` command exe
 local and remote file-system :ref:`paths <guide-paths>`, easy working-directory and 
 environment :ref:`manipulation <guide-local-machine>`, and a programmatic 
 :ref:`guide-cli` application toolkit. Now let's see some code!
+
+News
+====
+* **2012.05.28**: Plumbum is now `all green <http://travis-ci.org/#!/tomerfiliba/plumbum/builds/1459486>`_
+  on *Travis CI*
+
+* **2012.05.28**: Version 1.0 is planned to be released in July
 
 Cheat Sheet
 ===========
