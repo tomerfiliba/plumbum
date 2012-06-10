@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import logging
 import stat
+import tiem
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
 from plumbum.path import Path
@@ -508,6 +509,7 @@ class LocalMachine(object):
         logger.debug("Running %r", argv)
         proc = Popen(argv, executable = str(executable), stdin = stdin, stdout = stdout,
             stderr = stderr, cwd = str(cwd), env = env, **kwargs) # bufsize = 4096
+        proc._start_time = time.time()
         proc.encoding = self.encoding
         proc.argv = argv
         return proc
