@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import logging
 import stat
-import tiem
+import time
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
 from plumbum.path import Path
