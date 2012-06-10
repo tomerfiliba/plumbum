@@ -150,6 +150,7 @@ def run_proc(proc, retcode, timeout = None):
     if timeout is not None:
         _timeout_queue.put((proc, time.time() + timeout))
     stdout, stderr = proc.communicate()
+    proc._end_time = time.time()
     if not stdout:
         stdout = six.b("")
     if not stderr:
