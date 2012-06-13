@@ -403,7 +403,7 @@ class SshMachine(BaseRemoteMachine):
             raise TypeError("src %r points to a different remote machine" % (src,))
         if isinstance(dst, RemotePath):
             raise TypeError("dst of download cannot be %r" % (dst,))
-        self._scp_command(shquote("%s:%s" % (self._fqhost, src)), shquote(dst))
+        self._scp_command("%s:%s" % (self._fqhost, shquote(src)), dst)
 
     @_setdoc(BaseRemoteMachine)
     def upload(self, src, dst):
@@ -413,5 +413,5 @@ class SshMachine(BaseRemoteMachine):
             raise TypeError("dst of upload cannot be %r" % (dst,))
         if isinstance(dst, RemotePath) and dst.remote != self:
             raise TypeError("dst %r points to a different remote machine" % (dst,))
-        self._scp_command(src, "%s:%s" % (self._fqhost, dst))
+        self._scp_command(src, "%s:%s" % (self._fqhost, shquote(dst)))
 
