@@ -33,10 +33,20 @@ class CLITest(unittest.TestCase):
         self.assertEqual(rc, 0)
     
     def test_okay(self):
+        _, rc = TestApp.run(["foo", "--bacon=81"], exit = False)
+        self.assertEqual(rc, 0)
+
         inst, rc = TestApp.run(["foo", "--bacon=81", "-a", "-v", "-e", "7", "-vv", 
             "--", "lala", "-e", "7"], exit = False)
         self.assertEqual(rc, 0)
         self.assertEqual(inst.eggs, "7")
+    
+    def test_failures(self):
+        _, rc = TestApp.run(["foo"], exit = False)
+        self.assertEqual(rc, 2)
+
+        _, rc = TestApp.run(["foo", "--bacon=hello"], exit = False)
+        self.assertEqual(rc, 2)
 
 
 

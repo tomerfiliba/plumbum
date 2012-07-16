@@ -68,6 +68,27 @@ class RemoteEnv(BaseEnv):
         BaseEnv.update(self, *args, **kwargs)
         self.remote._session.run("export " +
             " ".join("%s=%s" % (k, shquote(v)) for k, v in self.getdict().items()))
+    
+    def expand(self, expr):
+        """Expands any environment variables and home shortcuts found in ``expr``
+        (like ``os.path.expanduser`` combined with ``os.path.expandvars``)
+
+        :param expr: An expression containing environment variables (as ``$FOO``) or
+                     home shortcuts (as ``~/.bashrc``)
+
+        :returns: The expanded string"""
+        return self.remote._session.run("echo %s" % (expr,))
+    
+    def expanduser(self, expr):
+        """Expand home shortcuts (e.g., ``~/foo/bar`` or ``~john/foo/bar``)
+
+        :param expr: An expression containing home shortcuts
+
+        :returns: The expanded string"""
+        if not any(part.startwith("~") for part in expr.split("/")):
+            return expr
+        # we escape all $ signs to avoid expanding env-vars
+        return self.remote._session.run("echo %s" % (expr.replace("$", "\\$"),))
 
     #def clear(self):
     #    BaseEnv.clear(self, *args, **kwargs)
@@ -156,7 +177,10 @@ class BaseRemoteMachine(object):
         for p in parts:
             if isinstance(p, LocalPath):
                 raise TypeError("Cannot construct RemotePath from %r" % (p,))
-            parts2.append(self.env.expanduser(str(p)))
+            p = str(p)
+            if "~" in p:
+                p = self.env.expanduser(p)
+            parts2.append(p)
         return RemotePath(self, *parts2)
 
     def which(self, progname):
