@@ -149,9 +149,22 @@ class BaseRemoteMachine(object):
     def __init__(self, encoding = "utf8"):
         self.encoding = encoding
         self._session = self.session()
+        self.uname = self._get_uname()
         self.cwd = Workdir(self)
         self.env = RemoteEnv(self)
         self._python = None
+
+    def _get_uname(self):
+        rc, out, _ = self._session.run("uname", retcode = None)
+        if rc == 0:
+            return out.strip()
+        else:
+            rc, out, _ = self._session.run("python -c 'import platform;print(platform.uname()[0])'", retcode = None)
+            if rc == 0:
+                return out.strip()
+            else:
+                # all POSIX systems should have uname. make an educated guess it's Windows
+                return "Windows"
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self)
@@ -343,19 +356,6 @@ class SshMachine(BaseRemoteMachine):
         self._ssh_command = ssh_command[tuple(ssh_args)]
         self._scp_command = scp_command[tuple(scp_args)]
         BaseRemoteMachine.__init__(self)
-        self.uname = self._uname()
-
-    def _uname(self):
-        rc, out, _ = self._session.run("uname", retcode = None)
-        if rc == 0:
-            return out.strip()
-        else:
-            rc, out, _ = self._session.run("python -c 'import platform;print(platform.uname()[0])'", retcode = None)
-            if rc == 0:
-                return out.strip()
-            else:
-                # all POSIX systems should have uname. make an educated guess it's Windows
-                return "Windows"
 
     def __str__(self):
         return "ssh://%s" % (self._fqhost,)
