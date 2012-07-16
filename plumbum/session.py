@@ -172,7 +172,7 @@ class ShellSession(object):
         
         :param cmd: The command (string or :class:`Command <plumbum.commands.BaseCommand>` object)
                     to run
-        :returns: An :class:`SessionPopen <plumbum.session.SessionPopen>` instance
+        :returns: A :class:`SessionPopen <plumbum.session.SessionPopen>` instance
         """
         if self.proc is None:
             raise ShellSessionError("Shell session has already been closed")

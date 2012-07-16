@@ -152,7 +152,12 @@ class BaseRemoteMachine(object):
 
             p = rem.path("/usr", "lib", "python2.7")
         """
-        return RemotePath(self, *parts)
+        parts2 = [str(self.cwd)]
+        for p in parts:
+            if isinstance(p, LocalPath):
+                raise TypeError("Cannot construct RemotePath from %r" % (p,))
+            parts2.append(self.env.expanduser(str(p)))
+        return RemotePath(self, *parts2)
 
     def which(self, progname):
         """Looks up a program in the ``PATH``. If the program is not found, raises
@@ -314,12 +319,19 @@ class SshMachine(BaseRemoteMachine):
         self._ssh_command = ssh_command[tuple(ssh_args)]
         self._scp_command = scp_command[tuple(scp_args)]
         BaseRemoteMachine.__init__(self)
+        self.uname = self._uname()
 
+    def _uname(self):
         rc, out, _ = self._session.run("uname", retcode = None)
         if rc == 0:
-            self.uname = out.strip()
+            return out.strip()
         else:
-            self.uname = None
+            rc, out, _ = self._session.run("python -c 'import platform;print(platform.uname()[0])'", retcode = None)
+            if rc == 0:
+                return out.strip()
+            else:
+                # all POSIX systems should have uname. make an educated guess it's Windows
+                return "Windows"
 
     def __str__(self):
         return "ssh://%s" % (self._fqhost,)

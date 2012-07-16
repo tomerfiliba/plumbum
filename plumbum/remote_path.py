@@ -17,10 +17,14 @@ class RemotePath(Path):
     __slots__ = ["_path", "remote"]
     def __init__(self, remote, *parts):
         self.remote = remote
+        windows = (self.remote.uname.lower() == "windows")
         normed = []
         parts = (self.remote.cwd,) + parts
         for p in parts:
-            plist = str(p).replace("\\", "/").split("/")
+            if windows:
+                plist = str(p).replace("\\", "/").split("/")
+            else:
+                plist = str(p).split("/")
             if not plist[0]:
                 plist.pop(0)
                 del normed[:]
@@ -32,7 +36,11 @@ class RemotePath(Path):
                         normed.pop(-1)
                 else:
                     normed.append(item)
-        self._path = "/" + "/".join(normed)
+        if windows:
+            self.CASE_SENSITIVE = False
+            self._path = "\\".join(normed)
+        else:
+            self._path = "/" + "/".join(normed)
 
     def __str__(self):
         return self._path

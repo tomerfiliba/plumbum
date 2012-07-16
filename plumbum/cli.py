@@ -151,7 +151,7 @@ def switch(names, argtype = None, argname = None, list = False, mandatory = Fals
 
 def autoswitch(*args, **kwargs):
     """A decorator that exposes a function as a switch, "inferring" the name of the switch
-    from the function's name (converting to lower-case, and replacing underscores by hyphens).
+    from the function's name (converting to lower-case, and replacing underscores with hyphens).
     The arguments are the same as for :func:`switch <plumbum.cli.switch>`."""
     def deco(func):
         return switch(func.__name__.replace("_", "-"), *args, **kwargs)(func)
