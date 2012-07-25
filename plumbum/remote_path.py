@@ -57,7 +57,7 @@ class RemotePath(Path):
     def dirname(self):
         if not "/" in str(self):
             return str(self)
-        return str(self).rsplit("/", 1)[0]
+        return self.__class__(self.remote, str(self).rsplit("/", 1)[0])
 
     def _get_info(self):
         return (self.remote, self._path)
