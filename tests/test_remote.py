@@ -30,12 +30,12 @@ s.close()
 class RemotePathTest(unittest.TestCase):
     def test_basename(self):
         name = RemotePath(SshMachine("localhost"), "/some/long/path/to/file.txt").basename
-        self.assertIsInstance(name, basestring)
+        self.assertTrue(isinstance(name, six.string_types))
         self.assertEqual("file.txt", str(name))
 
     def test_dirname(self):
         name = RemotePath(SshMachine("localhost"), "/some/long/path/to/file.txt").dirname
-        self.assertIsInstance(name, RemotePath)
+        self.assertTrue(isinstance(name, RemotePath))
         self.assertEqual("/some/long/path/to", str(name))
 
 

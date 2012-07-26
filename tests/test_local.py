@@ -1,6 +1,7 @@
 from __future__ import with_statement
 import os
 import unittest
+import six
 from plumbum import local, LocalPath, FG, BG, ERROUT
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 
@@ -8,12 +9,12 @@ from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 class LocalPathTest(unittest.TestCase):
     def test_basename(self):
         name = LocalPath("/some/long/path/to/file.txt").basename
-        self.assertIsInstance(name, basestring)
+        self.assertTrue(isinstance(name, six.string_types))
         self.assertEqual("file.txt", str(name))
 
     def test_dirname(self):
         name = LocalPath("/some/long/path/to/file.txt").dirname
-        self.assertIsInstance(name, LocalPath)
+        self.assertTrue(isinstance(name, LocalPath))
         self.assertEqual("/some/long/path/to", str(name))
 
 
