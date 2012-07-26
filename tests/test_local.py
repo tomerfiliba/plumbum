@@ -1,8 +1,20 @@
 from __future__ import with_statement
 import os
 import unittest
-from plumbum import local, FG, BG, ERROUT
+from plumbum import local, LocalPath, FG, BG, ERROUT
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
+
+
+class LocalPathTest(unittest.TestCase):
+    def test_basename(self):
+        name = LocalPath("/some/long/path/to/file.txt").basename
+        self.assertIsInstance(name, basestring)
+        self.assertEqual("file.txt", str(name))
+
+    def test_dirname(self):
+        name = LocalPath("/some/long/path/to/file.txt").dirname
+        self.assertIsInstance(name, LocalPath)
+        self.assertEqual("/some/long/path/to", str(name))
 
 
 class LocalMachineTest(unittest.TestCase):
@@ -10,16 +22,16 @@ class LocalMachineTest(unittest.TestCase):
         from plumbum.cmd import ls
         self.assertTrue("test_local.py" in local["ls"]().splitlines())
         self.assertTrue("test_local.py" in ls().splitlines())
-        
+
         self.assertRaises(CommandNotFound, lambda: local["non_exist1N9"])
-        
+
         try:
             from plumbum.cmd import non_exist1N9 #@UnresolvedImport @UnusedImport
         except CommandNotFound:
             pass
         else:
             self.fail("from plumbum.cmd import non_exist1N9")
-    
+
     def test_cwd(self):
         from plumbum.cmd import ls
         self.assertEqual(local.cwd, os.getcwd())
@@ -45,21 +57,21 @@ class LocalMachineTest(unittest.TestCase):
             if fn.basename == "index.rst":
                 found = True
         self.assertTrue(found)
-    
+
     def test_env(self):
         self.assertTrue("PATH" in local.env)
         self.assertFalse("FOOBAR72" in local.env)
         self.assertRaises(ProcessExecutionError, local.python, "-c", "import os;os.environ['FOOBAR72']")
         local.env["FOOBAR72"] = "spAm"
         self.assertEqual(local.python("-c", "import os;print (os.environ['FOOBAR72'])").splitlines(), ["spAm"])
-        
+
         with local.env(FOOBAR73 = 1889):
             self.assertEqual(local.python("-c", "import os;print (os.environ['FOOBAR73'])").splitlines(), ["1889"])
             with local.env(FOOBAR73 = 1778):
                 self.assertEqual(local.python("-c", "import os;print (os.environ['FOOBAR73'])").splitlines(), ["1778"])
             self.assertEqual(local.python("-c", "import os;print (os.environ['FOOBAR73'])").splitlines(), ["1889"])
         self.assertRaises(ProcessExecutionError, local.python, "-c", "import os;os.environ['FOOBAR73']")
-        
+
         # path manipulation
         self.assertRaises(CommandNotFound, local.which, "dummy-executable")
         with local.env():
@@ -74,25 +86,25 @@ class LocalMachineTest(unittest.TestCase):
         local.which("ls")
         local["ls"]
         self.assertEqual(local.python("-c", "print ('hi there')").splitlines(), ["hi there"])
-    
+
     def test_piping(self):
         from plumbum.cmd import ls, grep
         chain = ls | grep["\\.py"]
         self.assertTrue("test_local.py" in chain().splitlines())
-        
+
         chain = (ls["-a"] | grep["test"] | grep["local"])
         self.assertTrue("test_local.py" in chain().splitlines())
-    
+
     def test_redirection(self):
         from plumbum.cmd import cat, ls, grep, rm
-        
+
         chain = (ls | grep["\\.py"]) > "tmp.txt"
         chain()
-        
+
         chain2 = (cat < "tmp.txt") | grep["local"]
         self.assertTrue("test_local.py" in chain2().splitlines())
         rm("tmp.txt")
-        
+
         chain3 = (cat << "this is the\nworld of helloness and\nspam bar and eggs") | grep["hello"]
         self.assertTrue("world of helloness and" in chain3().splitlines())
 
@@ -105,10 +117,10 @@ class LocalMachineTest(unittest.TestCase):
         rc, out, _ = (grep["-Zq5"] >= ERROUT).run(["-Zq5"], retcode = None)
         self.assertEqual(rc, 2)
         self.assertTrue("Usage" in out)
-    
+
     def test_popen(self):
         from plumbum.cmd import ls
-        
+
         p = ls.popen(["-a"])
         out, _ = p.communicate()
         self.assertEqual(p.returncode, 0)
@@ -116,21 +128,21 @@ class LocalMachineTest(unittest.TestCase):
 
     def test_run(self):
         from plumbum.cmd import ls, grep
-        
+
         rc, out, err = (ls | grep["non_exist1N9"]).run(retcode = 1)
         self.assertEqual(rc, 1)
 
     def test_timeout(self):
         from plumbum.cmd import sleep
         self.assertRaises(ProcessTimedOut, sleep, 10, timeout = 5)
-        
-    
+
+
     def test_modifiers(self):
         from plumbum.cmd import ls, grep
         f = (ls["-a"] | grep["\\.py"]) & BG
         f.wait()
         self.assertTrue("test_local.py" in f.stdout.splitlines())
-        
+
         (ls["-a"] | grep["local"]) & FG
 
     def test_session(self):
@@ -147,11 +159,11 @@ class LocalMachineTest(unittest.TestCase):
     def test_quoting(self):
         ssh = local["ssh"]
         pwd = local["pwd"]
-        
-        cmd = ssh["localhost", "cd", "/usr", "&&", ssh["localhost", "cd", "/", "&&", 
+
+        cmd = ssh["localhost", "cd", "/usr", "&&", ssh["localhost", "cd", "/", "&&",
             ssh["localhost", "cd", "/bin", "&&", pwd]]]
         self.assertTrue("\"'&&'\"" in " ".join(cmd.formulate(0)))
-    
+
     def test_tempdir(self):
         from plumbum.cmd import cat
         with local.tempdir() as dir:
@@ -160,9 +172,9 @@ class LocalMachineTest(unittest.TestCase):
                 f.write("hello world")
             with open(str(dir / "test.txt"), "r") as f:
                 self.assertEqual(f.read(), "hello world")
-        
+
         self.assertFalse(dir.exists())
-    
+
     def test_read_write(self):
         with local.tempdir() as tmp:
             data = "hello world"

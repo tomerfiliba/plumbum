@@ -53,7 +53,7 @@ class LocalPath(Path):
     @property
     @_setdoc(Path)
     def dirname(self):
-        return os.path.dirname(str(self))
+        return self.__class__(os.path.dirname(str(self)))
 
     @_setdoc(Path)
     def join(self, other):
