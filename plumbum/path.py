@@ -1,12 +1,12 @@
 class Path(object):
     """An abstraction over file system paths. This class is abstract, and the two implementations
-    are :class:`LocalPath <plumbum.local_machine.LocalPath>` and 
+    are :class:`LocalPath <plumbum.local_machine.LocalPath>` and
     :class:`RemotePath <plumbum.remote_machine.RemotePath>`.
     """
-    
+
     __slots__ = []
     CASE_SENSITIVE = True
-    
+
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, str(self))
     def __div__(self, other):
@@ -44,7 +44,7 @@ class Path(object):
     def __nonzero__(self):
         return bool(str(self))
     __bool__ = __nonzero__
-    
+
     def up(self, count = 1):
         """Go up in ``count`` directories (the default is 1)"""
         return self.join("../" * count)
@@ -67,11 +67,19 @@ class Path(object):
     def dirname(self):
         """The dirname component of this path"""
         raise NotImplementedError()
-    
+    @property
+    def owner(self):
+        """The owner of leaf component of this path"""
+        raise NotImplementedError()
+    @property
+    def group(self):
+        """The group of leaf component of this path"""
+        raise NotImplementedError()
+
     def _get_info(self):
         raise NotImplementedError()
     def join(self, *parts):
-        """Joins this path with any number of paths""" 
+        """Joins this path with any number of paths"""
         raise NotImplementedError()
     def list(self):
         """Returns the files in this directory"""
@@ -114,9 +122,6 @@ class Path(object):
     def write(self, data):
         """writes the given data to this file"""
         raise NotImplementedError()
-
-
-
-
-
-
+    def chown(self, owner=None, group=None, uid=None, gid=None, recursive=False):
+        """Change ownership of leaf component of this path"""
+        raise NotImplementedError()
