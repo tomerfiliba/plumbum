@@ -59,6 +59,27 @@ class RemotePath(Path):
             return str(self)
         return self.__class__(self.remote, str(self).rsplit("/", 1)[0])
 
+    @property
+    @_setdoc(Path)
+    def owner(self):
+        files = self.remote._session.run("ls -a %s" % (self,))[1].splitlines()
+        stat = os.stat(str(self))
+        return pwd.getpwuid(stat.st_uid)[0]
+
+    @owner.setter
+    def owner(self, owner):
+        self.chown(owner)
+
+    @property
+    @_setdoc(Path)
+    def group(self):
+        stat = os.stat(str(self))
+        return grp.getgrgid(stat.st_gid)[0]
+
+    @group.setter
+    def group(self, group):
+        self.chown(group=group)
+
     def _get_info(self):
         return (self.remote, self._path)
 
@@ -160,3 +181,19 @@ class RemotePath(Path):
             f.flush()
             f.seek(0)
             self.remote.upload(f.name, self)
+
+    @_setdoc(Path)
+    def chown(self, owner='', group='', uid='', gid='', recursive=False):
+        gid = str(gid)  # str so uid 0 (int) isn't seen as False
+        uid = str(uid)
+        args = list()
+        if recursive:
+            args.append('-R')
+        if uid:
+            owner = uid
+        if gid:
+            group = gid
+        if group:
+            owner = '%s:%s' % (owner, group)
+        args.append(owner)
+        self.remote._session.run('chown %s "%s"' % (' '.join(args), self))

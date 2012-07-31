@@ -17,6 +17,33 @@ class LocalPathTest(unittest.TestCase):
         self.assertTrue(isinstance(name, LocalPath))
         self.assertEqual("/some/long/path/to", str(name))
 
+    # requires being run as root
+    def test_chown(self):
+        path = LocalPath("/tmp/delme.txt")
+        path.delete()
+        path.write('test')
+        self.assertTrue('nobody' != path.owner)
+        self.assertTrue('nogroup' != path.group)
+        # chown group
+        path.chown(group='nogroup')
+        self.assertEqual('nogroup', path.group)
+        self.assertTrue('nobody' != path.owner)
+        # chown owner
+        path.chown('nobody')
+        self.assertEqual('nobody', path.owner)
+        # chown both / numerical ids
+        path.chown(uid=0, gid=0)
+        self.assertEqual('root', path.owner)
+        self.assertEqual('root', path.group)
+        # recursive
+        path.chown('root', recursive=True)
+            # set properties
+        path.owner = 'nobody'
+        self.assertEqual('nobody', path.owner)
+        path.group = 'nogroup'
+        self.assertEqual('nogroup', path.group)
+        path.delete()
+
 
 class LocalMachineTest(unittest.TestCase):
     def test_imports(self):
