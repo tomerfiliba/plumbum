@@ -1,20 +1,23 @@
 from __future__ import with_statement
-import sys
 import os
+import sys
+import grp
+import pwd
 import glob
 import shutil
 import subprocess
 import logging
 import stat
 import time
+from types import ModuleType
+from tempfile import mkdtemp
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
+
 from plumbum.path import Path
 from plumbum.remote_path import RemotePath
 from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.session import ShellSession
-from types import ModuleType
-from tempfile import mkdtemp
 from plumbum.lib import _setdoc
 
 logger = logging.getLogger("plumbum.local")
@@ -54,6 +57,26 @@ class LocalPath(Path):
     @_setdoc(Path)
     def dirname(self):
         return self.__class__(os.path.dirname(str(self)))
+
+    @property
+    @_setdoc(Path)
+    def owner(self):
+        stat = os.stat(str(self))
+        return pwd.getpwuid(stat.st_uid)[0]
+
+    @owner.setter
+    def owner(self, owner):
+        self.chown(owner)
+
+    @property
+    @_setdoc(Path)
+    def group(self):
+        stat = os.stat(str(self))
+        return grp.getgrgid(stat.st_gid)[0]
+
+    @group.setter
+    def group(self, group):
+        self.chown(group=group)
 
     @_setdoc(Path)
     def join(self, other):
@@ -132,6 +155,25 @@ class LocalPath(Path):
     def write(self, data):
         with self.open("w") as f:
             f.write(data)
+
+    @_setdoc(Path)
+    def chown(self, owner='', group='', uid='', gid='', recursive=False):
+        gid = str(gid)  # str so uid 0 (int) isn't seen as False
+        uid = str(uid)
+        args = list()
+        if recursive:
+            args.append('-R')
+        if uid:
+            owner = uid
+        if gid:
+            group = gid
+        if group:
+            owner = '%s:%s' % (owner, group)
+        args.append(owner)
+        args.append(str(self))
+        # recursive is a pain using os.chown
+        local['chown'](*args)
+
 
 class Workdir(LocalPath):
     """Working directory manipulator"""
