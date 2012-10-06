@@ -32,8 +32,8 @@ Cheat Sheet
     u''
 
 Instead of writing ``xxx = local["xxx"]`` for every program you wish to use, you can 
-also :ref:`import commands <import-hack>`:
-    
+also import commands:
+
     >>> from plumbum.cmd import grep, wc, cat, head
     >>> grep
     LocalCommand(<LocalPath /bin/grep>)
@@ -111,7 +111,6 @@ also :ref:`import commands <import-hack>`:
             print "Verbose:", self.verbose
             print "Include dirs:", self.include_dirs 
             print "Compiling:", srcfiles
-    
     
     if __name__ == "__main__":
         MyCompiler.run()
