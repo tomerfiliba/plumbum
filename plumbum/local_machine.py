@@ -7,16 +7,17 @@ import subprocess
 import logging
 import stat
 import time
+import platform
 from tempfile import mkdtemp
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
+from types import ModuleType
 
 from plumbum.path import Path, FSUser
 from plumbum.remote_path import RemotePath
 from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.session import ShellSession
 from plumbum.lib import _setdoc
-import platform
 
 try:
     from pwd import getpwuid, getpwnam
@@ -580,3 +581,17 @@ Attributes:
 * ``encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``)
 """
 
+#===================================================================================================
+# Module hack: ``from plumbum.cmd import ls``
+#===================================================================================================
+class LocalModule(ModuleType):
+    """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
+    def __init__(self, name):
+        ModuleType.__init__(self, name, __doc__)
+        self.__file__ = None
+        self.__package__ = ".".join(name.split(".")[:-1])
+    def __getattr__(self, name):
+        return local[name]
+
+LocalModule = LocalModule("plumbum.cmd")
+sys.modules[LocalModule.__name__] = LocalModule

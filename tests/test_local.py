@@ -15,9 +15,8 @@ class LocalPathTest(unittest.TestCase):
     def test_dirname(self):
         name = LocalPath("/some/long/path/to/file.txt").dirname
         self.assertTrue(isinstance(name, LocalPath))
-        self.assertEqual("/some/long/path/to", str(name))
+        self.assertEqual("/some/long/path/to", str(name).replace("\\", "/"))
 
-    # requires being run as root
     def _test_chown(self):
         path = LocalPath("/tmp/delme.txt")
         path.delete()
