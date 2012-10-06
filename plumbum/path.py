@@ -3,7 +3,6 @@ class FSUser(int):
     just like a number (``uid``/``gid``), but also have a ``.name`` attribute that holds the
     string-name of the user, if given
     """
-    __slots__ = ["name"]
     def __new__(cls, val, name = None):
         self = int.__new__(cls, val)
         self.name = name
