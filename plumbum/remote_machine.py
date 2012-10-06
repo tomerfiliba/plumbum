@@ -180,10 +180,9 @@ class BaseRemoteMachine(object):
         self._session = ClosedRemote(self)
 
     def path(self, *parts):
-        """A factory for :class:`RemotePaths <plumbum.remote_machine.RemotePath>`. Usage
-
-        ::
-
+        """A factory for :class:`RemotePaths <plumbum.remote_machine.RemotePath>`. 
+        Usage ::
+        
             p = rem.path("/usr", "lib", "python2.7")
         """
         parts2 = [str(self.cwd)]
@@ -274,7 +273,7 @@ class BaseRemoteMachine(object):
         """A context manager that creates a remote temporary directory, which is removed when
         the context exits"""
         _, out, _ = self._session.run("mktemp -d")
-        dir = self.path(out.strip())
+        dir = self.path(out.strip()) #@ReservedAssignment
         try:
             yield dir
         finally:

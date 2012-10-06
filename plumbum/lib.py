@@ -1,7 +1,7 @@
 import heapq
 
 
-def _setdoc(super):
+def _setdoc(super): #@ReservedAssignment
     def deco(func):
         func.__doc__ = getattr(getattr(super, func.__name__, None), "__doc__", None)
         return func

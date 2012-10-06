@@ -1,24 +1,31 @@
 from __future__ import with_statement
 import os
 import sys
-import grp
-import pwd
 import glob
 import shutil
 import subprocess
 import logging
 import stat
 import time
-from types import ModuleType
 from tempfile import mkdtemp
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
 
-from plumbum.path import Path
+from plumbum.path import Path, FSUser
 from plumbum.remote_path import RemotePath
 from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.session import ShellSession
 from plumbum.lib import _setdoc
+import platform
+
+try:
+    from pwd import getpwuid, getpwnam
+    from grp import getgrgid, getgrnam
+except ImportError:
+    def getpwuid(x): return (None,)
+    def getgrgid(x): return (None,)
+    def getpwnam(x): raise OSError("`getpwnam` not supported")
+    def getgrnam(x): raise OSError("`getgrnam` not supported")
 
 logger = logging.getLogger("plumbum.local")
 
@@ -60,23 +67,17 @@ class LocalPath(Path):
 
     @property
     @_setdoc(Path)
-    def owner(self):
-        stat = os.stat(str(self))
-        return pwd.getpwuid(stat.st_uid)[0]
-
-    @owner.setter
-    def owner(self, owner):
-        self.chown(owner)
+    def uid(self):
+        uid = self.stat().st_uid
+        name = getpwuid(uid)[0]
+        return FSUser(uid, name)
 
     @property
     @_setdoc(Path)
     def group(self):
-        stat = os.stat(str(self))
-        return grp.getgrgid(stat.st_gid)[0]
-
-    @group.setter
-    def group(self, group):
-        self.chown(group=group)
+        gid = self.stat().st_gid
+        name = getgrgid(gid)[0]
+        return FSUser(gid, name)
 
     @_setdoc(Path)
     def join(self, other):
@@ -157,22 +158,15 @@ class LocalPath(Path):
             f.write(data)
 
     @_setdoc(Path)
-    def chown(self, owner='', group='', uid='', gid='', recursive=False):
-        gid = str(gid)  # str so uid 0 (int) isn't seen as False
-        uid = str(uid)
-        args = list()
-        if recursive:
-            args.append('-R')
-        if uid:
-            owner = uid
-        if gid:
-            group = gid
-        if group:
-            owner = '%s:%s' % (owner, group)
-        args.append(owner)
-        args.append(str(self))
-        # recursive is a pain using os.chown
-        local['chown'](*args)
+    def chown(self, owner=None, group=None, recursive = None):
+        if not hasattr(os, "chown"):
+            raise OSError("os.chown() not supported")
+        uid = owner if isinstance(owner, int) else getpwnam(owner)[2]
+        gid = group if isinstance(group, int) else getgrnam(group)[2]
+        os.chown(str(self), uid, gid)
+        if recursive or (recursive is None and self.isdir()):
+            for subpath in self.walk():
+                os.chown(str(subpath), uid, gid)
 
 
 class Workdir(LocalPath):
@@ -449,6 +443,7 @@ class LocalMachine(object):
     cwd = Workdir()
     env = LocalEnv()
     encoding = sys.getfilesystemencoding()
+    uname = platform.uname()[0]
 
     if IS_WIN32:
         _EXTENSIONS = [""] + env.get("PATHEXT", ":.exe:.bat").lower().split(os.path.pathsep)
@@ -502,10 +497,9 @@ class LocalMachine(object):
         raise CommandNotFound(progname, list(cls.env.path))
 
     def path(self, *parts):
-        """A factory for :class:`LocalPaths <plumbum.local_machine.LocalPath>`. Usage
-
-        ::
-
+        """A factory for :class:`LocalPaths <plumbum.local_machine.LocalPath>`. 
+        Usage ::
+        
             p = local.path("/usr", "lib", "python2.7")
         """
         parts2 = [str(self.cwd)]
@@ -565,7 +559,7 @@ class LocalMachine(object):
     def tempdir(self):
         """A context manager that creates a temporary directory, which is removed when the context
         exits"""
-        dir = self.path(mkdtemp())
+        dir = self.path(mkdtemp()) #@ReservedAssignment
         try:
             yield dir
         finally:
@@ -585,19 +579,4 @@ Attributes:
 * ``env`` - the local environment
 * ``encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``)
 """
-
-#===================================================================================================
-# Module hack: ``from plumbum.cmd import ls``
-#===================================================================================================
-class LocalModule(ModuleType):
-    """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
-    def __init__(self, name):
-        ModuleType.__init__(self, name, __doc__)
-        self.__file__ = None
-        self.__package__ = ".".join(name.split(".")[:-1])
-    def __getattr__(self, name):
-        return local[name]
-
-LocalModule = LocalModule("plumbum.cmd")
-sys.modules[LocalModule.__name__] = LocalModule
 

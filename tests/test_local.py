@@ -18,7 +18,7 @@ class LocalPathTest(unittest.TestCase):
         self.assertEqual("/some/long/path/to", str(name))
 
     # requires being run as root
-    def test_chown(self):
+    def _test_chown(self):
         path = LocalPath("/tmp/delme.txt")
         path.delete()
         path.write('test')

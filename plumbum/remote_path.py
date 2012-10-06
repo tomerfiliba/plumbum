@@ -3,7 +3,7 @@ import os
 import errno
 import six
 from tempfile import NamedTemporaryFile
-from plumbum.path import Path
+from plumbum.path import Path, FSUser
 from plumbum.lib import _setdoc
 from plumbum.commands import shquote
 
@@ -61,24 +61,15 @@ class RemotePath(Path):
 
     @property
     @_setdoc(Path)
-    def owner(self):
-        files = self.remote._session.run("ls -a %s" % (self,))[1].splitlines()
-        stat = os.stat(str(self))
-        return pwd.getpwuid(stat.st_uid)[0]
-
-    @owner.setter
-    def owner(self, owner):
-        self.chown(owner)
+    def uid(self):
+        uid, name = self.remote._session.run("stat -c '%u,%U' " + shquote(self)).split(",")
+        return FSUser(int(uid), name)
 
     @property
     @_setdoc(Path)
-    def group(self):
-        stat = os.stat(str(self))
-        return grp.getgrgid(stat.st_gid)[0]
-
-    @group.setter
-    def group(self, group):
-        self.chown(group=group)
+    def gid(self):
+        gid, name = self.remote._session.run("stat -c '%g,%G' " + shquote(self)).split(",")
+        return FSUser(int(gid), name)
 
     def _get_info(self):
         return (self.remote, self._path)
@@ -183,17 +174,18 @@ class RemotePath(Path):
             self.remote.upload(f.name, self)
 
     @_setdoc(Path)
-    def chown(self, owner='', group='', uid='', gid='', recursive=False):
-        gid = str(gid)  # str so uid 0 (int) isn't seen as False
-        uid = str(uid)
-        args = list()
+    def chown(self, owner=None, group=None, recursive=None):
+        args = ["chown"]
+        if recursive is None:
+            recursive = self.isdir()
         if recursive:
-            args.append('-R')
-        if uid:
-            owner = uid
-        if gid:
-            group = gid
-        if group:
-            owner = '%s:%s' % (owner, group)
-        args.append(owner)
-        self.remote._session.run('chown %s "%s"' % (' '.join(args), self))
+            args.append("-R")
+        if owner is not None and group is not None:
+            args.append("%s:%s" % (owner, group))
+        elif owner is not None:
+            args.append(str(owner))
+        elif group is not None:
+            args.append(":%s" % (group,))
+        args.append(shquote(self))
+        self.remote._session.run(" ".join(args))
+

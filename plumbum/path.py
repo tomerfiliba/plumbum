@@ -1,3 +1,14 @@
+class FSUser(int):
+    """A special object that represents file-system user. It derives from ``int``, so it behaves 
+    just like a number (``uid``/``gid``), but also have a ``.name`` attribute that holds the
+    string-name of the user, if given
+    """
+    __slots__ = ["name"]
+    def __new__(cls, val, name = None):
+        self = int.__new__(cls, val)
+        self.name = name
+        return self
+
 class Path(object):
     """An abstraction over file system paths. This class is abstract, and the two implementations
     are :class:`LocalPath <plumbum.local_machine.LocalPath>` and
@@ -68,12 +79,16 @@ class Path(object):
         """The dirname component of this path"""
         raise NotImplementedError()
     @property
-    def owner(self):
-        """The owner of leaf component of this path"""
+    def uid(self):
+        """The user that owns this path. The returned value is a :class:`FSUser <plumbum.path.FSUser>`
+        object which behaves like an ``int`` (as expected from ``uid``), but it also has a ``.name``
+        attribute that holds the string-name of the user"""
         raise NotImplementedError()
     @property
-    def group(self):
-        """The group of leaf component of this path"""
+    def gid(self):
+        """The group that owns this path. The returned value is a :class:`FSUser <plumbum.path.FSUser>`
+        object which behaves like an ``int`` (as expected from ``gid``), but it also has a ``.name``
+        attribute that holds the string-name of the group"""
         raise NotImplementedError()
 
     def _get_info(self):
@@ -122,6 +137,14 @@ class Path(object):
     def write(self, data):
         """writes the given data to this file"""
         raise NotImplementedError()
-    def chown(self, owner=None, group=None, uid=None, gid=None, recursive=False):
-        """Change ownership of leaf component of this path"""
+    def chown(self, owner=None, group=None, recursive=None):
+        """Change ownership of this path.
+        
+        :param owner: The owner to set (either ``uid`` or ``username``), optional
+        :param owner: The group to set (either ``gid`` or ``groupname``), optional
+        :param recursive: whether to change ownership of all contained files and subdirectories.
+                          Only meaningful when ``self`` is a directory. If ``None``, the value
+                          will default to ``True`` if ``self`` is a directory, ``False`` otherwise.
+        """
         raise NotImplementedError()
+
