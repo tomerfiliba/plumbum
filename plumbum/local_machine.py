@@ -75,7 +75,7 @@ class LocalPath(Path):
 
     @property
     @_setdoc(Path)
-    def group(self):
+    def gid(self):
         gid = self.stat().st_gid
         name = getgrgid(gid)[0]
         return FSUser(gid, name)
