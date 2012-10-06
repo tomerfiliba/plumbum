@@ -33,6 +33,8 @@ environment :ref:`manipulation <guide-local-machine>`, and a programmatic
 
 News
 ====
+* **2012.10.06**: Version 1.0.0 released
+
 * **2012.07.16**: Version 0.9.5 released
 
 * **2012.05.28**: Plumbum is now `all green <http://travis-ci.org/#!/tomerfiliba/plumbum/builds/1459486>`_
@@ -192,7 +194,7 @@ that I wrote for `RPyC <http://rpyc.sf.net>`_. When I combined the two with *she
 
 Credits
 =======
-The project has been inspired by `PBS <https://github.com/amoffat/pbs>`_ 
+The project has been inspired by **PBS** (now called `sh <http://amoffat.github.com/sh/>`_) 
 of `Andrew Moffat <https://github.com/amoffat>`_, 
 and has borrowed some of his ideas (namely treating programs like functions and the
 nice trick for importing commands). However, I felt there was too much magic going on in PBS, 

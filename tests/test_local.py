@@ -25,6 +25,8 @@ class LocalPathTest(unittest.TestCase):
             p.write("hello")
             self.assertEqual(p.uid, os.getuid())
             self.assertEqual(p.gid, os.getgid())
+            p.chown(p.uid.name)
+            self.assertEqual(p.uid, os.getuid())
 
 
 class LocalMachineTest(unittest.TestCase):

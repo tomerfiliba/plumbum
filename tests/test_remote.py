@@ -8,25 +8,6 @@ from plumbum import RemotePath, SshMachine, ProcessExecutionError
 #logging.basicConfig(level = logging.DEBUG)
 
 
-tunnel_prog = r"""
-import sys, socket
-s = socket.socket()
-if sys.version_info[0] < 3:
-    b = lambda x: x
-else:
-    b = lambda x: bytes(x, "utf8")
-s.bind(("", 0))
-s.listen(1)
-sys.stdout.write(b("%s\n" % (s.getsockname()[1],)))
-sys.stdout.flush()
-s2, _ = s.accept()
-data = s2.recv(100)
-s2.send(b("hello ") + data)
-s2.close()
-s.close()
-"""
-
-
 class RemotePathTest(unittest.TestCase):
     def test_basename(self):
         name = RemotePath(SshMachine("localhost"), "/some/long/path/to/file.txt").basename
@@ -37,6 +18,19 @@ class RemotePathTest(unittest.TestCase):
         name = RemotePath(SshMachine("localhost"), "/some/long/path/to/file.txt").dirname
         self.assertTrue(isinstance(name, RemotePath))
         self.assertEqual("/some/long/path/to", str(name))
+
+    def test_chown(self):
+        if not hasattr(os, "chown"):
+            self.skip("os.chown not supported")
+        with SshMachine("localhost") as rem:
+            with rem.tempdir() as dir:
+                p = dir / "foo.txt"
+                p.write("hello")
+                # because we're connected to localhost, we expect UID and GID to be the same
+                self.assertEqual(p.uid, os.getuid())
+                self.assertEqual(p.gid, os.getgid())
+                p.chown(p.uid.name)
+                self.assertEqual(p.uid, os.getuid())
 
 
 class RemoteMachineTest(unittest.TestCase):
@@ -82,8 +76,23 @@ class RemoteMachineTest(unittest.TestCase):
                 out = rem.python("-c", "import os;print(os.environ['FOOBAR72'])")
                 self.assertEqual(out.strip(), "lala")
 
-
     def test_tunnel(self):
+        tunnel_prog = r"""import sys, socket
+s = socket.socket()
+if sys.version_info[0] < 3:
+    b = lambda x: x
+else:
+    b = lambda x: bytes(x, "utf8")
+s.bind(("", 0))
+s.listen(1)
+sys.stdout.write(b("%s\n" % (s.getsockname()[1],)))
+sys.stdout.flush()
+s2, _ = s.accept()
+data = s2.recv(100)
+s2.send(b("hello ") + data)
+s2.close()
+s.close()
+"""
         with SshMachine("localhost") as rem:
             p = (rem.python["-u"] << tunnel_prog).popen()
             try:
