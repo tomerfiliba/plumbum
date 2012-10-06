@@ -62,13 +62,13 @@ class RemotePath(Path):
     @property
     @_setdoc(Path)
     def uid(self):
-        uid, name = self.remote._session.run("stat -c '%u,%U' " + shquote(self)).split(",")
+        uid, name = self.remote._session.run("stat -c '%u,%U' " + shquote(self))[1].strip().split(",")
         return FSUser(int(uid), name)
 
     @property
     @_setdoc(Path)
     def gid(self):
-        gid, name = self.remote._session.run("stat -c '%g,%G' " + shquote(self)).split(",")
+        gid, name = self.remote._session.run("stat -c '%g,%G' " + shquote(self))[1].strip().split(",")
         return FSUser(int(gid), name)
 
     def _get_info(self):
