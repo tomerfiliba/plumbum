@@ -21,8 +21,13 @@ Or as a context-manager::
     >>> with SshMachine("hostname", user = "john", keyfile = "/path/to/idrsa") as rem:
     ...     pass
 
+.. note::
+   At the moment, Plumbum requires ``ssh`` (``openSSH`` or compatible) installed on your 
+   system in order to connect to remote machines. Future versions of Plumbum may utilize
+   ``paramiko`` or similar tools.
+
 Only the ``hostname`` parameter is required, all other parameters are optional. If the host has
-your ``idrsa.pub`` key in its ``authorized_keys`` file, or if you've set up your ``~/.ssh/config``
+your ``id-rsa.pub`` key in its ``authorized_keys`` file, or if you've set up your ``~/.ssh/config``
 to login with some user and ``keyfile``, you can simply use ``rem = SshMachine("hostname")``.
 
 Much like the :ref:`local object <guide-local-machine>`, remote machines expose ``which()``,
@@ -88,10 +93,50 @@ object. You can either pass the command's name, in which case it will be resolve
     >>> r_ls()
     u'foo\nbar\spam\n'
 
-..  XXX: 
-    incomplete
-    talk about nesting
+Nesting Commands
+^^^^^^^^^^^^^^^^
+Remote commands can be nested just like local ones. In fact, that's how the ``SshMachine`` operates
+behind the scenes - it nests each command inside ``ssh``. Here are some examples::
 
+    >>> r_sudo = rem["sudo"]
+    >>> r_ifconfig = rem["ifconfig"]
+    >>> print r_sudo[r_ifconfig["-a"]]()
+    eth0      Link encap:Ethernet HWaddr ...
+    [...]
+
+You can nest multiple commands, one within another. For instance, you can connect to some machine
+over SSH and use that machine's SSH client to connect to yet another machine. Here's a sketch:: 
+
+    >>> from plumbum.cmd import ssh
+    >>> print ssh["localhost", ssh["localhost", "ls"]]
+    /usr/bin/ssh localhost /usr/bin/ssh localhost ls
+    >>>
+    >>> ssh["localhost", ssh["localhost", "ls"]]()
+    u'bin\nDesktop\nDocuments\n...'
+
+
+Piping
+^^^^^^
+Piping works for remote commands as well, but there's a caveat to note here: the plumbing takes
+place on the local machine! Consider this code for instance ::
+
+    >>> r_grep = rem["grep"]
+    >>> r_ls = rem["ls"]
+    >>> (r_ls | r_grep["b"])()
+    u'bin\nPublic\n'
+
+Although ``r_ls`` and ``r_grep`` are remote commands, the data is sent from ``r_ls`` to the local 
+machine, which then sends it to the remote one for running ``grep``. This will be fixed in a future
+version of Plumbum. 
+
+It should be noted, however, that piping remote commands into local ones is perfectly fine. 
+For example, the previous code can be written as ::
+
+    >>> from plumbum.cmd import grep
+    >>> (r_ls | grep["b"])()
+    u'bin\nPublic\n'
+
+Which is even more efficient (no need to send data back and forth over SSH).
 
 .. _guide-remote-paths:
 
@@ -107,7 +152,7 @@ renaming paths, etc. ::
     >>> (p / "ls").isfile()
     True
     >>> rem.path("/dev") // "sd*"
-    [<RemotePath /dev/sda>, <RemotePath /dev/sdb>, <RemotePath /dev/sdb1>, <RemotePath /dev/sdb2>]
+    [<RemotePath /dev/sda>, < RemotePath /dev/sdb>, <RemotePath /dev/sdb1>, <RemotePath /dev/sdb2>]
 
 .. note::
    See the :ref:`guide-utils` guide for copying, moving and deleting remote paths
