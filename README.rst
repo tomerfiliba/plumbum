@@ -32,7 +32,7 @@ Cheat Sheet
     u''
 
 Instead of writing ``xxx = local["xxx"]`` for every program you wish to use, you can 
-also import commands:
+also import commands::
 
     >>> from plumbum.cmd import grep, wc, cat, head
     >>> grep
