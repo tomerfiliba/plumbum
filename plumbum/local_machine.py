@@ -162,8 +162,8 @@ class LocalPath(Path):
     def chown(self, owner=None, group=None, recursive = None):
         if not hasattr(os, "chown"):
             raise OSError("os.chown() not supported")
-        uid = owner if isinstance(owner, int) else getpwnam(owner)[2]
-        gid = group if isinstance(group, int) else getgrnam(group)[2]
+        uid = self.uid if owner is None else (owner if isinstance(owner, int) else getpwnam(owner)[2])
+        gid = self.gid if group is None else (group if isinstance(group, int) else getgrnam(group)[2])
         os.chown(str(self), uid, gid)
         if recursive or (recursive is None and self.isdir()):
             for subpath in self.walk():
