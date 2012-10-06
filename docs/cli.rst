@@ -342,8 +342,8 @@ See Also
 --------
 * `filecopy.py <https://github.com/tomerfiliba/plumbum/blob/master/examples/filecopy.py>`_ example
 * `RPyC <http://rpyc.sf.net>`_ has changed it bash-based build script to Plumbum CLI.
-  Notice `how short <https://github.com/tomerfiliba/rpyc/blob/c457a28d689df7605838334a437c6b35f9a94618/build.py>`
-  and readable it is.
+  Notice `how short and readable <https://github.com/tomerfiliba/rpyc/blob/c457a28d689df7605838334a437c6b35f9a94618/build.py>`_
+  it is.
 * A blog post describing the philosophy of the CLI module: `http://tomerfiliba.com/blog/Plumbum/`_
 
 
