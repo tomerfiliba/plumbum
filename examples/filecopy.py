@@ -1,6 +1,7 @@
+import logging
 from plumbum import cli, local
 from plumbum.utils import delete, copy
-import logging
+
 
 logger = logging.getLogger("FileCopier")
 
@@ -21,7 +22,7 @@ class FileCopier(cli.Application):
     def main(self, src, dst):
         if local.path(dst).exists():
             if not self.overwrite:
-                logger.debug("Oh no! It's terrible")
+                logger.debug("Oh no! That's terrible")
                 raise ValueError("Destination already exists")
             else:
                 delete(dst)
@@ -29,6 +30,7 @@ class FileCopier(cli.Application):
         logger.debug("I'm going to copy %s to %s", src, dst)
         copy(src, dst)
         logger.debug("Great success")
+
 
 if __name__ == "__main__":
     FileCopier.run()

@@ -3,6 +3,7 @@ import six
 import inspect
 from plumbum import local
 from textwrap import TextWrapper
+import os
 
 
 class SwitchError(Exception):
@@ -182,7 +183,7 @@ class SwitchAttr(object):
             kwargs["help"] += "; the default is %r" % (default,)
         switch(names, argtype = argtype, argname = "VALUE", list = list, **kwargs)(self)
         if list:
-            self._value = [default]
+            self._value = [] if default is None else [default]
         else:
             self._value = default
     def __call__(self, _, val):
@@ -378,7 +379,7 @@ class Application(object):
     
     def __init__(self, executable):
         if self.PROGNAME is None:
-            self.PROGNAME = executable
+            self.PROGNAME = os.path.basename(executable)
         self.executable = executable
         self._switches_by_name = {}
         self._switches_by_func = {}
