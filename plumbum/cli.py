@@ -41,17 +41,17 @@ class SwitchInfo(object):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-def switch(names, argtype = None, argname = None, list = False, mandatory = False, requires = (), 
+def switch(names, argtype = None, argname = None, list = False, mandatory = False, requires = (),
         excludes = (), help = None, overridable = False, group = "Switches"):
     """
     A decorator that exposes functions as command-line switches. Usage::
-    
+
         class MyApp(Application):
             @switch(["-l", "--log-to-file"], argtype = str)
             def log_to_file(self, filename):
                 handler = logging.FileHandler(filename)
                 logger.addHandler(handler)
-            
+
             @switch(["--verbose"], excludes=["--terse"], requires=["--log-to-file"])
             def set_debug(self):
                 logger.setLevel(logging.DEBUG)
@@ -59,79 +59,79 @@ def switch(names, argtype = None, argname = None, list = False, mandatory = Fals
             @switch(["--terse"], excludes=["--verbose"], requires=["--log-to-file"])
             def set_terse(self):
                 logger.setLevel(logging.WARNING)
-    
+
     :param names: The name(s) under which the function is reachable; it can be a string
                   or a list of string, but at least one name is required. There's no need
                   to prefix the name with ``-`` or ``--`` (this is added automatically),
                   but it can be used for clarity. Single-letter names are prefixed by ``-``,
                   while longer names are prefixed by ``--``
-    
+
     :param argtype: If this function takes an argument, you need to specify its type. The
                     default is ``None``, which means the function takes no argument. The type
                     is more of a "validator" than a real type; it can be any callable object
                     that raises a ``TypeError`` if the argument is invalid, or returns an
-                    appropriate value on success. If the user provides an invalid value, 
+                    appropriate value on success. If the user provides an invalid value,
                     :func:`plumbum.cli.WrongArgumentType`
-    
+
     :param argname: The name of the argument; if ``None``, the name will be inferred from the
                     function's signature
-    
+
     :param list: Whether or not this switch can be repeated (e.g. ``gcc -I/lib -I/usr/lib``).
                  If ``False``, only a single occurrence of the switch is allowed; if ``True``,
                  it may be repeated indefinitely. The occurrences are collected into a list,
                  so the function is only called once with the collections. For instance,
-                 for ``gcc -I/lib -I/usr/lib``, the function will be called with 
+                 for ``gcc -I/lib -I/usr/lib``, the function will be called with
                  ``["/lib", "/usr/lib"]``.
-    
+
     :param mandatory: Whether or not this switch is mandatory; if a mandatory switch is not
                       given, :class:`MissingMandatorySwitch <plumbum.cli.MissingMandatorySwitch>`
                       is raised. The default is ``False``.
-    
-    :param requires: A list of switches that this switch depends on ("requires"). This means that 
-                     it's invalid to invoke this switch without also invoking the required ones. 
-                     In the example above, it's illegal to pass ``--verbose`` or ``--terse`` 
-                     without also passing ``--log-to-file``. By default, this list is empty, 
+
+    :param requires: A list of switches that this switch depends on ("requires"). This means that
+                     it's invalid to invoke this switch without also invoking the required ones.
+                     In the example above, it's illegal to pass ``--verbose`` or ``--terse``
+                     without also passing ``--log-to-file``. By default, this list is empty,
                      which means the switch has no prerequisites. If an invalid combination
                      is given, :class:`SwitchCombinationError <plumbum.cli.SwitchCombinationError>`
                      is raised.
-                     
-                     Note that this list is made of the switch *names*; if a switch has more 
+
+                     Note that this list is made of the switch *names*; if a switch has more
                      than a single name, any of its names will do.
-                     
+
                      .. note::
-                        There is no guarantee on the (topological) order in which the actual 
+                        There is no guarantee on the (topological) order in which the actual
                         switch functions will be invoked, as the dependency graph might contain
                         cycles.
-    
-    :param excludes: A list of switches that this switch forbids ("excludes"). This means that 
-                     it's invalid to invoke this switch if any of the excluded ones are given. 
-                     In the example above, it's illegal to pass ``--verbose`` along with 
-                     ``--terse``, as it will result in a contradiction. By default, this list 
-                     is empty, which means the switch has no prerequisites. If an invalid 
-                     combination is given, :class:`SwitchCombinationError 
+
+    :param excludes: A list of switches that this switch forbids ("excludes"). This means that
+                     it's invalid to invoke this switch if any of the excluded ones are given.
+                     In the example above, it's illegal to pass ``--verbose`` along with
+                     ``--terse``, as it will result in a contradiction. By default, this list
+                     is empty, which means the switch has no prerequisites. If an invalid
+                     combination is given, :class:`SwitchCombinationError
                      <plumbum.cli.SwitchCombinationError>` is raised.
-                     
-                     Note that this list is made of the switch *names*; if a switch has more 
+
+                     Note that this list is made of the switch *names*; if a switch has more
                      than a single name, any of its names will do.
-    
+
     :param help: The help message (description) for this switch; this description is used when
                  ``--help`` is given. If ``None``, the function's docstring will be used.
-    
+
     :param overridable: Whether or not the names of this switch are overridable by other switches.
-                        If ``False`` (the default), having another switch function with the same 
+                        If ``False`` (the default), having another switch function with the same
                         name(s) will cause an exception. If ``True``, this is silently ignored.
-    
+
     :param group: The switch's *group*; this is a string that is used to group related switches
                   together when ``--help`` is given. The default group is ``Switches``.
-    
+
     :returns: The decorated function (with a ``_switch_info`` attribute)
     """
-    if isinstance(names, str):
+    if isinstance(names, basestring):
         names = [names]
     names = [n.lstrip("-") for n in names]
     requires = [n.lstrip("-") for n in requires]
     excludes = [n.lstrip("-") for n in excludes]
-    
+
     def deco(func):
         if argname is None:
             argspec = inspect.getargspec(func)[0]
@@ -144,7 +144,7 @@ def switch(names, argtype = None, argname = None, list = False, mandatory = Fals
         help2 = inspect.getdoc(func) if help is None else help
         if not help2:
             help2 = str(func)
-        func._switch_info = SwitchInfo(names = names, argtype = argtype, list = list, func = func, 
+        func._switch_info = SwitchInfo(names = names, argtype = argtype, list = list, func = func,
             mandatory = mandatory, overridable = overridable, group = group,
             requires = requires, excludes = excludes, argname = argname2, help = help2)
         return func
@@ -164,14 +164,14 @@ def autoswitch(*args, **kwargs):
 class SwitchAttr(object):
     """
     A switch that stores its result in an attribute (descriptor). Usage::
-    
+
         class MyApp(Application):
             logfile = SwitchAttr(["-f", "--log-file"], str)
-            
+
             def main(self):
                 if self.logfile:
                     open(self.logfile, "w")
-    
+
     :param names: The switch names
     :param argtype: The switch argument's (and attribute's) type
     :param default: The attribute's default value (``None``)
@@ -203,7 +203,7 @@ class Flag(SwitchAttr):
     """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` for boolean flags. If the flag is not
     given, the value of this attribute is the ``default``; if it is given, the value changes
     to ``not default``. Usage::
-    
+
         class MyApp(Application):
             verbose = Flag(["-v", "--verbose"], help = "If given, I'll be very talkative")
 
@@ -218,14 +218,14 @@ class Flag(SwitchAttr):
         self._value = not self._value
 
 class CountOf(SwitchAttr):
-    """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` that counts the number of 
+    """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` that counts the number of
     occurrences of the switch in the command line. Usage::
 
         class MyApp(Application):
             verbosity = CountOf(["-v", "--verbose"], help = "The more, the merrier")
-            
+
     If ``-v -v -vv`` is given in the command-line, it will result in ``verbosity = 4``.
-    
+
     :param names: The switch names
     :param default: The default value (0)
     :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switch>`,
@@ -241,12 +241,12 @@ class CountOf(SwitchAttr):
 #===================================================================================================
 class Range(object):
     """
-    A switch-type validator that checks for the inclusion of a value in a certain range. 
+    A switch-type validator that checks for the inclusion of a value in a certain range.
     Usage::
-    
+
         class MyApp(Application):
             age = SwitchAttr(["--age"], Range(18, 120))
-    
+
     :param start: The minimal value
     :param end: The maximal value
     """
@@ -263,12 +263,12 @@ class Range(object):
 
 class Set(object):
     """
-    A switch-type validator that checks that the value is contained in a defined 
+    A switch-type validator that checks that the value is contained in a defined
     set of values. Usage::
-    
+
         class MyApp(Application):
             mode = SwitchAttr(["--mode"], Set("TCP", "UDP", case_insensitive = False))
-    
+
     :param values: The set of values (strings)
     :param case_insensitive: A keyword argument that indicates whether to use case-sensitive
                              comparison or not. The default is ``True``
@@ -333,50 +333,50 @@ class SwitchParseInfo(object):
 class Application(object):
     """
     The base class for CLI applications; your "entry point" class should derive from it,
-    define the relevant switch functions and attributes, and the ``main()`` function. 
-    The class defines two overridable "meta switches" for version (``-v``, ``--version``) 
-    and help (``-h``, ``--help``). 
-    
-    The signature of the main function matters: any positional arguments (e.g., non-switch 
+    define the relevant switch functions and attributes, and the ``main()`` function.
+    The class defines two overridable "meta switches" for version (``-v``, ``--version``)
+    and help (``-h``, ``--help``).
+
+    The signature of the main function matters: any positional arguments (e.g., non-switch
     arguments) given on the command line are passed to the ``main()`` function; if you wish
     to allow unlimited number of positional arguments, use varargs (``*args``). The names
     of the arguments will be shown in the help message.
-    
+
     The classmethod ``run`` serves as the entry point of the class. It parses the command-line
-    arguments, invokes switch functions and enter ``main``. You should **not override** this 
+    arguments, invokes switch functions and enter ``main``. You should **not override** this
     method.
-    
+
     Usage::
-    
+
         class FileCopier(Application):
             stat = Flag("p", "copy stat info as well")
-            
+
             def main(self, src, dst):
                 if self.stat:
                     shutil.copy2(src, dst)
                 else:
                     shutil.copy(src, dst)
-        
+
         if __name__ == "__main__":
             FileCopier.run()
-    
+
     There are several class-level attributes you may set:
-    
+
     * ``PROGNAME`` - the name of the program; if ``None`` (the default), it is set to the
       name of the executable (``argv[0]``)
 
     * ``VERSION`` - the program's version (defaults to ``1.0``)
-    
+
     * ``DESCRIPTION`` - a short description of your program (shown in help)
-    
+
     * ``USAGE`` - the usage line (shown in help)
     """
-    
+
     PROGNAME = None
     DESCRIPTION = None
     VERSION = "1.0"
     USAGE = "Usage: %(executable)s [SWITCHES] %(tailargs)s"
-    
+
     def __init__(self, executable):
         if self.PROGNAME is None:
             self.PROGNAME = os.path.basename(executable)
@@ -393,7 +393,7 @@ class Application(object):
                         raise SwitchError("Switch %r already defined and is not overridable" % (name,))
                     self._switches_by_name[name] = swinfo
                 self._switches_by_func[swinfo.func] = swinfo
-    
+
     def _parse_args(self, argv):
         tailargs = []
         swfuncs = {}
@@ -405,9 +405,9 @@ class Application(object):
                 # end of options, treat the rest as tailargs
                 tailargs.extend(argv)
                 break
-            
+
             elif a.startswith("--") and len(a) >= 3:
-                # [--name], [--name=XXX], [--name, XXX], [--name, ==, XXX], 
+                # [--name], [--name=XXX], [--name, XXX], [--name, ==, XXX],
                 # [--name=, XXX], [--name, =XXX]
                 eqsign = a.find("=")
                 if eqsign >= 0:
@@ -432,7 +432,7 @@ class Application(object):
                             val = argv.pop(0)
                     else:
                         val = a
-            
+
             elif a.startswith("-") and len(a) >= 2:
                 # [-a], [-a, XXX], [-aXXX], [-abc]
                 name = a[1]
@@ -449,7 +449,7 @@ class Application(object):
                         val = argv.pop(0)
                 elif len(a) >= 3:
                     argv.insert(0, "-" + a[2:])
-            
+
             else:
                 if a.startswith("-"):
                     raise UnknownSwitch("Unknown switch %s" % (a,))
@@ -466,7 +466,7 @@ class Application(object):
                         swname, swinfo.argtype, val, ex))
             else:
                 val = NotImplemented
-            
+
             if swinfo.func in swfuncs:
                 if swinfo.list:
                     swfuncs[swinfo.func].val[0].append(val)
@@ -483,62 +483,62 @@ class Application(object):
                     swfuncs[swinfo.func] = SwitchParseInfo(swname, (), index)
                 else:
                     swfuncs[swinfo.func] = SwitchParseInfo(swname, (val,), index)
-        
+
         return swfuncs, tailargs
-    
+
     def _validate_args(self, swfuncs, tailargs):
         if six.get_method_function(self.help) in swfuncs:
             raise ShowHelp()
         if six.get_method_function(self.version) in swfuncs:
             raise ShowVersion()
-        
+
         requirements = {}
         exclusions = {}
         for swinfo in self._switches_by_func.values():
             if swinfo.mandatory and not swinfo.func in swfuncs:
-                raise MissingMandatorySwitch("Switch %s is mandatory" % 
+                raise MissingMandatorySwitch("Switch %s is mandatory" %
                     ("/".join(("-" if len(n) == 1 else "--") + n for n in swinfo.names),))
             requirements[swinfo.func] = set(self._switches_by_name[req] for req in swinfo.requires)
             exclusions[swinfo.func] = set(self._switches_by_name[exc] for exc in swinfo.excludes)
-        
+
         # TODO: compute topological order
-        
+
         gotten = set(swfuncs.keys())
         for func in gotten:
             missing = set(f.func for f in requirements[func]) - gotten
             if missing:
-                raise SwitchCombinationError("Given %s, the following are missing %r" % 
+                raise SwitchCombinationError("Given %s, the following are missing %r" %
                     (swfuncs[func].swname, [self._switches_by_func[f].names[0] for f in missing]))
             invalid = set(f.func for f in exclusions[func]) & gotten
             if invalid:
-                raise SwitchCombinationError("Given %s, the following are invalid %r" % 
+                raise SwitchCombinationError("Given %s, the following are invalid %r" %
                     (swfuncs[func].swname, [swfuncs[f].swname for f in invalid]))
-        
+
         m_args, m_varargs, _, m_defaults = inspect.getargspec(self.main)
         max_args = six.MAXSIZE if m_varargs else len(m_args) - 1
         min_args = len(m_args) - 1 - (len(m_defaults) if m_defaults else 0)
         if len(tailargs) < min_args:
-            raise PositionalArgumentsError("Expected at least %d positional arguments, got %r" % 
+            raise PositionalArgumentsError("Expected at least %d positional arguments, got %r" %
                 (min_args, tailargs))
         elif len(tailargs) > max_args:
-            raise PositionalArgumentsError("Expected at most %d positional arguments, got %r" % 
+            raise PositionalArgumentsError("Expected at most %d positional arguments, got %r" %
                 (max_args, tailargs))
-        
-        ordered = [(f, a) for _, f, a in 
+
+        ordered = [(f, a) for _, f, a in
             sorted([(sf.index, f, sf.val) for f, sf in swfuncs.items()])]
         return ordered, tailargs
-    
+
     @classmethod
     def run(cls, argv = sys.argv, exit = True): #@ReservedAssignment
         """
-        Runs the application, taking the arguments from ``sys.argv`` by default. If ``exit`` is 
-        ``True`` (the default), the function will exit with the appropriate return code; 
-        otherwise it will return a tuple of ``(inst, retcode)``, where ``inst`` is the 
-        application instance created internally by this function and ``retcode`` is the 
-        exit code of the application. 
-        
+        Runs the application, taking the arguments from ``sys.argv`` by default. If ``exit`` is
+        ``True`` (the default), the function will exit with the appropriate return code;
+        otherwise it will return a tuple of ``(inst, retcode)``, where ``inst`` is the
+        application instance created internally by this function and ``retcode`` is the
+        exit code of the application.
+
         .. note::
-           Setting ``exit`` to ``False`` is intendend for testing/debugging purposes only -- do 
+           Setting ``exit`` to ``False`` is intendend for testing/debugging purposes only -- do
            not override it other situations.
         """
         argv = list(argv)
@@ -570,11 +570,11 @@ class Application(object):
             sys.exit(retcode)
         else:
             return inst, retcode
-    
+
     def main(self):
         """Override me"""
         pass
-    
+
     @switch(["-h", "--help"], overridable = True, group = "Meta-switches")
     def help(self): #@ReservedAssignment
         """Prints this help message and quits"""
@@ -590,22 +590,22 @@ class Application(object):
         if m_varargs:
             tailargs.append("%s..." % (m_varargs,))
         tailargs = " ".join(tailargs)
-        
+
         print("")
-        print(self.USAGE % {"executable" : self.executable, "progname" : self.PROGNAME, 
-            "tailargs" : tailargs}) 
-        
+        print(self.USAGE % {"executable" : self.executable, "progname" : self.PROGNAME,
+            "tailargs" : tailargs})
+
         by_groups = {}
         for si in self._switches_by_func.values():
             if si.group not in by_groups:
                 by_groups[si.group] = []
             by_groups[si.group].append(si)
-        
+
         for grp, swinfos in sorted(by_groups.items(), key = lambda item: item[0]):
             print("%s:" % (grp,))
-            
+
             for si in sorted(swinfos, key = lambda si: si.names):
-                swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names 
+                swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names
                     if self._switches_by_name[n] == si)
                 if si.argtype:
                     if isinstance(si.argtype, type):
@@ -625,12 +625,12 @@ class Application(object):
                 if si.excludes:
                     help += "; excludes %s" % (", ".join(si.excludes))
                 prefix = swnames + argtype
-                wrapper = TextWrapper(width = int(local.env.get("COLUMNS", 80)), 
+                wrapper = TextWrapper(width = int(local.env.get("COLUMNS", 80)),
                     initial_indent = " " * min(max(31, len(prefix)), 50), subsequent_indent = " " * 31)
                 help = wrapper.fill(" ".join(l.strip() for l in help.splitlines())) #@ReservedAssignment
                 print("    %-25s  %s" % (prefix, help.strip()))
             print ("")
-    
+
     @switch(["-v", "--version"], overridable = True, group = "Meta-switches")
     def version(self):
         """Prints the program's version and quits"""

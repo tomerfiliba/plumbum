@@ -421,7 +421,7 @@ class LocalCommand(ConcreteCommand):
         return "LocalCommand(%r)" % (self.executable,)
 
     def popen(self, args = (), cwd = None, env = None, **kwargs):
-        if isinstance(args, str):
+        if isinstance(args, basestring):
             args = (args,)
         return local._popen(self.executable, self.formulate(0, args),
             cwd = self.cwd if cwd is None else cwd, env = self.env if env is None else env,
@@ -498,9 +498,9 @@ class LocalMachine(object):
         raise CommandNotFound(progname, list(cls.env.path))
 
     def path(self, *parts):
-        """A factory for :class:`LocalPaths <plumbum.local_machine.LocalPath>`. 
+        """A factory for :class:`LocalPaths <plumbum.local_machine.LocalPath>`.
         Usage ::
-        
+
             p = local.path("/usr", "lib", "python2.7")
         """
         parts2 = [str(self.cwd)]
@@ -520,7 +520,7 @@ class LocalMachine(object):
         """
         if isinstance(cmd, LocalPath):
             return LocalCommand(cmd)
-        elif isinstance(cmd, str):
+        elif not isinstance(cmd, RemotePath):
             if "/" in cmd or "\\" in cmd:
                 # assume path
                 return LocalCommand(local.path(cmd))
@@ -528,7 +528,7 @@ class LocalMachine(object):
                 # search for command
                 return LocalCommand(self.which(cmd))
         else:
-            raise TypeError("cmd must be a LocalPath or a string: %r" % (cmd,))
+            raise TypeError("cmd must not be a RemotePath: %r" % (cmd,))
 
     def _popen(self, executable, argv, stdin = PIPE, stdout = PIPE, stderr = PIPE,
             cwd = None, env = None, **kwargs):

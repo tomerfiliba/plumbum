@@ -68,7 +68,7 @@ class RemoteEnv(BaseEnv):
         BaseEnv.update(self, *args, **kwargs)
         self.remote._session.run("export " +
             " ".join("%s=%s" % (k, shquote(v)) for k, v in self.getdict().items()))
-    
+
     def expand(self, expr):
         """Expands any environment variables and home shortcuts found in ``expr``
         (like ``os.path.expanduser`` combined with ``os.path.expandvars``)
@@ -78,7 +78,7 @@ class RemoteEnv(BaseEnv):
 
         :returns: The expanded string"""
         return self.remote._session.run("echo %s" % (expr,))
-    
+
     def expanduser(self, expr):
         """Expand home shortcuts (e.g., ``~/foo/bar`` or ``~john/foo/bar``)
 
@@ -180,9 +180,9 @@ class BaseRemoteMachine(object):
         self._session = ClosedRemote(self)
 
     def path(self, *parts):
-        """A factory for :class:`RemotePaths <plumbum.remote_machine.RemotePath>`. 
+        """A factory for :class:`RemotePaths <plumbum.remote_machine.RemotePath>`.
         Usage ::
-        
+
             p = rem.path("/usr", "lib", "python2.7")
         """
         parts2 = [str(self.cwd)]
@@ -228,13 +228,13 @@ class BaseRemoteMachine(object):
                 return RemoteCommand(self, cmd)
             else:
                 raise TypeError("Given path does not belong to this remote machine: %r" % (cmd,))
-        elif isinstance(cmd, str):
+        elif not isinstance(cmd, LocalPath):
             if "/" in cmd or "\\" in cmd:
                 return RemoteCommand(self, self.path(cmd))
             else:
                 return RemoteCommand(self, self.which(cmd))
         else:
-            raise TypeError("cmd must be a path or a string: %r" % (cmd,))
+            raise TypeError("cmd must not be a LocalPath: %r" % (cmd,))
 
     @property
     def python(self):
