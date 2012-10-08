@@ -138,7 +138,7 @@ class RemotePath(Path):
     def move(self, dst):
         if isinstance(dst, RemotePath) and dst.remote is not self.remote:
             raise TypeError("dst points to a different remote machine")
-        elif not isinstance(dst, str):
+        elif not isinstance(dst, basestring):
             raise TypeError("dst must be a string or a RemotePath (to the same remote machine)")
         self.remote._session.run("mv %s %s" % (shquote(self), shquote(dst)))
 
@@ -147,10 +147,10 @@ class RemotePath(Path):
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
-        elif not isinstance(dst, str):
+        elif not isinstance(dst, basestring):
             raise TypeError("dst must be a string or a RemotePath (to the same remote machine)", repr(dst))
         if override:
-            if isinstance(dst, str):
+            if isinstance(dst, basestring):
                 dst = RemotePath(self.remote, dst)
             dst.remove()
         self.remote._session.run("cp -r %s %s" % (shquote(self), shquote(dst)))
