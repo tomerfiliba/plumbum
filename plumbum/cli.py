@@ -126,7 +126,7 @@ def switch(names, argtype = None, argname = None, list = False, mandatory = Fals
 
     :returns: The decorated function (with a ``_switch_info`` attribute)
     """
-    if isinstance(names, basestring):
+    if isinstance(names, six.string_types):
         names = [names]
     names = [n.lstrip("-") for n in names]
     requires = [n.lstrip("-") for n in requires]

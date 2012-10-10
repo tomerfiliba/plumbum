@@ -8,6 +8,7 @@ import logging
 import stat
 import time
 import platform
+import six
 from tempfile import mkdtemp
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
@@ -421,7 +422,7 @@ class LocalCommand(ConcreteCommand):
         return "LocalCommand(%r)" % (self.executable,)
 
     def popen(self, args = (), cwd = None, env = None, **kwargs):
-        if isinstance(args, basestring):
+        if isinstance(args, six.string_types):
             args = (args,)
         return local._popen(self.executable, self.formulate(0, args),
             cwd = self.cwd if cwd is None else cwd, env = self.env if env is None else env,

@@ -292,7 +292,7 @@ class BoundCommand(BaseCommand):
     def formulate(self, level = 0, args = ()):
         return self.cmd.formulate(level + 1, self.args + tuple(args))
     def popen(self, args = (), **kwargs):
-        if isinstance(args, basestring):
+        if isinstance(args, six.string_types):
             args = (args,)
         return self.cmd.popen(self.args + tuple(args), **kwargs)
 
@@ -345,7 +345,7 @@ class BaseRedirection(BaseCommand):
 
         if self.KWARG in kwargs and kwargs[self.KWARG] not in (PIPE, None):
             raise RedirectionError("%s is already redirected" % (self.KWARG,))
-        if isinstance(self.file, (basestring, LocalPath)):
+        if isinstance(self.file, six.string_types + (LocalPath,)):
             f = kwargs[self.KWARG] = open(str(self.file), self.MODE)
         elif isinstance(self.file, RemotePath):
             raise TypeError("Cannot redirect to/from remote paths")

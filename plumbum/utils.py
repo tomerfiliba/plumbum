@@ -1,4 +1,5 @@
 from __future__ import with_statement
+import six
 from plumbum.path import Path
 from plumbum.local_machine import local, LocalPath
 
@@ -11,7 +12,7 @@ def delete(*paths):
     for p in paths:
         if isinstance(p, Path):
             p.delete()
-        elif isinstance(p, basestring):
+        elif isinstance(p, six.string_types):
             local.path(p).delete()
         elif hasattr(p, "__iter__"):
             delete(*p)
