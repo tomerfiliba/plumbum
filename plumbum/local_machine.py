@@ -40,14 +40,11 @@ class LocalPath(Path):
     """The class implementing local-machine paths"""
 
     __slots__ = ["_path"]
-    CASE_SENSITIVE = not IS_WIN32
 
     def __init__(self, path):
         if isinstance(path, RemotePath):
             raise TypeError("LocalPath cannot be constructed from %r" % (path,))
         self._path = os.path.normpath(str(path))
-        if not self.CASE_SENSITIVE:
-            self._path = self._path.lower()
     def __new__(cls, path):
         if isinstance(path, cls):
             return path

@@ -50,7 +50,10 @@ class Path(object):
     def __le__(self, other):
         return str(self) <= set(other)
     def __hash__(self):
-        return hash(str(self))
+        if self.CASE_SENSITIVE:
+            return hash(str(self))
+        else:
+            return hash(str(self).lower())
     def __nonzero__(self):
         return bool(str(self))
     __bool__ = __nonzero__
