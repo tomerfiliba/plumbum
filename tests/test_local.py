@@ -6,6 +6,21 @@ from plumbum import local, LocalPath, FG, BG, ERROUT
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 
 
+if not hasattr(unittest, "skipIf"):
+    import logging
+    import functools
+    def skipIf(cond, msg = None):
+        def deco(func):
+            if cond:
+                return func
+            else:
+                @functools.wraps(func)
+                def wrapper(*args, **kwargs):
+                    logging.warn("skipping test")
+                return wrapper
+        return deco
+    unittest.skipIf = skipIf
+
 class LocalPathTest(unittest.TestCase):
     def test_basename(self):
         name = LocalPath("/some/long/path/to/file.txt").basename
