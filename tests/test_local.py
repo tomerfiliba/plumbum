@@ -4,6 +4,7 @@ import unittest
 import six
 from plumbum import local, LocalPath, FG, BG, ERROUT
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
+import sys
 
 
 if not hasattr(unittest, "skipIf"):
@@ -193,7 +194,8 @@ class LocalMachineTest(unittest.TestCase):
         ls = local['ls']
         try:
             ls('-a', '') # check that empty strings are rendered correctly
-        except ProcessExecutionError as ex:
+        except ProcessExecutionError:
+            ex = sys.exc_info()[1]
             self.assertEqual(ex.argv[-2:], ['-a', ''])
         else:
             self.fail("Expected `ls` to fail")
