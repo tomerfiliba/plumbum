@@ -40,6 +40,7 @@ class LocalPath(Path):
     """The class implementing local-machine paths"""
 
     __slots__ = ["_path"]
+    CASE_SENSITIVE = not IS_WIN32
 
     def __init__(self, path):
         if isinstance(path, RemotePath):
