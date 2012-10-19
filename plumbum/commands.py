@@ -428,7 +428,7 @@ class ConcreteCommand(BaseCommand):
     def formulate(self, level = 0, args = ()):
         argv = [str(self.executable)]
         for a in args:
-            if not a:
+            if not a and a != "":
                 continue
             if isinstance(a, BaseCommand):
                 if level >= self.QUOTE_LEVEL:

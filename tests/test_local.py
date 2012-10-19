@@ -17,9 +17,8 @@ class LocalPathTest(unittest.TestCase):
         self.assertTrue(isinstance(name, LocalPath))
         self.assertEqual("/some/long/path/to", str(name).replace("\\", "/"))
 
+    @unittest.skipIf(not hasattr(os, "chown"), "os.chown not supported")
     def test_chown(self):
-        if not hasattr(os, "chown"):
-            self.skip("os.chown not supported")
         with local.tempdir() as dir:
             p = dir / "foo.txt"
             p.write("hello")
@@ -175,6 +174,14 @@ class LocalMachineTest(unittest.TestCase):
         cmd = ssh["localhost", "cd", "/usr", "&&", ssh["localhost", "cd", "/", "&&",
             ssh["localhost", "cd", "/bin", "&&", pwd]]]
         self.assertTrue("\"'&&'\"" in " ".join(cmd.formulate(0)))
+
+        ls = local['ls']
+        try:
+            ls('-a', '') # check that empty strings are rendered correctly
+        except ProcessExecutionError as ex:
+            self.assertEqual(ex.argv[-2:], ['-a', ''])
+        else:
+            self.fail("Expected `ls` to fail")
 
     def test_tempdir(self):
         from plumbum.cmd import cat
