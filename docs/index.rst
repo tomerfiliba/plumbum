@@ -37,16 +37,10 @@ environment :ref:`manipulation <guide-local-machine>`, and a programmatic
 
 News
 ====
-* **2012.10.06**: Version 1.0.0 released
-
-* **2012.07.16**: Version 0.9.5 released
-
-* **2012.05.28**: Plumbum is now `all green <http://travis-ci.org/#!/tomerfiliba/plumbum/builds/1459486>`_
-  on *Travis CI*
+.. include:: _news.rst
 
 Cheat Sheet
 ===========
-
 .. include:: _cheatsheet.rst
 
 Development and Installation
@@ -92,6 +86,7 @@ you read it in order.
    remote
    utils
    cli
+   changelog
 
 API Reference
 =============

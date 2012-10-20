@@ -181,9 +181,7 @@ class BaseRemoteMachine(object):
 
     def path(self, *parts):
         """A factory for :class:`RemotePaths <plumbum.remote_machine.RemotePath>`.
-        Usage ::
-
-            p = rem.path("/usr", "lib", "python2.7")
+        Usage: ``p = rem.path("/usr", "lib", "python2.7")``
         """
         parts2 = [str(self.cwd)]
         for p in parts:

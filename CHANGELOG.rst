@@ -1,5 +1,5 @@
 1.0.1
-=====
+-----
 * Windows: path are no longer converted to lower-case, but ``__eq__`` and ``__hash__`` operate on
   the lower-cased result `#38 <https://github.com/tomerfiliba/plumbum/issues/38>`_
 * Properly handle empty strings in the argument list `#41 <https://github.com/tomerfiliba/plumbum/issues/41>`_
@@ -8,7 +8,7 @@
   (instead of ``ssh`` and ``scp``) `#37 <https://github.com/tomerfiliba/plumbum/issues/37>`_
 
 1.0.0
-=====
+-----
 * Rename ``cli.CountingAttr`` to ``cli.CountOf``
 * Moved to `Travis <http://travis-ci.org/#!/tomerfiliba/plumbum>`_ continuous integration
 * Added ``unixutils``
@@ -17,5 +17,5 @@
 * Full list of `issues <https://github.com/tomerfiliba/plumbum/issues?labels=V1.0&page=1&state=closed>`_
 
 0.9.0
-=====
+-----
 Initial release

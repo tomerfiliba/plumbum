@@ -504,9 +504,7 @@ class LocalMachine(object):
 
     def path(self, *parts):
         """A factory for :class:`LocalPaths <plumbum.local_machine.LocalPath>`.
-        Usage ::
-
-            p = local.path("/usr", "lib", "python2.7")
+        Usage: ``p = local.path("/usr", "lib", "python2.7")``
         """
         parts2 = [str(self.cwd)]
         for p in parts:
