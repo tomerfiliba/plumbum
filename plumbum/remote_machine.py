@@ -453,7 +453,7 @@ class SshMachine(BaseRemoteMachine):
 
 class PuttyMachine(SshMachine):
     """
-    PuTTY-flavored SSH connection. The programs ``plink`` and ``pscp`` are expected to 
+    PuTTY-flavored SSH connection. The programs ``plink`` and ``pscp`` are expected to
     be in the path (or you may supply
     """
     def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None,
@@ -466,19 +466,15 @@ class PuttyMachine(SshMachine):
             ssh_opts = ["-ssh"]
         if user is None:
             user = local.env.user
-        SshMachine.__init__(self, host, user, port, keyfile, ssh_command, scp_command, 
+        SshMachine.__init__(self, host, user, port, keyfile, ssh_command, scp_command,
             ssh_opts, scp_opts)
-    
+
     def __str__(self):
         return "ssh(putty)://%s" % (self._fqhost,)
 
     @_setdoc(BaseRemoteMachine)
     def session(self, isatty = False):
         return ShellSession(self.popen((), ["-t"] if isatty else ["-T"]), self.encoding, isatty)
-
-
-
-
 
 
 
