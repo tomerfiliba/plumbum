@@ -354,7 +354,7 @@ class SshMachine(BaseRemoteMachine):
         scp_args.extend(scp_opts)
         self._ssh_command = ssh_command[tuple(ssh_args)]
         self._scp_command = scp_command[tuple(scp_args)]
-        BaseRemoteMachine.__init__(self)
+        BaseRemoteMachine.__init__(self, encoding)
 
     def __str__(self):
         return "ssh://%s" % (self._fqhost,)
@@ -378,7 +378,7 @@ class SshMachine(BaseRemoteMachine):
 
     @_setdoc(BaseRemoteMachine)
     def session(self, isatty = False):
-        return ShellSession(self.popen((), ["-tt"] if isatty else []), self.encoding, isatty)
+        return ShellSession(self.popen((), ["-tt"] if isatty else ["-T"]), self.encoding, isatty)
 
     def tunnel(self, lport, dport, lhost = "localhost", dhost = "localhost"):
         r"""Creates an SSH tunnel from the TCP port (``lport``) of the local machine
@@ -449,4 +449,36 @@ class SshMachine(BaseRemoteMachine):
         if isinstance(dst, RemotePath) and dst.remote != self:
             raise TypeError("dst %r points to a different remote machine" % (dst,))
         self._scp_command(src, "%s:%s" % (self._fqhost, shquote(dst)))
+
+
+class PuttyMachine(SshMachine):
+    """
+    PuTTY-flavored SSH connection. The programs ``plink`` and ``pscp`` are expected to 
+    be in the path (or you may supply
+    """
+    def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None,
+            scp_command = None, ssh_opts = (), scp_opts = (), encoding = "utf8"):
+        if ssh_command is None:
+            ssh_command = local["plink"]
+        if scp_command is None:
+            scp_command = local["pscp"]
+        if not ssh_opts:
+            ssh_opts = ["-ssh"]
+        if user is None:
+            user = local.env.user
+        SshMachine.__init__(self, host, user, port, keyfile, ssh_command, scp_command, 
+            ssh_opts, scp_opts)
+    
+    def __str__(self):
+        return "ssh(putty)://%s" % (self._fqhost,)
+
+    @_setdoc(BaseRemoteMachine)
+    def session(self, isatty = False):
+        return ShellSession(self.popen((), ["-t"] if isatty else ["-T"]), self.encoding, isatty)
+
+
+
+
+
+
 

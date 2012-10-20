@@ -1,3 +1,12 @@
+1.0.1
+=====
+* Windows: path are no longer converted to lower-case, but ``__eq__`` and ``__hash__`` operate on
+  the lower-cased result `#38 <https://github.com/tomerfiliba/plumbum/issues/38>`_
+* Properly handle empty strings in the argument list `#41 <https://github.com/tomerfiliba/plumbum/issues/41>`_
+* Relaxed type-checking of ``LocalPath`` and ``RemotePath`` `#35 <https://github.com/tomerfiliba/plumbum/issues/35>`_
+* Added ``PuttyMachine`` for Windows users that relies on ``plink`` and ``pscp`` 
+  (instead of ``ssh`` and ``scp``) `#37 <https://github.com/tomerfiliba/plumbum/issues/37>`_
+
 1.0.0
 =====
 * Rename ``cli.CountingAttr`` to ``cli.CountOf``

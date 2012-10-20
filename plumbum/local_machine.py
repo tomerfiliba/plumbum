@@ -356,11 +356,17 @@ class BaseEnv(object):
     @property
     def user(self):
         """Return the user name, or ``None`` if it is not set"""
-        if "USER" in self:
-            return self["USER"]
-        elif "USERNAME" in self:
-            return self["USERNAME"]
-        return None
+        # adapted from getpass.getuser()
+        for name in ('LOGNAME', 'USER', 'LNAME', 'USERNAME'):
+            if name in self:
+                return self[name]
+        try:
+            # POSIX only
+            import pwd
+        except ImportError:
+            return None
+        else:
+            return pwd.getpwuid(os.getuid())[0] #@UndefinedVariable
 
 
 class LocalEnv(BaseEnv):
