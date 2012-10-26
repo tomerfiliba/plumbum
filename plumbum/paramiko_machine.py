@@ -1,10 +1,7 @@
 import paramiko
 import logging
 import six
-import select
-import threading
-import socket
-from plumbum.remote_machine import BaseRemoteMachine, SshMachine
+from plumbum.remote_machine import BaseRemoteMachine, ClosedRemote
 from plumbum.session import ShellSession
 from plumbum.lib import _setdoc
 from plumbum.local_machine import LocalPath
@@ -39,6 +36,12 @@ class ParamikoPopen(object):
         self.channel.shutdown_write()
         self.channel.close()
     def kill(self):
+        # possible way to obtain pid:
+        # "(cmd ; echo $?) & echo ?!"
+        # and then client.exec_command("kill -9 %s" % (pid,))
+        raise EnvironmentError("Cannot kill remote processes, we don't have their PIDs")
+    terminate = kill
+    def send_signal(self, sig):
         raise NotImplementedError()
     def communicate(self, input = None):
         stdout = []
@@ -63,132 +66,6 @@ class ParamikoPopen(object):
         stdout = six.b("").join(stdout)
         stderr = six.b("").join(stderr)
         return stdout, stderr
-
-
-class SimpleReactor(object):
-    __slots__ = ["_active", "_io_handlers"]
-    
-    def __init__(self):
-        self._active = False
-        self._io_handlers = []
-
-    def add_handler(self, handler):
-        self._io_handlers.append(handler)
-
-    def _mainloop(self):
-        while self._active:
-            pruned = []
-            for handler in self._io_handlers:
-                try:
-                    handler.fileno()
-                except EnvironmentError:
-                    pass
-                else:
-                    pruned.append(handler)
-            self._io_handlers = pruned
-            rlist, _, _ = select.select(self._io_handlers, (), (), 0.5)
-            for handler in rlist:
-                handler.handle()
-
-    def start(self):
-        if self._active:
-            raise ValueError("reactor already running")
-        self._active = True
-        self._mainloop()
-    def stop(self):
-        self._active = False
-
-reactor = SimpleReactor()
-reactor_thread = threading.Thread(target = reactor.start)
-reactor_thread.start()
-#def shutdown_reactor_thread():
-#    reactor.stop()
-#    reactor_thread.join()
-#atexit.register(shutdown_reactor_thread)
-
-class ReactorHandler(object):
-    __slots__ = ()
-    def fileno(self):
-        raise NotImplementedError()
-    def close(self):
-        pass
-
-class Accepter(ReactorHandler):
-    __slots__ = ["tunnel", "listener"]
-    
-    def __init__(self, tunnel, backlog = 5, family = socket.AF_INET, socktype = socket.SOCK_STREAM):
-        self.tunnel = tunnel
-        self.listener = socket.socket(family, socktype)
-        self.listener.bind((tunnel.lhost, tunnel.lport))
-        self.listener.listen(backlog)
-    def close(self):
-        self.listener.close()
-    def fileno(self):
-        return self.listener.fileno()
-    def handle(self):
-        sock, _ = self.listener.accept()
-        chan = self.tunnel.transport.open_channel('direct-tcpip',
-           (self.tunnel.dhost, self.tunnel.dport), sock.getpeername())
-        if chan is None:
-            raise ValueError("Rejected by server")
-        self.tunnel.add_pair(chan, sock)
-
-class Forwarder(ReactorHandler):
-    __slots__ = ["srcsock", "dstsock"]
-    CHUNK_SIZE = 1024
-    
-    def __init__(self, srcsock, dstsock):
-        self.srcsock = srcsock
-        self.dstsock = dstsock
-    def fileno(self):
-        return self.srcsock.fileno()
-    def close(self):
-        self.srcsock.shutdown(socket.SHUT_RDWR)
-        self.srcsock.close()
-        self.dstsock.shutdown(socket.SHUT_RDWR)
-        self.dstsock.close()
-    def handle(self):
-        data = self.srcsock.recv(self.CHUNK_SIZE)
-        if not data:
-            self.shutdown()
-        while data:
-            count = self.dstsock.send(data)
-            data = data[count:]
-
-class ParamikoTunnel(object):
-    def __init__(self, reactor, transport, lhost, lport, dhost, dport):
-        self.reactor = reactor
-        self.transport = transport
-        self.lhost = lhost
-        self.lport = lport
-        self.dhost = dhost
-        self.dport = dport
-        self.accepter = Accepter(self)
-        self.forwarders = []
-        self.reactor.add_handler(self.accepter)
-
-    def __repr__(self):
-        return "<ParamikoTunnel %s:%s->%s:%s" % (self.lhost, self.lport, self.dhost, self.dport)
-
-    def is_active(self):
-        return bool(self.accepter)
-
-    def close(self):
-        if not self.accepter:
-            return
-        for fwd in self.forwarders:
-            fwd.close()
-        del self.forwarders[:]
-        self.accepter.close()
-        self.accepter = None
-
-    def add_pair(self, chan, sock):
-        f1 = Forwarder(chan, sock)
-        f2 = Forwarder(sock, chan)
-        self.forwarders.append(f1)
-        self.forwarders.append(f2)
-        self.reactor.add_handler(f1)
-        self.reactor.add_handler(f2)
 
 
 class ParamikoMachine(BaseRemoteMachine):
@@ -243,6 +120,11 @@ class ParamikoMachine(BaseRemoteMachine):
     def __str__(self):
         return "paramiko://%s" % (self._fqhost,)
 
+    def close(self):
+        BaseRemoteMachine.close(self)
+        self._client.close()
+        #self._session = ClosedRemote(self)
+
     @property
     def sftp(self):
         """
@@ -263,7 +145,7 @@ class ParamikoMachine(BaseRemoteMachine):
         stdin = chan.makefile('wb', -1)
         stdout = chan.makefile('rb', -1)
         stderr = chan.makefile_stderr('rb', -1)
-        proc = ParamikoPopen("<shell>", stdin, stdout, stderr, self.encoding)
+        proc = ParamikoPopen(["<shell>"], stdin, stdout, stderr, self.encoding)
         return ShellSession(proc, self.encoding, isatty)
 
     @_setdoc(BaseRemoteMachine)
@@ -300,28 +182,22 @@ class ParamikoMachine(BaseRemoteMachine):
             raise TypeError("dst %r points to a different remote machine" % (dst,))
         self.sftp.put(str(src), str(dst))
 
-    @_setdoc(SshMachine)
-    def tunnel(self, lport, dport, lhost = "localhost", dhost = "localhost"):
-        return ParamikoTunnel(reactor, self._client.get_transport(), lhost, lport, dhost, dport)
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level = 0)
-
-    m = ParamikoMachine("192.168.1.143")
-    ls = m["ls"]
-    #print repr(ls)
-    print ls("-l")
-
-
-
-
-
-
-
-
-
-
+    def connect_sock(self, dport, dhost = "localhost", ipv6 = False):
+        """Returns a Paramiko ``Channel``, connected to dhost:dport on the remote machine.
+        The ``Channel`` behaves like a regular socket; you can ``send`` and ``recv`` on it
+        and the data will pass encrypted over SSH. Usage::
+        
+            mach = ParamikoMachine("myhost")
+            sock = mach.connect_sock(12345)
+            data = sock.recv(100)
+            sock.send("foobar")
+            sock.close()
+        """
+        if ipv6 and dhost == "localhost":
+            dhost = "::1"
+        srcaddr = ("::1", 0, 0, 0) if ipv6 else ("127.0.0.1", 0)
+        chan = self._client.get_transport().open_channel('direct-tcpip', (dhost, dport), srcaddr)
+        return chan
 
 
 
