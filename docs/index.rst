@@ -39,6 +39,8 @@ News
 ====
 .. include:: _news.rst
 
+* :doc:`changelog`
+
 Cheat Sheet
 ===========
 .. include:: _cheatsheet.rst

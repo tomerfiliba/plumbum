@@ -1,3 +1,8 @@
+1.1
+---
+* `Paramiko <http://pypi.python.org/pypi/paramiko/1.8.0>`_ integration 
+  `#10 <https://github.com/tomerfiliba/plumbum/issues/10>`_
+
 1.0.1
 -----
 * Windows: path are no longer converted to lower-case, but ``__eq__`` and ``__hash__`` operate on
