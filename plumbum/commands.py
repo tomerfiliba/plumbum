@@ -125,7 +125,7 @@ def _timeout_thread():
             except EnvironmentError:
                 pass
 
-thd = Thread(target = _timeout_thread)
+thd = Thread(target = _timeout_thread, name = "PlumbumTimeoutThread")
 thd.setDaemon(True)
 thd.start()
 

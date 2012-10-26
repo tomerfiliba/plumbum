@@ -1,7 +1,10 @@
 import paramiko
 import logging
 import six
-from plumbum.remote_machine import BaseRemoteMachine, ClosedRemote
+import errno
+import socket
+import functools
+from plumbum.remote_machine import BaseRemoteMachine
 from plumbum.session import ShellSession
 from plumbum.lib import _setdoc
 from plumbum.local_machine import LocalPath
@@ -123,7 +126,6 @@ class ParamikoMachine(BaseRemoteMachine):
     def close(self):
         BaseRemoteMachine.close(self)
         self._client.close()
-        #self._session = ClosedRemote(self)
 
     @property
     def sftp(self):
@@ -198,6 +200,29 @@ class ParamikoMachine(BaseRemoteMachine):
         srcaddr = ("::1", 0, 0, 0) if ipv6 else ("127.0.0.1", 0)
         chan = self._client.get_transport().open_channel('direct-tcpip', (dhost, dport), srcaddr)
         return chan
+
+
+###############################################################################
+# monkey-patch paramiko.Channel, so that send and recv will fail after the 
+# transport has been closed. see https://github.com/paramiko/paramiko/pull/99
+################################################################################
+_orig_send = paramiko.Channel.send
+@functools.wraps(paramiko.Channel.send)
+def send2(self, s):
+    if self.closed:
+        raise socket.error(errno.EBADF, 'Bad file descriptor')
+    return _orig_send(self, s)
+paramiko.Channel.send = send2
+
+_orig_recv = paramiko.Channel.recv
+@functools.wraps(paramiko.Channel.recv)
+def recv2(self, count):
+    if self.closed:
+        raise socket.error(errno.EBADF, 'Bad file descriptor')
+    return _orig_recv(self, count)
+paramiko.Channel.recv = recv2
+
+
 
 
 
