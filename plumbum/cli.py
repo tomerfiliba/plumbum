@@ -383,6 +383,7 @@ class Application(object):
         self.executable = executable
         self._switches_by_name = {}
         self._switches_by_func = {}
+        self._subcommands = {}
         for cls in reversed(type(self).mro()):
             for obj in cls.__dict__.values():
                 swinfo = getattr(obj, "_switch_info", None)
@@ -393,6 +394,9 @@ class Application(object):
                         raise SwitchError("Switch %r already defined and is not overridable" % (name,))
                     self._switches_by_name[name] = swinfo
                 self._switches_by_func[swinfo.func] = swinfo
+    
+    def subcommand(self, name, cls):
+        self._subcommands[name] = cls
 
     def _parse_args(self, argv):
         tailargs = []
@@ -405,7 +409,12 @@ class Application(object):
                 # end of options, treat the rest as tailargs
                 tailargs.extend(argv)
                 break
-
+            
+            if a in self._subcommands:
+                subcmd = self._subcommands[a]
+                swfuncs[subcmd] = SwitchParseInfo(a, ([argv[1:]],), index)
+                break
+            
             elif a.startswith("--") and len(a) >= 3:
                 # [--name], [--name=XXX], [--name, XXX], [--name, ==, XXX],
                 # [--name=, XXX], [--name, =XXX]
