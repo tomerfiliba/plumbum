@@ -240,6 +240,8 @@ class Subcommand(object):
     def __init__(self, name, subapplication):
         self.name = name
         self.subapplication = subapplication
+    def __repr__(self):
+        return "Subcommand(%r, %r)" % (self.name, self.subapplication)
 
 
 #===================================================================================================
@@ -379,8 +381,9 @@ class Application(object):
 
     PROGNAME = None
     DESCRIPTION = None
-    VERSION = "1.0"
-    USAGE = "Usage: %(executable)s [SWITCHES] %(tailargs)s"
+    VERSION = None
+    USAGE = None
+    parent = None
 
     def __init__(self, executable):
         if self.PROGNAME is None:
@@ -389,8 +392,15 @@ class Application(object):
         self._switches_by_name = {}
         self._switches_by_func = {}
         self._subcommands = {}
+        self._curr_subcommand = None
         for cls in reversed(type(self).mro()):
             for obj in cls.__dict__.values():
+                if isinstance(obj, Subcommand):
+                    if obj.name.startswith("-"):
+                        raise ValueError("Subcommand names cannot start with '-'")
+                    self._subcommands[obj.name] = obj.subapplication
+                    continue
+                
                 swinfo = getattr(obj, "_switch_info", None)
                 if not swinfo:
                     continue
@@ -400,9 +410,6 @@ class Application(object):
                     self._switches_by_name[name] = swinfo
                 self._switches_by_func[swinfo.func] = swinfo
     
-    def subcommand(self, name, cls):
-        self._subcommands[name] = cls
-
     def _parse_args(self, argv):
         tailargs = []
         swfuncs = {}
@@ -416,8 +423,7 @@ class Application(object):
                 break
             
             if a in self._subcommands:
-                subcmd = self._subcommands[a]
-                swfuncs[subcmd] = SwitchParseInfo(a, ([argv[1:]],), index)
+                self._curr_subcommand = (self._subcommands[a], [self.executable + " " + a] + argv)
                 break
             
             elif a.startswith("--") and len(a) >= 3:
@@ -575,6 +581,11 @@ class Application(object):
             for f, a in ordered:
                 f(inst, *a)
             retcode = inst.main(*tailargs)
+            if not retcode and inst._curr_subcommand:
+                subapp, argv = inst._curr_subcommand
+                subapp.parent = inst
+                inst, retcode = subapp.run(argv, exit = False)
+            
             if retcode is None:
                 retcode = 0
             #elif not isinstance(retcode, int):
@@ -606,6 +617,11 @@ class Application(object):
         tailargs = " ".join(tailargs)
 
         print("")
+        if not self.USAGE:
+            if self._subcommands:
+                self.USAGE = "Usage: %(executable)s [SWITCHES] [SUBCOMMAND [SWITCHES]] %(tailargs)s"
+            else:
+                self.USAGE = "Usage: %(executable)s [SWITCHES] %(tailargs)s"
         print(self.USAGE % {"executable" : self.executable, "progname" : self.PROGNAME,
             "tailargs" : tailargs})
 
@@ -645,10 +661,19 @@ class Application(object):
                 print("    %-25s  %s" % (prefix, help.strip()))
             print ("")
 
+        if self._subcommands:
+            print("Subcommands:")
+            for name, subapp in sorted(self._subcommands.items()):
+                desc = subapp.DESCRIPTION + "; " if subapp.DESCRIPTION else ""
+                print ("    %-25s  %suse '%s %s --help' for details" % (name, desc, self.PROGNAME, name))
+
     @switch(["-v", "--version"], overridable = True, group = "Meta-switches")
     def version(self):
         """Prints the program's version and quits"""
-        print ("%s v%s" % (self.PROGNAME, self.VERSION))
+        if self.VERSION:
+            print ("%s v%s" % (self.PROGNAME, self.VERSION))
+        else:
+            print (self.PROGNAME)
 
 
 

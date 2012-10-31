@@ -24,6 +24,29 @@ class TestApp(cli.Application):
         self.eggs = old
         self.tailargs = args
 
+class GeetAdd(cli.Application):
+    def main(self, *files):
+        return "adding", files
+
+class GeetCommit(cli.Application):
+    message = cli.Flag("-m", str)
+    
+    def main(self):
+        if self.parent.debug:
+            return "committing in debug"
+        else:
+            return "committing"
+
+class Geet(cli.Application):
+    debug = cli.Flag("--debug")
+    
+    def main(self):
+        print ("hi this is geet main")
+    
+    # subcommands
+    add = cli.Subcommand("add", GeetAdd)
+    commit = cli.Subcommand("commit", GeetCommit)
+
 
 class CLITest(unittest.TestCase):
     def test_meta_switches(self):
@@ -47,6 +70,19 @@ class CLITest(unittest.TestCase):
 
         _, rc = TestApp.run(["foo", "--bacon=hello"], exit = False)
         self.assertEqual(rc, 2)
+    
+    def test_subcommands(self):
+        _, rc = Geet.run(["geet", "--debug"], exit = False)
+        self.assertEqual(rc, 0)
+        _, rc = Geet.run(["geet", "--debug", "add", "foo.txt", "bar.txt"], exit = False)
+        self.assertEqual(rc, ("adding", ("foo.txt", "bar.txt")))
+        _, rc = Geet.run(["geet", "--debug", "commit"], exit = False)
+        self.assertEqual(rc, "committing in debug")
+        _, rc = Geet.run(["geet", "--help"], exit = False)
+        self.assertEqual(rc, 0)
+        _, rc = Geet.run(["geet", "commit", "--help"], exit = False)
+        self.assertEqual(rc, 0)
+
 
 
 
