@@ -236,6 +236,12 @@ class CountOf(SwitchAttr):
     def __call__(self, _, v):
         self._value = len(v)
 
+class Subcommand(object):
+    def __init__(self, name, subapplication):
+        self.name = name
+        self.subapplication = subapplication
+
+
 #===================================================================================================
 # Switch type validators
 #===================================================================================================
@@ -313,11 +319,10 @@ class NonexistentPath(Predicate):
     """A switch-type validator that ensures that the given argument is an nonexistent path"""
     def __call__(self, val):
         p = local.path(val)
-        if not p.exists():
+        if p.exists():
             raise ValueError("%r already exists" % (val,))
         return p
 NonexistentPath = NonexistentPath()
-
 
 #===================================================================================================
 # CLI Application base class
