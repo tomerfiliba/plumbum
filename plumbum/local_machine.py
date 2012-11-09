@@ -12,7 +12,6 @@ import six
 from tempfile import mkdtemp
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
-from types import ModuleType
 
 from plumbum.path import Path, FSUser
 from plumbum.remote_path import RemotePath
@@ -583,18 +582,3 @@ Attributes:
 * ``env`` - the local environment
 * ``encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``)
 """
-
-#===================================================================================================
-# Module hack: ``from plumbum.cmd import ls``
-#===================================================================================================
-class LocalModule(ModuleType):
-    """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
-    def __init__(self, name):
-        ModuleType.__init__(self, name, __doc__)
-        self.__file__ = None
-        self.__package__ = ".".join(name.split(".")[:-1])
-    def __getattr__(self, name):
-        return local[name]
-
-LocalModule = LocalModule("plumbum.cmd")
-sys.modules[LocalModule.__name__] = LocalModule
