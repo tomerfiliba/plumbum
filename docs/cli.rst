@@ -389,18 +389,17 @@ attached to the root application using the ``subcommand`` decorator ::
 
     @Geet.subcommand("commit")                    # attach 'geet push'
     class GeetPush(cli.Application):
-        def main(self, remote, branch = None)
+        def main(self, remote, branch = None):
             print "doing the push..."
 
     if __name__ == "__main__":
         Geet.run()
 
-Naturally, since ``GeetCommit`` is a ``cli.Application`` on its own right, you may invoke 
-``GeetCommit.run()`` directly -- if that makes sense in the context of your application.
-
 .. note::
-    You can also attach sub-commands "imperatively", using ``subcommand`` as a method instead
-    of a decorator: ``Geet.subcommand("push", GeetPush)``.
+    * Naturally, since ``GeetCommit`` is a ``cli.Application`` on its own right, you may invoke 
+      ``GeetCommit.run()`` directly (should that make sense in the context of your application)
+    * You can also attach sub-commands "imperatively", using ``subcommand`` as a method instead
+      of a decorator: ``Geet.subcommand("push", GeetPush)``
 
 Here's an example of running this application::
 
@@ -439,8 +438,8 @@ Here's an example of running this application::
 See Also
 --------
 * `filecopy.py <https://github.com/tomerfiliba/plumbum/blob/master/examples/filecopy.py>`_ example
-* `geet.py <https://github.com/tomerfiliba/plumbum/blob/master/examples/geet.py>`_ - an runnable 
-   example of using sub-commands
+* `geet.py <https://github.com/tomerfiliba/plumbum/blob/master/examples/geet.py>`_ - a runnable 
+  example of using sub-commands
 * `RPyC <http://rpyc.sf.net>`_ has changed it bash-based build script to Plumbum CLI.
   Notice `how short and readable <https://github.com/tomerfiliba/rpyc/blob/c457a28d689df7605838334a437c6b35f9a94618/build.py>`_
   it is.

@@ -30,12 +30,10 @@ class Geet(cli.Application):
     def main(self):
         print ("hi this is geet main")
 
-@Geet.subcommand("add")
 class GeetAdd(cli.Application):
     def main(self, *files):
         return "adding", files
 
-@Geet.subcommand("commit")
 class GeetCommit(cli.Application):
     message = cli.Flag("-m", str)
     
@@ -44,6 +42,10 @@ class GeetCommit(cli.Application):
             return "committing in debug"
         else:
             return "committing"
+
+# python 2.5 compatibility (otherwise, could be used as a decorator)
+Geet.subcommand("add", GeetAdd)
+Geet.subcommand("commit", GeetCommit)
 
 
 class CLITest(unittest.TestCase):
