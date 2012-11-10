@@ -34,9 +34,6 @@ of command-line interface (CLI) programs.
 
 See http://plumbum.readthedocs.org for full details
 """
-import sys
-from types import ModuleType
-
 from plumbum.commands import FG, BG, ERROUT
 from plumbum.commands import ProcessExecutionError, CommandNotFound, ProcessTimedOut
 from plumbum.path import Path
@@ -46,16 +43,20 @@ from plumbum.version import version as __version__
 
 __author__ = "Tomer Filiba (tomerfiliba@gmail.com)"
 
+
 #===================================================================================================
 # Module hack: ``from plumbum.cmd import ls``
 #===================================================================================================
+import sys
+from types import ModuleType
+
 class LocalModule(ModuleType):
     """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
-    __file__ = None
+    __all__ = ()                # to make help() happy
     __package__ = __name__
-    __getattr__ = local.__getitem__
+    __getitem__ = __getattr__ = local.__getitem__
 
-cmd = LocalModule(__name__ + ".cmd")
+cmd = LocalModule(__name__ + ".cmd", LocalModule.__doc__)
 sys.modules[cmd.__name__] = cmd
 
 del sys

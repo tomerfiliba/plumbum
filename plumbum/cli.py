@@ -410,6 +410,29 @@ class Application(object):
                     self._switches_by_name[name] = swinfo
                 self._switches_by_func[swinfo.func] = swinfo
     
+    @classmethod
+    def subcommand(cls, name, subapp = None):
+        """Registers the given sub-application as a sub-command of this one. This method can be
+        used both as a decorator and as a normal classmethod::
+        
+            @MyApp.subcommand("foo")
+            class FooApp(cli.Application):
+                pass
+        
+        Or ::
+        
+            MyApp.subcommand("foo", FooApp)
+        
+        .. versionadded:: 1.1
+        """
+        def wrapper(subapp):
+            setattr(cls, "_subcommand_%s" % (subapp.__name__), subapp)
+            return subapp
+        if subapp:
+            return wrapper(subapp)
+        else:
+            return wrapper
+    
     def _parse_args(self, argv):
         tailargs = []
         swfuncs = {}

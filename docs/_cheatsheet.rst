@@ -8,7 +8,7 @@
     u'build.py\ndist\ndocs\nLICENSE\nplumbum\nREADME.rst\nsetup.py\ntests\ntodo.txt\n'
     >>> notepad = local["c:\\windows\\notepad.exe"]
     >>> notepad()                                   # Notepad window pops up
-    u''
+    u''                                             # Notepad window is closed by user, command returns
 
 Instead of writing ``xxx = local["xxx"]`` for every program you wish to use, you can 
 also :ref:`import commands <import-hack>`:

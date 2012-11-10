@@ -338,6 +338,81 @@ With varargs::
         -v, --version              Prints the program's version and quits
 
 
+Sub-commands
+------------
+.. versionadded:: 1.1
+
+The ``Application`` class can also have *sub-applications* (or *sub-commands*) - this basically 
+means you can nest applications one into the other, and they will be processed accordingly.
+This is a common practice in many tools that tend to get large and spread out, like ``git``,
+``hg`` and many other version control systems.
+
+How Sub-commands Work
+^^^^^^^^^^^^^^^^^^^^^
+Each sub-command is responsible of **every** argument that follows it, which makes the structure
+recursive. Take, for instance, ``maincommand -x --foo=zzz bar subcommand -w --bar=123 file1 file2 file3``;
+the *root application* is ``maincommand``, which accepts two switches (``-x`` and ``--foo``) and 
+one positional argument (``bar``). Following it, comes ``subcommand``, which accepts everything
+that comes after it (two switches and three positional arguments).
+
+Subcommands are processed in order: first, ``maincommand`` is executed with its set of parameters 
+(invoking its ``main()`` method), and if everything goes well, ``subcommand`` will then be invoked.
+Theoretically, there's no limit on the number of nested sub-commands that you can define or use;
+in parctice, however, there's usually only a "main command" and a single sub-command. 
+
+
+.. note::
+    Each sub-command is an ``Application`` on its own and can be used independently.
+
+::
+    
+    class GeetCommit(cli.Application):
+        auto_add = cli.Flag("-a")
+        message = cli.SwitchAttr("-m", str)
+        
+        def main(self):
+            print "doing the commit..."
+
+    class GeetPull(cli.Application):
+        def main(self, remote, branch = None)
+            print "doing the pull..."
+    
+    class Geet(cli.Application):
+        commit = cli.Subcommand(GeetPull, "pull")
+        pull = cli.Subcommand(GeetPull, "pull")
+        
+        def main(self, *args):
+            if args:
+                print "Unknown command %r" % (args[0],)
+            else:
+                print "No command given"
+    
+    if __name__ == "__main__":
+        Geet.run()
+
+You can also add sub-commands later on (not necessarily during the definitions of the parent class)::
+
+    class Geet(cli.Application):
+        pass #...
+    
+    class GeetCommit(cli.Application):
+        pass #...
+    
+    # add commit as a subcommand
+    Geet.commit = cli.Subcommand(GeetCommit, "commit")
+
+Or using the ``subcommand`` decorator::
+
+    class Geet(cli.Application):
+        pass #...
+    
+    @Geet.subcommand("commit")
+    class GeetCommit(cli.Application):
+        pass #...
+    
+which does exactly the same thing as above.
+
+
 See Also
 --------
 * `filecopy.py <https://github.com/tomerfiliba/plumbum/blob/master/examples/filecopy.py>`_ example
