@@ -24,10 +24,18 @@ class TestApp(cli.Application):
         self.eggs = old
         self.tailargs = args
 
+class Geet(cli.Application):
+    debug = cli.Flag("--debug")
+    
+    def main(self):
+        print ("hi this is geet main")
+
+@Geet.subcommand("add")
 class GeetAdd(cli.Application):
     def main(self, *files):
         return "adding", files
 
+@Geet.subcommand("commit")
 class GeetCommit(cli.Application):
     message = cli.Flag("-m", str)
     
@@ -36,16 +44,6 @@ class GeetCommit(cli.Application):
             return "committing in debug"
         else:
             return "committing"
-
-class Geet(cli.Application):
-    debug = cli.Flag("--debug")
-    
-    def main(self):
-        print ("hi this is geet main")
-    
-    # subcommands
-    add = cli.Subcommand("add", GeetAdd)
-    commit = cli.Subcommand("commit", GeetCommit)
 
 
 class CLITest(unittest.TestCase):

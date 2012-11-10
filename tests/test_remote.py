@@ -8,6 +8,21 @@ from plumbum import RemotePath, SshMachine, ProcessExecutionError
 #logging.basicConfig(level = logging.DEBUG)
 
 
+if not hasattr(unittest, "skipIf"):
+    import logging
+    import functools
+    def skipIf(cond, msg = None):
+        def deco(func):
+            if cond:
+                return func
+            else:
+                @functools.wraps(func)
+                def wrapper(*args, **kwargs):
+                    logging.warn("skipping test")
+                return wrapper
+        return deco
+    unittest.skipIf = skipIf
+
 class RemotePathTest(unittest.TestCase):
     def test_basename(self):
         name = RemotePath(SshMachine("localhost"), "/some/long/path/to/file.txt").basename
@@ -19,9 +34,8 @@ class RemotePathTest(unittest.TestCase):
         self.assertTrue(isinstance(name, RemotePath))
         self.assertEqual("/some/long/path/to", str(name))
 
+    @unittest.skipIf(not hasattr(os, "chown"), "os.chown not supported")
     def test_chown(self):
-        if not hasattr(os, "chown"):
-            self.skip("os.chown not supported")
         with SshMachine("localhost") as rem:
             with rem.tempdir() as dir:
                 p = dir / "foo.txt"

@@ -28,6 +28,9 @@ class WrongArgumentType(SwitchError):
     """Raised when a switch expected an argument of some type, but an argument of a wrong
     type has been given"""
     pass
+class SubcommandError(SwitchError):
+    """Raised when there's something wrong with subcommands"""
+    pass
 class ShowHelp(SwitchError):
     pass
 class ShowVersion(SwitchError):
@@ -374,9 +377,16 @@ class Application(object):
 
     * ``VERSION`` - the program's version (defaults to ``1.0``)
 
-    * ``DESCRIPTION`` - a short description of your program (shown in help)
+    * ``DESCRIPTION`` - a short description of your program (shown in help). If not set, 
+      the class' ``__doc__`` will be used.
 
     * ``USAGE`` - the usage line (shown in help)
+    
+    A note on sub-commands: when an application is the root, its ``parent`` attribute is set to
+    ``None``. When it is used as a nested-command, ``parent`` will point to be its direct ancestor.
+    Likewise, when an application is invoked with a sub-command, its ``nested_command`` attribute
+    will hold the chosen sub-application and its command-line arguments (a tuple); otherwise, it
+    will be set to ``None``
     """
 
     PROGNAME = None
@@ -384,20 +394,25 @@ class Application(object):
     VERSION = None
     USAGE = None
     parent = None
+    nested_command = None
 
     def __init__(self, executable):
         if self.PROGNAME is None:
             self.PROGNAME = os.path.basename(executable)
+        if self.DESCRIPTION is None:
+            self.DESCRIPTION = inspect.getdoc(self)
+
         self.executable = executable
         self._switches_by_name = {}
         self._switches_by_func = {}
         self._subcommands = {}
-        self._curr_subcommand = None
+        
         for cls in reversed(type(self).mro()):
             for obj in cls.__dict__.values():
                 if isinstance(obj, Subcommand):
                     if obj.name.startswith("-"):
-                        raise ValueError("Subcommand names cannot start with '-'")
+                        raise SubcommandError("Subcommand names cannot start with '-'")
+                    # it's okay for child classes to override subcommands set by their parents
                     self._subcommands[obj.name] = obj.subapplication
                     continue
                 
@@ -413,7 +428,7 @@ class Application(object):
     @classmethod
     def subcommand(cls, name, subapp = None):
         """Registers the given sub-application as a sub-command of this one. This method can be
-        used both as a decorator and as a normal classmethod::
+        used both as a decorator and as a normal ``classmethod``::
         
             @MyApp.subcommand("foo")
             class FooApp(cli.Application):
@@ -426,7 +441,7 @@ class Application(object):
         .. versionadded:: 1.1
         """
         def wrapper(subapp):
-            setattr(cls, "_subcommand_%s" % (subapp.__name__), subapp)
+            setattr(cls, "_subcommand_%s" % (subapp.__name__), Subcommand(name, subapp))
             return subapp
         if subapp:
             return wrapper(subapp)
@@ -446,7 +461,7 @@ class Application(object):
                 break
             
             if a in self._subcommands:
-                self._curr_subcommand = (self._subcommands[a], [self.executable + " " + a] + argv)
+                self.nested_command = (self._subcommands[a], [self.PROGNAME + " " + a] + argv)
                 break
             
             elif a.startswith("--") and len(a) >= 3:
@@ -596,16 +611,16 @@ class Application(object):
             inst.version()
         except SwitchError:
             ex = sys.exc_info()[1] # compatibility with python 2.5
-            print(ex)
-            print("")
+            print("Error: %s" % (ex,))
+            print("~" * 70)
             inst.help()
             retcode = 2
         else:
             for f, a in ordered:
                 f(inst, *a)
             retcode = inst.main(*tailargs)
-            if not retcode and inst._curr_subcommand:
-                subapp, argv = inst._curr_subcommand
+            if not retcode and inst.nested_command:
+                subapp, argv = inst.nested_command
                 subapp.parent = inst
                 inst, retcode = subapp.run(argv, exit = False)
             
@@ -687,16 +702,26 @@ class Application(object):
         if self._subcommands:
             print("Subcommands:")
             for name, subapp in sorted(self._subcommands.items()):
-                desc = subapp.DESCRIPTION + "; " if subapp.DESCRIPTION else ""
-                print ("    %-25s  %suse '%s %s --help' for details" % (name, desc, self.PROGNAME, name))
+                doc = subapp.DESCRIPTION if subapp.DESCRIPTION else inspect.getdoc(subapp)
+                help = doc + "; " if doc else "" #@ReservedAssignment
+                help += "see '%s %s --help' for more info" % (self.PROGNAME, name)
+                wrapper = TextWrapper(width = int(local.env.get("COLUMNS", 80)),
+                    initial_indent = " " * min(max(31, len(name)), 50), subsequent_indent = " " * 31)
+                help = wrapper.fill(" ".join(l.strip() for l in help.splitlines())) #@ReservedAssignment
+                print("    %-25s  %s" % (name, help.strip()))
 
     @switch(["-v", "--version"], overridable = True, group = "Meta-switches")
     def version(self):
         """Prints the program's version and quits"""
-        if self.VERSION:
-            print ("%s v%s" % (self.PROGNAME, self.VERSION))
-        else:
-            print (self.PROGNAME)
+        ver = None
+        curr = self
+        while curr:
+            ver = getattr(curr, "VERSION", None)
+            if ver:
+                print ("%s v%s" % (self.PROGNAME, ver))
+                return
+            curr = curr.parent
+        print ("%s (no version set)" % (self.PROGNAME,))
 
 
 

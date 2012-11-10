@@ -342,80 +342,105 @@ Sub-commands
 ------------
 .. versionadded:: 1.1
 
-The ``Application`` class can also have *sub-applications* (or *sub-commands*) - this basically 
-means you can nest applications one into the other, and they will be processed accordingly.
-This is a common practice in many tools that tend to get large and spread out, like ``git``,
-``hg`` and many other version control systems.
+A common practice of CLI applications, as they span out and get larger, is to split their
+logic into multiple, pluggable *sub-applications* (or *sub-commands*). A classic example is version
+control systems, such as `git <http://git-scm.com/>`_, where ``git`` is the *root* command, 
+under which sub-commands such as ``commit`` or ``push`` are nested. Git even supports ``alias``-ing,
+which creates allows users to create custom sub-commands. Plumbum makes writing such applications 
+really easy.
 
-How Sub-commands Work
-^^^^^^^^^^^^^^^^^^^^^
-Each sub-command is responsible of **every** argument that follows it, which makes the structure
-recursive. Take, for instance, ``maincommand -x --foo=zzz bar subcommand -w --bar=123 file1 file2 file3``;
-the *root application* is ``maincommand``, which accepts two switches (``-x`` and ``--foo``) and 
-one positional argument (``bar``). Following it, comes ``subcommand``, which accepts everything
-that comes after it (two switches and three positional arguments).
+Before we get to the code, it is important to stress out two things:
 
-Subcommands are processed in order: first, ``maincommand`` is executed with its set of parameters 
-(invoking its ``main()`` method), and if everything goes well, ``subcommand`` will then be invoked.
-Theoretically, there's no limit on the number of nested sub-commands that you can define or use;
-in parctice, however, there's usually only a "main command" and a single sub-command. 
+* Under Plumbum, each sub-command is a full-fledged ``cli.Application`` on its own; if you wish,
+  you can execute it separately, detached from its so-called root application. When an application
+  is run independently, its ``parent`` attribute is ``None``; when it is run as a sub-command, 
+  its ``parent`` attribute points to its parent application. Likewise, when an parent application 
+  is executed with a sub-command, its ``nested_command`` is set to the nested application; otherwise
+  it's ``None``.
 
+* Each sub-command is responsible of **all** arguments that follow it (up to the next sub-command). 
+  This allows applications to process their own switches and positional arguments before the nested
+  application is invoked. Take, for instance, ``git --foo=bar spam push origin --tags``: the root
+  application, ``git``, is in charge of the switch ``--foo`` and the positional argument ``spam``,
+  and the nested application ``push`` is in charge of the arguments that follow it. In theory, 
+  you can nest several sub-applications one into the other; in practice, only a single level
+  is normally used.
 
-.. note::
-    Each sub-command is an ``Application`` on its own and can be used independently.
-
-::
-    
-    class GeetCommit(cli.Application):
-        auto_add = cli.Flag("-a")
-        message = cli.SwitchAttr("-m", str)
-        
-        def main(self):
-            print "doing the commit..."
-
-    class GeetPull(cli.Application):
-        def main(self, remote, branch = None)
-            print "doing the pull..."
+Here is an example of a mock version control system, called ``geet``. We're going to have a root
+application ``Geet``, which has two sub-commands - ``GeetCommit`` and ``GeetPush``: these are 
+attached to the root application using the ``subcommand`` decorator ::
     
     class Geet(cli.Application):
-        commit = cli.Subcommand(GeetPull, "pull")
-        pull = cli.Subcommand(GeetPull, "pull")
-        
         def main(self, *args):
             if args:
                 print "Unknown command %r" % (args[0],)
-            else:
+                return 1   # error exit code
+            if not self.nested_command:           # will be ``None`` if no sub-command follows
                 print "No command given"
-    
+                return 1   # error exit code
+
+    @Geet.subcommand("commit")                    # attach 'geet commit'
+    class GeetCommit(cli.Application):
+        auto_add = cli.Flag("-a")
+        message = cli.SwitchAttr("-m", str)
+
+        def main(self):
+            print "doing the commit..."
+
+    @Geet.subcommand("commit")                    # attach 'geet push'
+    class GeetPush(cli.Application):
+        def main(self, remote, branch = None)
+            print "doing the push..."
+
     if __name__ == "__main__":
         Geet.run()
 
-You can also add sub-commands later on (not necessarily during the definitions of the parent class)::
+Naturally, since ``GeetCommit`` is a ``cli.Application`` on its own right, you may invoke 
+``GeetCommit.run()`` directly -- if that makes sense in the context of your application.
 
-    class Geet(cli.Application):
-        pass #...
-    
-    class GeetCommit(cli.Application):
-        pass #...
-    
-    # add commit as a subcommand
-    Geet.commit = cli.Subcommand(GeetCommit, "commit")
+.. note::
+    You can also attach sub-commands "imperatively", using ``subcommand`` as a method instead
+    of a decorator: ``Geet.subcommand("push", GeetPush)``.
 
-Or using the ``subcommand`` decorator::
+Here's an example of running this application::
 
-    class Geet(cli.Application):
-        pass #...
+    $ python geet.py --help
+    geet v1.7.2
+    The l33t version control
     
-    @Geet.subcommand("commit")
-    class GeetCommit(cli.Application):
-        pass #...
+    Usage: geet.py [SWITCHES] [SUBCOMMAND [SWITCHES]] args...
+    Meta-switches:
+        -h, --help                 Prints this help message and quits
+        -v, --version              Prints the program's version and quits
     
-which does exactly the same thing as above.
+    Subcommands:
+        commit                     creates a new commit in the current branch; see
+                                   'geet commit --help' for more info
+        push                       pushes the current local branch to the remote
+                                   one; see 'geet push --help' for more info
+    
+    $ python geet.py commit --help
+    geet commit v1.7.2
+    creates a new commit in the current branch
+    
+    Usage: geet commit [SWITCHES]
+    Meta-switches:
+        -h, --help                 Prints this help message and quits
+        -v, --version              Prints the program's version and quits
+    
+    Switches:
+        -a                         automatically add changed files
+        -m VALUE:str               sets the commit message; required
+    
+    $ python geet.py commit -m "foo"
+    committing...
 
 
 See Also
 --------
 * `filecopy.py <https://github.com/tomerfiliba/plumbum/blob/master/examples/filecopy.py>`_ example
+* `geet.py <https://github.com/tomerfiliba/plumbum/blob/master/examples/geet.py>`_ - an runnable 
+   example of using sub-commands
 * `RPyC <http://rpyc.sf.net>`_ has changed it bash-based build script to Plumbum CLI.
   Notice `how short and readable <https://github.com/tomerfiliba/rpyc/blob/c457a28d689df7605838334a437c6b35f9a94618/build.py>`_
   it is.

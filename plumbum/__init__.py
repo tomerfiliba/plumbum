@@ -54,7 +54,7 @@ class LocalModule(ModuleType):
     """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
     __all__ = ()                # to make help() happy
     __package__ = __name__
-    __getitem__ = __getattr__ = local.__getitem__
+    __getattr__ = local.__getitem__
 
 cmd = LocalModule(__name__ + ".cmd", LocalModule.__doc__)
 sys.modules[cmd.__name__] = cmd
