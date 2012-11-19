@@ -187,11 +187,12 @@ class SwitchAttr(object):
             kwargs["help"] += "; the default is %r" % (default,)
 
         switch(names, argtype = argtype, argname = argname, list = list, **kwargs)(self)
+        listtype = type([])
         if list:
             if default is None:
                 self._value = []
-            elif isinstance(default, (tuple, list)):
-                self._value = list(default)
+            elif isinstance(default, (tuple, listtype)):
+                self._value = listtype(default)
             else:
                 self._value = [default]
         else:
