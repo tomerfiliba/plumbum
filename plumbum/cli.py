@@ -178,19 +178,22 @@ class SwitchAttr(object):
     :param names: The switch names
     :param argtype: The switch argument's (and attribute's) type
     :param default: The attribute's default value (``None``)
+    :param argname: The switch argument's name (default is ``"VALUE"``)
     :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switch>`
     """
-    def __init__(self, names, argtype = str, default = None, list = False, **kwargs):
+    def __init__(self, names, argtype = str, default = None, list = False, argname = "VALUE", **kwargs):
         self.__doc__ = "Sets an attribute" # to prevent the help message from showing SwitchAttr's docstring
         if "help" in kwargs and default:
             kwargs["help"] += "; the default is %r" % (default,)
 
-        if "argname" not in kwargs:
-            kwargs["argname"] = "VALUE"
-
-        switch(names, argtype = argtype, list = list, **kwargs)(self)
+        switch(names, argtype = argtype, argname = argname, list = list, **kwargs)(self)
         if list:
-            self._value = [] if default is None else [default]
+            if default is None:
+                self._value = []
+            elif isinstance(default, (tuple, list)):
+                self._value = list(default)
+            else:
+                self._value = [default]
         else:
             self._value = default
     def __call__(self, _, val):
