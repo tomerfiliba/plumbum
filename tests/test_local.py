@@ -111,7 +111,9 @@ class LocalMachineTest(unittest.TestCase):
         self.assertTrue("PATH" in local.env.getdict())
         self.assertEqual(local.path("foo"), os.path.join(os.getcwd(), "foo"))
         local.which("ls")
-        local["ls"]
+        local["ls"]()
+        local["ls"]['-a','-l']()
+        local["ls"]['-a -l']()
         self.assertEqual(local.python("-c", "print ('hi there')").splitlines(), ["hi there"])
 
     def test_piping(self):
@@ -187,9 +189,13 @@ class LocalMachineTest(unittest.TestCase):
         ssh = local["ssh"]
         pwd = local["pwd"]
 
-        cmd = ssh["localhost", "cd", "/usr", "&&", ssh["localhost", "cd", "/", "&&",
+        cmd1 = ssh["localhost", "cd", "/usr", "&&", ssh["localhost", "cd", "/", "&&",
             ssh["localhost", "cd", "/bin", "&&", pwd]]]
-        self.assertTrue("\"'&&'\"" in " ".join(cmd.formulate(0)))
+        self.assertTrue("\"'&&'\"" in " ".join(cmd1.formulate(0)))
+
+        cmd2 = ssh["localhost cd /usr &&", ssh["localhost cd / &&",
+            ssh["localhost cd /bin &&", pwd]]]
+        self.assertEqual(" ".join(cmd1.formulate(0)), " ".join(cmd2.formulate(0)))
 
         ls = local['ls']
         try:
