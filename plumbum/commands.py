@@ -1,3 +1,4 @@
+import shlex
 import six
 import subprocess
 import time
@@ -206,11 +207,14 @@ class BaseCommand(object):
     def __getitem__(self, args):
         """Creates a bound-command with the given arguments"""
         if not isinstance(args, (tuple, list)):
-            args = (args,)
+            args = tuple(shlex.split(args))
+        else:
+            args = tuple(sum([shlex.split(arg) if isinstance(arg, six.string_types) else [arg] for arg in args],[]))
+
         if not args:
             return self
         if isinstance(self, BoundCommand):
-            return BoundCommand(self.cmd, self.args + tuple(args))
+            return BoundCommand(self.cmd, self.args + args)
         else:
             return BoundCommand(self, args)
 
@@ -293,7 +297,7 @@ class BoundCommand(BaseCommand):
         return self.cmd.formulate(level + 1, self.args + tuple(args))
     def popen(self, args = (), **kwargs):
         if isinstance(args, six.string_types):
-            args = (args,)
+            args = shlex.split(args)
         return self.cmd.popen(self.args + tuple(args), **kwargs)
 
 class Pipeline(BaseCommand):
