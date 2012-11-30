@@ -189,3 +189,8 @@ class RemotePath(Path):
         args.append(shquote(self))
         self.remote._session.run(" ".join(args))
 
+    @_setdoc(Path)
+    def chmod(self, mode):
+        args = ["chmod", '%o' % mode, shquote(self)]
+        self.remote._session.run(" ".join(args))
+
