@@ -167,6 +167,12 @@ class LocalPath(Path):
             for subpath in self.walk():
                 os.chown(str(subpath), uid, gid)
 
+    @_setdoc(Path)
+    def chmod(self, mode):
+        if not hasattr(os, "chmod"):
+            raise OSError("os.chmod() not supported")
+        os.chmod(str(self), mode)
+
 
 class Workdir(LocalPath):
     """Working directory manipulator"""
