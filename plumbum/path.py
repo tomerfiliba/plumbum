@@ -149,4 +149,10 @@ class Path(object):
                           will default to ``True`` if ``self`` is a directory, ``False`` otherwise.
         """
         raise NotImplementedError()
+    def chmod(self, mode):
+        """Change the mode of path to the numeric mode.
+
+        :param mode: file mode as for os.chmod
+        """
+        raise NotImplementedError()
 
