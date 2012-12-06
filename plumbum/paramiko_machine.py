@@ -3,7 +3,6 @@ import logging
 import six
 import errno
 import socket
-import functools
 from plumbum.remote_machine import BaseRemoteMachine
 from plumbum.session import ShellSession
 from plumbum.lib import _setdoc
@@ -14,7 +13,8 @@ from plumbum.remote_path import RemotePath
 logger = logging.getLogger("plumbum.paramiko")
 
 class ParamikoPopen(object):
-    def __init__(self, argv, stdin, stdout, stderr, encoding):
+    def __init__(self, argv, stdin, stdout, stderr, encoding, stdin_file = None, 
+            stdout_file = None, stderr_file = None):
         self.argv = argv
         self.channel = stdout.channel
         self.stdin = stdin
@@ -23,6 +23,9 @@ class ParamikoPopen(object):
         self.encoding = encoding
         self.returncode = None
         self.pid = None
+        self.stdin_file = stdin_file
+        self.stdout_file = stdout_file
+        self.stderr_file = stderr_file
     def poll(self):
         if self.returncode is None:
             if self.channel.exit_status_ready():
@@ -46,23 +49,32 @@ class ParamikoPopen(object):
     terminate = kill
     def send_signal(self, sig):
         raise NotImplementedError()
-    def communicate(self, input = None):
+    def communicate(self):
         stdout = []
         stderr = []
-        sources = [("1", stdout, self.stdout), ("2", stderr, self.stderr)]
+        infile = self.stdin_file
+        sources = [("1", stdout, self.stdout, self.stdout_file), ("2", stderr, self.stderr, self.stderr_file)]
         i = 0
         while sources:
-            if input:
-                chunk = input[:1000]
-                self.stdin.write(chunk)
-                self.stdin.flush()
-                input = input[1000:]
+            if infile:
+                line = infile.readline()
+                if not line:
+                    infile.close()
+                    infile = None
+                    self.stdin.close()
+                else:
+                    self.stdin.write(line)
+                    self.stdin.flush()
+
             i = (i + 1) % len(sources)
-            name, coll, pipe = sources[i]
+            name, coll, pipe, outfile = sources[i]
             line = pipe.readline()
             #logger.debug("%s> %r", name, line)
             if not line:
                 del sources[i]
+            elif outfile:
+                outfile.write(line)
+                outfile.flush()
             else:
                 coll.append(line)
         self.wait()
@@ -80,7 +92,8 @@ class ParamikoMachine(BaseRemoteMachine):
         with ParamikoMachine("yourhostname") as rem:
             r_ls = rem["ls"]
             # r_ls is the remote `ls`
-            # executing r_ls() translates to `ssh yourhostname ls`
+            # executing r_ls() is equivalent to `ssh yourhostname ls`, only without 
+            # spawning a new ssh client
 
     :param host: the host name to connect to (SSH server)
 
@@ -151,7 +164,7 @@ class ParamikoMachine(BaseRemoteMachine):
         return ShellSession(proc, self.encoding, isatty)
 
     @_setdoc(BaseRemoteMachine)
-    def popen(self, args):
+    def popen(self, args, stdin = None, stdout = None, stderr = None):
         argv = []
         envdelta = self.env.getdelta()
         argv.extend(["cd", str(self.cwd), "&&"])
@@ -161,8 +174,8 @@ class ParamikoMachine(BaseRemoteMachine):
         argv.extend(args.formulate())
         cmdline = " ".join(argv)
         logger.debug(cmdline)
-        si, so, se = self._client.exec_command(cmdline)
-        return ParamikoPopen(argv, si, so, se, self.encoding)
+        si, so, se = self._client.exec_command(cmdline, 1)
+        return ParamikoPopen(argv, si, so, se, self.encoding, stdin_file = stdin, stdout_file = stdout, stderr_file = stderr)
 
     @_setdoc(BaseRemoteMachine)
     def download(self, src, dst):
@@ -199,28 +212,29 @@ class ParamikoMachine(BaseRemoteMachine):
             dhost = "::1"
         srcaddr = ("::1", 0, 0, 0) if ipv6 else ("127.0.0.1", 0)
         chan = self._client.get_transport().open_channel('direct-tcpip', (dhost, dport), srcaddr)
-        return chan
+        return SocketCompatibleChannel(chan)
 
 
-###############################################################################
-# monkey-patch paramiko.Channel, so that send and recv will fail after the 
-# transport has been closed. see https://github.com/paramiko/paramiko/pull/99
-################################################################################
-_orig_send = paramiko.Channel.send
-@functools.wraps(paramiko.Channel.send)
-def send2(self, s):
-    if self.closed:
-        raise socket.error(errno.EBADF, 'Bad file descriptor')
-    return _orig_send(self, s)
-paramiko.Channel.send = send2
-
-_orig_recv = paramiko.Channel.recv
-@functools.wraps(paramiko.Channel.recv)
-def recv2(self, count):
-    if self.closed:
-        raise socket.error(errno.EBADF, 'Bad file descriptor')
-    return _orig_recv(self, count)
-paramiko.Channel.recv = recv2
+###################################################################################################
+# Make paramiko.Channel adhere to the socket protocol, namely, send and recv should fail 
+# when the socket has been closed
+###################################################################################################
+if paramiko.__version__.split(".") <= ('1', '9', '0'):
+    class SocketCompatibleChannel(object):
+        def __init__(self, chan):
+            self._chan = chan
+        def __getattr__(self, name):
+            return getattr(self._chan, name)
+        def send(self, s):
+            if self._chan.closed:
+                raise socket.error(errno.EBADF, 'Bad file descriptor')
+            return self._chan.send(s)
+        def recv(self, count):
+            if self._chan.closed:
+                raise socket.error(errno.EBADF, 'Bad file descriptor')
+            return self._chan.recv(count)
+else:
+    SocketCompatibleChannel = lambda x: x
 
 
 

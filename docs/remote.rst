@@ -22,9 +22,9 @@ Or as a context-manager::
     ...     pass
 
 .. note::
-   At the moment, Plumbum requires ``ssh`` (``openSSH`` or compatible) installed on your 
-   system in order to connect to remote machines. Future versions of Plumbum may utilize
-   ``paramiko`` or similar tools.
+   ``SshMachine`` requires ``ssh`` (``openSSH`` or compatible) installed on your system in order 
+   to connect to remote machines. Alternatively, you can use the pure-Python implementation of
+   :ref:`ParamikoMachine <guide-paramiko-machine>`.
 
 Only the ``hostname`` parameter is required, all other parameters are optional. If the host has
 your ``id-rsa.pub`` key in its ``authorized_keys`` file, or if you've set up your ``~/.ssh/config``
@@ -137,6 +137,79 @@ For example, the previous code can be written as ::
     u'bin\nPublic\n'
 
 Which is even more efficient (no need to send data back and forth over SSH).
+
+.. _guide-paramiko-machine:
+
+Paramiko Remote Machine
+-----------------------
+.. versionadded:: 1.1
+
+``SshMachine`` relies on the system's ``ssh`` client to run commands; this means that for each
+remote command you run, a local process is spawned and an SSH connection is established.
+While relying on a well-known and trusted SSH client is the most stable option, the incurred 
+overhead of creating a separate SSH connection for each command may be too high. In order to 
+overcome this, Plumbum provides integration for `paramiko <https://github.com/paramiko/paramiko/>`_,
+an open-source, pure-Python implementation of the SSH2 protocol. This is the ``ParamikoMachine``, 
+and it works along the lines of the ``SshMachine``::
+
+    >>> from plumbum.paramiko_machine import ParamikoMachine
+    >>> rem = ParamikoMachine("192.168.1.143")
+    >>> rem["ls"]
+    RemoteCommand(<ParamikoMachine paramiko://192.168.1.143>, <RemotePath /bin/ls>)
+    >>> r_ls = rem["ls"]
+    >>> r_ls()
+    u'bin\nDesktop\nDocuments\nDownloads\nexamples.desktop\nMusic\nPictures\n...'
+    >>> r_ls("-a")
+    u'.\n..\n.adobe\n.bash_history\n.bash_logout\n.bashrc\nbin...'
+
+.. note::
+    Using ``ParamikoMachine`` requires paramiko to be installed on your system. Also, you have
+    to explicitly import it (``from plumbum.paramiko_machine import ParamikoMachine``) as paramiko
+    is quite heavy.
+
+    Refer to :class:`the API docs <plumbum.paramiko_machine.ParamikoMachine>` for more details.
+
+The main advantage of using ``ParamikoMachine`` is that only a single, persistent SSH connection 
+is created, over which commands execute. Moreover, paramiko has a built-in SFTP client, which is 
+used instead of ``scp`` to copy files (employed by the ``.download()``/``.upload()`` methods), 
+and tunneling is much more light weight: In the ``SshMachine``, a tunnel is created by an external 
+process that lives for as long as the tunnel is to remain active. The ``ParamikoMachine``, however,
+can simply create an extra *channel* on top of the same underlying connection with ease; this is 
+exposed by ``connect_sock()``, which creates a tunneled TCP connection and returns a socket-like 
+object
+
+Tunneling Example
+^^^^^^^^^^^^^^^^^ 
+
+On ``192.168.1.143``, I ran the following sophisticated server (notice it's bound to ``localhost``)::
+
+    >>> import socket
+    >>> s=socket.socket()
+    >>> s.bind(("localhost", 12345))
+    >>> s.listen(1)
+    >>> s2,_=s.accept()
+    >>> while True:
+    ...     data = s2.recv(1000)
+    ...     if not data:
+    ...         break
+    ...     s2.send("I eat " + data)
+    ...
+
+On my other machine, I connect (over SSH) to this host and then create a tunneled connection to
+port 12345, getting back a socket-like object::
+
+    >>> rem = ParamikoMachine("192.168.1.143")
+    >>> s = rem.connect_sock(12345)
+    >>> s.send("carrot")
+    6
+    >>> s.recv(1000)
+    'I eat carrot'
+    >>> s.send("babies")
+    6
+    >>> s.recv(1000)
+    'I eat babies'
+    >>> s.close()
+
 
 .. _guide-remote-paths:
 

@@ -414,10 +414,10 @@ class StdinDataRedirection(BaseCommand):
             f.write(chunk)
             data = data[self.CHUNK_SIZE:]
         f.seek(0)
-        try:
-            return self.cmd.popen(args, stdin = f, **kwargs)
-        finally:
-            f.close()
+        #try:
+        return self.cmd.popen(args, stdin = f, **kwargs)
+        #finally:
+        #    f.close()
 
 class ConcreteCommand(BaseCommand):
     QUOTE_LEVEL = None

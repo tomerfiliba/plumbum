@@ -337,6 +337,7 @@ With varargs::
         -h, --help                 Prints this help message and quits
         -v, --version              Prints the program's version and quits
 
+.. _guide-subcommands:
 
 Sub-commands
 ------------

@@ -6,7 +6,9 @@ python:
     - "3.1"
     - "3.2"
 
-install: pip install six
+install: 
+    - pip install six
+    - pip install paramiko
 
 before_script:
     - "echo NoHostAuthenticationForLocalhost yes >> ~/.ssh/config"
