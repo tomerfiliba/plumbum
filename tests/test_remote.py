@@ -5,14 +5,13 @@ import unittest
 import six
 from plumbum import RemotePath, SshMachine, ProcessExecutionError
 from plumbum.paramiko_machine import ParamikoMachine
-#import logging
-#logging.basicConfig(level = logging.DEBUG)
 
 
 #TEST_HOST = "192.168.1.143"
 TEST_HOST = "localhost"
-#import plumbum
-#plumbum.local.env.path.append("c:\\Program Files\\Git\\bin")
+if TEST_HOST != "localhost":
+    import plumbum
+    plumbum.local.env.path.append("c:\\Program Files\\Git\\bin")
 
 if not hasattr(unittest, "skipIf"):
     import logging
