@@ -4,7 +4,6 @@ import socket
 import unittest
 import six
 from plumbum import RemotePath, SshMachine, ProcessExecutionError
-from plumbum.paramiko_machine import ParamikoMachine
 
 
 #TEST_HOST = "192.168.1.143"
@@ -151,33 +150,37 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
             p.communicate()
 
 
-class TestParamikoMachine(unittest.TestCase, BaseRemoteMachineTest):
-    def _connect(self):
-        return ParamikoMachine(TEST_HOST)
+if not six.PY3:
+    import paramiko
+    from plumbum.paramiko_machine import ParamikoMachine
+
+    class TestParamikoMachine(unittest.TestCase, BaseRemoteMachineTest):
+        def _connect(self):
+            return ParamikoMachine(TEST_HOST, missing_host_policy = paramiko.AutoAddPolicy())
+        
+        def test_remote(self):
+            with self._connect() as rem:
+                r_ssh = rem["ssh"]
+                r_ls = rem["ls"]
+                r_grep = rem["grep"]
     
-    def test_remote(self):
-        with self._connect() as rem:
-            r_ssh = rem["ssh"]
-            r_ls = rem["ls"]
-            r_grep = rem["grep"]
-
-            self.assertTrue(".bashrc" in r_ls("-a").splitlines())
-
-    def test_tunnel(self):
-        with self._connect() as rem:
-            p = rem.python["-c", self.TUNNEL_PROG].popen()
-            try:
-                port = int(p.stdout.readline().strip())
-            except ValueError:
-                print(p.communicate())
-                raise
-            
-            s = rem.connect_sock(port)
-            s.send(six.b("world"))
-            data = s.recv(100)
-            s.close()
-            self.assertEqual(data, six.b("hello world"))
-
+                self.assertTrue(".bashrc" in r_ls("-a").splitlines())
+    
+        def test_tunnel(self):
+            with self._connect() as rem:
+                p = rem.python["-c", self.TUNNEL_PROG].popen()
+                try:
+                    port = int(p.stdout.readline().strip())
+                except ValueError:
+                    print(p.communicate())
+                    raise
+                
+                s = rem.connect_sock(port)
+                s.send(six.b("world"))
+                data = s.recv(100)
+                s.close()
+                self.assertEqual(data, six.b("hello world"))
+    
 
 
 

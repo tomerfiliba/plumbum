@@ -110,11 +110,15 @@ class ParamikoMachine(BaseRemoteMachine):
                                   and ``~/.ssh``). The default is ``True``, which means Paramiko
                                   behaves much like the ``ssh`` command-line client
 
+    :param missing_host_policy: the value passed to the underlying ``set_missing_host_key_policy``
+                                of the client. The default is ``None``, which means
+                                ``set_missing_host_key_policy`` is not invoked and paramiko's
+                                default behavior (reject) is employed
+
     :param encoding: the remote machine's encoding (defaults to UTF8)
     """    
     def __init__(self, host, user = None, port = None, password = None, keyfile = None, 
-            load_system_host_keys = True, missing_host_policy = paramiko.AutoAddPolicy(), 
-            encoding = "utf8"):
+            load_system_host_keys = True, missing_host_policy = None, encoding = "utf8"):
         self.host = host
         if user:
             self._fqhost = "%s@%s" % (user, host)
@@ -130,7 +134,8 @@ class ParamikoMachine(BaseRemoteMachine):
             kwargs["key_filename"] = keyfile
         if password is not None:
             kwargs["password"] = password
-        self._client.set_missing_host_key_policy(missing_host_policy)
+        if missing_host_policy is not None:
+            self._client.set_missing_host_key_policy(missing_host_policy)
         self._client.connect(host, **kwargs)
         self._sftp = None
         BaseRemoteMachine.__init__(self, encoding)
