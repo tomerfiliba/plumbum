@@ -8,8 +8,8 @@ from plumbum.paramiko_machine import ParamikoMachine
 
 
 #TEST_HOST = "192.168.1.143"
-TEST_HOST = "localhost"
-if TEST_HOST != "localhost":
+TEST_HOST = "127.0.0.1"
+if TEST_HOST not in ("::1", "127.0.0.1", "localhost"):
     import plumbum
     plumbum.local.env.path.append("c:\\Program Files\\Git\\bin")
 
