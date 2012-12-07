@@ -1,11 +1,9 @@
 from __future__ import with_statement
-import os
 import errno
 import six
 from tempfile import NamedTemporaryFile
 from plumbum.path import Path, FSUser
 from plumbum.lib import _setdoc
-from plumbum.commands import shquote
 
 
 if not six.PY3:
@@ -62,13 +60,13 @@ class RemotePath(Path):
     @property
     @_setdoc(Path)
     def uid(self):
-        uid, name = self.remote._session.run("stat -c '%u,%U' " + shquote(self))[1].strip().split(",")
+        uid, name = self.remote._path_getuid(self)
         return FSUser(int(uid), name)
 
     @property
     @_setdoc(Path)
     def gid(self):
-        gid, name = self.remote._session.run("stat -c '%g,%G' " + shquote(self))[1].strip().split(",")
+        gid, name = self.remote._path_getgid(self)
         return FSUser(int(gid), name)
 
     def _get_info(self):
@@ -82,57 +80,42 @@ class RemotePath(Path):
     def list(self):
         if not self.isdir():
             return []
-        files = self.remote._session.run("ls -a %s" % (self,))[1].splitlines()
-        files.remove(".")
-        files.remove("..")
-        return [self.join(fn) for fn in files]
+        return [self.join(fn) for fn in self.remote._path_listdir(self)]
 
     @_setdoc(Path)
     def isdir(self):
-        res = self._stat(self)
+        res = self.remote._path_stat(self)
         if not res:
             return False
-        return res[0] in ("directory")
+        return res.text_mode == "directory"
 
     @_setdoc(Path)
     def isfile(self):
-        res = self._stat(self)
+        res = self.remote._path_stat(self)
         if not res:
             return False
-        return res[0] in ("regular file", "regular empty file")
+        return res.text_mode in ("regular file", "regular empty file")
 
     @_setdoc(Path)
     def exists(self):
-        return self._stat(self) is not None
-
-    def _stat(self, path):
-        rc, out, _ = self.remote._session.run(
-            "stat -c '%F,%f,%i,%d,%h,%u,%g,%s,%X,%Y,%Z' " + shquote(path), retcode = None)
-        if rc != 0:
-            return None
-        statres = out.strip().split(",")
-        mode = statres.pop(0).lower()
-        return mode, os.stat_result(statres)
+        return self.remote._path_stat(self) is not None
 
     @_setdoc(Path)
     def stat(self):
-        res = self._stat(self)
+        res = self.remote._path_stat(self)
         if res is None:
             raise OSError(errno.ENOENT)
-        return res[1]
+        return res
 
     @_setdoc(Path)
     def glob(self, pattern):
-        matches = self.remote._session.run("for fn in %s/%s; do echo $fn; done" % (self, pattern))[1].splitlines()
-        if len(matches) == 1 and not self._stat(matches[0]):
-            return [] # pattern expansion failed
-        return [RemotePath(self.remote, m) for m in matches]
+        return [RemotePath(self.remote, m) for m in self.remote._path_glob(self, pattern)]
 
     @_setdoc(Path)
     def delete(self):
         if not self.exists():
             return
-        self.remote._session.run("rm -rf %s" % (shquote(self),))
+        self.remote._path_delete(self)
 
     @_setdoc(Path)
     def move(self, dst):
@@ -140,7 +123,7 @@ class RemotePath(Path):
             raise TypeError("dst points to a different remote machine")
         elif not isinstance(dst, six.string_types):
             raise TypeError("dst must be a string or a RemotePath (to the same remote machine)")
-        self.remote._session.run("mv %s %s" % (shquote(self), shquote(dst)))
+        self.remote._path_move(self, dst)
 
     @_setdoc(Path)
     def copy(self, dst, override = False):
@@ -148,49 +131,34 @@ class RemotePath(Path):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
         elif not isinstance(dst, six.string_types):
-            raise TypeError("dst must be a string or a RemotePath (to the same remote machine)", repr(dst))
+            raise TypeError("dst must be a string or a RemotePath (to the same remote machine), "
+                "got %r" % (dst,))
         if override:
             if isinstance(dst, six.string_types):
                 dst = RemotePath(self.remote, dst)
             dst.remove()
-        self.remote._session.run("cp -r %s %s" % (shquote(self), shquote(dst)))
+        self.remote._path_copy(self, dst)
 
     @_setdoc(Path)
     def mkdir(self):
-        self.remote._session.run("mkdir -p %s" % (shquote(self),))
+        self.remote._path_mkdir(self)
 
     @_setdoc(Path)
     def read(self):
-        return self.remote["cat"](self)
-
+        return self.remote._path_read(self)
     @_setdoc(Path)
     def write(self, data):
-        if self.remote.encoding and isinstance(data, str) and not isinstance(data, bytes):
-            data = data.encode(self.remote.encoding)
-        with NamedTemporaryFile() as f:
-            f.write(data)
-            f.flush()
-            f.seek(0)
-            self.remote.upload(f.name, self)
+        self.remote._path_write(self, data)
 
     @_setdoc(Path)
     def chown(self, owner=None, group=None, recursive=None):
-        args = ["chown"]
-        if recursive is None:
-            recursive = self.isdir()
-        if recursive:
-            args.append("-R")
-        if owner is not None and group is not None:
-            args.append("%s:%s" % (owner, group))
-        elif owner is not None:
-            args.append(str(owner))
-        elif group is not None:
-            args.append(":%s" % (group,))
-        args.append(shquote(self))
-        self.remote._session.run(" ".join(args))
-
+        self.remote._path_chown(self, owner, group, self.isdir() if recursive is None else recursive)
     @_setdoc(Path)
     def chmod(self, mode):
-        args = ["chmod", '%o' % mode, shquote(self)]
-        self.remote._session.run(" ".join(args))
+        self.remote._path_chmod(mode, self)
+        
+
+
+
+
 

@@ -62,8 +62,12 @@ also :ref:`import commands <import-hack>`:
     lo        Link encap:Local Loopback  
               UP LOOPBACK RUNNING  MTU:16436  Metric:1
 
-**Remote commands (over SSH)** ::
-    
+**Remote commands (over SSH)**
+
+Supports `openSSH <http://www.openssh.org/>`_-compatible clients, 
+`PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/>`_ (on Windows)
+and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implementation of SSH2) ::
+
     >>> from plumbum import SshMachine
     >>> remote = SshMachine("somehost", user = "john", keyfile = "/path/to/idrsa")
     >>> r_ls = remote["ls"]

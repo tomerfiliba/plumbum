@@ -8,6 +8,7 @@ from plumbum.session import ShellSession
 from plumbum.lib import _setdoc
 from plumbum.local_machine import LocalPath
 from plumbum.remote_path import RemotePath
+from plumbum.commands import shquote
 
 
 logger = logging.getLogger("plumbum.paramiko")
@@ -244,6 +245,27 @@ class ParamikoMachine(BaseRemoteMachine):
         srcaddr = ("::1", 0, 0, 0) if ipv6 else ("127.0.0.1", 0)
         chan = self._client.get_transport().open_channel('direct-tcpip', (dhost, dport), srcaddr)
         return SocketCompatibleChannel(chan)
+
+    #
+    # Path implementation
+    #
+    def _path_listdir(self, fn):
+        return self.sftp.listdir(str(fn))
+    
+    def _path_read(self, fn):
+        f = self.sftp.open(str(fn), 'rb')
+        data = f.read()
+        f.close()
+        #if self.encoding and isinstance(data, bytes) and not isinstance(data, str):
+        #    data = data.decode(self.encoding)
+        return data
+    def _path_write(self, fn, data):
+        if self.encoding and isinstance(data, str) and not isinstance(data, bytes):
+            data = data.encode(self.encoding)
+        f = self.sftp.open(str(fn), 'wb')
+        f.write(data)
+        f.close()
+
 
 
 ###################################################################################################

@@ -238,11 +238,12 @@ class BaseCommand(object):
         """Spawns the given command, returning a ``Popen``-like object.
 
         .. note::
-            When processes run in the **background** (either via ``popen`` or 
-            :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
-            causing them to hang. If you know a process produces output, be sure to consume it 
-            every once in a while, using a monitoring thread/reactor in the background.
-            For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
+        
+           When processes run in the **background** (either via ``popen`` or 
+           :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
+           causing them to hang. If you know a process produces output, be sure to consume it 
+           every once in a while, using a monitoring thread/reactor in the background.
+           For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
 
         :param args: Any arguments to be passed to the process (a tuple)
 
@@ -519,11 +520,12 @@ class BG(ExecutionModifier):
         future = sleep[5] & BG(7)    # a future expecting an exit code of 7
 
     .. note::
-        When processes run in the **background** (either via ``popen`` or 
-        :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
-        causing them to hang. If you know a process produces output, be sure to consume it 
-        every once in a while, using a monitoring thread/reactor in the background.
-        For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
+    
+       When processes run in the **background** (either via ``popen`` or 
+       :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
+       causing them to hang. If you know a process produces output, be sure to consume it 
+       every once in a while, using a monitoring thread/reactor in the background.
+       For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
     """
     __slots__ = []
     def __rand__(self, cmd):
@@ -540,11 +542,12 @@ when you right-and it with a command. If you wish to expect a different return c
     future = sleep[5] & BG(7)    # a future expecting an exit code of 7
 
 .. note::
-    When processes run in the **background** (either via ``popen`` or 
-    :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
-    causing them to hang. If you know a process produces output, be sure to consume it 
-    every once in a while, using a monitoring thread/reactor in the background.
-    For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
+
+   When processes run in the **background** (either via ``popen`` or 
+   :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
+   causing them to hang. If you know a process produces output, be sure to consume it 
+   every once in a while, using a monitoring thread/reactor in the background.
+   For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
 """
 
 class FG(ExecutionModifier):

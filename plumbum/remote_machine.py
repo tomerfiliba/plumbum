@@ -5,6 +5,8 @@ from plumbum.commands import CommandNotFound, shquote, ConcreteCommand
 from plumbum.session import ShellSession
 from plumbum.lib import _setdoc
 from plumbum.local_machine import local, BaseEnv, LocalPath
+from plumbum.path import StatRes
+from tempfile import NamedTemporaryFile
 
 
 class Workdir(RemotePath):
@@ -277,6 +279,69 @@ class BaseRemoteMachine(object):
         finally:
             dir.delete()
 
+    #
+    # Path implementation
+    #
+    def _path_listdir(self, fn):
+        files = self._session.run("ls -a %s" % (shquote(fn),))[1].splitlines()
+        files.remove(".")
+        files.remove("..")
+        return files
+    def _path_glob(self, fn, pattern):
+        matches = self._session.run("for fn in %s/%s; do echo $fn; done" % (fn, pattern))[1].splitlines()
+        if len(matches) == 1 and not self._path_stat(matches[0]):
+            return [] # pattern expansion failed
+        return matches
+
+    def _path_getuid(self, fn):
+        return self._session.run("stat -c '%u,%U' " + shquote(fn))[1].strip().split(",")
+    def _path_getgid(self, fn):
+        return self._session.run("stat -c '%g,%G' " + shquote(fn))[1].strip().split(",")
+    def _path_stat(self, fn):
+        rc, out, _ = self._session.run("stat -c '%F,%f,%i,%d,%h,%u,%g,%s,%X,%Y,%Z' " + shquote(fn), 
+            retcode = None)
+        if rc != 0:
+            return None
+        statres = out.strip().split(",")
+        text_mode = statres.pop(0).lower()
+        res = StatRes(statres)
+        res.text_mode = text_mode
+        return res
+    
+    def _path_delete(self, fn):
+        self._session.run("rm -rf %s" % (shquote(fn),))
+    def _path_move(self, src, dst):
+        self._session.run("mv %s %s" % (shquote(src), shquote(dst)))
+    def _path_copy(self, src, dst):
+        self._session.run("cp -r %s %s" % (shquote(src), shquote(dst)))
+    def _path_mkdir(self, fn):
+        self._session.run("mkdir -p %s" % (shquote(fn),))
+    def _path_chmod(self, mode, fn):
+        self._session.run("chmod %o %s" % (mode, shquote(fn)))
+    def _path_chown(self, fn, owner, group, recursive):
+        args = ["chown"]
+        if recursive:
+            args.append("-R")
+        if owner is not None and group is not None:
+            args.append("%s:%s" % (owner, group))
+        elif owner is not None:
+            args.append(str(owner))
+        elif group is not None:
+            args.append(":%s" % (group,))
+        args.append(shquote(fn))
+        self._session.run(" ".join(args))
+
+    def _path_read(self, fn):
+        return self["cat"](fn)
+    def _path_write(self, fn, data):
+        if self.encoding and isinstance(data, str) and not isinstance(data, bytes):
+            data = data.encode(self.encoding)
+        with NamedTemporaryFile() as f:
+            f.write(data)
+            f.flush()
+            f.seek(0)
+            self.upload(f.name, fn)
+
 
 class SshTunnel(object):
     """An object representing an SSH tunnel (created by
@@ -452,7 +517,9 @@ class SshMachine(BaseRemoteMachine):
 class PuttyMachine(SshMachine):
     """
     PuTTY-flavored SSH connection. The programs ``plink`` and ``pscp`` are expected to
-    be in the path (or you may supply
+    be in the path (or you may provide your own ``ssh_command`` and ``scp_command``)
+    
+    Arguments are the same as for :class:`plumbum.remote_machine.SshMachine` 
     """
     def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None,
             scp_command = None, ssh_opts = (), scp_opts = (), encoding = "utf8"):
@@ -468,7 +535,7 @@ class PuttyMachine(SshMachine):
             ssh_opts, scp_opts)
 
     def __str__(self):
-        return "ssh(putty)://%s" % (self._fqhost,)
+        return "putty-ssh://%s" % (self._fqhost,)
 
     @_setdoc(BaseRemoteMachine)
     def session(self, isatty = False):

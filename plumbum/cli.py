@@ -295,7 +295,7 @@ class Set(object):
     def __init__(self, *values, **kwargs):
         self.case_sensitive = kwargs.pop("case_sensitive", False)
         if kwargs:
-            raise TypeError("got unexpected keyword argument(s)", kwargs.keys())
+            raise TypeError("got unexpected keyword argument(s): %r" % (kwargs.keys(),))
         self.values = dict(((v if self.case_sensitive else v.lower()), v) for v in values)
     def __repr__(self):
         return "{%s}" % (", ".join(repr(v) for v in self.values.values()))

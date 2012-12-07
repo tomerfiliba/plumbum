@@ -39,9 +39,10 @@ from plumbum.commands import ProcessExecutionError, CommandNotFound, ProcessTime
 from plumbum.path import Path
 from plumbum.local_machine import local, LocalPath
 from plumbum.remote_machine import SshMachine, RemotePath, PuttyMachine
-from plumbum.version import version as __version__
+from plumbum.version import version
 
 __author__ = "Tomer Filiba (tomerfiliba@gmail.com)"
+__version__ = version
 
 
 #===================================================================================================

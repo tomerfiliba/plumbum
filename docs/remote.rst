@@ -22,6 +22,7 @@ Or as a context-manager::
     ...     pass
 
 .. note::
+
    ``SshMachine`` requires ``ssh`` (``openSSH`` or compatible) installed on your system in order 
    to connect to remote machines. Alternatively, you can use the pure-Python implementation of
    :ref:`ParamikoMachine <guide-paramiko-machine>`.
@@ -34,6 +35,14 @@ Much like the :ref:`local object <guide-local-machine>`, remote machines expose 
 ``path()``, ``python``, ``cwd`` and ``env``. You can also run remote commands, create SSH tunnels, 
 upload/download files, etc. You may also refer to :class:`the full API  
 <plumbum.remote_machine.SshMachine>`, as this guide will only survey the features.
+
+.. note::
+
+   `PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/>`_ users on Windows should use
+   the dedicated :class:`PuttyMachine <plumbum.remote_machine.PuttyMachine>` instead of 
+   ``SshMachine``. See also :ref:`ParamikoMachine <guide-paramiko-machine>`.
+
+   .. versionadded:: 1.0.1
 
 Working Directory and Environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -140,8 +149,8 @@ Which is even more efficient (no need to send data back and forth over SSH).
 
 .. _guide-paramiko-machine:
 
-Paramiko Remote Machine
------------------------
+Paramiko Machine
+----------------
 .. versionadded:: 1.1
 
 ``SshMachine`` relies on the system's ``ssh`` client to run commands; this means that for each

@@ -71,7 +71,21 @@ s2.send(b("hello ") + data)
 s2.close()
 s.close()
 """
-    
+
+    def test_basic(self):
+        with self._connect() as rem:
+            r_ssh = rem["ssh"]
+            r_ls = rem["ls"]
+            r_grep = rem["grep"]
+
+            self.assertTrue(".bashrc" in r_ls("-a").splitlines())
+
+            with rem.cwd(os.path.dirname(__file__)):
+                cmd = r_ssh["localhost", "cd", rem.cwd, "&&", r_ls | r_grep["\\.py"]]
+                self.assertTrue("'|'" in str(cmd))
+                self.assertTrue("test_remote.py" in cmd())
+                self.assertTrue("test_remote.py" in [f.basename for f in rem.cwd // "*.py"])
+
     def test_download_upload(self):
         with self._connect() as rem:
             rem.upload("test_remote.py", "/tmp")
@@ -115,21 +129,6 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
     def _connect(self):
         return SshMachine(TEST_HOST)
 
-    def test_remote(self):
-        with self._connect() as rem:
-            r_ssh = rem["ssh"]
-            r_ls = rem["ls"]
-            r_grep = rem["grep"]
-
-            self.assertTrue(".bashrc" in r_ls("-a").splitlines())
-
-            with rem.cwd(os.path.dirname(__file__)):
-                cmd = r_ssh["localhost", "cd", rem.cwd, "&&", r_ls | r_grep["\\.py"]]
-                self.assertTrue("'|'" in str(cmd))
-                self.assertTrue("test_remote.py" in cmd())
-                self.assertTrue("test_remote.py" in [f.basename for f in rem.cwd // "*.py"])
-
-
     def test_tunnel(self):
         with self._connect() as rem:
             p = (rem.python["-u"] << self.TUNNEL_PROG).popen()
@@ -158,14 +157,6 @@ if not six.PY3:
         def _connect(self):
             return ParamikoMachine(TEST_HOST, missing_host_policy = paramiko.AutoAddPolicy())
         
-        def test_remote(self):
-            with self._connect() as rem:
-                r_ssh = rem["ssh"]
-                r_ls = rem["ls"]
-                r_grep = rem["grep"]
-    
-                self.assertTrue(".bashrc" in r_ls("-a").splitlines())
-    
         def test_tunnel(self):
             with self._connect() as rem:
                 p = rem.python["-c", self.TUNNEL_PROG].popen()

@@ -8,6 +8,24 @@ class FSUser(int):
         self.name = name
         return self
 
+class StatRes(object):
+    """POSIX-like stat result"""
+    def __init__(self, tup):
+        self._tup = tuple(tup)
+    def __getitem__(self, index):
+        return self._tup[index]
+    mode = property(lambda self: self[0])
+    ino = property(lambda self: self[1])
+    dev = property(lambda self: self[2])
+    nlink = property(lambda self: self[3])
+    uid = property(lambda self: self[4])
+    gid = property(lambda self: self[5])
+    size = property(lambda self: self[6])
+    atime = property(lambda self: self[7])
+    mtime = property(lambda self: self[8])
+    ctime = property(lambda self: self[9])
+
+
 class Path(object):
     """An abstraction over file system paths. This class is abstract, and the two implementations
     are :class:`LocalPath <plumbum.local_machine.LocalPath>` and

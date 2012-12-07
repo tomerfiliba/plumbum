@@ -110,7 +110,7 @@ for instance, ``$ ./myapp.py --log-to-file=/tmp/log`` would translate to a call 
         def log_to_file(self, filename):
             pass
    
-   Will bind the add the switch function to ``--log-to-file``.
+   Will bind the switch function to ``--log-to-file``.
 
 Arguments
 ^^^^^^^^^

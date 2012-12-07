@@ -132,4 +132,4 @@ the two libraries go in different directions, where Plumbum attempts to provide 
 wholesome approach.
 
 Plumbum also pays tribute to `Rotem Yaari <https://github.com/vmalloc/>`_ who suggested a 
-library code-named ``pyplatform`` for that very same purpose, but which had never materialized.
+library code-named ``pyplatform`` for that very purpose, but which had never materialized.

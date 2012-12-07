@@ -6,6 +6,9 @@
   See also: `#43 <https://github.com/tomerfiliba/plumbum/issues/43>`_
 * The "import hack" has moved to the package's ``__init__.py``, to make it importable directly
   `#45 <https://github.com/tomerfiliba/plumbum/issues/45>`_
+* Paths now support ``chmod`` (on POSIX platform) `#49 <https://github.com/tomerfiliba/plumbum/pull/49>`_
+* The argument name of a ``SwitchAttr`` can now be given to it (defaults to ``VALUE``) 
+  `#46 <https://github.com/tomerfiliba/plumbum/pull/46>`_
 
 1.0.1
 -----
