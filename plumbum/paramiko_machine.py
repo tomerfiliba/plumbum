@@ -187,7 +187,19 @@ class ParamikoMachine(BaseRemoteMachine):
             raise TypeError("src %r points to a different remote machine" % (src,))
         if isinstance(dst, RemotePath):
             raise TypeError("dst of download cannot be %r" % (dst,))
-        self.sftp.get(str(src), str(dst))
+        return self._download(src if isinstance(src, RemotePath) else self.path(src),
+            dst if isinstance(dst, LocalPath) else LocalPath(dst)) 
+
+    def _download(self, src, dst):
+        if src.isdir():
+            if not dst.exists():
+                self.sftp.mkdir(str(dst))
+            for fn in src:
+                self._download(fn, dst / fn.basename)
+        elif dst.isdir():
+            self.sftp.get(str(src), str(dst / src.basename))
+        else:
+            self.sftp.get(str(src), str(dst))
 
     @_setdoc(BaseRemoteMachine)
     def upload(self, src, dst):
@@ -197,7 +209,19 @@ class ParamikoMachine(BaseRemoteMachine):
             raise TypeError("dst of upload cannot be %r" % (dst,))
         if isinstance(dst, RemotePath) and dst.remote != self:
             raise TypeError("dst %r points to a different remote machine" % (dst,))
-        self.sftp.put(str(src), str(dst))
+        return self._upload(src if isinstance(src, LocalPath) else LocalPath(src), 
+            dst if isinstance(dst, RemotePath) else self.path(dst))
+
+    def _upload(self, src, dst):
+        if src.isdir():
+            if not dst.exists():
+                self.sftp.mkdir(str(dst))
+            for fn in src:
+                self._upload(fn, dst / fn.basename)
+        elif dst.isdir():
+            self.sftp.put(str(src), str(dst / src.basename))
+        else:
+            self.sftp.put(str(src), str(dst))
 
     def connect_sock(self, dport, dhost = "localhost", ipv6 = False):
         """Returns a Paramiko ``Channel``, connected to dhost:dport on the remote machine.
