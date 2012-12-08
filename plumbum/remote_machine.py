@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from plumbum.remote_path import RemotePath
 from plumbum.commands import CommandNotFound, shquote, ConcreteCommand
 from plumbum.session import ShellSession
-from plumbum.lib import _setdoc
+from plumbum.lib import _setdoc, bytes
 from plumbum.local_machine import local, BaseEnv, LocalPath
 from plumbum.path import StatRes
 from tempfile import NamedTemporaryFile

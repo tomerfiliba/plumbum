@@ -5,10 +5,9 @@ import errno
 import socket
 from plumbum.remote_machine import BaseRemoteMachine
 from plumbum.session import ShellSession
-from plumbum.lib import _setdoc
+from plumbum.lib import _setdoc, bytes
 from plumbum.local_machine import LocalPath
 from plumbum.remote_path import RemotePath
-from plumbum.commands import shquote
 
 
 logger = logging.getLogger("plumbum.paramiko")

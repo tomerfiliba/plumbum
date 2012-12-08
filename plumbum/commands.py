@@ -4,11 +4,8 @@ import time
 from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
 from threading import Thread
-from plumbum.lib import MinHeap
+from plumbum.lib import MinHeap, ascii, bytes
 
-if not six.PY3:
-    bytes = str #@ReservedAssignment
-    ascii = repr
 
 if not hasattr(Popen, "kill"):
     # python 2.5 compatibility

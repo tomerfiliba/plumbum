@@ -1,6 +1,16 @@
 import heapq
 
 
+try:
+    bytes = bytes #@ReservedAssignment
+except NameError:
+    bytes = str #@ReservedAssignment
+try:
+    ascii = ascii #@UndefinedVariable
+except NameError:
+    ascii = repr #@ReservedAssignment
+
+
 def _setdoc(super): #@ReservedAssignment
     def deco(func):
         func.__doc__ = getattr(getattr(super, func.__name__, None), "__doc__", None)

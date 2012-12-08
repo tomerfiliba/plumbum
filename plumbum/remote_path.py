@@ -1,13 +1,9 @@
 from __future__ import with_statement
 import errno
 import six
-from tempfile import NamedTemporaryFile
 from plumbum.path import Path, FSUser
 from plumbum.lib import _setdoc
 
-
-if not six.PY3:
-    bytes = str #@ReservedAssignment
 
 class RemotePath(Path):
     """The class implementing remote-machine paths"""
