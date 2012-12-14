@@ -57,7 +57,11 @@ class ParamikoPopen(object):
         i = 0
         while sources:
             if infile:
-                line = infile.readline()
+                try:
+                    line = infile.readline()
+                except (ValueError, IOError):
+                    line = None
+                print "!!", repr(line)
                 if not line:
                     infile.close()
                     infile = None
@@ -271,24 +275,19 @@ class ParamikoMachine(BaseRemoteMachine):
 # Make paramiko.Channel adhere to the socket protocol, namely, send and recv should fail 
 # when the socket has been closed
 ###################################################################################################
-if paramiko.__version__.split(".") <= ('1', '9', '0'):
-    class SocketCompatibleChannel(object):
-        def __init__(self, chan):
-            self._chan = chan
-        def __getattr__(self, name):
-            return getattr(self._chan, name)
-        def send(self, s):
-            if self._chan.closed:
-                raise socket.error(errno.EBADF, 'Bad file descriptor')
-            return self._chan.send(s)
-        def recv(self, count):
-            if self._chan.closed:
-                raise socket.error(errno.EBADF, 'Bad file descriptor')
-            return self._chan.recv(count)
-else:
-    SocketCompatibleChannel = lambda x: x
-
-
+class SocketCompatibleChannel(object):
+    def __init__(self, chan):
+        self._chan = chan
+    def __getattr__(self, name):
+        return getattr(self._chan, name)
+    def send(self, s):
+        if self._chan.closed:
+            raise socket.error(errno.EBADF, 'Bad file descriptor')
+        return self._chan.send(s)
+    def recv(self, count):
+        if self._chan.closed:
+            raise socket.error(errno.EBADF, 'Bad file descriptor')
+        return self._chan.recv(count)
 
 
 

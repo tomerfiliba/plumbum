@@ -33,8 +33,8 @@ With just a touch of magic, you can *import* commands from the mock module ``cmd
 
 .. note::
    There's no real module named ``plumbum.cmd``; it's a dynamically-created "module", injected 
-   into ``sys.modules`` to enable the use of ``from plumbum.cmd import foo``. Attempting to 
-   ``import plumbum.cmd`` is bound to fail.
+   into ``sys.modules`` to enable the use of ``from plumbum.cmd import foo``. As of version 1.1,
+   you can actually ``import plumbum.cmd``, for consistency, but it's not recommended.
    
    It is important to stress that ``from plumbum.cmd import foo`` translates to ``local["foo"]``
    behind the scenes.
