@@ -31,7 +31,7 @@ Cheat Sheet
     u''                                             # Notepad window is closed by user, command returns
 
 Instead of writing ``xxx = local["xxx"]`` for every program you wish to use, you can 
-also :ref:`import commands <import-hack>`:
+also ``import`` commands::
     
     >>> from plumbum.cmd import grep, wc, cat, head
     >>> grep

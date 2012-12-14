@@ -193,12 +193,12 @@ object
     ``I/O operation on closed file`` -- this is due to the fact that Paramiko's channels are not
     real, OS-level files, so they can't interact with ``subprocess.Popen``.
     
-    This will be solved in a later release; in the meanwhile, you can use the machine's 
+    This will be solved in a future release; in the meanwhile, you can use the machine's 
     ``.session()`` method, like so ::
     
-    >>> s = mach.session()
-    >>> s.run("ls | grep b")
-    (0, u'bin\nPublic\n', u'')
+        >>> s = mach.session()
+        >>> s.run("ls | grep b")
+        (0, u'bin\nPublic\n', u'')
 
 
 Tunneling Example
