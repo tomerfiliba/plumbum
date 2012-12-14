@@ -1,4 +1,14 @@
-import paramiko
+try:
+    # Sigh... we need to gracefully-import paramiko for Sphinx builds, etc
+    import paramiko
+except ImportError:
+    class paramiko(object):
+        def __nonzero__(self):
+            return False
+        __bool__ = __nonzero__
+        def __getattr__(self, name):
+            raise ImportError("No module named paramiko")
+    paramiko = paramiko()
 import logging
 import six
 import errno
