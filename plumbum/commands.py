@@ -5,6 +5,7 @@ from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
 from threading import Thread
 from plumbum.lib import MinHeap, ascii, bytes
+from contextlib import contextmanager
 
 
 if not hasattr(Popen, "kill"):
@@ -250,6 +251,56 @@ class BaseCommand(object):
         """
         raise NotImplementedError()
 
+    @contextmanager
+    def bgrun(self, args = (), **kwargs):
+        """Runs the given command as a context manager, allowing you to create a
+        `pipeline <http://en.wikipedia.org/wiki/Pipeline_(computing)>`_ (not in the UNIX sense)
+        of programs, parallelizing their work. In other words, instead of running programs
+        one after the other, you can start all of them at the same time and wait for them to
+        finish. For a more thorough review, see
+        `Lightweight Asynchronism <http://tomerfiliba.com/blog/Toying-with-Context-Managers/>`_.
+        
+        Example::
+        
+            from plumbum.cmd import mkfs
+            
+            with mkfs["-t", "ext3", "/dev/sda1"] as p1:
+                with mkfs["-t", "ext3", "/dev/sdb1"] as p2:
+                    pass
+
+        .. note::
+        
+           When processes run in the **background** (either via ``popen`` or 
+           :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
+           causing them to hang. If you know a process produces output, be sure to consume it 
+           every once in a while, using a monitoring thread/reactor in the background.
+           For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
+
+        For the arguments, see :func:`run <BaseCommand.run>`.
+
+        :returns: A Popen object, augmented with a ``.run()`` method, which returns a tuple of
+                  (return code, stdout, stderr)
+        """
+        retcode = kwargs.pop("retcode", 0)
+        timeout = kwargs.pop("timeout", None)
+        p = self.popen(args, **kwargs)
+        was_run = [False]
+        def runner():
+            if was_run[0]:
+                return # already done
+            was_run[0] = True
+            try:
+                return run_proc(p, retcode, timeout)
+            finally:
+                for f in [p.stdin, p.stdout, p.stderr]:
+                    try:
+                        f.close()
+                    except Exception:
+                        pass
+        p.run = runner
+        yield p
+        runner()
+
     def run(self, args = (), **kwargs):
         """Runs the given command (equivalent to popen() followed by
         :func:`run_proc <plumbum.commands.run_proc>`). If the exit code of the process does
@@ -265,25 +316,19 @@ class BaseCommand(object):
                         .. note:: this argument must be passed as a keyword argument.
 
         :param timeout: The maximal amount of time (in seconds) to allow the process to run.
-                       ``None`` means no timeout is imposed; otherwise, if the process hasn't
-                       terminated after that many seconds, the process will be forcefully
-                       terminated an exception will be raised
+                        ``None`` means no timeout is imposed; otherwise, if the process hasn't
+                        terminated after that many seconds, the process will be forcefully
+                        terminated an exception will be raised
+
+                        .. note:: this argument must be passed as a keyword argument.
 
         :param kwargs: Any keyword-arguments to be passed to the ``Popen`` constructor
 
         :returns: A tuple of (return code, stdout, stderr)
         """
-        retcode = kwargs.pop("retcode", 0)
-        timeout = kwargs.pop("timeout", None)
-        p = self.popen(args, **kwargs)
-        try:
-            return run_proc(p, retcode, timeout)
-        finally:
-            for f in [p.stdin, p.stdout, p.stderr]:
-                try:
-                    f.close()
-                except Exception:
-                    pass
+        with self.bgrun(args, **kwargs) as p:
+            return p.run()
+
 
 class BoundCommand(BaseCommand):
     __slots__ = ["cmd", "args"]
