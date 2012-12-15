@@ -1,3 +1,4 @@
+from __future__ import with_statement
 import six
 import subprocess
 import time
