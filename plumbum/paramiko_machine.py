@@ -134,14 +134,15 @@ class ParamikoMachine(BaseRemoteMachine):
     def __init__(self, host, user = None, port = None, password = None, keyfile = None, 
             load_system_host_keys = True, missing_host_policy = None, encoding = "utf8"):
         self.host = host
+        kwargs = {}
         if user:
             self._fqhost = "%s@%s" % (user, host)
+            kwargs['username'] = user
         else:
             self._fqhost = host
         self._client = paramiko.SSHClient()
         if load_system_host_keys:
             self._client.load_system_host_keys()
-        kwargs = {}
         if port is not None:
             kwargs["port"] = port
         if keyfile is not None:
