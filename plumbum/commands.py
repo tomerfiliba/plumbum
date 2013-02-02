@@ -425,7 +425,7 @@ class StdoutRedirection(BaseRedirection):
     KWARG = "stdout"
     MODE = "w"
 
-class StdoutRedirection(BaseRedirection):
+class AppendingStdoutRedirection(BaseRedirection):
     __slots__ = []
     SYM = ">>"
     KWARG = "stdout"
