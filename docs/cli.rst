@@ -388,7 +388,7 @@ attached to the root application using the ``subcommand`` decorator ::
         def main(self):
             print "doing the commit..."
 
-    @Geet.subcommand("commit")                    # attach 'geet push'
+    @Geet.subcommand("push")                      # attach 'geet push'
     class GeetPush(cli.Application):
         def main(self, remote, branch = None):
             print "doing the push..."
