@@ -56,6 +56,7 @@ class LocalModule(ModuleType):
     __all__ = ()                # to make help() happy
     __package__ = __name__
     __getattr__ = local.__getitem__
+    __path__ = []
 
 cmd = LocalModule(__name__ + ".cmd", LocalModule.__doc__)
 sys.modules[cmd.__name__] = cmd
