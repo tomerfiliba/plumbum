@@ -191,6 +191,10 @@ class BaseCommand(object):
         """Redirects the process' stdout to the given file"""
         return StdoutRedirection(self, file)
 
+    def __rshift__(self, file):
+        """Redirects the process' stdout to the given file (appending)"""
+        return AppendingStdoutRedirection(self, file)
+
     def __ge__(self, file):
         """Redirects the process' stderr to the given file"""
         return StderrRedirection(self, file)
@@ -420,6 +424,12 @@ class StdoutRedirection(BaseRedirection):
     SYM = ">"
     KWARG = "stdout"
     MODE = "w"
+
+class AppendingStdoutRedirection(BaseRedirection):
+    __slots__ = []
+    SYM = ">>"
+    KWARG = "stdout"
+    MODE = "a"
 
 class StderrRedirection(BaseRedirection):
     __slots__ = []
