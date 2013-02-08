@@ -71,7 +71,7 @@ class ParamikoPopen(object):
                     line = infile.readline()
                 except (ValueError, IOError):
                     line = None
-                print "!!", repr(line)
+                print("!! %s", (repr(line),))
                 if not line:
                     infile.close()
                     infile = None
