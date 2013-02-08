@@ -9,6 +9,7 @@ except ImportError:
         def __getattr__(self, name):
             raise ImportError("No module named paramiko")
     paramiko = paramiko()
+
 import logging
 import six
 import errno
@@ -71,7 +72,7 @@ class ParamikoPopen(object):
                     line = infile.readline()
                 except (ValueError, IOError):
                     line = None
-                print("!! %s", (repr(line),))
+                logger.debug("communicate: %r", line)
                 if not line:
                     infile.close()
                     infile = None
