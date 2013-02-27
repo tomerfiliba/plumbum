@@ -14,13 +14,34 @@
     <img style="display: block; margin-left: auto; margin-right: auto" 
     src="_static/fish-text-black.png" title="Tomer's Blog"/></a>
     <br/>
+    <a href="http://github.com/tomerfiliba/plumbum" target="_blank">
+    <img style="display: block; margin-left: auto; margin-right: auto; opacity: 0.7; width: 70px;" 
+    src="_static/github-logo.png" title="Github Repo"/></a>
+    <br/>
     <a href="http://travis-ci.org/tomerfiliba/plumbum" target="_blank">
-    <img src="https://secure.travis-ci.org/tomerfiliba/plumbum.png" 
+    <img src="https://travis-ci.org/tomerfiliba/plumbum.png?branch=master" 
     style="display: block; margin-left: auto; margin-right: auto;" title="Travis CI status"></a>
     </div>
 
 Plumbum: Shell Combinators and More
 ===================================
+.. comment raw:: html
+
+   <div style="width:795px; margin: 1em 0 2em 0; display: block; padding: 1em; border: 1px dotted #DDD; 
+    background-color: rgba(255, 255, 202, 0.69); border-radius: 5px;">
+   
+   <strong>Sticky</strong><br/>
+   
+   <a class="reference external" href="https://pypi.python.org/pypi/rpyc">Version 3.2.3</a> 
+   was released on December 2nd <br/>
+   
+   Please use the 
+   <a class="reference external" href="https://groups.google.com/forum/?fromgroups#!forum/rpyc">mailing list</a> 
+   to ask questions and use 
+   <a class="reference external" href="https://github.com/tomerfiliba/rpyc/issues">github issues</a> 
+   to report problems. <strong>Please do not email me directly</strong>.
+   
+   </div>
 
 Ever wished the wrist-handiness of shell scripts be put into a **real** programming language? 
 Say hello to *Plumbum Shell Combinators*. Plumbum (Latin for *lead*, which was used to create 
