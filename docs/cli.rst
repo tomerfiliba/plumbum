@@ -81,6 +81,8 @@ CLI toolkit; it exposes methods of your CLI application as CLI-switches, allowin
 invoked from the command line. Let's examine the following toy application::
 
     class MyApp(cli.Application):
+        _allow_root = False       # provide a default
+
         @cli.switch("--log-to-file", str)
         def log_to_file(self, filename):
             """Sets the file into which logs will be emitted"""
