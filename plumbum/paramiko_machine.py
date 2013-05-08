@@ -150,6 +150,8 @@ class ParamikoMachine(BaseRemoteMachine):
             kwargs["key_filename"] = keyfile
         if password is not None:
             kwargs["password"] = password
+        if user is not None:
+            kwargs["username"] = user
         if missing_host_policy is not None:
             self._client.set_missing_host_key_policy(missing_host_policy)
         self._client.connect(host, **kwargs)
