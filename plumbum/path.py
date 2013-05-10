@@ -87,7 +87,7 @@ class Path(object):
             if filter(p):
                 yield p
                 if p.isdir():
-                    for p2 in p.walk():
+                    for p2 in p.walk(filter):
                         yield p2
 
     @property
