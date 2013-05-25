@@ -636,7 +636,7 @@ class LocalMachine(object):
             self._as_user_stack.pop(-1)
     
     def as_root(self):
-        """A shorthand for :method:`plumbum.local_machine.LocalMachine.as_user <as_user("root")>`"""
+        """A shorthand for :func:`as_user("root") <plumbum.local_machine.LocalMachine.as_user>`"""
         return self.as_user()
 
     python = LocalCommand(sys.executable, encoding)
