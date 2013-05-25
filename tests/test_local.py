@@ -216,6 +216,19 @@ class LocalMachineTest(unittest.TestCase):
             data = "hello world"
             (tmp / "foo.txt").write(data)
             self.assertEqual((tmp / "foo.txt").read(), data)
+    
+    def test_links(self):
+        with local.tempdir() as tmp:
+            src = tmp / "foo.txt"
+            dst1 = tmp / "bar.txt"
+            dst2 = tmp / "spam.txt"
+            data = "hello world"
+            src.write(data)
+            src.link(dst1)
+            self.assertEqual(data, dst1.read())
+            src.symlink(dst2)
+            self.assertEqual(data, dst2.read())
+
 
 
 if __name__ == "__main__":

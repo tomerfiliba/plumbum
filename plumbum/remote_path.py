@@ -152,7 +152,26 @@ class RemotePath(Path):
     @_setdoc(Path)
     def chmod(self, mode):
         self.remote._path_chmod(mode, self)
-        
+
+    @_setdoc(Path)
+    def link(self, dst):
+        if isinstance(dst, RemotePath):
+            if dst.remote is not self.remote:
+                raise TypeError("dst points to a different remote machine")
+        elif not isinstance(dst, six.string_types):
+            raise TypeError("dst must be a string or a RemotePath (to the same remote machine), "
+                "got %r" % (dst,))
+        self.remote._path_link(self, dst, False)
+
+    @_setdoc(Path)
+    def symlink(self, dst):
+        if isinstance(dst, RemotePath):
+            if dst.remote is not self.remote:
+                raise TypeError("dst points to a different remote machine")
+        elif not isinstance(dst, six.string_types):
+            raise TypeError("dst must be a string or a RemotePath (to the same remote machine), "
+                "got %r" % (dst,))
+        self.remote._path_link(self, dst, True)
 
 
 

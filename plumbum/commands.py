@@ -82,6 +82,8 @@ def shquote(text):
     if not text:
         return "''"
     text = str(text)
+    if not text:
+        return "''"
     for c in text:
         if c not in _safechars:
             break
@@ -124,9 +126,25 @@ def _timeout_thread():
             except EnvironmentError:
                 pass
 
-thd = Thread(target = _timeout_thread, name = "PlumbumTimeoutThread")
-thd.setDaemon(True)
-thd.start()
+thd1 = Thread(target = _timeout_thread, name = "PlumbumTimeoutThread")
+thd1.setDaemon(True)
+thd1.start()
+
+_bg_processes = []
+
+def _output_collector_thread():
+    while True:
+        num_producing_procs = 1
+        for proc in _bg_processes:
+            proc.stdout_data += proc.stdout.read(1000)
+            proc.stderr_data += proc.stderr.read(1000)
+        
+        time.sleep(min(1.0 / num_producing_procs, 0.1))
+
+thd2 = Thread(target = _output_collector_thread, name = "PlumbumTimeoutThread")
+thd2.setDaemon(True)
+thd2.start()
+
 
 def run_proc(proc, retcode, timeout = None):
     """Waits for the given process to terminate, with the expected exit code
@@ -633,5 +651,19 @@ use ``BG(retcode)``. Example::
     vim & FG       # run vim in the foreground, expecting an exit code of 0
     vim & FG(7)    # run vim in the foreground, expecting an exit code of 7
 """
+
+class Tee(object):
+    def __init__(self, *streams):
+        self.streams = streams
+
+
+
+
+
+
+
+
+
+
 
 

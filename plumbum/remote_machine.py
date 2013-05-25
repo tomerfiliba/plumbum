@@ -341,6 +341,9 @@ class BaseRemoteMachine(object):
             f.flush()
             f.seek(0)
             self.upload(f.name, fn)
+    
+    def _path_link(self, src, dst, symlink):
+        self._session.run("ln -s %s %s" % ("-s" if symlink else "", shquote(src), shquote(dst)))
 
 
 class SshTunnel(object):

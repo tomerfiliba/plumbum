@@ -173,6 +173,30 @@ class LocalPath(Path):
             raise OSError("os.chmod() not supported")
         os.chmod(str(self), mode)
 
+    @_setdoc(Path)
+    def link(self, dst):
+        if isinstance(dst, RemotePath):
+            raise TypeError("Cannot create a hardlink from local path %s to %r" % (self, dst))
+        if hasattr(os, "link"):
+            os.link(str(self), str(dst))
+        else:
+            # windows: use mklink
+            if self.isdir():
+                local["cmd"]("/C", "mklink", "/D", "/H", str(dst), str(self))
+            else:
+                local["cmd"]("/C", "mklink", "/H", str(dst), str(self))
+    @_setdoc(Path)
+    def symlink(self, dst):
+        if isinstance(dst, RemotePath):
+            raise TypeError("Cannot create a symlink from local path %s to %r" % (self, dst))
+        if hasattr(os, "symlink"):
+            os.symlink(str(self), str(dst))
+        else:
+            # windows: use mklink
+            if self.isdir():
+                local["cmd"]("/C", "mklink", "/D", str(dst), str(self))
+            else:
+                local["cmd"]("/C", "mklink", str(dst), str(self))
 
 class Workdir(LocalPath):
     """Working directory manipulator"""

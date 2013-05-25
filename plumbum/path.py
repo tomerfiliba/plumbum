@@ -173,4 +173,19 @@ class Path(object):
         :param mode: file mode as for os.chmod
         """
         raise NotImplementedError()
+    
+    def link(self, dst):
+        """Creates a hard link from ``self`` to ``dst``
+
+        :param dst: the destination path
+        """
+        raise NotImplementedError()
+    def symlink(self, dst):
+        """Creates a symbolic link from ``self`` to ``dst``
+
+        :param dst: the destination path
+        """
+        raise NotImplementedError()
+
+
 
