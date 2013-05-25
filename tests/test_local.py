@@ -228,6 +228,10 @@ class LocalMachineTest(unittest.TestCase):
             self.assertEqual(data, dst1.read())
             src.symlink(dst2)
             self.assertEqual(data, dst2.read())
+    
+    def test_as_user(self):
+        with local.as_root():
+            local["date"]()
 
 
 

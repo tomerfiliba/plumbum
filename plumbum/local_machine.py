@@ -480,6 +480,9 @@ class LocalMachine(object):
     encoding = sys.getfilesystemencoding()
     uname = platform.uname()[0]
 
+    def __init__(self):
+        self._as_user_stack = []
+
     if IS_WIN32:
         _EXTENSIONS = [""] + env.get("PATHEXT", ":.exe:.bat").lower().split(os.path.pathsep)
 
@@ -566,7 +569,7 @@ class LocalMachine(object):
             cwd = None, env = None, **kwargs):
         if subprocess.mswindows and "startupinfo" not in kwargs and stdin not in (sys.stdin, None):
             kwargs["startupinfo"] = sui = subprocess.STARTUPINFO()
-            if hasattr( subprocess, '_subprocess' ):
+            if hasattr(subprocess, "_subprocess"):
                 sui.dwFlags |= subprocess._subprocess.STARTF_USESHOWWINDOW  #@UndefinedVariable
                 sui.wShowWindow = subprocess._subprocess.SW_HIDE  #@UndefinedVariable
             else:
@@ -579,6 +582,9 @@ class LocalMachine(object):
             env = self.env
         if isinstance(env, BaseEnv):
             env = env.getdict()
+        
+        if self._as_user_stack:
+            argv, executable = self._as_user_stack[-1](argv)
 
         logger.debug("Running %r", argv)
         proc = Popen(argv, executable = str(executable), stdin = stdin, stdout = stdout,
@@ -602,6 +608,36 @@ class LocalMachine(object):
             yield dir
         finally:
             dir.delete()
+
+    @contextmanager
+    def as_user(self, username = None):
+        """Run nested commands as the given user. For example::
+        
+            head = local["head"]
+            head("-n1", "/dev/sda1")    # this will fail...
+            with local.as_user():
+                head("-n1", "/dev/sda1")
+        
+        :param username: The user to run commands as. If not given, root (or Administrator) is assumed 
+        """
+        if IS_WIN32:
+            if username is None:
+                username = "Administrator"
+            self._as_user_stack.append(lambda argv: (["runas", "/savecred", "/user:%s" % (username,), 
+                '"' + " ".join(str(a) for a in argv) + '"'], self.which("runas")))
+        else:
+            if username is None:
+                self._as_user_stack.append(lambda argv: (["sudo"] + list(argv), self.which("sudo")))
+            else:
+                self._as_user_stack.append(lambda argv: (["sudo", "-u", username] + list(argv), self.which("sudo")))
+        try:
+            yield
+        finally:
+            self._as_user_stack.pop(-1)
+    
+    def as_root(self):
+        """A shorthand for :method:`plumbum.local_machine.LocalMachine.as_user <as_user("root")>`"""
+        return self.as_user()
 
     python = LocalCommand(sys.executable, encoding)
     """A command that represents the current python interpreter (``sys.executable``)"""
