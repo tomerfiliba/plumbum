@@ -119,7 +119,8 @@ class RemotePath(Path):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
         elif not isinstance(dst, six.string_types):
-            raise TypeError("dst must be a string or a RemotePath (to the same remote machine)")
+            raise TypeError("dst must be a string or a RemotePath (to the same remote machine), "
+                "got %r" % (dst,))
         self.remote._path_move(self, dst)
 
     @_setdoc(Path)
