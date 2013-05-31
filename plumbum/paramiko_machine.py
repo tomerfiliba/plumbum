@@ -131,9 +131,13 @@ class ParamikoMachine(BaseRemoteMachine):
                                 default behavior (reject) is employed
 
     :param encoding: the remote machine's encoding (defaults to UTF8)
-    """    
+
+    :param look_for_keys: set to False to disable searching for discoverable
+                          private key files in ``~/.ssh``
+    """
     def __init__(self, host, user = None, port = None, password = None, keyfile = None, 
-            load_system_host_keys = True, missing_host_policy = None, encoding = "utf8"):
+            load_system_host_keys = True, missing_host_policy = None, encoding = "utf8",
+            look_for_keys = None, timeout = None):
         self.host = host
         kwargs = {}
         if user:
@@ -152,6 +156,8 @@ class ParamikoMachine(BaseRemoteMachine):
             kwargs["password"] = password
         if missing_host_policy is not None:
             self._client.set_missing_host_key_policy(missing_host_policy)
+        if look_for_keys is not None:
+            kwargs["look_for_keys"] = look_for_keys
         self._client.connect(host, **kwargs)
         self._sftp = None
         BaseRemoteMachine.__init__(self, encoding)
