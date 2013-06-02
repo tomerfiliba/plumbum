@@ -105,7 +105,7 @@ and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implement
         verbose = cli.Flag(["-v", "--verbose"], help = "Enable verbose mode")
         include_dirs = cli.SwitchAttr("-I", list = True, help = "Specify include directories")
         
-        @cli.switch("-loglevel", int)
+        @cli.switch("--loglevel", int)
         def set_log_level(self, level):
             """Sets the log-level of the logger"""
             logging.root.setLevel(level)

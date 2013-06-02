@@ -1,3 +1,15 @@
+1.2
+---
+* Path: added `chmod <https://github.com/tomerfiliba/plumbum/pull/49>`_
+* Path: added `link and symlink <https://github.com/tomerfiliba/plumbum/issues/65>`_
+* Path: ``walk()`` now applies filter recursively (`#64 <https://github.com/tomerfiliba/plumbum/issues/64>`_)
+* Commands: added `Append redirect <https://github.com/tomerfiliba/plumbum/pull/54>`_
+* Commands: fix ``_subprocess`` issue (`#59 <https://github.com/tomerfiliba/plumbum/issues/59>`_)
+* Commands: add ``__file__`` to module hack (`#66 <https://github.com/tomerfiliba/plumbum/issues/66>`_)  
+* Paramiko: add `'username' and 'password' <https://github.com/tomerfiliba/plumbum/pull/52>`_ 
+* Paramiko: add `'timeout' and 'look_for_keys' <https://github.com/tomerfiliba/plumbum/pull/67>`_
+* Python 3: fix `#56 <https://github.com/tomerfiliba/plumbum/issues/56>`_ and `#55 <https://github.com/tomerfiliba/plumbum/pull/55>`_
+
 1.1
 ---
 * `Paramiko <http://pypi.python.org/pypi/paramiko/1.8.0>`_ integration 
