@@ -10,7 +10,7 @@ HERE = os.path.dirname(__file__)
 exec(open(os.path.join(HERE, "plumbum", "version.py")).read())
 
 setup(name = "plumbum",
-    version = version_string, #@UndefinedVariable
+    version = version_string,  # @UndefinedVariable
     description = "Plumbum: shell combinators library",
     author = "Tomer Filiba",
     author_email = "tomerfiliba@gmail.com",
@@ -22,8 +22,8 @@ setup(name = "plumbum",
     requires = ["six"],
     install_requires = ["six"],
     keywords = "path, local, remote, ssh, pipe, popen, process, execution",
-    #use_2to3 = False,
-    #zip_safe = True,
+    # use_2to3 = False,
+    # zip_safe = True,
     long_description = open(os.path.join(HERE, "README.rst"), "r").read(),
     classifiers = [
         "Development Status :: 5 - Production/Stable",

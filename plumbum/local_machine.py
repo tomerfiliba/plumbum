@@ -23,10 +23,14 @@ try:
     from pwd import getpwuid, getpwnam
     from grp import getgrgid, getgrnam
 except ImportError:
-    def getpwuid(x): return (None,)
-    def getgrgid(x): return (None,)
-    def getpwnam(x): raise OSError("`getpwnam` not supported")
-    def getgrnam(x): raise OSError("`getgrnam` not supported")
+    def getpwuid(x):
+        return (None,)
+    def getgrgid(x):
+        return (None,)
+    def getpwnam(x):
+        raise OSError("`getpwnam` not supported")
+    def getgrnam(x):
+        raise OSError("`getgrnam` not supported")
 
 logger = logging.getLogger("plumbum.local")
 
@@ -157,7 +161,7 @@ class LocalPath(Path):
             f.write(data)
 
     @_setdoc(Path)
-    def chown(self, owner=None, group=None, recursive = None):
+    def chown(self, owner = None, group = None, recursive = None):
         if not hasattr(os, "chown"):
             raise OSError("os.chown() not supported")
         uid = self.uid if owner is None else (owner if isinstance(owner, int) else getpwnam(owner)[2])
@@ -395,7 +399,7 @@ class BaseEnv(object):
         except ImportError:
             return None
         else:
-            return pwd.getpwuid(os.getuid())[0] #@UndefinedVariable
+            return pwd.getpwuid(os.getuid())[0]  # @UndefinedVariable
 
 
 class LocalEnv(BaseEnv):
@@ -570,11 +574,11 @@ class LocalMachine(object):
         if subprocess.mswindows and "startupinfo" not in kwargs and stdin not in (sys.stdin, None):
             kwargs["startupinfo"] = sui = subprocess.STARTUPINFO()
             if hasattr(subprocess, "_subprocess"):
-                sui.dwFlags |= subprocess._subprocess.STARTF_USESHOWWINDOW  #@UndefinedVariable
-                sui.wShowWindow = subprocess._subprocess.SW_HIDE  #@UndefinedVariable
+                sui.dwFlags |= subprocess._subprocess.STARTF_USESHOWWINDOW  # @UndefinedVariable
+                sui.wShowWindow = subprocess._subprocess.SW_HIDE  # @UndefinedVariable
             else:
-                sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW  #@UndefinedVariable
-                sui.wShowWindow = subprocess.SW_HIDE  #@UndefinedVariable
+                sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # @UndefinedVariable
+                sui.wShowWindow = subprocess.SW_HIDE  # @UndefinedVariable
 
         if cwd is None:
             cwd = self.cwd
@@ -582,13 +586,13 @@ class LocalMachine(object):
             env = self.env
         if isinstance(env, BaseEnv):
             env = env.getdict()
-        
+
         if self._as_user_stack:
             argv, executable = self._as_user_stack[-1](argv)
 
         logger.debug("Running %r", argv)
         proc = Popen(argv, executable = str(executable), stdin = stdin, stdout = stdout,
-            stderr = stderr, cwd = str(cwd), env = env, **kwargs) # bufsize = 4096
+            stderr = stderr, cwd = str(cwd), env = env, **kwargs)  # bufsize = 4096
         proc._start_time = time.time()
         proc.encoding = self.encoding
         proc.argv = argv
@@ -603,7 +607,7 @@ class LocalMachine(object):
     def tempdir(self):
         """A context manager that creates a temporary directory, which is removed when the context
         exits"""
-        dir = self.path(mkdtemp()) #@ReservedAssignment
+        dir = self.path(mkdtemp())  # @ReservedAssignment
         try:
             yield dir
         finally:
@@ -612,18 +616,18 @@ class LocalMachine(object):
     @contextmanager
     def as_user(self, username = None):
         """Run nested commands as the given user. For example::
-        
+
             head = local["head"]
             head("-n1", "/dev/sda1")    # this will fail...
             with local.as_user():
                 head("-n1", "/dev/sda1")
-        
-        :param username: The user to run commands as. If not given, root (or Administrator) is assumed 
+
+        :param username: The user to run commands as. If not given, root (or Administrator) is assumed
         """
         if IS_WIN32:
             if username is None:
                 username = "Administrator"
-            self._as_user_stack.append(lambda argv: (["runas", "/savecred", "/user:%s" % (username,), 
+            self._as_user_stack.append(lambda argv: (["runas", "/savecred", "/user:%s" % (username,),
                 '"' + " ".join(str(a) for a in argv) + '"'], self.which("runas")))
         else:
             if username is None:
@@ -634,7 +638,7 @@ class LocalMachine(object):
             yield
         finally:
             self._as_user_stack.pop(-1)
-    
+
     def as_root(self):
         """A shorthand for :func:`as_user("root") <plumbum.local_machine.LocalMachine.as_user>`"""
         return self.as_user()

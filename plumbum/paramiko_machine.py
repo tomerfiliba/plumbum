@@ -24,7 +24,7 @@ from plumbum.remote_path import RemotePath
 logger = logging.getLogger("plumbum.paramiko")
 
 class ParamikoPopen(object):
-    def __init__(self, argv, stdin, stdout, stderr, encoding, stdin_file = None, 
+    def __init__(self, argv, stdin, stdout, stderr, encoding, stdin_file = None,
             stdout_file = None, stderr_file = None):
         self.argv = argv
         self.channel = stdout.channel
@@ -84,7 +84,7 @@ class ParamikoPopen(object):
             i = (i + 1) % len(sources)
             name, coll, pipe, outfile = sources[i]
             line = pipe.readline()
-            #logger.debug("%s> %r", name, line)
+            # logger.debug("%s> %r", name, line)
             if not line:
                 del sources[i]
             elif outfile:
@@ -101,13 +101,13 @@ class ParamikoPopen(object):
 class ParamikoMachine(BaseRemoteMachine):
     """
     An implementation of :class:`remote machine <plumbum.remote_machine.BaseRemoteMachine>`
-    over Paramiko (a Python implementation of openSSH2 client/server). Invoking a remote command 
+    over Paramiko (a Python implementation of openSSH2 client/server). Invoking a remote command
     translates to invoking it over SSH ::
 
         with ParamikoMachine("yourhostname") as rem:
             r_ls = rem["ls"]
             # r_ls is the remote `ls`
-            # executing r_ls() is equivalent to `ssh yourhostname ls`, only without 
+            # executing r_ls() is equivalent to `ssh yourhostname ls`, only without
             # spawning a new ssh client
 
     :param host: the host name to connect to (SSH server)
@@ -120,8 +120,8 @@ class ParamikoMachine(BaseRemoteMachine):
                      (if ``None``, key-based authentication will be used)
 
     :param keyfile: the path to the identity file (if ``None``, the default will be used)
-    
-    :param load_system_host_keys: whether or not to load the system's host keys (from ``/etc/ssh`` 
+
+    :param load_system_host_keys: whether or not to load the system's host keys (from ``/etc/ssh``
                                   and ``~/.ssh``). The default is ``True``, which means Paramiko
                                   behaves much like the ``ssh`` command-line client
 
@@ -137,7 +137,7 @@ class ParamikoMachine(BaseRemoteMachine):
 
     :param timeout: timout for the TCP connect
     """
-    def __init__(self, host, user = None, port = None, password = None, keyfile = None, 
+    def __init__(self, host, user = None, port = None, password = None, keyfile = None,
             load_system_host_keys = True, missing_host_policy = None, encoding = "utf8",
             look_for_keys = None, timeout = None):
         self.host = host
@@ -208,7 +208,8 @@ class ParamikoMachine(BaseRemoteMachine):
         cmdline = " ".join(argv)
         logger.debug(cmdline)
         si, so, se = self._client.exec_command(cmdline, 1)
-        return ParamikoPopen(argv, si, so, se, self.encoding, stdin_file = stdin, stdout_file = stdout, stderr_file = stderr)
+        return ParamikoPopen(argv, si, so, se, self.encoding, stdin_file = stdin,
+            stdout_file = stdout, stderr_file = stderr)
 
     @_setdoc(BaseRemoteMachine)
     def download(self, src, dst):
@@ -219,7 +220,7 @@ class ParamikoMachine(BaseRemoteMachine):
         if isinstance(dst, RemotePath):
             raise TypeError("dst of download cannot be %r" % (dst,))
         return self._download(src if isinstance(src, RemotePath) else self.path(src),
-            dst if isinstance(dst, LocalPath) else LocalPath(dst)) 
+            dst if isinstance(dst, LocalPath) else LocalPath(dst))
 
     def _download(self, src, dst):
         if src.isdir():
@@ -240,7 +241,7 @@ class ParamikoMachine(BaseRemoteMachine):
             raise TypeError("dst of upload cannot be %r" % (dst,))
         if isinstance(dst, RemotePath) and dst.remote != self:
             raise TypeError("dst %r points to a different remote machine" % (dst,))
-        return self._upload(src if isinstance(src, LocalPath) else LocalPath(src), 
+        return self._upload(src if isinstance(src, LocalPath) else LocalPath(src),
             dst if isinstance(dst, RemotePath) else self.path(dst))
 
     def _upload(self, src, dst):
@@ -258,7 +259,7 @@ class ParamikoMachine(BaseRemoteMachine):
         """Returns a Paramiko ``Channel``, connected to dhost:dport on the remote machine.
         The ``Channel`` behaves like a regular socket; you can ``send`` and ``recv`` on it
         and the data will pass encrypted over SSH. Usage::
-        
+
             mach = ParamikoMachine("myhost")
             sock = mach.connect_sock(12345)
             data = sock.recv(100)
@@ -276,12 +277,12 @@ class ParamikoMachine(BaseRemoteMachine):
     #
     def _path_listdir(self, fn):
         return self.sftp.listdir(str(fn))
-    
+
     def _path_read(self, fn):
         f = self.sftp.open(str(fn), 'rb')
         data = f.read()
         f.close()
-        #if self.encoding and isinstance(data, bytes) and not isinstance(data, str):
+        # if self.encoding and isinstance(data, bytes) and not isinstance(data, str):
         #    data = data.decode(self.encoding)
         return data
     def _path_write(self, fn, data):
@@ -294,7 +295,7 @@ class ParamikoMachine(BaseRemoteMachine):
 
 
 ###################################################################################################
-# Make paramiko.Channel adhere to the socket protocol, namely, send and recv should fail 
+# Make paramiko.Channel adhere to the socket protocol, namely, send and recv should fail
 # when the socket has been closed
 ###################################################################################################
 class SocketCompatibleChannel(object):

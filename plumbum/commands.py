@@ -138,7 +138,7 @@ def _output_collector_thread():
         for proc in _bg_processes:
             proc.stdout_data += proc.stdout.read(1000)
             proc.stderr_data += proc.stderr.read(1000)
-        
+
         time.sleep(min(1.0 / num_producing_procs, 0.1))
 
 thd2 = Thread(target = _output_collector_thread, name = "PlumbumTimeoutThread")
@@ -259,10 +259,10 @@ class BaseCommand(object):
         """Spawns the given command, returning a ``Popen``-like object.
 
         .. note::
-        
-           When processes run in the **background** (either via ``popen`` or 
+
+           When processes run in the **background** (either via ``popen`` or
            :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
-           causing them to hang. If you know a process produces output, be sure to consume it 
+           causing them to hang. If you know a process produces output, be sure to consume it
            every once in a while, using a monitoring thread/reactor in the background.
            For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
 
@@ -282,20 +282,20 @@ class BaseCommand(object):
         one after the other, you can start all of them at the same time and wait for them to
         finish. For a more thorough review, see
         `Lightweight Asynchronism <http://tomerfiliba.com/blog/Toying-with-Context-Managers/>`_.
-        
+
         Example::
-        
+
             from plumbum.cmd import mkfs
-            
+
             with mkfs["-t", "ext3", "/dev/sda1"] as p1:
                 with mkfs["-t", "ext3", "/dev/sdb1"] as p2:
                     pass
 
         .. note::
-        
-           When processes run in the **background** (either via ``popen`` or 
+
+           When processes run in the **background** (either via ``popen`` or
            :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
-           causing them to hang. If you know a process produces output, be sure to consume it 
+           causing them to hang. If you know a process produces output, be sure to consume it
            every once in a while, using a monitoring thread/reactor in the background.
            For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
 
@@ -310,7 +310,7 @@ class BaseCommand(object):
         was_run = [False]
         def runner():
             if was_run[0]:
-                return # already done
+                return  # already done
             was_run[0] = True
             try:
                 return run_proc(p, retcode, timeout)
@@ -486,9 +486,9 @@ class StdinDataRedirection(BaseCommand):
             f.write(chunk)
             data = data[self.CHUNK_SIZE:]
         f.seek(0)
-        #try:
+        # try:
         return self.cmd.popen(args, stdin = f, **kwargs)
-        #finally:
+        # finally:
         #    f.close()
 
 class ConcreteCommand(BaseCommand):
@@ -519,7 +519,7 @@ class ConcreteCommand(BaseCommand):
                     argv.append(shquote(a))
                 else:
                     argv.append(str(a))
-        #if self.encoding:
+        # if self.encoding:
         #    argv = [a.encode(self.encoding) for a in argv if isinstance(a, six.string_types)]
         return argv
 
@@ -591,10 +591,10 @@ class BG(ExecutionModifier):
         future = sleep[5] & BG(7)    # a future expecting an exit code of 7
 
     .. note::
-    
-       When processes run in the **background** (either via ``popen`` or 
+
+       When processes run in the **background** (either via ``popen`` or
        :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
-       causing them to hang. If you know a process produces output, be sure to consume it 
+       causing them to hang. If you know a process produces output, be sure to consume it
        every once in a while, using a monitoring thread/reactor in the background.
        For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
     """
@@ -614,9 +614,9 @@ when you right-and it with a command. If you wish to expect a different return c
 
 .. note::
 
-   When processes run in the **background** (either via ``popen`` or 
+   When processes run in the **background** (either via ``popen`` or
    :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
-   causing them to hang. If you know a process produces output, be sure to consume it 
+   causing them to hang. If you know a process produces output, be sure to consume it
    every once in a while, using a monitoring thread/reactor in the background.
    For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
 """

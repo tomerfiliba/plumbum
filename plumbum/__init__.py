@@ -1,7 +1,7 @@
 r"""
 Plumbum Shell Combinators
 -------------------------
-A wrist-handy library for writing shell-like scripts in Python, that can serve 
+A wrist-handy library for writing shell-like scripts in Python, that can serve
 as a ``Popen`` replacement, and much more::
 
     >>> from plumbum.cmd import ls, grep, wc, cat
@@ -19,7 +19,7 @@ as a ``Popen`` replacement, and much more::
     >>> from plumbum import local, FG, BG
     >>> with local.cwd("/tmp"):
     ...     (ls | wc["-l"]) & FG
-    ... 
+    ...
     13              # printed directly to the interpreter's stdout
     >>> (ls | wc["-l"]) & BG
     <Future ['/usr/bin/wc', '-l'] (running)>
@@ -27,9 +27,9 @@ as a ``Popen`` replacement, and much more::
     >>> f.stdout    # will wait for the process to terminate
     u'9\n'
 
-Plumbum includes local/remote path abstraction, working directory and environment 
-manipulation, process execution, remote process execution over SSH, tunneling, 
-SCP-based upload/download, and a {arg|opt}parse replacement for the easy creation 
+Plumbum includes local/remote path abstraction, working directory and environment
+manipulation, process execution, remote process execution over SSH, tunneling,
+SCP-based upload/download, and a {arg|opt}parse replacement for the easy creation
 of command-line interface (CLI) programs.
 
 See http://plumbum.readthedocs.org for full details
@@ -53,7 +53,7 @@ from types import ModuleType
 
 class LocalModule(ModuleType):
     """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
-    __all__ = ()                # to make help() happy
+    __all__ = ()  # to make help() happy
     __package__ = __name__
     __getattr__ = local.__getitem__
     __path__ = []

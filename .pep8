@@ -1,0 +1,4 @@
+[pep8]
+ignore = E128,E251,E301,E302,E303,W391
+max-line-length = 120
+exclude = docs/,tests/,examples/,experimental/,build.py

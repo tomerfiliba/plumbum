@@ -182,7 +182,7 @@ class SwitchAttr(object):
     :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switch>`
     """
     def __init__(self, names, argtype = str, default = None, list = False, argname = "VALUE", **kwargs):
-        self.__doc__ = "Sets an attribute" # to prevent the help message from showing SwitchAttr's docstring
+        self.__doc__ = "Sets an attribute"  # to prevent the help message from showing SwitchAttr's docstring
         if "help" in kwargs and default:
             kwargs["help"] += "; the default is %r" % (default,)
 
@@ -385,11 +385,11 @@ class Application(object):
 
     * ``VERSION`` - the program's version (defaults to ``1.0``)
 
-    * ``DESCRIPTION`` - a short description of your program (shown in help). If not set, 
+    * ``DESCRIPTION`` - a short description of your program (shown in help). If not set,
       the class' ``__doc__`` will be used.
 
     * ``USAGE`` - the usage line (shown in help)
-    
+
     A note on sub-commands: when an application is the root, its ``parent`` attribute is set to
     ``None``. When it is used as a nested-command, ``parent`` will point to be its direct ancestor.
     Likewise, when an application is invoked with a sub-command, its ``nested_command`` attribute
@@ -414,7 +414,7 @@ class Application(object):
         self._switches_by_name = {}
         self._switches_by_func = {}
         self._subcommands = {}
-        
+
         for cls in reversed(type(self).mro()):
             for obj in cls.__dict__.values():
                 if isinstance(obj, Subcommand):
@@ -423,7 +423,7 @@ class Application(object):
                     # it's okay for child classes to override subcommands set by their parents
                     self._subcommands[obj.name] = obj.subapplication
                     continue
-                
+
                 swinfo = getattr(obj, "_switch_info", None)
                 if not swinfo:
                     continue
@@ -432,20 +432,20 @@ class Application(object):
                         raise SwitchError("Switch %r already defined and is not overridable" % (name,))
                     self._switches_by_name[name] = swinfo
                 self._switches_by_func[swinfo.func] = swinfo
-    
+
     @classmethod
     def subcommand(cls, name, subapp = None):
         """Registers the given sub-application as a sub-command of this one. This method can be
         used both as a decorator and as a normal ``classmethod``::
-        
+
             @MyApp.subcommand("foo")
             class FooApp(cli.Application):
                 pass
-        
+
         Or ::
-        
+
             MyApp.subcommand("foo", FooApp)
-        
+
         .. versionadded:: 1.1
         """
         def wrapper(subapp):
@@ -455,7 +455,7 @@ class Application(object):
             return wrapper(subapp)
         else:
             return wrapper
-    
+
     def _parse_args(self, argv):
         tailargs = []
         swfuncs = {}
@@ -467,11 +467,11 @@ class Application(object):
                 # end of options, treat the rest as tailargs
                 tailargs.extend(argv)
                 break
-            
+
             if a in self._subcommands:
                 self.nested_command = (self._subcommands[a], [self.PROGNAME + " " + a] + argv)
                 break
-            
+
             elif a.startswith("--") and len(a) >= 3:
                 # [--name], [--name=XXX], [--name, XXX], [--name, ==, XXX],
                 # [--name=, XXX], [--name, =XXX]
@@ -527,7 +527,7 @@ class Application(object):
                 try:
                     val = swinfo.argtype(val)
                 except (TypeError, ValueError):
-                    ex = sys.exc_info()[1] # compat
+                    ex = sys.exc_info()[1]  # compat
                     raise WrongArgumentType("Argument of %s expected to be %r, not %r:\n    %r" % (
                         swname, swinfo.argtype, val, ex))
             else:
@@ -595,7 +595,7 @@ class Application(object):
         return ordered, tailargs
 
     @classmethod
-    def run(cls, argv = sys.argv, exit = True): #@ReservedAssignment
+    def run(cls, argv = sys.argv, exit = True):  # @ReservedAssignment
         """
         Runs the application, taking the arguments from ``sys.argv`` by default. If ``exit`` is
         ``True`` (the default), the function will exit with the appropriate return code;
@@ -618,7 +618,7 @@ class Application(object):
         except ShowVersion:
             inst.version()
         except SwitchError:
-            ex = sys.exc_info()[1] # compatibility with python 2.5
+            ex = sys.exc_info()[1]  # compatibility with python 2.5
             print("Error: %s" % (ex,))
             print("~" * 70)
             inst.help()
@@ -631,10 +631,10 @@ class Application(object):
                 subapp, argv = inst.nested_command
                 subapp.parent = inst
                 inst, retcode = subapp.run(argv, exit = False)
-            
+
             if retcode is None:
                 retcode = 0
-            #elif not isinstance(retcode, int):
+            # elif not isinstance(retcode, int):
             #    retcode = 1
 
         if exit:
@@ -647,14 +647,14 @@ class Application(object):
         pass
 
     @switch(["-h", "--help"], overridable = True, group = "Meta-switches")
-    def help(self): #@ReservedAssignment
+    def help(self):  # @ReservedAssignment
         """Prints this help message and quits"""
         self.version()
         if self.DESCRIPTION:
             print(self.DESCRIPTION.strip())
 
         m_args, m_varargs, _, m_defaults = inspect.getargspec(self.main)
-        tailargs = m_args[1:] # skip self
+        tailargs = m_args[1:]  # skip self
         if m_defaults:
             for i, d in enumerate(reversed(m_defaults)):
                 tailargs[-i - 1] = "[%s=%r]" % (tailargs[-i - 1], d)
@@ -668,8 +668,8 @@ class Application(object):
                 self.USAGE = "Usage: %(executable)s [SWITCHES] [SUBCOMMAND [SWITCHES]] %(tailargs)s"
             else:
                 self.USAGE = "Usage: %(executable)s [SWITCHES] %(tailargs)s"
-        print(self.USAGE % {"executable" : self.executable, "progname" : self.PROGNAME,
-            "tailargs" : tailargs})
+        print(self.USAGE % {"executable": self.executable, "progname": self.PROGNAME,
+            "tailargs": tailargs})
 
         by_groups = {}
         for si in self._switches_by_func.values():
@@ -691,7 +691,7 @@ class Application(object):
                     argtype = " %s:%s" % (si.argname.upper(), typename)
                 else:
                     argtype = ""
-                help = si.help #@ReservedAssignment
+                help = si.help  # @ReservedAssignment
                 if si.list:
                     help += "; may be given multiple times"
                 if si.mandatory:
@@ -703,7 +703,7 @@ class Application(object):
                 prefix = swnames + argtype
                 wrapper = TextWrapper(width = int(local.env.get("COLUMNS", 80)),
                     initial_indent = " " * min(max(31, len(prefix)), 50), subsequent_indent = " " * 31)
-                help = wrapper.fill(" ".join(l.strip() for l in help.splitlines())) #@ReservedAssignment
+                help = wrapper.fill(" ".join(l.strip() for l in help.splitlines()))  # @ReservedAssignment
                 print("    %-25s  %s" % (prefix, help.strip()))
             print ("")
 
@@ -711,11 +711,11 @@ class Application(object):
             print("Subcommands:")
             for name, subapp in sorted(self._subcommands.items()):
                 doc = subapp.DESCRIPTION if subapp.DESCRIPTION else inspect.getdoc(subapp)
-                help = doc + "; " if doc else "" #@ReservedAssignment
+                help = doc + "; " if doc else ""  # @ReservedAssignment
                 help += "see '%s %s --help' for more info" % (self.PROGNAME, name)
                 wrapper = TextWrapper(width = int(local.env.get("COLUMNS", 80)),
                     initial_indent = " " * min(max(31, len(name)), 50), subsequent_indent = " " * 31)
-                help = wrapper.fill(" ".join(l.strip() for l in help.splitlines())) #@ReservedAssignment
+                help = wrapper.fill(" ".join(l.strip() for l in help.splitlines()))  # @ReservedAssignment
                 print("    %-25s  %s" % (name, help.strip()))
 
     @switch(["-v", "--version"], overridable = True, group = "Meta-switches")

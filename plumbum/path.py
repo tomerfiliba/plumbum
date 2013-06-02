@@ -1,5 +1,5 @@
 class FSUser(int):
-    """A special object that represents file-system user. It derives from ``int``, so it behaves 
+    """A special object that represents file-system user. It derives from ``int``, so it behaves
     just like a number (``uid``/``gid``), but also have a ``.name`` attribute that holds the
     string-name of the user, if given
     """
@@ -79,7 +79,7 @@ class Path(object):
     def up(self, count = 1):
         """Go up in ``count`` directories (the default is 1)"""
         return self.join("../" * count)
-    def walk(self, filter = lambda p: True): #@ReservedAssignment
+    def walk(self, filter = lambda p: True):  # @ReservedAssignment
         """traverse all (recursive) sub-elements under this directory, that match the given filter.
         By default, the filter accepts everything; you can provide a custom filter function that
         takes a path as an argument and returns a boolean"""
@@ -157,9 +157,9 @@ class Path(object):
     def write(self, data):
         """writes the given data to this file"""
         raise NotImplementedError()
-    def chown(self, owner=None, group=None, recursive=None):
+    def chown(self, owner = None, group = None, recursive = None):
         """Change ownership of this path.
-        
+
         :param owner: The owner to set (either ``uid`` or ``username``), optional
         :param owner: The group to set (either ``gid`` or ``groupname``), optional
         :param recursive: whether to change ownership of all contained files and subdirectories.
@@ -173,7 +173,7 @@ class Path(object):
         :param mode: file mode as for os.chmod
         """
         raise NotImplementedError()
-    
+
     def link(self, dst):
         """Creates a hard link from ``self`` to ``dst``
 

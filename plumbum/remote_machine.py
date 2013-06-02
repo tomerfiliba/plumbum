@@ -49,7 +49,7 @@ class RemoteEnv(BaseEnv):
     __slots__ = ["_orig", "remote"]
     def __init__(self, remote):
         self.remote = remote
-        self._curr = dict(line.split("=",1) for line in self.remote._session.run("env")[1].splitlines())
+        self._curr = dict(line.split("=", 1) for line in self.remote._session.run("env")[1].splitlines())
         self._orig = self._curr.copy()
         BaseEnv.__init__(self, self.remote.path)
 
@@ -92,7 +92,7 @@ class RemoteEnv(BaseEnv):
         # we escape all $ signs to avoid expanding env-vars
         return self.remote._session.run("echo %s" % (expr.replace("$", "\\$"),))
 
-    #def clear(self):
+    # def clear(self):
     #    BaseEnv.clear(self, *args, **kwargs)
     #    self.remote._session.run("export %s" % " ".join("%s=%s" % (k, v) for k, v in self.getdict()))
 
@@ -273,7 +273,7 @@ class BaseRemoteMachine(object):
         """A context manager that creates a remote temporary directory, which is removed when
         the context exits"""
         _, out, _ = self._session.run("mktemp -d")
-        dir = self.path(out.strip()) #@ReservedAssignment
+        dir = self.path(out.strip())  # @ReservedAssignment
         try:
             yield dir
         finally:
@@ -290,7 +290,7 @@ class BaseRemoteMachine(object):
     def _path_glob(self, fn, pattern):
         matches = self._session.run("for fn in %s/%s; do echo $fn; done" % (fn, pattern))[1].splitlines()
         if len(matches) == 1 and not self._path_stat(matches[0]):
-            return [] # pattern expansion failed
+            return []  # pattern expansion failed
         return matches
 
     def _path_getuid(self, fn):
@@ -298,7 +298,7 @@ class BaseRemoteMachine(object):
     def _path_getgid(self, fn):
         return self._session.run("stat -c '%g,%G' " + shquote(fn))[1].strip().split(",")
     def _path_stat(self, fn):
-        rc, out, _ = self._session.run("stat -c '%F,%f,%i,%d,%h,%u,%g,%s,%X,%Y,%Z' " + shquote(fn), 
+        rc, out, _ = self._session.run("stat -c '%F,%f,%i,%d,%h,%u,%g,%s,%X,%Y,%Z' " + shquote(fn),
             retcode = None)
         if rc != 0:
             return None
@@ -307,7 +307,7 @@ class BaseRemoteMachine(object):
         res = StatRes(statres)
         res.text_mode = text_mode
         return res
-    
+
     def _path_delete(self, fn):
         self._session.run("rm -rf %s" % (shquote(fn),))
     def _path_move(self, src, dst):
@@ -341,7 +341,7 @@ class BaseRemoteMachine(object):
             f.flush()
             f.seek(0)
             self.upload(f.name, fn)
-    
+
     def _path_link(self, src, dst, symlink):
         self._session.run("ln -s %s %s" % ("-s" if symlink else "", shquote(src), shquote(dst)))
 
@@ -521,8 +521,8 @@ class PuttyMachine(SshMachine):
     """
     PuTTY-flavored SSH connection. The programs ``plink`` and ``pscp`` are expected to
     be in the path (or you may provide your own ``ssh_command`` and ``scp_command``)
-    
-    Arguments are the same as for :class:`plumbum.remote_machine.SshMachine` 
+
+    Arguments are the same as for :class:`plumbum.remote_machine.SshMachine`
     """
     def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None,
             scp_command = None, ssh_opts = (), scp_opts = (), encoding = "utf8"):

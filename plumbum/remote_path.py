@@ -149,7 +149,7 @@ class RemotePath(Path):
         self.remote._path_write(self, data)
 
     @_setdoc(Path)
-    def chown(self, owner=None, group=None, recursive=None):
+    def chown(self, owner = None, group = None, recursive = None):
         self.remote._path_chown(self, owner, group, self.isdir() if recursive is None else recursive)
     @_setdoc(Path)
     def chmod(self, mode):

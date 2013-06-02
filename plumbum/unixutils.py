@@ -6,7 +6,7 @@ MOUNT_PATTERN = re.compile(r"(.+?)\s+on\s+(.+?)\s+type\s+(\S+)")
 
 class MountEntry(object):
     """
-    Represents a mount entry (device file, mount point and file system type) 
+    Represents a mount entry (device file, mount point and file system type)
     """
     def __init__(self, dev, point, type):
         self.dev = dev
@@ -16,7 +16,7 @@ class MountEntry(object):
         return "%s on %s, %s" % (self.dev, self.point, self.type)
 
 def mount_table():
-    """returns the system's current mount table (a list of 
+    """returns the system's current mount table (a list of
     :class:`MountEntry <plumbum.unixutils.MountEntry>` objects)"""
     table = []
     for line in mount().splitlines():
