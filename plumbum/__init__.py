@@ -36,6 +36,7 @@ See http://plumbum.readthedocs.org for full details
 """
 from plumbum.commands import FG, BG, ERROUT
 from plumbum.commands import ProcessExecutionError, CommandNotFound, ProcessTimedOut
+from plumbum.commands import shutdown
 from plumbum.path import Path
 from plumbum.local_machine import local, LocalPath
 from plumbum.remote_machine import SshMachine, RemotePath, PuttyMachine
