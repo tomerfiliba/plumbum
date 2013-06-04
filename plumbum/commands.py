@@ -100,19 +100,29 @@ def shquote_list(seq):
 queue = six.moves.queue
 _timeout_queue = queue.Queue()
 
+_shutdown_flag = False
+
+def shutdown():
+    """Gracefully finishes all background threads"""
+    global _shutdown_flag
+    _shutdown_flag = True
+
 def _timeout_thread():
     waiting = MinHeap()
-    while True:
+    while not _shutdown_flag:
         if waiting:
             ttk, _ = waiting.peek()
             timeout = max(0, ttk - time.time())
         else:
             timeout = None
         try:
-            proc, time_to_kill = _timeout_queue.get(timeout = timeout)
+            proc, time_to_kill = _timeout_queue.get(block = False)
             waiting.push((time_to_kill, proc))
         except queue.Empty:
-            pass
+            if timeout:
+                time.sleep(timeout)
+            else:
+                time.sleep(0.1)
         now = time.time()
         while waiting:
             ttk, proc = waiting.peek()
@@ -133,7 +143,7 @@ thd1.start()
 _bg_processes = []
 
 def _output_collector_thread():
-    while True:
+    while not _shutdown_flag:
         num_producing_procs = 1
         for proc in _bg_processes:
             proc.stdout_data += proc.stdout.read(1000)
