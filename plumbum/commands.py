@@ -2,6 +2,7 @@ from __future__ import with_statement
 import six
 import subprocess
 import time
+import atexit
 from tempfile import TemporaryFile
 from subprocess import Popen, PIPE
 from threading import Thread
@@ -99,10 +100,11 @@ def shquote_list(seq):
 
 queue = six.moves.queue
 _timeout_queue = queue.Queue()
+_shutting_down = False
 
 def _timeout_thread():
     waiting = MinHeap()
-    while True:
+    while not _shutting_down:
         if waiting:
             ttk, _ = waiting.peek()
             timeout = max(0, ttk - time.time())
@@ -110,6 +112,9 @@ def _timeout_thread():
             timeout = None
         try:
             proc, time_to_kill = _timeout_queue.get(timeout = timeout)
+            if proc is SystemExit:
+                # terminate
+                return
             waiting.push((time_to_kill, proc))
         except queue.Empty:
             pass
@@ -130,21 +135,12 @@ thd1 = Thread(target = _timeout_thread, name = "PlumbumTimeoutThread")
 thd1.setDaemon(True)
 thd1.start()
 
-_bg_processes = []
+def _shutdown_bg_threads():
+    global _shutting_down
+    _shutting_down = True
+    _timeout_queue.put((SystemExit, 0))
 
-def _output_collector_thread():
-    while True:
-        num_producing_procs = 1
-        for proc in _bg_processes:
-            proc.stdout_data += proc.stdout.read(1000)
-            proc.stderr_data += proc.stderr.read(1000)
-
-        time.sleep(min(1.0 / num_producing_procs, 0.1))
-
-thd2 = Thread(target = _output_collector_thread, name = "PlumbumTimeoutThread")
-thd2.setDaemon(True)
-thd2.start()
-
+atexit.register(_shutdown_bg_threads)
 
 def run_proc(proc, retcode, timeout = None):
     """Waits for the given process to terminate, with the expected exit code
