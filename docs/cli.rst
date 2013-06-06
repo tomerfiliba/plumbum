@@ -374,6 +374,9 @@ application ``Geet``, which has two sub-commands - ``GeetCommit`` and ``GeetPush
 attached to the root application using the ``subcommand`` decorator ::
     
     class Geet(cli.Application):
+        """The l33t version control"""
+        VERSION = "1.7.2"
+        
         def main(self, *args):
             if args:
                 print "Unknown command %r" % (args[0],)
@@ -384,14 +387,17 @@ attached to the root application using the ``subcommand`` decorator ::
 
     @Geet.subcommand("commit")                    # attach 'geet commit'
     class GeetCommit(cli.Application):
-        auto_add = cli.Flag("-a")
-        message = cli.SwitchAttr("-m", str)
+        """creates a new commit in the current branch"""
+        
+        auto_add = cli.Flag("-a", help = "automatically add changed files")
+        message = cli.SwitchAttr("-m", str, mandatory = True, help = "sets the commit message")
 
         def main(self):
             print "doing the commit..."
 
     @Geet.subcommand("push")                      # attach 'geet push'
     class GeetPush(cli.Application):
+        """pushes the current local branch to the remote one"""
         def main(self, remote, branch = None):
             print "doing the push..."
 
@@ -399,7 +405,7 @@ attached to the root application using the ``subcommand`` decorator ::
         Geet.run()
 
 .. note::
-    * Naturally, since ``GeetCommit`` is a ``cli.Application`` on its own right, you may invoke 
+    * Since ``GeetCommit`` is a ``cli.Application`` on its own right, you may invoke 
       ``GeetCommit.run()`` directly (should that make sense in the context of your application)
     * You can also attach sub-commands "imperatively", using ``subcommand`` as a method instead
       of a decorator: ``Geet.subcommand("push", GeetPush)``
