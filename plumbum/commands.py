@@ -353,7 +353,7 @@ class BoundCommand(BaseCommand):
     __slots__ = ["cmd", "args"]
     def __init__(self, cmd, args):
         self.cmd = cmd
-        self.args = args
+        self.args = list(args)
     def __repr__(self):
         return "BoundCommand(%r, %r)" % (self.cmd, self.args)
     def _get_encoding(self):
@@ -363,7 +363,7 @@ class BoundCommand(BaseCommand):
     def popen(self, args = (), **kwargs):
         if isinstance(args, six.string_types):
             args = (args,)
-        return self.cmd.popen(self.args + tuple(args), **kwargs)
+        return self.cmd.popen(self.args + list(args), **kwargs)
 
 class Pipeline(BaseCommand):
     __slots__ = ["srccmd", "dstcmd"]
