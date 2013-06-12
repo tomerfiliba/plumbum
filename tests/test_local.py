@@ -172,6 +172,12 @@ class LocalMachineTest(unittest.TestCase):
 
         (ls["-a"] | grep["local"]) & FG
 
+    def test_arg_expansion(self):
+        from plumbum.cmd import ls
+        args = [ '-l', '-F' ]
+        ls(*args)
+        ls[args]
+
     def test_session(self):
         sh = local.session()
         for _ in range(4):
