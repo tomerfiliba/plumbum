@@ -223,11 +223,11 @@ class BaseCommand(object):
     def __getitem__(self, args):
         """Creates a bound-command with the given arguments"""
         if not isinstance(args, (tuple, list)):
-            args = (args,)
+            args = [args,]
         if not args:
             return self
         if isinstance(self, BoundCommand):
-            return BoundCommand(self.cmd, self.args + tuple(args))
+            return BoundCommand(self.cmd, self.args + list(args))
         else:
             return BoundCommand(self, args)
 
@@ -353,17 +353,17 @@ class BoundCommand(BaseCommand):
     __slots__ = ["cmd", "args"]
     def __init__(self, cmd, args):
         self.cmd = cmd
-        self.args = args
+        self.args = list(args)
     def __repr__(self):
         return "BoundCommand(%r, %r)" % (self.cmd, self.args)
     def _get_encoding(self):
         return self.cmd._get_encoding()
     def formulate(self, level = 0, args = ()):
-        return self.cmd.formulate(level + 1, self.args + tuple(args))
+        return self.cmd.formulate(level + 1, self.args + list(args))
     def popen(self, args = (), **kwargs):
         if isinstance(args, six.string_types):
-            args = (args,)
-        return self.cmd.popen(self.args + tuple(args), **kwargs)
+            args = [args,]
+        return self.cmd.popen(self.args + list(args), **kwargs)
 
 class Pipeline(BaseCommand):
     __slots__ = ["srccmd", "dstcmd"]
