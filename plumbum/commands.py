@@ -223,11 +223,11 @@ class BaseCommand(object):
     def __getitem__(self, args):
         """Creates a bound-command with the given arguments"""
         if not isinstance(args, (tuple, list)):
-            args = (args,)
+            args = [args,]
         if not args:
             return self
         if isinstance(self, BoundCommand):
-            return BoundCommand(self.cmd, self.args + tuple(args))
+            return BoundCommand(self.cmd, self.args + list(args))
         else:
             return BoundCommand(self, args)
 
@@ -359,10 +359,10 @@ class BoundCommand(BaseCommand):
     def _get_encoding(self):
         return self.cmd._get_encoding()
     def formulate(self, level = 0, args = ()):
-        return self.cmd.formulate(level + 1, self.args + tuple(args))
+        return self.cmd.formulate(level + 1, self.args + list(args))
     def popen(self, args = (), **kwargs):
         if isinstance(args, six.string_types):
-            args = (args,)
+            args = [args,]
         return self.cmd.popen(self.args + list(args), **kwargs)
 
 class Pipeline(BaseCommand):
