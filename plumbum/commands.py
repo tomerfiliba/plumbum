@@ -22,10 +22,11 @@ if not hasattr(Popen, "kill"):
             """taken from subprocess.py of python 2.7"""
             try:
                 _subprocess.TerminateProcess(self._handle, 1)
-            except OSError as e:
+            except OSError:
+                ex = sys.exc_info()[1]
                 # ERROR_ACCESS_DENIED (winerror 5) is received when the
                 # process already died.
-                if e.winerror != 5:
+                if ex.winerror != 5:
                     raise
                 rc = _subprocess.GetExitCodeProcess(self._handle)
                 if rc == _subprocess.STILL_ACTIVE:
