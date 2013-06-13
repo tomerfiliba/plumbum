@@ -13,14 +13,37 @@ from contextlib import contextmanager
 if not hasattr(Popen, "kill"):
     # python 2.5 compatibility
     import os
+    import sys
     import signal
-    def _Popen_kill(self):
-        os.kill(self.pid, signal.SIGTERM)
-    def _Popen_send_signal(self, sig):
-        os.kill(self.pid, sig)
-    Popen.kill = _Popen_kill
-    Popen.terminate = _Popen_kill
-    Popen.send_signal = _Popen_send_signal
+    if sys.platform == "win32":
+        import _subprocess
+
+        def _Popen_terminate(self):
+            """taken from subprocess.py of python 2.7"""
+            try:
+                _subprocess.TerminateProcess(self._handle, 1)
+            except OSError as e:
+                # ERROR_ACCESS_DENIED (winerror 5) is received when the
+                # process already died.
+                if e.winerror != 5:
+                    raise
+                rc = _subprocess.GetExitCodeProcess(self._handle)
+                if rc == _subprocess.STILL_ACTIVE:
+                    raise
+                self.returncode = rc
+        
+        Popen.kill = _Popen_terminate
+        Popen.terminate = _Popen_terminate
+    else:
+        def _Popen_kill(self):
+            os.kill(self.pid, signal.SIGKILL)
+        def _Popen_terminate(self):
+            os.kill(self.pid, signal.SIGTERM)
+        def _Popen_send_signal(self, sig):
+            os.kill(self.pid, sig)
+        Popen.kill = _Popen_kill
+        Popen.terminate = _Popen_kill
+        Popen.send_signal = _Popen_send_signal
 
 #===================================================================================================
 # Exceptions

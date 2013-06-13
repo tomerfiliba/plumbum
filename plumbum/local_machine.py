@@ -570,7 +570,16 @@ class LocalMachine(object):
             raise TypeError("cmd must not be a RemotePath: %r" % (cmd,))
 
     def _popen(self, executable, argv, stdin = PIPE, stdout = PIPE, stderr = PIPE,
-            cwd = None, env = None, **kwargs):
+            cwd = None, env = None, new_session = False, **kwargs):
+        if new_session:
+            if subprocess.mswindows:
+                kwargs["creationflags"] = kwargs.get("creationflags", 0) | subprocess.CREATE_NEW_PROCESS_GROUP 
+            else:
+                def preexec_fn(prev_fn = kwargs.get("preexec_fn", lambda: None)):
+                    os.setsid()
+                    prev_fn()
+                kwargs["preexec_fn"] = preexec_fn
+
         if subprocess.mswindows and "startupinfo" not in kwargs and stdin not in (sys.stdin, None):
             kwargs["startupinfo"] = sui = subprocess.STARTUPINFO()
             if hasattr(subprocess, "_subprocess"):
