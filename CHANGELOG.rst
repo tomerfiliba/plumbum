@@ -1,3 +1,9 @@
+1.2.1
+-----
+* ``Command.popen``: a new argument, ``new_session`` may be passed to ``Command.popen``, which runs the given 
+  in a new session (``setsid`` on POSIX, ``CREATE_NEW_PROCESS_GROUP`` on Windows) 
+* ``utils.daemonize``: run commands as full daemons (double-fork and setsid), on both Windows and POSIX systems
+
 1.2
 ---
 * Path: added `chmod <https://github.com/tomerfiliba/plumbum/pull/49>`_
