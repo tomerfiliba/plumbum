@@ -5,6 +5,8 @@ import six
 from plumbum import local, LocalPath, FG, BG, ERROUT
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 import sys
+import signal
+import time
 
 
 if not hasattr(unittest, "skipIf"):
@@ -239,6 +241,37 @@ class LocalMachineTest(unittest.TestCase):
         with local.as_root():
             local["date"]()
 
+
+class SetsidTest(unittest.TestCase):
+    def generate_sigint(self):
+        try:
+            if sys.platform == "win32":
+                from win32api import GenerateConsoleCtrlEvent
+                GenerateConsoleCtrlEvent(0, 0) # send Ctrl+C to current TTY
+            else:
+                os.kill(0, signal.SIGINT)
+            time.sleep(1)
+        except KeyboardInterrupt:
+            pass
+        else:
+            self.fail("Expected KeyboardInterrupt")
+    
+    @unittest.skipIf(not sys.stdin.isatty(), "Not a TTY")
+    def test_same_sesion(self):
+        p = local.python.popen(["-c", "import time; time.sleep(1000)"])
+        self.assertIs(p.poll(), None)
+        self.generate_sigint()
+        time.sleep(1)
+        self.assertIsNot(p.poll(), None)
+    
+    @unittest.skipIf(not sys.stdin.isatty(), "Not a TTY")
+    def test_new_session(self):
+        p = local.python.popen(["-c", "import time; time.sleep(1000)"], new_session = True)
+        self.assertIs(p.poll(), None)
+        self.generate_sigint()
+        time.sleep(1)
+        self.assertIs(p.poll(), None)
+        p.terminate()
 
 
 if __name__ == "__main__":
