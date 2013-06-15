@@ -26,11 +26,11 @@ def _posix_daemonize(command, cwd = "/"):
             signal.signal(signal.SIGHUP, signal.SIG_IGN)
             proc = command.popen(cwd = cwd, close_fds = True, stdin = stdin.fileno(), 
                 stdout = stdout.fileno(), stderr = stderr.fileno())
-            os.write(wfd, str(proc.pid))
+            os.write(wfd, str(proc.pid).encode("utf8"))
         except:
             rc = 1
             tbtext = "".join(traceback.format_exception(*sys.exc_info()))[-MAX_SIZE:]
-            os.write(wfd, tbtext)
+            os.write(wfd, tbtext.encode("utf8"))
         finally:
             os.close(wfd)
             os._exit(rc)
@@ -39,6 +39,10 @@ def _posix_daemonize(command, cwd = "/"):
         os.close(wfd)
         _, rc = os.waitpid(firstpid, 0)
         output = os.read(rfd, MAX_SIZE)
+        try:
+            output = output.decode("utf8")
+        except UnicodeError:
+            pass
         if rc == 0 and output.isdigit():
             secondpid = int(output)
         else:
