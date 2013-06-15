@@ -242,10 +242,10 @@ class LocalMachineTest(unittest.TestCase):
             local["date"]()
     
     def test_list_processes(self):
-        self.assertGreater(len(list(local.list_processes())), 1)
+        self.assertTrue(list(local.list_processes()))
     
     def test_pgrep(self):
-        self.assertGreater(len(list(local.pgrep("python"))), 1)
+        self.assertTrue(list(local.pgrep("python")))
 
     def _generate_sigint(self):
         try:
