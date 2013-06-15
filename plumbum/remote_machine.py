@@ -8,6 +8,7 @@ from plumbum.local_machine import local, BaseEnv, LocalPath
 from plumbum.path import StatRes
 from tempfile import NamedTemporaryFile
 import re
+import sys
 
 
 class Workdir(RemotePath):
@@ -535,6 +536,13 @@ class SshMachine(BaseRemoteMachine):
         opts = ["-L", "[%s]:%s:[%s]:%s" % (lhost, lport, dhost, dport)]
         return SshTunnel(ShellSession(self.popen((), opts), self.encoding))
 
+    def _translate_drive_letter(self, path):
+        # replace c:\some\path to /c/some/path
+        path = str(path)
+        if ":" in path:
+            path = "/" + path.replace(":", "").replace("\\", "/")
+        return path
+
     @_setdoc(BaseRemoteMachine)
     def download(self, src, dst):
         if isinstance(src, LocalPath):
@@ -543,6 +551,9 @@ class SshMachine(BaseRemoteMachine):
             raise TypeError("src %r points to a different remote machine" % (src,))
         if isinstance(dst, RemotePath):
             raise TypeError("dst of download cannot be %r" % (dst,))
+        if sys.platform == "win32":
+            src = self._translate_drive_letter(src)
+            dst = self._translate_drive_letter(dst)
         self._scp_command("%s:%s" % (self._fqhost, shquote(src)), dst)
 
     @_setdoc(BaseRemoteMachine)
@@ -553,6 +564,9 @@ class SshMachine(BaseRemoteMachine):
             raise TypeError("dst of upload cannot be %r" % (dst,))
         if isinstance(dst, RemotePath) and dst.remote != self:
             raise TypeError("dst %r points to a different remote machine" % (dst,))
+        if sys.platform == "win32":
+            src = self._translate_drive_letter(src)
+            dst = self._translate_drive_letter(dst)
         self._scp_command(src, "%s:%s" % (self._fqhost, shquote(dst)))
 
 
@@ -578,6 +592,10 @@ class PuttyMachine(SshMachine):
 
     def __str__(self):
         return "putty-ssh://%s" % (self._fqhost,)
+
+    def _translate_drive_letter(self, path):
+        # pscp takes care of windows paths automatically
+        return path
 
     @_setdoc(BaseRemoteMachine)
     def session(self, isatty = False):
