@@ -277,8 +277,8 @@ class BaseRemoteMachine(object):
         lines = ps("-e", "-o", "pid,uid,stat,args").splitlines()
         lines.pop(0) # header
         for line in lines:
-            parts = line.strip().replace("\t", " ").split(" ", 4)
-            yield ProcInfo(int(parts[0]), int(parts[1]), parts[2], parts[3])
+            parts = line.strip().split()
+            yield ProcInfo(int(parts[0]), int(parts[1]), parts[2], " ".join(parts[3:]))
     
     def pgrep(self, pattern):
         """
