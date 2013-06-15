@@ -30,4 +30,14 @@ class MinHeap(object):
     def peek(self):
         return self._items[0]
 
+class ProcInfo(object):
+    def __init__(self, pid, uid, stat, args):
+        self.pid = pid
+        self.uid = uid
+        self.stat = stat
+        self.args = args
+    def __repr__(self):
+        return "ProcInfo(%r, %r, %r, %r)" % (self.pid, self.uid, self.stat, self.args)
+
+
 

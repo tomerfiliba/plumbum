@@ -240,10 +240,14 @@ class LocalMachineTest(unittest.TestCase):
     def test_as_user(self):
         with local.as_root():
             local["date"]()
+    
+    def test_list_processes(self):
+        self.assertGreater(len(list(local.list_processes())), 1)
+    
+    def test_pgrep(self):
+        self.assertGreater(len(list(local.pgrep("python"))), 1)
 
-
-class SetsidTest(unittest.TestCase):
-    def generate_sigint(self):
+    def _generate_sigint(self):
         try:
             if sys.platform == "win32":
                 from win32api import GenerateConsoleCtrlEvent
@@ -258,20 +262,34 @@ class SetsidTest(unittest.TestCase):
     
     @unittest.skipIf(not sys.stdin.isatty(), "Not a TTY")
     def test_same_sesion(self):
-        p = local.python.popen(["-c", "import time; time.sleep(1000)"])
+        from plumbum.cmd import sleep
+        p = sleep.popen([1000])
         self.assertIs(p.poll(), None)
-        self.generate_sigint()
+        self._generate_sigint()
         time.sleep(1)
         self.assertIsNot(p.poll(), None)
     
     @unittest.skipIf(not sys.stdin.isatty(), "Not a TTY")
     def test_new_session(self):
-        p = local.python.popen(["-c", "import time; time.sleep(1000)"], new_session = True)
+        from plumbum.cmd import sleep
+        p = sleep.popen([1000])
         self.assertIs(p.poll(), None)
-        self.generate_sigint()
+        self._generate_sigint()
         time.sleep(1)
         self.assertIs(p.poll(), None)
         p.terminate()
+    
+    def test_local_daemon(self):
+        from plumbum.cmd import sleep
+        proc = local.daemonize(sleep[5])
+        try:
+            os.waitpid(proc.pid, 0)
+        except OSError:
+            pass
+        else:
+            self.fail("I shouldn't have any children by now -- they are daemons!")
+        proc.wait()
+
 
 
 if __name__ == "__main__":

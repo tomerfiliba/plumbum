@@ -4,6 +4,7 @@ import socket
 import unittest
 import six
 from plumbum import RemotePath, SshMachine, ProcessExecutionError
+import time
 
 
 #TEST_HOST = "192.168.1.143"
@@ -147,6 +148,22 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
                 self.assertEqual(data, six.b("hello world"))
 
             p.communicate()
+
+    def test_list_processes(self):
+        with self._connect() as rem:
+            self.assertGreater(len(list(rem.list_processes())), 1)
+    
+    def test_pgrep(self):
+        with self._connect() as rem:
+            self.assertGreater(len(list(rem.pgrep("ssh"))), 1)
+
+    def test_remote_daemon(self):
+        with self._connect() as rem:
+            sleep = rem["sleep"]
+            rem.daemonize(sleep["5.793817"])
+            self.assertTrue(list(rem.pgrep("5.793817")))
+            time.sleep(6)
+            self.assertFalse(list(rem.pgrep("5.793817")))
 
 
 if not six.PY3:

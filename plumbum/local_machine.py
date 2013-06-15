@@ -17,7 +17,9 @@ from plumbum.path import Path, FSUser
 from plumbum.remote_path import RemotePath
 from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.session import ShellSession
-from plumbum.lib import _setdoc
+from plumbum.lib import _setdoc, ProcInfo
+from plumbum.daemons import _win32_daemonize, _posix_daemonize
+import re
 
 try:
     from pwd import getpwuid, getpwnam
@@ -606,6 +608,66 @@ class LocalMachine(object):
         proc.encoding = self.encoding
         proc.argv = argv
         return proc
+
+    def daemonize(self, command, cwd = "/"):
+        """
+        On POSIX systems
+        ~~~~~~~~~~~~~~~~
+        Run ``command`` as a UNIX daemon: fork a child process to setpid, redirect std handles to /dev/null, 
+        umask, close all fds, chdir to ``cwd``, then fork and exec ``command``. Returns a ``Popen`` process that
+        can be used to poll/wait for the executed command (but keep in mind that you cannot access std handles) 
+        
+        On Windows
+        ~~~~~~~~~~
+        Run ``command`` as a "Windows daemon": detach from controlling console and create a new process group.
+        This means that the command will not receive console events and would survive its parent's termination. 
+        Returns a ``Popen`` object.
+        
+        .. note:: this does not run ``command`` as a system service, only detaches it from its parent.
+    
+        .. versionadded:: 1.3
+        """
+        if subprocess.mswindows:
+            return _win32_daemonize(command, cwd)
+        else:
+            return _posix_daemonize(command, cwd)
+    
+    if sys.platform == "win32":
+        def list_processes(self):
+            """
+            Returns information about all running processes (on Windows: using ``tasklist``)
+            """
+            import csv
+            tasklist = local["tasklist"]
+            lines = tasklist("/V", "/FO", "CSV").encode("utf8").splitlines()
+            rows = csv.reader(lines)
+            header = rows.next()
+            imgidx = header.index('Image Name')
+            pididx = header.index('PID')
+            statidx = header.index('Status')
+            useridx = header.index('User Name')
+            for row in rows:
+                yield ProcInfo(int(row[pididx]), row[useridx].decode("utf8"), 
+                    row[statidx].decode("utf8"), row[imgidx].decode("utf8"))
+    else:
+        def list_processes(self):
+            """
+            Returns information about all running processes (on POSIX systems: using ``ps``)
+            """
+            ps = self["ps"]
+            lines = ps("-e", "-o", "pid,uid,stat,args").splitlines()
+            for line in lines:
+                parts = line.strip().replace("\t", " ").split(" ", 4)
+                yield ProcInfo(int(parts[0]), int(parts[1]), parts[2], parts[3])
+
+    def pgrep(self, pattern):
+        """
+        Process grep: return information about all processes whose command-line args match the given regex pattern
+        """
+        pat = re.compile(pattern)
+        for procinfo in self.list_processes():
+            if pat.match(procinfo.args):
+                yield procinfo 
 
     def session(self):
         """Creates a new :class:`ShellSession <plumbum.session.ShellSession>` object; this

@@ -1,8 +1,13 @@
-1.2.1
+1.3
 -----
 * ``Command.popen``: a new argument, ``new_session`` may be passed to ``Command.popen``, which runs the given 
   in a new session (``setsid`` on POSIX, ``CREATE_NEW_PROCESS_GROUP`` on Windows) 
-* ``utils.daemonize``: run commands as full daemons (double-fork and setsid), on both Windows and POSIX systems
+* ``Command.Popen``: args can now also be a list (previously, it was required to be a tuple). See 
+* ``local.daemonize``: run commands as full daemons (double-fork and ``setsid``) on POSIX systems, or
+  detached from their controlling console and parent (on Windows).   
+* ``SshMachine.daemonize``: "daemonize" remote commands via ``nohup`` (not really a daemon, but good enough)
+* ``copy`` and ``move``: the ``src`` argument can now be a list of files to move, e.g., ``copy(["foo", "bar"], "/usr/bin")``
+* list local and remote processes
 
 1.2
 ---

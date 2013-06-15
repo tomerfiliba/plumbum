@@ -1,12 +1,13 @@
 from __future__ import with_statement
 from contextlib import contextmanager
 from plumbum.remote_path import RemotePath
-from plumbum.commands import CommandNotFound, shquote, ConcreteCommand
+from plumbum.commands import CommandNotFound, shquote, ConcreteCommand, run_proc, ProcessExecutionError
 from plumbum.session import ShellSession
-from plumbum.lib import _setdoc, bytes
+from plumbum.lib import _setdoc, bytes, ProcInfo
 from plumbum.local_machine import local, BaseEnv, LocalPath
 from plumbum.path import StatRes
 from tempfile import NamedTemporaryFile
+import re
 
 
 class Workdir(RemotePath):
@@ -268,6 +269,25 @@ class BaseRemoteMachine(object):
         process"""
         raise NotImplementedError()
 
+    def list_processes(self):
+        """
+        Returns information about all running processes (on POSIX systems: using ``ps``)
+        """
+        ps = self["ps"]
+        lines = ps("-e", "-o", "pid,uid,stat,args").splitlines()
+        for line in lines:
+            parts = line.strip().replace("\t", " ").split(" ", 4)
+            yield ProcInfo(int(parts[0]), int(parts[1]), parts[2], parts[3])
+    
+    def pgrep(self, pattern):
+        """
+        Process grep: return information about all processes whose command-line args match the given regex pattern
+        """
+        pat = re.compile(pattern)
+        for procinfo in self.list_processes():
+            if pat.match(procinfo.args):
+                yield procinfo 
+
     @contextmanager
     def tempdir(self):
         """A context manager that creates a remote temporary directory, which is removed when
@@ -441,6 +461,24 @@ class SshMachine(BaseRemoteMachine):
             else:
                 cmdline.append(args)
         return self._ssh_command[tuple(cmdline)].popen(**kwargs)
+
+    def daemonize(self, command):
+        """
+        Runs the given command using ``nohup`` and redirects std handles to ``/dev/null``, allowing the command
+        to run "detached" from its controlling TTY or parent. Does not return anything.
+        """
+        args = ["nohup"]
+        args.extend(command.formulate())
+        args.extend([">/dev/null", "2>/dev/null", "</dev/null"])
+        proc = self.popen(args, ssh_opts = ["-f"])
+        rc = proc.wait()
+        try:
+            if rc != 0:
+                raise ProcessExecutionError(args, rc, proc.stdout.read(), proc.stderr.read())
+        finally:
+            proc.stdin.close()
+            proc.stdout.close()
+            proc.stderr.close()
 
     @_setdoc(BaseRemoteMachine)
     def session(self, isatty = False):
