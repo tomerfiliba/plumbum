@@ -286,7 +286,7 @@ class BaseRemoteMachine(object):
         """
         pat = re.compile(pattern)
         for procinfo in self.list_processes():
-            if pat.match(procinfo.args):
+            if pat.search(procinfo.args):
                 yield procinfo 
 
     @contextmanager

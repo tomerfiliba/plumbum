@@ -151,11 +151,11 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
 
     def test_list_processes(self):
         with self._connect() as rem:
-            self.assertGreater(len(list(rem.list_processes())), 1)
+            self.assertTrue(list(rem.list_processes()))
     
     def test_pgrep(self):
         with self._connect() as rem:
-            self.assertGreater(len(list(rem.pgrep("ssh"))), 1)
+            self.assertTrue(list(rem.pgrep("ssh")))
 
     def test_remote_daemon(self):
         with self._connect() as rem:
