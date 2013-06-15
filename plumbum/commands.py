@@ -123,38 +123,41 @@ def shquote_list(seq):
     return [shquote(item) for item in seq]
 
 queue = six.moves.queue
-Empty = queue.Empty
 _timeout_queue = queue.Queue()
 _shutting_down = False
 
 def _timeout_thread():
     waiting = MinHeap()
-    while not _shutting_down:
-        if waiting:
-            ttk, _ = waiting.peek()
-            timeout = max(0, ttk - time.time())
-        else:
-            timeout = None
-        try:
-            proc, time_to_kill = _timeout_queue.get(timeout = timeout)
-            if proc is SystemExit:
-                # terminate
-                return
-            waiting.push((time_to_kill, proc))
-        except Empty:
-            pass
-        now = time.time()
-        while waiting:
-            ttk, proc = waiting.peek()
-            if ttk > now:
-                break
-            waiting.pop()
+    try:
+        while not _shutting_down:
+            if waiting:
+                ttk, _ = waiting.peek()
+                timeout = max(0, ttk - time.time())
+            else:
+                timeout = None
             try:
-                if proc.poll() is None:
-                    proc.kill()
-                    proc._timed_out = True
-            except EnvironmentError:
+                proc, time_to_kill = _timeout_queue.get(timeout = timeout)
+                if proc is SystemExit:
+                    # terminate
+                    return
+                waiting.push((time_to_kill, proc))
+            except queue.Empty:
                 pass
+            now = time.time()
+            while waiting:
+                ttk, proc = waiting.peek()
+                if ttk > now:
+                    break
+                waiting.pop()
+                try:
+                    if proc.poll() is None:
+                        proc.kill()
+                        proc._timed_out = True
+                except EnvironmentError:
+                    pass
+    except Exception:
+        # to prevent all sorts of exceptions during interpreter shutdown
+        pass
 
 thd1 = Thread(target = _timeout_thread, name = "PlumbumTimeoutThread")
 thd1.setDaemon(True)
