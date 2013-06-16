@@ -1,14 +1,14 @@
 from __future__ import with_statement
+import re
+import sys
 from contextlib import contextmanager
 from plumbum.remote_path import RemotePath
-from plumbum.commands import CommandNotFound, shquote, ConcreteCommand, run_proc, ProcessExecutionError
+from plumbum.commands import CommandNotFound, shquote, ConcreteCommand, ProcessExecutionError
 from plumbum.session import ShellSession
 from plumbum.lib import _setdoc, bytes, ProcInfo
 from plumbum.local_machine import local, BaseEnv, LocalPath
 from plumbum.path import StatRes
 from tempfile import NamedTemporaryFile
-import re
-import sys
 
 
 class Workdir(RemotePath):
@@ -533,8 +533,9 @@ class SshMachine(BaseRemoteMachine):
                 sock.connect(("localhost", 1234))
                 # sock is now tunneled to megazord:5678
         """
-        opts = ["-L", "[%s]:%s:[%s]:%s" % (lhost, lport, dhost, dport)]
-        return SshTunnel(ShellSession(self.popen((), opts), self.encoding))
+        ssh_opts = ["-L", "[%s]:%s:[%s]:%s" % (lhost, lport, dhost, dport)]
+        proc = self.popen((), ssh_opts = ssh_opts, new_session = True)
+        return SshTunnel(ShellSession(proc, self.encoding))
 
     def _translate_drive_letter(self, path):
         # replace c:\some\path to /c/some/path
