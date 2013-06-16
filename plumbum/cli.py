@@ -734,7 +734,7 @@ class Application(object):
     def version(self):
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
-        print ("%s (no version set)" % (self.PROGNAME, ver if ver else "(no version set)"))
+        print ("%s %s" % (self.PROGNAME, ver if ver else "(no version set)"))
 
 
 
