@@ -9,6 +9,7 @@ import stat
 import time
 import platform
 import six
+import re
 from tempfile import mkdtemp
 from subprocess import Popen, PIPE
 from contextlib import contextmanager
@@ -19,7 +20,6 @@ from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.session import ShellSession
 from plumbum.lib import _setdoc, ProcInfo
 from plumbum.daemons import _win32_daemonize, _posix_daemonize
-import re
 
 try:
     from pwd import getpwuid, getpwnam
@@ -227,7 +227,7 @@ class Workdir(LocalPath):
         self._path = os.path.normpath(os.getcwd())
     def getpath(self):
         """Returns the current working directory as a ``LocalPath`` object"""
-        return LocalPath(self)
+        return LocalPath(self._path)
     @contextmanager
     def __call__(self, newdir):
         """A context manager used to ``chdir`` into a directory and then ``chdir`` back to
