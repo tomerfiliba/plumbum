@@ -10,10 +10,22 @@ import time
 import platform
 import six
 import re
-from tempfile import mkdtemp
-from subprocess import Popen, PIPE
-from contextlib import contextmanager
 
+if sys.version_info >= (3, 2):
+    # python 3.2 has the new-and-improved subprocess module
+    from subprocess import Popen, PIPE
+    has_new_subprocess = True
+else:
+    # otherwise, see if we have subprocess32
+    try:
+        from subprocess32 import Popen, PIPE
+        has_new_subprocess = True
+    except ImportError:
+        from subprocess import Popen, PIPE
+        has_new_subprocess = False
+
+from tempfile import mkdtemp
+from contextlib import contextmanager
 from plumbum.path import Path, FSUser
 from plumbum.remote_path import RemotePath
 from plumbum.commands import CommandNotFound, ConcreteCommand
@@ -574,7 +586,9 @@ class LocalMachine(object):
     def _popen(self, executable, argv, stdin = PIPE, stdout = PIPE, stderr = PIPE,
             cwd = None, env = None, new_session = False, **kwargs):
         if new_session:
-            if subprocess.mswindows:
+            if has_new_subprocess:
+                kwargs["start_new_session"] = True
+            elif subprocess.mswindows:
                 kwargs["creationflags"] = kwargs.get("creationflags", 0) | subprocess.CREATE_NEW_PROCESS_GROUP 
             else:
                 def preexec_fn(prev_fn = kwargs.get("preexec_fn", lambda: None)):
@@ -591,7 +605,7 @@ class LocalMachine(object):
                 sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # @UndefinedVariable
                 sui.wShowWindow = subprocess.SW_HIDE  # @UndefinedVariable
         
-        if "close_fds" not in kwargs:
+        if not has_new_subprocess and "close_fds" not in kwargs:
             if subprocess.mswindows and (stdin is not None or stdout is not None or stderr is not None):
                 # we can't close fds if we're on windows and we want to redirect any std handle
                 kwargs["close_fds"] = False
