@@ -590,6 +590,13 @@ class LocalMachine(object):
             else:
                 sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # @UndefinedVariable
                 sui.wShowWindow = subprocess.SW_HIDE  # @UndefinedVariable
+        
+        if "close_fds" not in kwargs:
+            if subprocess.mswindows and (stdin is not None or stdout is not None or stderr is not None):
+                # we can't close fds if we're on windows and we want to redirect any std handle
+                kwargs["close_fds"] = False
+            else:
+                kwargs["close_fds"] = True
 
         if cwd is None:
             cwd = self.cwd
