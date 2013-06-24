@@ -2,6 +2,7 @@ from __future__ import with_statement
 import os
 import sys
 import glob
+import errno
 import shutil
 import subprocess
 import logging
@@ -158,7 +159,13 @@ class LocalPath(Path):
     @_setdoc(Path)
     def mkdir(self):
         if not self.exists():
-            os.makedirs(str(self))
+            try:
+                os.makedirs(str(self))
+            except OSError:
+                # directory might already exist (a race with other threads/processes)
+                _, ex, _ = sys.exc_info()
+                if ex.errno != errno.EEXIST:
+                    raise
 
     @_setdoc(Path)
     def open(self, mode = "r"):
