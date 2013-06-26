@@ -666,11 +666,10 @@ class Application(object):
         print("")
         if not self.USAGE:
             if self._subcommands:
-                self.USAGE = "Usage: %(executable)s [SWITCHES] [SUBCOMMAND [SWITCHES]] %(tailargs)s"
+                self.USAGE = "Usage: %(progname)s [SWITCHES] [SUBCOMMAND [SWITCHES]] %(tailargs)s"
             else:
-                self.USAGE = "Usage: %(executable)s [SWITCHES] %(tailargs)s"
-        print(self.USAGE % {"executable": self.executable, "progname": self.PROGNAME,
-            "tailargs": tailargs})
+                self.USAGE = "Usage: %(progname)s [SWITCHES] %(tailargs)s"
+        print(self.USAGE % {"progname": self.PROGNAME, "tailargs": tailargs})
 
         by_groups = {}
         for si in self._switches_by_func.values():
