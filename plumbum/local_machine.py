@@ -81,7 +81,7 @@ class LocalPath(Path):
     @property
     @_setdoc(Path)
     def dirname(self):
-        return self.__class__(os.path.dirname(str(self)))
+        return LocalPath(os.path.dirname(str(self)))
 
     @property
     @_setdoc(Path)
