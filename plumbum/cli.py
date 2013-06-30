@@ -676,36 +676,54 @@ class Application(object):
             if si.group not in by_groups:
                 by_groups[si.group] = []
             by_groups[si.group].append(si)
+        
+        def switchs(by_groups, show_groups):
+            for grp, swinfos in sorted(by_groups.items(), key = lambda item: item[0]):
+                if show_groups:
+                    print("%s:" % (grp,))
 
-        for grp, swinfos in sorted(by_groups.items(), key = lambda item: item[0]):
-            print("%s:" % (grp,))
-
-            for si in sorted(swinfos, key = lambda si: si.names):
-                swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names
-                    if self._switches_by_name[n] == si)
-                if si.argtype:
-                    if isinstance(si.argtype, type):
-                        typename = si.argtype.__name__
+                for si in sorted(swinfos, key = lambda si: si.names):
+                    swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names
+                        if self._switches_by_name[n] == si)
+                    if si.argtype:
+                        if isinstance(si.argtype, type):
+                            typename = si.argtype.__name__
+                        else:
+                            typename = str(si.argtype)
+                        argtype = " %s:%s" % (si.argname.upper(), typename)
                     else:
-                        typename = str(si.argtype)
-                    argtype = " %s:%s" % (si.argname.upper(), typename)
-                else:
-                    argtype = ""
-                help = si.help  # @ReservedAssignment
-                if si.list:
-                    help += "; may be given multiple times"
-                if si.mandatory:
-                    help += "; required"
-                if si.requires:
-                    help += "; requires %s" % (", ".join(si.requires))
-                if si.excludes:
-                    help += "; excludes %s" % (", ".join(si.excludes))
-                prefix = swnames + argtype
-                wrapper = TextWrapper(width = int(local.env.get("COLUMNS", 80)),
-                    initial_indent = " " * min(max(31, len(prefix)), 50), subsequent_indent = " " * 31)
-                help = wrapper.fill(" ".join(l.strip() for l in help.splitlines()))  # @ReservedAssignment
-                print("    %-25s  %s" % (prefix, help.strip()))
-            print ("")
+                        argtype = ""
+                    prefix = swnames + argtype
+                    yield si, prefix
+
+                if show_groups:
+                    print("")
+
+        sw_width = 0
+            
+        for si, prefix in switchs(by_groups, False):
+            sw_width = max(sw_width, len(prefix))
+
+        sw_indent = "    "
+        sw_to_help_padding = "  "
+        initial_indent_width = len(sw_indent) + sw_width + len(sw_to_help_padding)
+        description_indent = sw_indent + "%%-%is" % sw_width + sw_to_help_padding + "%s"
+
+        for si, prefix in switchs(by_groups, True):
+            help = si.help  # @ReservedAssignment
+            if si.list:
+                help += "; may be given multiple times"
+            if si.mandatory:
+                help += "; required"
+            if si.requires:
+                help += "; requires %s" % (", ".join(si.requires))
+            if si.excludes:
+                help += "; excludes %s" % (", ".join(si.excludes))
+            wrapper = TextWrapper(width = int(local.env.get("COLUMNS", 80)),
+                initial_indent = " " * min(initial_indent_width, 50),
+                subsequent_indent = " " * initial_indent_width)
+            help = wrapper.fill(" ".join(l.strip() for l in help.splitlines()))  # @ReservedAssignment
+            print(description_indent % (prefix, help.strip()))
 
         if self._subcommands:
             print("Subcommands:")
@@ -714,9 +732,10 @@ class Application(object):
                 help = doc + "; " if doc else ""  # @ReservedAssignment
                 help += "see '%s %s --help' for more info" % (self.PROGNAME, name)
                 wrapper = TextWrapper(width = int(local.env.get("COLUMNS", 80)),
-                    initial_indent = " " * min(max(31, len(name)), 50), subsequent_indent = " " * 31)
+                    initial_indent = " " * min(initial_indent_width, 50),
+                    subsequent_indent = " " * initial_indent_width)
                 help = wrapper.fill(" ".join(l.strip() for l in help.splitlines()))  # @ReservedAssignment
-                print("    %-25s  %s" % (name, help.strip()))
+                print(description_indent % (name, help.strip()))
 
     def _get_prog_version(self):
         ver = None
