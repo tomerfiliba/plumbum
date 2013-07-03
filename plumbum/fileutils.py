@@ -1,9 +1,18 @@
+from __future__ import with_statement
 import os
 import six
 import threading
 import sys
 from contextlib import contextmanager
 from plumbum.local_machine import local
+
+try:
+    import thread
+except ImportError:
+    pass
+else:
+    threading.get_ident = thread.get_ident
+
 
 try:
     import fcntl
@@ -69,7 +78,7 @@ class AtomicFile(object):
 
     @contextmanager
     def locked(self, blocking = True):
-        if self._owned_by == thread.get_ident():
+        if self._owned_by == threading.get_ident():
             yield
             return
         with self._thdlock:
