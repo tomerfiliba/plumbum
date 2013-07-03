@@ -6,12 +6,13 @@ import sys
 from contextlib import contextmanager
 from plumbum.local_machine import local
 
-try:
-    import thread
-except ImportError:
-    pass
-else:
+if not hasattr(threading, "get_ident"):
+    try:
+        import thread
+    except ImportError:
+        import _thread as thread
     threading.get_ident = thread.get_ident
+    del thread
 
 
 try:

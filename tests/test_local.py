@@ -295,10 +295,10 @@ class LocalMachineTest(unittest.TestCase):
     def test_atomic_file(self):
         af1 = AtomicFile("tmp.txt")
         af2 = AtomicFile("tmp.txt")
-        af1.write_atomic("foo")
-        af2.write_atomic("bar")
-        self.assertEqual(af1.read_atomic(), "bar")
-        self.assertEqual(af2.read_atomic(), "bar")
+        af1.write_atomic(six.b("foo"))
+        af2.write_atomic(six.b("bar"))
+        self.assertEqual(af1.read_atomic(), six.b("bar"))
+        self.assertEqual(af2.read_atomic(), six.b("bar"))
 
         with af1.locked():
             try:
@@ -329,7 +329,7 @@ class LocalMachineTest(unittest.TestCase):
         for thd in thds:
             thd.join()
 
-        self.assertEqual(results, range(num_of_threads * num_of_increments))
+        self.assertEqual(results, list(range(num_of_threads * num_of_increments)))
         local.path("counter").delete()
 
     def test_pid_file(self):
