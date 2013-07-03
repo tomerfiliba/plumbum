@@ -49,7 +49,7 @@ if not hasattr(Popen, "kill"):
 #===================================================================================================
 # Exceptions
 #===================================================================================================
-class ProcessExecutionError(Exception):
+class ProcessExecutionError(EnvironmentError):
     """Represents the failure of a process. When the exit code of a terminated process does not
     match the expected result, this exception is raised by :func:`run_proc
     <plumbum.commands.run_proc>`. It contains the process' return code, stdout, and stderr, as
