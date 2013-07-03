@@ -2,11 +2,13 @@ from __future__ import with_statement
 import os
 import unittest
 import six
-from plumbum import local, LocalPath, FG, BG, ERROUT
-from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 import sys
 import signal
 import time
+from threading import Thread, Lock
+from plumbum import local, LocalPath, FG, BG, ERROUT
+from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
+from plumbum.fileutils import AtomicFile, AtomicCounterFile, pid_file, PidFileTaken
 
 
 if not hasattr(unittest, "skipIf"):
@@ -289,6 +291,57 @@ class LocalMachineTest(unittest.TestCase):
         else:
             self.fail("I shouldn't have any children by now -- they are daemons!")
         proc.wait()
+
+    def test_atomic_file(self):
+        af1 = AtomicFile("tmp.txt")
+        af2 = AtomicFile("tmp.txt")
+        af1.write_atomic("foo")
+        af2.write_atomic("bar")
+        self.assertEqual(af1.read_atomic(), "bar")
+        self.assertEqual(af2.read_atomic(), "bar")
+
+        with af1.locked():
+            try:
+                with af2.locked(False):
+                    self.fail("The file should be already locked")
+            except (IOError, OSError):
+                pass
+
+        local.path("tmp.txt").delete()
+
+    def test_atomic_counter(self):
+        results = []
+        lock = Lock()
+        local.path("counter").delete()
+        num_of_threads = 20
+        num_of_increments = 20
+
+        def inc_counter():
+            afc = AtomicCounterFile.open("counter")
+            for _ in range(num_of_increments):
+                with lock:
+                    results.append(afc.next())
+                time.sleep(0.001)
+
+        thds = [Thread(target = inc_counter) for _ in range(num_of_threads)]
+        for thd in thds:
+            thd.start()
+        for thd in thds:
+            thd.join()
+
+        self.assertEqual(results, range(num_of_threads * num_of_increments))
+        local.path("counter").delete()
+
+    def test_pid_file(self):
+        with pid_file("mypid"):
+            try:
+                with pid_file("mypid"):
+                    self.fail("PID file should be taken here!")
+            except PidFileTaken as ex:
+                pass
+
+        local.path("mypid").delete()
+
 
 
 
