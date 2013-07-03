@@ -11,8 +11,9 @@
     </ul>
     <hr/>
     <a href="http://tomerfiliba.com" target="_blank">
-    <img style="display: block; margin-left: auto; margin-right: auto" 
-    src="_static/fish-text-black.png" title="Tomer's Blog"/></a>
+    <img style="display: block; margin-left: auto; margin-right: auto" alt="Tomer Filiba"
+    src="_static/fish-text-black.png" title="Tomer's Blog"/>
+    <span style="color:transparent;position: absolute;font-size:5px;width: 0px;height: 0px;">Tomer Filiba</span></a>
     <br/>
     <a href="http://github.com/tomerfiliba/plumbum" target="_blank">
     <img style="display: block; margin-left: auto; margin-right: auto; opacity: 0.7; width: 70px;" 
