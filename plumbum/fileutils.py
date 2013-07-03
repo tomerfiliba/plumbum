@@ -1,6 +1,6 @@
 import os
 import six
-import thread
+import threading
 import sys
 from contextlib import contextmanager
 from plumbum.local_machine import local
@@ -43,7 +43,7 @@ class AtomicFile(object):
     def __init__(self, filename, ignore_deletion = False):
         self._path = local.path(filename)
         self._ignore_deletion = ignore_deletion
-        self._thdlock = thread.allocate_lock()
+        self._thdlock = threading.Lock()
         self._owned_by = None
         self._fileobj = None
         self.reopen()
@@ -76,7 +76,7 @@ class AtomicFile(object):
             with locked_file(self._fileobj.fileno(), blocking):
                 if not self._path.exists() and not self._ignore_deletion:
                     raise ValueError("Atomic file removed from filesystem")
-                self._owned_by = thread.get_ident()
+                self._owned_by = threading.get_ident()
                 try:
                     yield
                 finally:
