@@ -337,7 +337,7 @@ class LocalMachineTest(unittest.TestCase):
             try:
                 with pid_file("mypid"):
                     self.fail("PID file should be taken here!")
-            except PidFileTaken as ex:
+            except PidFileTaken:
                 pass
 
         local.path("mypid").delete()
