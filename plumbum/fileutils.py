@@ -74,7 +74,7 @@ class AtomicFile(object):
     
     def reopen(self):
         self.close()
-        self._fileobj = os.fdopen(os.open(str(self._path), os.O_CREAT | os.O_RDWR, 384), "r+", 0)
+        self._fileobj = os.fdopen(os.open(str(self._path), os.O_CREAT | os.O_RDWR, 384), "r+b", 0)
 
     @contextmanager
     def locked(self, blocking = True):
