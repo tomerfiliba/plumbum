@@ -273,6 +273,8 @@ class BaseRemoteMachine(object):
     def list_processes(self):
         """
         Returns information about all running processes (on POSIX systems: using ``ps``)
+
+        .. versionadded:: 1.3
         """
         ps = self["ps"]
         lines = ps("-e", "-o", "pid,uid,stat,args").splitlines()

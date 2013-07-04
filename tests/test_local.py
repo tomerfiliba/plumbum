@@ -8,7 +8,7 @@ import time
 from threading import Thread, Lock
 from plumbum import local, LocalPath, FG, BG, ERROUT
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
-from plumbum.fileutils import AtomicFile, AtomicCounterFile, pid_file, PidFileTaken
+from plumbum.atomic import AtomicFile, AtomicCounterFile, PidFile, PidFileTaken
 
 
 if not hasattr(unittest, "skipIf"):
@@ -332,10 +332,26 @@ class LocalMachineTest(unittest.TestCase):
         self.assertEqual(results, list(range(num_of_threads * num_of_increments)))
         local.path("counter").delete()
 
+    def test_atomic_counter2(self):
+        local.path("counter").delete()
+        afc = AtomicCounterFile.open("counter")
+        self.assertEqual(afc.next(), 0)
+        self.assertEqual(afc.next(), 1)
+        self.assertEqual(afc.next(), 2)
+
+        self.assertRaises(TypeError, afc.reset, "hello")
+
+        afc.reset(70)
+        self.assertEqual(afc.next(), 70)
+        self.assertEqual(afc.next(), 71)
+        self.assertEqual(afc.next(), 72)
+
+        local.path("counter").delete()
+
     def test_pid_file(self):
-        with pid_file("mypid"):
+        with PidFile("mypid"):
             try:
-                with pid_file("mypid"):
+                with PidFile("mypid"):
                     self.fail("PID file should be taken here!")
             except PidFileTaken:
                 pass

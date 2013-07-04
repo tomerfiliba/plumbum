@@ -5,8 +5,9 @@
 * ``Command.Popen``: args can now also be a list (previously, it was required to be a tuple). See 
 * ``local.daemonize``: run commands as full daemons (double-fork and ``setsid``) on POSIX systems, or
   detached from their controlling console and parent (on Windows).   
+* ``list_processes``: return a list of running process (local/remote machines)
 * ``SshMachine.daemonize``: "daemonize" remote commands via ``nohup`` (not really a daemon, but good enough)
-* ``fileutils``: Atomic file operations (``AtomicFile``, ``AtomicCounterFile`` and ``pid_file``)
+* ``atomic``: Atomic file operations (``AtomicFile``, ``AtomicCounterFile`` and ``PidFile``)
 * ``copy`` and ``move``: the ``src`` argument can now be a list of files to move, e.g., ``copy(["foo", "bar"], "/usr/bin")``
 * list local and remote processes
 
