@@ -7,6 +7,7 @@ import os
 import six
 import threading
 import sys
+import atexit
 from contextlib import contextmanager
 from plumbum.local_machine import local
 
@@ -246,6 +247,11 @@ class PidFile(object):
         self.acquire()
     def __exit__(self, t, v, tb):
         self.release()
+    def __del__(self):
+        try:
+            self.release()
+        except Exception:
+            pass
 
     def acquire(self):
         """
@@ -267,6 +273,7 @@ class PidFile(object):
             raise PidFileTaken("PID file %r taken by process %s" % (self.atomicfile.path, pid))
         else:
             self.atomicfile.write_atomic(str(os.getpid()).encode("utf8"))
+            atexit.register(self.release)
 
     def release(self):
         """
