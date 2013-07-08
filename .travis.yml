@@ -18,7 +18,7 @@ before_script:
     - "export PYTHONPATH=$PYTHONPATH:`pwd`"
     - "cd tests"
 
-script: nosetests -vv
+script: nosetests -vv -d
 
 notifications:
     email:
