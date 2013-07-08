@@ -5,7 +5,6 @@ import six
 import sys
 import signal
 import time
-from threading import Thread
 from plumbum import local, LocalPath, FG, BG, ERROUT
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 from plumbum.atomic import AtomicFile, AtomicCounterFile, PidFile
@@ -353,8 +352,8 @@ for _ in range(%s):
             procs.append(local.python["-c", code].popen())
         results = []
         for p in procs:
-            out, err = p.communicate()
-            self.assertFalse(err)
+            out, _ = p.communicate()
+            self.assertEqual(p.returncode, 0)
             results.extend(int(num) for num in out.splitlines())
 
         self.assertEqual(len(results), num_of_procs * num_of_increments)
