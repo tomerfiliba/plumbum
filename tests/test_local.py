@@ -5,10 +5,10 @@ import six
 import sys
 import signal
 import time
-from threading import Thread, Lock
+from threading import Thread
 from plumbum import local, LocalPath, FG, BG, ERROUT
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
-from plumbum.atomic import AtomicFile, AtomicCounterFile, PidFile, PidFileTaken
+from plumbum.atomic import AtomicFile, AtomicCounterFile, PidFile
 
 
 if not hasattr(unittest, "skipIf"):
@@ -299,37 +299,68 @@ class LocalMachineTest(unittest.TestCase):
         af2.write_atomic(six.b("bar"))
         self.assertEqual(af1.read_atomic(), six.b("bar"))
         self.assertEqual(af2.read_atomic(), six.b("bar"))
+        local.path("tmp.txt").delete()
 
-        with af1.locked():
-            try:
-                with af2.locked(False):
-                    self.fail("The file should be already locked")
-            except (IOError, OSError):
-                pass
+    def test_atomic_file2(self):
+        af = AtomicFile("tmp.txt")
+
+        code = """from __future__ import with_statement
+from plumbum.atomic import AtomicFile
+af = AtomicFile("tmp.txt")
+try:
+    with af.locked(blocking = False):
+        raise ValueError("this should have failed")
+except (OSError, IOError):
+    print("already locked")
+"""
+        with af.locked():
+            output = local.python("-c", code)
+            self.assertEqual(output.strip(), "already locked")
 
         local.path("tmp.txt").delete()
 
+    def test_pid_file(self):
+        code = """from __future__ import with_statement
+from plumbum.atomic import PidFile, PidFileTaken
+try:
+    with PidFile("mypid"):
+        raise ValueError("this should have failed")
+except PidFileTaken:
+    print("already locked")
+"""
+        with PidFile("mypid"):
+            output = local.python("-c", code)
+            self.assertEqual(output.strip(), "already locked")
+
+        local.path("mypid").delete()
+
     def test_atomic_counter(self):
-        results = []
-        lock = Lock()
         local.path("counter").delete()
-        num_of_threads = 20
+        num_of_procs = 20
         num_of_increments = 20
 
-        def inc_counter():
-            afc = AtomicCounterFile.open("counter")
-            for _ in range(num_of_increments):
-                with lock:
-                    results.append(afc.next())
-                time.sleep(0.001)
+        code = """from plumbum.atomic import AtomicCounterFile
+import time
+time.sleep(0.2)
+afc = AtomicCounterFile.open("counter")
+for _ in range(%s):
+    print(afc.next())
+    time.sleep(0.1)
+""" % (num_of_increments,)
 
-        thds = [Thread(target = inc_counter) for _ in range(num_of_threads)]
-        for thd in thds:
-            thd.start()
-        for thd in thds:
-            thd.join()
+        procs = []
+        for _ in range(num_of_procs):
+            procs.append(local.python["-c", code].popen())
+        results = []
+        for p in procs:
+            out, err = p.communicate()
+            self.assertFalse(err)
+            results.extend(int(num) for num in out.splitlines())
 
-        self.assertEqual(results, list(range(num_of_threads * num_of_increments)))
+        self.assertEqual(len(results), num_of_procs * num_of_increments)
+        self.assertEqual(len(set(results)), len(results))
+        self.assertEqual(min(results), 0)
+        self.assertEqual(max(results), num_of_procs * num_of_increments - 1)
         local.path("counter").delete()
 
     def test_atomic_counter2(self):
@@ -347,16 +378,6 @@ class LocalMachineTest(unittest.TestCase):
         self.assertEqual(afc.next(), 72)
 
         local.path("counter").delete()
-
-    def test_pid_file(self):
-        with PidFile("mypid"):
-            try:
-                with PidFile("mypid"):
-                    self.fail("PID file should be taken here!")
-            except PidFileTaken:
-                pass
-
-        local.path("mypid").delete()
 
 
 
