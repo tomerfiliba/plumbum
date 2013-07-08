@@ -23,19 +23,32 @@ if not hasattr(threading, "get_ident"):
 try:
     import fcntl
     
-    @contextmanager
-    def locked_file(fileno, blocking = True):
-        fcntl.flock(fileno, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
-        try:
-            yield
-        finally:
-            fcntl.flock(fileno, fcntl.LOCK_UN)
+    if hasattr(fcntl, "lockf"):
+        @contextmanager
+        def locked_file(fileno, blocking = True):
+            fcntl.lockf(fileno, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
+            try:
+                yield
+            finally:
+                fcntl.lockf(fileno, fcntl.LOCK_UN)
+
+    else:
+        @contextmanager
+        def locked_file(fileno, blocking = True):
+            fcntl.flock(fileno, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
+            try:
+                yield
+            finally:
+                fcntl.flock(fileno, fcntl.LOCK_UN)
 
 except ImportError:
     import msvcrt
     from pywintypes import error as WinError
-    from win32file import LockFileEx, UnlockFile, OVERLAPPED
-    from win32con import LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY
+    try:
+        from win32file import LockFileEx, UnlockFile, OVERLAPPED
+        from win32con import LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY
+    except ImportError:
+        raise ImportError("On Windows, we require Python for Windows Extensions (pywin32)")
     
     @contextmanager
     def locked_file(fileno, blocking = True):
