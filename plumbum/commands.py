@@ -123,10 +123,11 @@ def shquote_list(seq):
     return [shquote(item) for item in seq]
 
 queue = six.moves.queue
+QueueEmpty = queue.Empty
 _timeout_queue = queue.Queue()
 _shutting_down = False
 
-def _timeout_thread():
+def _timeout_thread_func():
     waiting = MinHeap()
     try:
         while not _shutting_down:
@@ -141,7 +142,7 @@ def _timeout_thread():
                     # terminate
                     return
                 waiting.push((time_to_kill, proc))
-            except queue.Empty:
+            except QueueEmpty:
                 pass
             now = time.time()
             while waiting:
@@ -156,10 +157,13 @@ def _timeout_thread():
                 except EnvironmentError:
                     pass
     except Exception:
-        # to prevent all sorts of exceptions during interpreter shutdown
-        pass
+        if _shutting_down:
+            # to prevent all sorts of exceptions during interpreter shutdown
+            pass
+        else:
+            raise
 
-thd1 = Thread(target = _timeout_thread, name = "PlumbumTimeoutThread")
+thd1 = Thread(target = _timeout_thread_func, name = "PlumbumTimeoutThread")
 thd1.setDaemon(True)
 thd1.start()
 
