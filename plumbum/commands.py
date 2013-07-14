@@ -166,14 +166,16 @@ def _timeout_thread_func():
         else:
             raise
 
-thd1 = Thread(target = _timeout_thread_func, name = "PlumbumTimeoutThread")
-thd1.setDaemon(True)
-thd1.start()
+bgthd = Thread(target = _timeout_thread_func, name = "PlumbumTimeoutThread")
+bgthd.setDaemon(True)
+bgthd.start()
 
 def _shutdown_bg_threads():
     global _shutting_down
     _shutting_down = True
     _timeout_queue.put((SystemExit, 0))
+    # grace period
+    bgthd.join(0.1)
 
 atexit.register(_shutdown_bg_threads)
 
