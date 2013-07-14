@@ -8,6 +8,10 @@ from subprocess import Popen, PIPE
 from threading import Thread
 from plumbum.lib import MinHeap, ascii, bytes
 from contextlib import contextmanager
+try:
+    from queue import Queue, Empty as QueueEmpty
+except ImportError:
+    from Queue import Queue, Empty as QueueEmpty
 
 
 if not hasattr(Popen, "kill"):
@@ -122,9 +126,8 @@ def shquote(text):
 def shquote_list(seq):
     return [shquote(item) for item in seq]
 
-queue = six.moves.queue
-QueueEmpty = queue.Empty
-_timeout_queue = queue.Queue()
+
+_timeout_queue = Queue()
 _shutting_down = False
 
 def _timeout_thread_func():
