@@ -739,7 +739,7 @@ class Application(object):
     def _get_prog_version(self):
         ver = None
         curr = self
-        while curr:
+        while curr is not None:
             ver = getattr(curr, "VERSION", None)
             if ver:
                 print ("%s v%s" % (self.PROGNAME, ver))
