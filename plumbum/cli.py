@@ -741,8 +741,8 @@ class Application(object):
         curr = self
         while curr is not None:
             ver = getattr(curr, "VERSION", None)
-            if ver:
-                return
+            if ver is not None:
+                return ver
             curr = curr.parent
         return ver
 
@@ -750,7 +750,8 @@ class Application(object):
     def version(self):
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
-        print ("%s %s" % (self.PROGNAME, ver if ver else "(no version set)"))
+        print ("%s %s" % (self.PROGNAME,
+                          ver if ver is not None else "(no version set)"))
 
 
 
