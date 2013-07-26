@@ -649,8 +649,7 @@ class Application(object):
     @switch(["-h", "--help"], overridable = True, group = "Meta-switches")
     def help(self):  # @ReservedAssignment
         """Prints this help message and quits"""
-        ver = self._get_prog_version()
-        print ("%s %s" % (self.PROGNAME, ver if ver else ""))
+        self.version()
         if self.DESCRIPTION:
             print(self.DESCRIPTION.strip())
 
@@ -740,11 +739,10 @@ class Application(object):
     def _get_prog_version(self):
         ver = None
         curr = self
-        while curr:
+        while curr is not None:
             ver = getattr(curr, "VERSION", None)
-            if ver:
-                print ("%s v%s" % (self.PROGNAME, ver))
-                return
+            if ver is not None:
+                return ver
             curr = curr.parent
         return ver
 
@@ -752,7 +750,8 @@ class Application(object):
     def version(self):
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
-        print ("%s %s" % (self.PROGNAME, ver if ver else "(no version set)"))
+        print ("%s %s" % (self.PROGNAME,
+                          ver if ver is not None else "(no version set)"))
 
 
 
