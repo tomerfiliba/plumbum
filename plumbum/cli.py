@@ -1,9 +1,10 @@
 import sys
 import six
 import inspect
+import os
 from plumbum import local
 from textwrap import TextWrapper
-import os
+from plumbum.terminal import get_terminal_size
 
 
 class SwitchError(Exception):
@@ -702,7 +703,9 @@ class Application(object):
             
         for si, prefix in switchs(by_groups, False):
             sw_width = max(sw_width, len(prefix))
-
+            
+        cols, _ = get_terminal_size()
+        min_msg_width = 50
         sw_indent = "    "
         sw_to_help_padding = "  "
         initial_indent_width = len(sw_indent) + sw_width + len(sw_to_help_padding)
@@ -718,23 +721,30 @@ class Application(object):
                 help += "; requires %s" % (", ".join(si.requires))
             if si.excludes:
                 help += "; excludes %s" % (", ".join(si.excludes))
-            wrapper = TextWrapper(width = int(local.env.get("COLUMNS", 80)),
-                initial_indent = " " * min(initial_indent_width, 50),
-                subsequent_indent = " " * initial_indent_width)
-            help = wrapper.fill(" ".join(l.strip() for l in help.splitlines()))  # @ReservedAssignment
-            print(description_indent % (prefix, help.strip()))
-
+            
+            wrapper = TextWrapper(width = max(cols - initial_indent_width, min_msg_width) - 1)
+            wrapped = wrapper.wrap(" ".join(l.strip() for l in help.splitlines()))
+            indentation = "\n" + " " * min(initial_indent_width, cols - min_msg_width)
+            msg = indentation.join(wrapped)
+            if initial_indent_width + min_msg_width >= cols:
+                msg = indentation + msg
+            print(description_indent % (prefix, msg))
+        
         if self._subcommands:
             print("Subcommands:")
             for name, subapp in sorted(self._subcommands.items()):
                 doc = subapp.DESCRIPTION if subapp.DESCRIPTION else inspect.getdoc(subapp)
                 help = doc + "; " if doc else ""  # @ReservedAssignment
                 help += "see '%s %s --help' for more info" % (self.PROGNAME, name)
-                wrapper = TextWrapper(width = int(local.env.get("COLUMNS", 80)),
-                    initial_indent = " " * min(initial_indent_width, 50),
-                    subsequent_indent = " " * initial_indent_width)
-                help = wrapper.fill(" ".join(l.strip() for l in help.splitlines()))  # @ReservedAssignment
-                print(description_indent % (name, help.strip()))
+
+                wrapper = TextWrapper(width = max(cols - initial_indent_width, min_msg_width) - 1)
+                wrapped = wrapper.wrap(" ".join(l.strip() for l in help.splitlines()))
+                indentation = "\n" + " " * min(initial_indent_width, cols - min_msg_width)
+                msg = indentation.join(wrapped)
+                if initial_indent_width + min_msg_width >= cols:
+                    msg = indentation + msg
+                print(description_indent % (name, msg))
+
 
     def _get_prog_version(self):
         ver = None
@@ -750,8 +760,7 @@ class Application(object):
     def version(self):
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
-        print ("%s %s" % (self.PROGNAME,
-                          ver if ver is not None else "(no version set)"))
+        print ("%s %s" % (self.PROGNAME, ver if ver is not None else "(no version set)"))
 
 
 
