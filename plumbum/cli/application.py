@@ -97,6 +97,7 @@ class Application(object):
     DESCRIPTION = None
     VERSION = None
     USAGE = None
+    CALL_MAIN_IF_NESTED_COMMAND = True
 
     parent = None
     nested_command = None
@@ -345,7 +346,8 @@ class Application(object):
         else:
             for f, a in ordered:
                 f(inst, *a)
-            retcode = inst.main(*tailargs)
+            if not inst.nested_command or inst.CALL_MAIN_IF_NESTED_COMMAND:
+                retcode = inst.main(*tailargs)
             if not retcode and inst.nested_command:
                 subapp, argv = inst.nested_command
                 subapp.parent = inst
