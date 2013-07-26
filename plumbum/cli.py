@@ -742,7 +742,6 @@ class Application(object):
         while curr is not None:
             ver = getattr(curr, "VERSION", None)
             if ver:
-                print ("%s v%s" % (self.PROGNAME, ver))
                 return
             curr = curr.parent
         return ver
