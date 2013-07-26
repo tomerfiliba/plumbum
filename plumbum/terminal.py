@@ -73,6 +73,4 @@ def _get_terminal_size_linux():
     return cr[1], cr[0]
  
  
-if __name__ == "__main__":
-    print get_terminal_size()
 
