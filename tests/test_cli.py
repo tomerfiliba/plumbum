@@ -75,6 +75,21 @@ class Mumble(cli.Application):
 
 Sample.subcommand("mumble", Mumble)
 
+if not hasattr(unittest.TestCase, "assertIn"):
+    def assertIn(self, member, container, msg = None):
+        if msg:
+            assert member in container, msg
+        else:
+            assert member in container
+    def assertNotIn(self, member, container, msg = None):
+        if msg:
+            assert member not in container, msg
+        else:
+            assert member not in container
+    unittest.TestCase.assertIn = assertIn
+    unittest.TestCase.assertNotIn = assertNotIn
+    
+
 class CLITest(unittest.TestCase):
     def test_meta_switches(self):
         _, rc = TestApp.run(["foo", "-h"], exit = False)
