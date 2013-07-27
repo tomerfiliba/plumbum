@@ -1,5 +1,23 @@
+from __future__ import with_statement
+import sys
 import unittest
 from plumbum import cli
+from contextlib import contextmanager
+if sys.version_info[0] >= 3:
+    from io import StringIO
+else:
+    from StringIO import StringIO
+
+
+@contextmanager
+def captured_stdout():
+    prev = sys.stdout
+    stream = StringIO()
+    sys.stdout = stream
+    try:
+        yield stream
+    finally:
+        sys.stdout = prev
 
 
 class TestApp(cli.Application):
@@ -47,6 +65,15 @@ class GeetCommit(cli.Application):
 Geet.subcommand("add", GeetAdd)
 Geet.subcommand("commit", GeetCommit)
 
+class Sample(cli.Application):
+    foo = cli.SwitchAttr("--foo")
+
+Sample.unbind_switches("--version")
+
+class Mumble(cli.Application):
+    pass
+
+Sample.subcommand("mumble", Mumble)
 
 class CLITest(unittest.TestCase):
     def test_meta_switches(self):
@@ -82,7 +109,29 @@ class CLITest(unittest.TestCase):
         self.assertEqual(rc, 0)
         _, rc = Geet.run(["geet", "commit", "--help"], exit = False)
         self.assertEqual(rc, 0)
+    
+    def test_unbind(self):
+        with captured_stdout() as stream:
+            _, rc = Sample.run(["sample", "--help"], exit = False)
+        self.assertEqual(rc, 0)
+        self.assertIn("--foo", stream.getvalue())
+        self.assertNotIn("--version", stream.getvalue())
 
+    def test_default_main(self):
+        with captured_stdout() as stream:
+            _, rc = Sample.run(["sample"], exit = False)
+        self.assertEqual(rc, 1)
+        self.assertIn("No sub-command given", stream.getvalue())
+        
+        with captured_stdout() as stream:
+            _, rc = Sample.run(["sample", "pimple"], exit = False)
+        self.assertEqual(rc, 1)
+        self.assertIn("Unknown sub-command 'pimple'", stream.getvalue())
+        
+        with captured_stdout() as stream:
+            _, rc = Sample.run(["sample", "mumble"], exit = False)
+        self.assertEqual(rc, 1)
+        self.assertIn("main() not implemented", stream.getvalue())
 
 
 

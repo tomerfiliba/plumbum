@@ -248,14 +248,6 @@ class CountOf(SwitchAttr):
     def __call__(self, _, v):
         self._value = len(v)
 
-class Subcommand(object):
-    def __init__(self, name, subapplication):
-        self.name = name
-        self.subapplication = subapplication
-    def __repr__(self):
-        return "Subcommand(%r, %r)" % (self.name, self.subapplication)
-
-
 #===================================================================================================
 # Switch type validators
 #===================================================================================================
@@ -348,6 +340,12 @@ class SwitchParseInfo(object):
         self.val = val
         self.index = index
 
+class Subcommand(object):
+    def __init__(self, name, subapplication):
+        self.name = name
+        self.subapplication = subapplication
+    def __repr__(self):
+        return "Subcommand(%r, %r)" % (self.name, self.subapplication)
 
 class Application(object):
     """
@@ -402,8 +400,10 @@ class Application(object):
     DESCRIPTION = None
     VERSION = None
     USAGE = None
+    
     parent = None
     nested_command = None
+    _unbound_switches = ()
 
     def __init__(self, executable):
         if self.PROGNAME is None:
@@ -429,10 +429,22 @@ class Application(object):
                 if not swinfo:
                     continue
                 for name in swinfo.names:
+                    if name in self._unbound_switches:
+                        continue
                     if name in self._switches_by_name and not self._switches_by_name[name].overridable:
                         raise SwitchError("Switch %r already defined and is not overridable" % (name,))
                     self._switches_by_name[name] = swinfo
-                self._switches_by_func[swinfo.func] = swinfo
+                    self._switches_by_func[swinfo.func] = swinfo
+
+    @classmethod
+    def unbind_switches(cls, *switch_names):
+        """Unbinds the given switch names from this application. For example::
+            
+            class MyApp(cli.Application):
+                pass
+            MyApp.unbind("--version")
+        """
+        cls._unbound_switches += tuple(name.lstrip("-") for name in switch_names if name)
 
     @classmethod
     def subcommand(cls, name, subapp = None):
@@ -621,7 +633,7 @@ class Application(object):
         except SwitchError:
             ex = sys.exc_info()[1]  # compatibility with python 2.5
             print("Error: %s" % (ex,))
-            print("~" * 70)
+            print("------")
             inst.help()
             retcode = 2
         else:
@@ -635,17 +647,28 @@ class Application(object):
 
             if retcode is None:
                 retcode = 0
-            # elif not isinstance(retcode, int):
-            #    retcode = 1
 
         if exit:
             sys.exit(retcode)
         else:
             return inst, retcode
 
-    def main(self):
-        """Override me"""
-        pass
+    def main(self, *args):
+        """Implement me (no need to call super)"""
+        if self._subcommands:
+            if args:
+                print("Unknown sub-command %r" % (args[0],))
+                print("------")
+                self.help()
+                return 1
+            if not self.nested_command:
+                print("No sub-command given")
+                print("------")
+                self.help()
+                return 1
+        else:
+            print("main() not implemented")
+            return 1
 
     @switch(["-h", "--help"], overridable = True, group = "Meta-switches")
     def help(self):  # @ReservedAssignment
@@ -684,7 +707,7 @@ class Application(object):
 
                 for si in sorted(swinfos, key = lambda si: si.names):
                     swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names
-                        if self._switches_by_name[n] == si)
+                        if n in self._switches_by_name and self._switches_by_name[n] == si)
                     if si.argtype:
                         if isinstance(si.argtype, type):
                             typename = si.argtype.__name__
@@ -744,7 +767,6 @@ class Application(object):
                 if initial_indent_width + min_msg_width >= cols:
                     msg = indentation + msg
                 print(description_indent % (name, msg))
-
 
     def _get_prog_version(self):
         ver = None

@@ -1,6 +1,6 @@
 """
 Adapted from https://gist.github.com/jtriley/1108174
-Originally retrieved from: http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
+Originally from: http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
 """
 import os
 import platform
@@ -71,6 +71,5 @@ def _get_terminal_size_linux():
         except Exception:
             return None
     return cr[1], cr[0]
- 
- 
+
 

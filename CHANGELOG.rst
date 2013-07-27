@@ -10,6 +10,9 @@
 * ``atomic``: Atomic file operations (``AtomicFile``, ``AtomicCounterFile`` and ``PidFile``)
 * ``copy`` and ``move``: the ``src`` argument can now be a list of files to move, e.g., ``copy(["foo", "bar"], "/usr/bin")``
 * list local and remote processes
+* cli: better handling of text wrapping in ``cli.Application.help``
+* cli: add a default ``main()`` method that checks for unknown subcommands
+* terminal: initial commit (``get_terminal_size``)
 
 1.2
 ---

@@ -49,14 +49,6 @@ class Geet(cli.Application):
     verbosity = cli.SwitchAttr("--verbosity", cli.Set("low", "high", "some-very-long-name", "to-test-wrap-around"), 
         help = "sets the verbosity level of the geet tool. doesn't really do anything except for testing line-wrapping "
         "in help " * 3)
-    
-    def main(self, *args):
-        if args:
-            print("unknown command %r" % (args[0]))
-            return 1
-        if not self.nested_command:
-            print("no command given")
-            return 1
 
 @Geet.subcommand("commit")
 class GeetCommit(cli.Application):
@@ -67,6 +59,8 @@ class GeetCommit(cli.Application):
     
     def main(self):
         print("committing...")
+
+GeetCommit.unbind_switches("-v", "--version")
 
 @Geet.subcommand("push")
 class GeetPush(cli.Application):
