@@ -3,6 +3,7 @@ import six
 import subprocess
 from contextlib import contextmanager
 from plumbum.commands.processes import run_proc
+from plumbum.lib import bytes
 from tempfile import TemporaryFile
 from subprocess import PIPE
 
