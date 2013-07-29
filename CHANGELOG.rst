@@ -13,6 +13,8 @@
 * cli: better handling of text wrapping in ``cli.Application.help``
 * cli: add a default ``main()`` method that checks for unknown subcommands
 * terminal: initial commit (``get_terminal_size``)
+* packaging: the package was split into subpackages; it grew too big for a flat namespace.
+  imports are not expected to be broken by this change
 
 1.2
 ---
