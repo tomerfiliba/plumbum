@@ -113,7 +113,7 @@ class ShellSession(object):
     less "robust" than executing a process on its own, and they are susseptible to all sorts
     of malformatted-strings attacks, and there is little benefit from using them locally.
     However, they can greatly speed up remote connections, and are required for the implementation
-    of :class:`SshMachine <plumbum.remote_machine.SshMachine>`, as they allow us to send multiple
+    of :class:`SshMachine <plumbum.machines.remote.SshMachine>`, as they allow us to send multiple
     commands over a single SSH connection (setting up separate SSH connections incurs a high
     overhead). Try to avoid using shell sessions, unless you know what you're doing.
 

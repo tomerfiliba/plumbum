@@ -5,10 +5,10 @@ import sys
 import errno
 import signal
 import traceback
-from plumbum.commands import ProcessExecutionError
+from plumbum.commands.processes import ProcessExecutionError
 
 
-def _posix_daemonize(command, cwd = "/"):
+def posix_daemonize(command, cwd):
     MAX_SIZE = 16384
     rfd, wfd = os.pipe()
     argv = command.formulate()
@@ -84,11 +84,16 @@ def _posix_daemonize(command, cwd = "/"):
         return proc
 
 
-def _win32_daemonize(command, cwd = "/"):
+def win32_daemonize(command, cwd):
     DETACHED_PROCESS = 0x00000008
     stdin = open(os.devnull, "r")
     stdout = open(os.devnull, "w")
     stderr = open(os.devnull, "w")
     return command.popen(cwd = cwd, stdin = stdin.fileno(), stdout = stdout.fileno(), stderr = stderr.fileno(), 
         creationflags = subprocess.CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS)
+
+
+
+
+
 

@@ -1,7 +1,7 @@
 from __future__ import with_statement
 import unittest
 from plumbum import local, SshMachine
-from plumbum.utils import copy, delete, move
+from plumbum.path.utils import copy, delete, move
 
 
 class UtilsTest(unittest.TestCase):
@@ -52,8 +52,6 @@ class UtilsTest(unittest.TestCase):
                             
                             # test rm
                             delete(dir)
-
-
 
 
 if __name__ == "__main__":

@@ -34,11 +34,10 @@ of command-line interface (CLI) programs.
 
 See http://plumbum.readthedocs.org for full details
 """
-from plumbum.commands import FG, BG, ERROUT
 from plumbum.commands import ProcessExecutionError, CommandNotFound, ProcessTimedOut
-from plumbum.path import Path
-from plumbum.local_machine import local, LocalPath
-from plumbum.remote_machine import SshMachine, RemotePath, PuttyMachine
+from plumbum.commands import FG, BG, ERROUT
+from plumbum.path import Path, LocalPath, RemotePath
+from plumbum.machines import local, BaseRemoteMachine, SshMachine, PuttyMachine
 from plumbum.version import version
 
 __author__ = "Tomer Filiba (tomerfiliba@gmail.com)"

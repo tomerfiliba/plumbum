@@ -3,8 +3,8 @@ import os
 import socket
 import unittest
 import six
-from plumbum import RemotePath, SshMachine, ProcessExecutionError
 import time
+from plumbum import RemotePath, SshMachine, ProcessExecutionError
 
 
 #TEST_HOST = "192.168.1.143"
@@ -160,7 +160,7 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
     def test_remote_daemon(self):
         with self._connect() as rem:
             sleep = rem["sleep"]
-            rem.daemonize(sleep["5.793817"])
+            rem.nohup(sleep["5.793817"])
             self.assertTrue(list(rem.pgrep("5.793817")))
             time.sleep(6)
             self.assertFalse(list(rem.pgrep("5.793817")))
@@ -168,7 +168,7 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
 
 if not six.PY3:
     import paramiko
-    from plumbum.paramiko_machine import ParamikoMachine
+    from plumbum.machines.paramiko_machine import ParamikoMachine
 
     class TestParamikoMachine(unittest.TestCase, BaseRemoteMachineTest):
         def _connect(self):

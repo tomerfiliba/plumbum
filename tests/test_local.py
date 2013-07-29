@@ -282,7 +282,7 @@ class LocalMachineTest(unittest.TestCase):
     
     def test_local_daemon(self):
         from plumbum.cmd import sleep
-        proc = local.daemonize(sleep[5])
+        proc = local.daemonic_popen(sleep[5])
         try:
             os.waitpid(proc.pid, 0)
         except OSError:

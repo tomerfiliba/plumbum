@@ -1,5 +1,7 @@
-import heapq
+import sys
 
+
+IS_WIN32 = (sys.platform == "win32")
 
 try:
     bytes = bytes  # @ReservedAssignment
@@ -17,18 +19,6 @@ def _setdoc(super):  # @ReservedAssignment
         return func
     return deco
 
-class MinHeap(object):
-    def __init__(self, items = ()):
-        self._items = list(items)
-        heapq.heapify(self._items)
-    def __len__(self):
-        return len(self._items)
-    def push(self, item):
-        heapq.heappush(self._items, item)
-    def pop(self):
-        heapq.heappop(self._items)
-    def peek(self):
-        return self._items[0]
 
 class ProcInfo(object):
     def __init__(self, pid, uid, stat, args):
@@ -38,6 +28,5 @@ class ProcInfo(object):
         self.args = args
     def __repr__(self):
         return "ProcInfo(%r, %r, %r, %r)" % (self.pid, self.uid, self.stat, self.args)
-
 
 

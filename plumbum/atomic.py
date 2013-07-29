@@ -9,7 +9,7 @@ import threading
 import sys
 import atexit
 from contextlib import contextmanager
-from plumbum.local_machine import local
+from plumbum.machines.local import local
 
 if not hasattr(threading, "get_ident"):
     try:
@@ -22,25 +22,6 @@ if not hasattr(threading, "get_ident"):
 
 try:
     import fcntl
-    
-    if hasattr(fcntl, "lockf"):
-        @contextmanager
-        def locked_file(fileno, blocking = True):
-            fcntl.lockf(fileno, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
-            try:
-                yield
-            finally:
-                fcntl.lockf(fileno, fcntl.LOCK_UN)
-
-    else:
-        @contextmanager
-        def locked_file(fileno, blocking = True):
-            fcntl.flock(fileno, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
-            try:
-                yield
-            finally:
-                fcntl.flock(fileno, fcntl.LOCK_UN)
-
 except ImportError:
     import msvcrt
     from pywintypes import error as WinError
@@ -63,6 +44,23 @@ except ImportError:
             yield
         finally:
             UnlockFile(hndl, 0, 0, 0xffffffff, 0xffffffff)
+else:
+    if hasattr(fcntl, "lockf"):
+        @contextmanager
+        def locked_file(fileno, blocking = True):
+            fcntl.lockf(fileno, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
+            try:
+                yield
+            finally:
+                fcntl.lockf(fileno, fcntl.LOCK_UN)
+    else:
+        @contextmanager
+        def locked_file(fileno, blocking = True):
+            fcntl.flock(fileno, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
+            try:
+                yield
+            finally:
+                fcntl.flock(fileno, fcntl.LOCK_UN)
 
 
 class AtomicFile(object):

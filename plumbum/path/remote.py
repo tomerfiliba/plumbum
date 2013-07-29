@@ -1,8 +1,28 @@
 from __future__ import with_statement
 import errno
 import six
-from plumbum.path import Path, FSUser
+from contextlib import contextmanager
+from plumbum.path.base import Path, FSUser
 from plumbum.lib import _setdoc
+from plumbum.commands import shquote
+
+
+class StatRes(object):
+    """POSIX-like stat result"""
+    def __init__(self, tup):
+        self._tup = tuple(tup)
+    def __getitem__(self, index):
+        return self._tup[index]
+    mode = property(lambda self: self[0])
+    ino = property(lambda self: self[1])
+    dev = property(lambda self: self[2])
+    nlink = property(lambda self: self[3])
+    uid = property(lambda self: self[4])
+    gid = property(lambda self: self[5])
+    size = property(lambda self: self[6])
+    atime = property(lambda self: self[7])
+    mtime = property(lambda self: self[8])
+    ctime = property(lambda self: self[9])
 
 
 class RemotePath(Path):
@@ -176,6 +196,39 @@ class RemotePath(Path):
         self.remote._path_link(self, dst, True)
 
 
+class RemoteWorkdir(RemotePath):
+    """Remote working directory manipulator"""
+
+    def __init__(self, remote):
+        self.remote = remote
+        self._path = self.remote._session.run("pwd")[1].strip()
+    def __hash__(self):
+        raise TypeError("unhashable type")
+
+    def chdir(self, newdir):
+        """Changes the current working directory to the given one"""
+        self.remote._session.run("cd %s" % (shquote(newdir),))
+        self._path = self.remote._session.run("pwd")[1].strip()
+
+    def getpath(self):
+        """Returns the current working directory as a
+        `remote path <plumbum.path.remote.RemotePath>` object"""
+        return RemotePath(self.remote, self)
+
+    @contextmanager
+    def __call__(self, newdir):
+        """A context manager used to ``chdir`` into a directory and then ``chdir`` back to
+        the previous location; much like ``pushd``/``popd``.
+
+        :param newdir: The destination director (a string or a
+                       :class:`RemotePath <plumbum.path.remote.RemotePath>`)
+        """
+        prev = self._path
+        self.chdir(newdir)
+        try:
+            yield
+        finally:
+            self.chdir(prev)
 
 
 

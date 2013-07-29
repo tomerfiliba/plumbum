@@ -1,3 +1,12 @@
+import logging
+import six
+import errno
+import socket
+from plumbum.machines.remote import BaseRemoteMachine
+from plumbum.machines.session import ShellSession
+from plumbum.lib import _setdoc, bytes
+from plumbum.path.local import LocalPath
+from plumbum.path.remote import RemotePath
 try:
     # Sigh... we need to gracefully-import paramiko for Sphinx builds, etc
     import paramiko
@@ -9,16 +18,6 @@ except ImportError:
         def __getattr__(self, name):
             raise ImportError("No module named paramiko")
     paramiko = paramiko()
-
-import logging
-import six
-import errno
-import socket
-from plumbum.remote_machine import BaseRemoteMachine
-from plumbum.session import ShellSession
-from plumbum.lib import _setdoc, bytes
-from plumbum.local_machine import LocalPath
-from plumbum.remote_path import RemotePath
 
 
 logger = logging.getLogger("plumbum.paramiko")
@@ -100,7 +99,7 @@ class ParamikoPopen(object):
 
 class ParamikoMachine(BaseRemoteMachine):
     """
-    An implementation of :class:`remote machine <plumbum.remote_machine.BaseRemoteMachine>`
+    An implementation of :class:`remote machine <plumbum.machines.remote.BaseRemoteMachine>`
     over Paramiko (a Python implementation of openSSH2 client/server). Invoking a remote command
     translates to invoking it over SSH ::
 

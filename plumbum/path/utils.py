@@ -1,13 +1,13 @@
 from __future__ import with_statement
 import six
-from plumbum.path import Path
-from plumbum.local_machine import local, LocalPath
+from plumbum.path.base import Path
+from plumbum.machines.local import local, LocalPath
 
 
 def delete(*paths):
     """Deletes the given paths. The arguments can be either strings,
-    :class:`local paths <plumbum.local_machine.LocalPath>`,
-    :class:`remote paths <plumbum.remote_machine.RemotePath>`, or iterables of such.
+    :class:`local paths <plumbum.path.local.LocalPath>`,
+    :class:`remote paths <plumbum.path.remote.RemotePath>`, or iterables of such.
     No error is raised if any of the paths does not exist (it is silently ignored)
     """
     for p in paths:
@@ -27,8 +27,8 @@ def _move(src, dst):
 
 def move(src, dst):
     """Moves the source path onto the destination path; ``src`` and ``dst`` can be either
-    strings, :class:`LocalPaths <plumbum.local_machine.LocalPath>` or
-    :class:`RemotePath <plumbum.remote_machine.RemotePath>`; any combination of the three will
+    strings, :class:`LocalPaths <plumbum.path.local.LocalPath>` or
+    :class:`RemotePath <plumbum.path.remote.RemotePath>`; any combination of the three will
     work. 
     
     .. versionadded:: 1.3
@@ -63,8 +63,8 @@ def move(src, dst):
 def copy(src, dst):
     """
     Copy (recursively) the source path onto the destination path; ``src`` and ``dst`` can be
-    either strings, :class:`LocalPaths <plumbum.local_machine.LocalPath>` or
-    :class:`RemotePath <plumbum.remote_machine.RemotePath>`; any combination of the three will
+    either strings, :class:`LocalPaths <plumbum.path.local.LocalPath>` or
+    :class:`RemotePath <plumbum.path.remote.RemotePath>`; any combination of the three will
     work.
 
     .. versionadded:: 1.3
