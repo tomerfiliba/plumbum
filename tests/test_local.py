@@ -378,6 +378,11 @@ for _ in range(%s):
 
         local.path("counter").delete()
 
+    def test_bound_env(self):
+        from plumbum.cmd import printenv
+        with local.env(FOO = "hello"):
+            self.assertEqual(printenv.setenv(BAR = "world")("FOO", "BAR"), "hello\nworld\n")
+            self.assertEqual(printenv.setenv(FOO = "sea", BAR = "world")("FOO", "BAR"), "sea\nworld\n")
 
 
 

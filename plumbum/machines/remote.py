@@ -84,6 +84,9 @@ class RemoteCommand(ConcreteCommand):
         self.remote = remote
         ConcreteCommand.__init__(self, executable,
             remote.encoding if encoding == "auto" else encoding)
+    @property
+    def machine(self):
+        return self.remote
     def __repr__(self):
         return "RemoteCommand(%r, %r)" % (self.remote, self.executable)
     def popen(self, args = (), **kwargs):

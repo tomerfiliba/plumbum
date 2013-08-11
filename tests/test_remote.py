@@ -4,7 +4,7 @@ import socket
 import unittest
 import six
 import time
-from plumbum import RemotePath, SshMachine, ProcessExecutionError
+from plumbum import RemotePath, SshMachine, ProcessExecutionError, local
 
 
 #TEST_HOST = "192.168.1.143"
@@ -152,18 +152,38 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
     def test_list_processes(self):
         with self._connect() as rem:
             self.assertTrue(list(rem.list_processes()))
-    
+
     def test_pgrep(self):
         with self._connect() as rem:
             self.assertTrue(list(rem.pgrep("ssh")))
 
-    def test_remote_daemon(self):
+    def test_nohup(self):
         with self._connect() as rem:
             sleep = rem["sleep"]
             rem.nohup(sleep["5.793817"])
             self.assertTrue(list(rem.pgrep("5.793817")))
             time.sleep(6)
             self.assertFalse(list(rem.pgrep("5.793817")))
+
+    def test_bound_env(self):
+        with self._connect() as rem:
+            printenv = rem["printenv"]
+            with rem.env(FOO = "hello"):
+                self.assertEqual(printenv.setenv(BAR = "world")("FOO", "BAR"), "hello\nworld\n")
+                self.assertEqual(printenv.setenv(FOO = "sea", BAR = "world")("FOO", "BAR"), "sea\nworld\n")
+
+    def test_sshpass(self):
+        with local.as_root():
+            local["useradd"]("-m", "-b", "/tmp", "testuser")
+            (local["passwd"] << "123456")("--stdin", "testuser")
+
+        try:
+            with SshMachine("localhost", user = "testuser", password = "123456") as rem:
+                self.assertEqual(rem["pwd"]().strip(), "/tmp/testuser")
+        finally:
+            with local.as_root():
+                local["userdel"]("-r", "testuser")
+
 
 
 if not six.PY3:
@@ -189,9 +209,6 @@ if not six.PY3:
                 s.close()
                 self.assertEqual(data, six.b("hello world"))
     
-
-
-
 
 
 if __name__ == "__main__":

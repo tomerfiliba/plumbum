@@ -56,21 +56,33 @@ class SshMachine(BaseRemoteMachine):
 
     :param scp_opts: any additional options for ``scp`` (a list of strings)
 
+    :param password: the password to use; requires ``sshpass`` be installed. Cannot be used
+                     in conjunction with ``ssh_command`` or ``scp_command`` (will be ignored).
+                     NOTE: THIS IS A SECURITY RISK!
+
     :param encoding: the remote machine's encoding (defaults to UTF8)
     """
 
     def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None,
-            scp_command = None, ssh_opts = (), scp_opts = (), encoding = "utf8"):
+            scp_command = None, ssh_opts = (), scp_opts = (), password = None, encoding = "utf8"):
+
         if ssh_command is None:
-            ssh_command = local["ssh"]
+            if password is not None:
+                ssh_command = local["sshpass"]["-p", password, "ssh"]
+            else:
+                ssh_command = local["ssh"]
         if scp_command is None:
-            scp_command = local["scp"]
+            if password is not None:
+                scp_command = local["sshpass"]["-p", password, "scp"]
+            else:
+                scp_command = local["scp"]
+
+        scp_args = []
+        ssh_args = []
         if user:
             self._fqhost = "%s@%s" % (user, host)
         else:
             self._fqhost = host
-        scp_args = []
-        ssh_args = []
         if port:
             ssh_args.extend(["-p", str(port)])
             scp_args.extend(["-P", str(port)])

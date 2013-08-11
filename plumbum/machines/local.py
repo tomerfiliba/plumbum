@@ -89,9 +89,12 @@ class LocalCommand(ConcreteCommand):
     def __init__(self, executable, encoding = "auto"):
         ConcreteCommand.__init__(self, executable,
             local.encoding if encoding == "auto" else encoding)
-
     def __repr__(self):
         return "LocalCommand(%r)" % (self.executable,)
+
+    @property
+    def machine(self):
+        return local
 
     def popen(self, args = (), cwd = None, env = None, **kwargs):
         if isinstance(args, six.string_types):

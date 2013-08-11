@@ -92,6 +92,16 @@ class BaseCommand(object):
     def _get_encoding(self):
         raise NotImplementedError()
 
+    def setenv(self, **envvars):
+        """Creates a BoundEnvCommand with the given environment variables"""
+        if not envvars:
+            return self
+        return BoundEnvCommand(self, envvars)
+
+    @property
+    def machine(self):
+        raise NotImplementedError()
+
     def formulate(self, level = 0, args = ()):
         """Formulates the command into a command-line, i.e., a list of shell-quoted strings
         that can be executed by ``Popen`` or shells.
@@ -214,10 +224,31 @@ class BoundCommand(BaseCommand):
         return self.cmd._get_encoding()
     def formulate(self, level = 0, args = ()):
         return self.cmd.formulate(level + 1, self.args + list(args))
+    @property
+    def machine(self):
+        return self.cmd.machine
     def popen(self, args = (), **kwargs):
         if isinstance(args, six.string_types):
             args = [args, ]
         return self.cmd.popen(self.args + list(args), **kwargs)
+
+class BoundEnvCommand(BaseCommand):
+    __slots__ = ["cmd", "envvars"]
+    def __init__(self, cmd, envvars):
+        self.cmd = cmd
+        self.envvars = envvars
+    def __repr__(self):
+        return "BoundEnvCommand(%r, %r)" % (self.cmd, self.envvars)
+    def _get_encoding(self):
+        return self.cmd._get_encoding()
+    def formulate(self, level = 0, args = ()):
+        return self.cmd.formulate(level, args)
+    @property
+    def machine(self):
+        return self.cmd.machine
+    def popen(self, args = (), **kwargs):
+        with self.machine.env(**self.envvars):
+            return self.cmd.popen(args, **kwargs)
 
 class Pipeline(BaseCommand):
     __slots__ = ["srccmd", "dstcmd"]
@@ -230,6 +261,10 @@ class Pipeline(BaseCommand):
         return self.srccmd._get_encoding() or self.dstcmd._get_encoding()
     def formulate(self, level = 0, args = ()):
         return self.srccmd.formulate(level + 1) + ["|"] + self.dstcmd.formulate(level + 1, args)
+
+    @property
+    def machine(self):
+        return self.srccmd.machine
 
     def popen(self, args = (), **kwargs):
         src_kwargs = kwargs.copy()
@@ -262,6 +297,9 @@ class BaseRedirection(BaseCommand):
         return "%s(%r, %r)" % (self.__class__.__name__, self.cmd, self.file)
     def formulate(self, level = 0, args = ()):
         return self.cmd.formulate(level + 1, args) + [self.SYM, shquote(getattr(self.file, "name", self.file))]
+    @property
+    def machine(self):
+        return self.cmd.machine
     def popen(self, args = (), **kwargs):
         from plumbum.machines.local import LocalPath
         from plumbum.machines.remote import RemotePath
@@ -324,6 +362,9 @@ class StdinDataRedirection(BaseCommand):
 
     def formulate(self, level = 0, args = ()):
         return ["echo %s" % (shquote(self.data),), "|", self.cmd.formulate(level + 1, args)]
+    @property
+    def machine(self):
+        return self.cmd.machine
     def popen(self, args = (), **kwargs):
         if "stdin" in kwargs and kwargs["stdin"] != PIPE:
             raise RedirectionError("stdin is already redirected")
@@ -353,6 +394,10 @@ class ConcreteCommand(BaseCommand):
         return str(self.executable)
     def _get_encoding(self):
         return self.encoding
+
+    @property
+    def machine(self):
+        return self.cmd.machine
 
     def formulate(self, level = 0, args = ()):
         argv = [str(self.executable)]
