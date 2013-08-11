@@ -175,9 +175,15 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
     def test_sshpass(self):
         with local.as_root():
             local["useradd"]("-m", "-b", "/tmp", "testuser")
-            (local["passwd"] << "123456")("--stdin", "testuser")
 
         try:
+            with local.as_root():
+                try:
+                    (local["passwd"] << "123456")("--stdin", "testuser")
+                except ProcessExecutionError:
+                    # some versions of passwd don't support --stdin, nothing to do in this case
+                    self.skipTest("passwd failed")
+
             with SshMachine("localhost", user = "testuser", password = "123456") as rem:
                 self.assertEqual(rem["pwd"]().strip(), "/tmp/testuser")
         finally:
