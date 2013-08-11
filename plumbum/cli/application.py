@@ -426,9 +426,9 @@ class Application(object):
             if si.mandatory:
                 help += "; required"
             if si.requires:
-                help += "; requires %s" % (", ".join(si.requires))
+                help += "; requires %s" % (", ".join((("-" if len(s) == 1 else "--") + s) for s in si.requires))
             if si.excludes:
-                help += "; excludes %s" % (", ".join(si.excludes))
+                help += "; excludes %s" % (", ".join((("-" if len(s) == 1 else "--") + s) for s in si.excludes))
 
             wrapper = TextWrapper(width = max(cols - initial_indent_width, min_msg_width) - 1)
             wrapped = wrapper.wrap(" ".join(l.strip() for l in help.splitlines()))
