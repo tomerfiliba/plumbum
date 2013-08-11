@@ -4,6 +4,7 @@ import socket
 import unittest
 import six
 import time
+import logging
 from plumbum import RemotePath, SshMachine, ProcessExecutionError, local
 
 
@@ -14,7 +15,6 @@ if TEST_HOST not in ("::1", "127.0.0.1", "localhost"):
     plumbum.local.env.path.append("c:\\Program Files\\Git\\bin")
 
 if not hasattr(unittest, "skipIf"):
-    import logging
     import functools
     def skipIf(cond, msg = None):
         def deco(func):
