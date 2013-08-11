@@ -6,7 +6,7 @@
 * ``local.daemonize``: run commands as full daemons (double-fork and ``setsid``) on POSIX systems, or
   detached from their controlling console and parent (on Windows).   
 * ``list_processes``: return a list of running process (local/remote machines)
-* ``SshMachine.daemonize``: "daemonize" remote commands via ``nohup`` (not really a daemon, but good enough)
+* ``SshMachine.nohup``: "daemonize" remote commands via ``nohup`` (not really a daemon, but good enough)
 * ``atomic``: Atomic file operations (``AtomicFile``, ``AtomicCounterFile`` and ``PidFile``)
 * ``copy`` and ``move``: the ``src`` argument can now be a list of files to move, e.g., ``copy(["foo", "bar"], "/usr/bin")``
 * list local and remote processes
@@ -14,7 +14,11 @@
 * cli: add a default ``main()`` method that checks for unknown subcommands
 * terminal: initial commit (``get_terminal_size``)
 * packaging: the package was split into subpackages; it grew too big for a flat namespace.
-  imports are not expected to be broken by this change
+  imports are not expected to be broken by this change, except for ``plumbum.utils --> plumbum.path.utils``
+* SshMachine: added ``password`` parameter, which relies on `sshpass <http://linux.die.net/man/1/sshpass>`_ to feed the 
+  password to ``ssh``. This is a security risk, but it's occasionally necessary. Use this with caution!
+* Commands now have a ``machine`` attribute that points to the machine they run on
+* Commands gained ``setenv``, which creates a command with a bound environment
 
 1.2
 ---
