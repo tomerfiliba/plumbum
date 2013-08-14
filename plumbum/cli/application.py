@@ -411,13 +411,14 @@ class Application(object):
 
         for si, prefix in switchs(by_groups, False):
             sw_width = max(sw_width, len(prefix))
+        if sw_width > 60:
+            sw_width = 60
 
         cols, _ = get_terminal_size()
         min_msg_width = 50
-        sw_indent = "    "
-        sw_to_help_padding = "  "
-        initial_indent_width = len(sw_indent) + sw_width + len(sw_to_help_padding)
-        description_indent = sw_indent + "%%-%is" % sw_width + sw_to_help_padding + "%s"
+        description_indent = "    %s%s%s"
+        wrapper = TextWrapper(width = max(cols - sw_width, min_msg_width) - 2)
+        indentation = "\n" + " " * (cols - wrapper.width)
 
         for si, prefix in switchs(by_groups, True):
             help = si.help  # @ReservedAssignment
@@ -430,13 +431,13 @@ class Application(object):
             if si.excludes:
                 help += "; excludes %s" % (", ".join((("-" if len(s) == 1 else "--") + s) for s in si.excludes))
 
-            wrapper = TextWrapper(width = max(cols - initial_indent_width, min_msg_width) - 1)
-            wrapped = wrapper.wrap(" ".join(l.strip() for l in help.splitlines()))
-            indentation = "\n" + " " * min(initial_indent_width, cols - min_msg_width)
-            msg = indentation.join(wrapped)
-            if initial_indent_width + min_msg_width >= cols:
-                msg = indentation + msg
-            print(description_indent % (prefix, msg))
+            msg = indentation.join(wrapper.wrap(" ".join(l.strip() for l in help.splitlines())))
+
+            if len(prefix) + wrapper.width >= cols:
+                padding = indentation
+            else:
+                padding = " " * max(cols - wrapper.width - len(prefix) - 4, 1)
+            print(description_indent % (prefix, padding, msg))
 
         if self._subcommands:
             print("Subcommands:")
@@ -445,13 +446,13 @@ class Application(object):
                 help = doc + "; " if doc else ""  # @ReservedAssignment
                 help += "see '%s %s --help' for more info" % (self.PROGNAME, name)
 
-                wrapper = TextWrapper(width = max(cols - initial_indent_width, min_msg_width) - 1)
-                wrapped = wrapper.wrap(" ".join(l.strip() for l in help.splitlines()))
-                indentation = "\n" + " " * min(initial_indent_width, cols - min_msg_width)
-                msg = indentation.join(wrapped)
-                if initial_indent_width + min_msg_width >= cols:
-                    msg = indentation + msg
-                print(description_indent % (name, msg))
+                msg = indentation.join(wrapper.wrap(" ".join(l.strip() for l in help.splitlines())))
+
+                if len(name) + wrapper.width >= cols:
+                    padding = indentation
+                else:
+                    padding = " " * max(cols - wrapper.width - len(name) - 4, 1)
+                print(description_indent % (name, padding, msg))
 
     def _get_prog_version(self):
         ver = None

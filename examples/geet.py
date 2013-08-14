@@ -46,7 +46,7 @@ class Geet(cli.Application):
     PROGNAME = "geet"
     VERSION = "1.7.2"
     
-    verbosity = cli.SwitchAttr("--verbosity", cli.Set("low", "high", "some-very-long-name", "to-test-wrap-around"), 
+    verbosity = cli.SwitchAttr("--verbosity", cli.Set("low", "high", "some-very-long-name", "to-test-wrap-around"),
         help = "sets the verbosity level of the geet tool. doesn't really do anything except for testing line-wrapping "
         "in help " * 3)
 
