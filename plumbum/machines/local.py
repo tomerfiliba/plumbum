@@ -163,13 +163,15 @@ class LocalMachine(object):
 
         :param progname: The program's name. Note that if underscores (``_``) are present
                          in the name, and the exact name is not found, they will be replaced
-                         by hyphens (``-``) and the name will be looked up again
+                         in turn by hyphens (``-``) then periods (``.``), and the name will 
+                         be looked up again for each alternative
 
         :returns: A :class:`LocalPath <plumbum.machines.local.LocalPath>`
         """
         alternatives = [progname]
         if "_" in progname:
             alternatives.append(progname.replace("_", "-"))
+            alternatives.append(progname.replace("_", "."))
         for pn in alternatives:
             path = cls._which(pn)
             if path:
