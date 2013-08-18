@@ -46,6 +46,19 @@ class LocalPathTest(unittest.TestCase):
             p.chown(p.uid.name)
             self.assertEqual(p.uid, os.getuid())
 
+    def test_split(self):
+        p = local.path("/var/log/messages")
+        self.assertEqual(p.split(), ["var", "log", "messages"])
+
+    def test_relative_to(self):
+        p = local.path("/var/log/messages")
+        self.assertEqual(p.relative_to("/var/log/messages"), [])
+        self.assertEqual(p.relative_to("/var/"), ["log", "messages"])
+        self.assertEqual(p.relative_to("/"), ["var", "log", "messages"])
+        self.assertEqual(p.relative_to("/var/tmp"), ["..", "log", "messages"])
+        self.assertEqual(p.relative_to("/opt"), ["..", "var", "log", "messages"])
+        self.assertEqual(p.relative_to("/opt/lib"), ["..", "..", "var", "log", "messages"])
+
 
 class LocalMachineTest(unittest.TestCase):
     def test_imports(self):

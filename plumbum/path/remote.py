@@ -30,6 +30,8 @@ class RemotePath(Path):
 
     __slots__ = ["_path", "remote"]
     def __init__(self, remote, *parts):
+        if not parts:
+            raise TypeError("At least one path part is require (none given)")
         self.remote = remote
         windows = (self.remote.uname.lower() == "windows")
         normed = []
@@ -55,6 +57,9 @@ class RemotePath(Path):
             self._path = "\\".join(normed)
         else:
             self._path = "/" + "/".join(normed)
+
+    def _form(self, *parts):
+        return RemotePath(self.remote, *parts)
 
     def __str__(self):
         return self._path

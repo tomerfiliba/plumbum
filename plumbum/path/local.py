@@ -34,18 +34,25 @@ class LocalPath(Path):
     __slots__ = ["_path"]
     CASE_SENSITIVE = not IS_WIN32
 
-    def __init__(self, path):
-        if isinstance(path, RemotePath):
-            raise TypeError("LocalPath cannot be constructed from %r" % (path,))
-        self._path = os.path.normpath(str(path))
-    def __new__(cls, path):
-        if isinstance(path, cls):
-            return path
+    def __init__(self, *parts):
+        if not parts:
+            raise TypeError("At least one path part is require (none given)")
+        if any(isinstance(path, RemotePath) for path in parts):
+            raise TypeError("LocalPath cannot be constructed from %r" % (parts,))
+        self._path = os.path.normpath(os.path.join(*(str(p) for p in parts)))
+    def __new__(cls, *parts):
+        if len(parts) == 1 and isinstance(parts[0], cls):
+            return parts[0]
         return object.__new__(cls)
     def __str__(self):
         return self._path
     def _get_info(self):
         return self._path
+    def __getstate__(self):
+        return {"_path" : self._path}
+
+    def _form(self, *parts):
+        return LocalPath(*parts)
 
     @property
     @_setdoc(Path)
@@ -72,10 +79,8 @@ class LocalPath(Path):
         return FSUser(gid, name)
 
     @_setdoc(Path)
-    def join(self, other):
-        if isinstance(other, RemotePath):
-            raise TypeError("Cannot join local path %s with %r" % (self, other))
-        return LocalPath(os.path.join(str(self), str(other)))
+    def join(self, *others):
+        return LocalPath(self, *others)
 
     @_setdoc(Path)
     def list(self):

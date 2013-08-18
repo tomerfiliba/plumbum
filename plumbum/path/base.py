@@ -1,3 +1,4 @@
+import itertools
 class FSUser(int):
     """A special object that represents a file-system user. It derives from ``int``, so it behaves
     just like a number (``uid``/``gid``), but also have a ``.name`` attribute that holds the
@@ -57,6 +58,9 @@ class Path(object):
     def __nonzero__(self):
         return bool(str(self))
     __bool__ = __nonzero__
+
+    def _form(self, *parts):
+        raise NotImplementedError()
 
     def up(self, count = 1):
         """Go up in ``count`` directories (the default is 1)"""
@@ -168,6 +172,45 @@ class Path(object):
         :param dst: the destination path
         """
         raise NotImplementedError()
+
+    def split(self):
+        """Splits the path on directory separators, yielding a list of directories, e.g,
+        ``"/var/log/messages"`` will yield ``['var', 'log', 'messages']``.
+        """
+        parts = []
+        path = self
+        while path != path.dirname:
+            parts.append(path.basename)
+            path = path.dirname
+        return parts[::-1]
+
+    def relative_to(self, source):
+        """Computes the "relative path" require to get from ``source`` to ``self``. For example::
+
+            /var/log/messages - /var/log/messages = []
+            /var/log/messages - /var              = [log, messages]
+            /var/log/messages - /                 = [var, log, messages]
+            /var/log/messages - /var/tmp          = [.., log, messages]
+            /var/log/messages - /opt              = [.., var, log, messages]
+            /var/log/messages - /opt/lib          = [.., .., var, log, messages]
+        """
+        if isinstance(source, str):
+            source = self._form(source)
+        parts = self.split()
+        baseparts = source.split()
+        ancestors = len(list(itertools.takewhile(lambda p: p[0] == p[1], zip(parts, baseparts))))
+        return [".."] * (len(baseparts) - ancestors) + parts[ancestors:]
+
+    def __sub__(self, other):
+        """Same as ``self.relative_to(other)``"""
+        return self.relative_to(other)
+
+
+
+
+
+
+
 
 
 
