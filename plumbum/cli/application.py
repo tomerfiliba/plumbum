@@ -25,8 +25,20 @@ class Subcommand(object):
     def __init__(self, name, subapplication):
         self.name = name
         self.subapplication = subapplication
+    def get(self):
+        if isinstance(self.subapplication, str):
+            modname, clsname = self.subapplication.rsplit(".", 1)
+            mod = __import__(modname, None, None, "*")
+            try:
+                cls = getattr(mod, clsname)
+            except AttributeError:
+                raise ImportError("cannot import name %s" % (clsname,))
+            self.subapplication = cls
+        return self.subapplication
+
     def __repr__(self):
         return "Subcommand(%r, %r)" % (self.name, self.subapplication)
+
 
 #===================================================================================================
 # CLI Application base class
@@ -107,7 +119,7 @@ class Application(object):
                     if obj.name.startswith("-"):
                         raise SubcommandError("Subcommand names cannot start with '-'")
                     # it's okay for child classes to override subcommands set by their parents
-                    self._subcommands[obj.name] = obj.subapplication
+                    self._subcommands[obj.name] = obj
                     continue
 
                 swinfo = getattr(obj, "_switch_info", None)
@@ -145,14 +157,19 @@ class Application(object):
             MyApp.subcommand("foo", FooApp)
 
         .. versionadded:: 1.1
+
+        .. versionadded:: 1.3
+            The subcommand can also be a string, in which case it is treated as a
+            fully-qualified class name and is imported on demand. For examples,
+
+            MyApp.subcommand("foo", "fully.qualified.package.FooApp")
+
         """
         def wrapper(subapp):
-            setattr(cls, "_subcommand_%s" % (subapp.__name__), Subcommand(name, subapp))
+            attrname = "_subcommand_%s" % (subapp if isinstance(subapp, str) else subapp.__name__,)
+            setattr(cls, attrname, Subcommand(name, subapp))
             return subapp
-        if subapp:
-            return wrapper(subapp)
-        else:
-            return wrapper
+        return wrapper(subapp) if subapp else wrapper
 
     def _parse_args(self, argv):
         tailargs = []
@@ -167,7 +184,8 @@ class Application(object):
                 break
 
             if a in self._subcommands:
-                self.nested_command = (self._subcommands[a], [self.PROGNAME + " " + a] + argv)
+                subcmd = self._subcommands[a].get()
+                self.nested_command = (subcmd, [self.PROGNAME + " " + a] + argv)
                 break
 
             elif a.startswith("--") and len(a) >= 3:
@@ -441,7 +459,8 @@ class Application(object):
 
         if self._subcommands:
             print("Subcommands:")
-            for name, subapp in sorted(self._subcommands.items()):
+            for name, subcls in sorted(self._subcommands.items()):
+                subapp = subcls.get()
                 doc = subapp.DESCRIPTION if subapp.DESCRIPTION else inspect.getdoc(subapp)
                 help = doc + "; " if doc else ""  # @ReservedAssignment
                 help += "see '%s %s --help' for more info" % (self.PROGNAME, name)

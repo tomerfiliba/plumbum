@@ -75,6 +75,10 @@ class Mumble(cli.Application):
 
 Sample.subcommand("mumble", Mumble)
 
+class LazyLoaded(cli.Application):
+    def main(self):
+        print("hello world")
+
 if not hasattr(unittest.TestCase, "assertIn"):
     def assertIn(self, member, container, msg = None):
         if msg:
@@ -147,6 +151,18 @@ class CLITest(unittest.TestCase):
             _, rc = Sample.run(["sample", "mumble"], exit = False)
         self.assertEqual(rc, 1)
         self.assertIn("main() not implemented", stream.getvalue())
+
+    def test_lazy_subcommand(self):
+        class Foo(cli.Application):
+            pass
+
+        Foo.subcommand("lazy", "test_cli.LazyLoaded")
+
+        with captured_stdout() as stream:
+            _, rc = Foo.run(["foo", "lazy"], exit = False)
+
+        self.assertEqual(rc, 0)
+        self.assertIn("hello world", stream.getvalue())
 
 
 
