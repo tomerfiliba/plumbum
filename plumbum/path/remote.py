@@ -13,16 +13,16 @@ class StatRes(object):
         self._tup = tuple(tup)
     def __getitem__(self, index):
         return self._tup[index]
-    mode = property(lambda self: self[0])
-    ino = property(lambda self: self[1])
-    dev = property(lambda self: self[2])
-    nlink = property(lambda self: self[3])
-    uid = property(lambda self: self[4])
-    gid = property(lambda self: self[5])
-    size = property(lambda self: self[6])
-    atime = property(lambda self: self[7])
-    mtime = property(lambda self: self[8])
-    ctime = property(lambda self: self[9])
+    st_mode = mode = property(lambda self: self[0])
+    st_ino = ino = property(lambda self: self[1])
+    st_dev = dev = property(lambda self: self[2])
+    st_nlink = nlink = property(lambda self: self[3])
+    st_uid = uid = property(lambda self: self[4])
+    st_gid = gid = property(lambda self: self[5])
+    st_size = size = property(lambda self: self[6])
+    st_atime = atime = property(lambda self: self[7])
+    st_mtime = mtime = property(lambda self: self[8])
+    st_ctime = ctime = property(lambda self: self[9])
 
 
 class RemotePath(Path):

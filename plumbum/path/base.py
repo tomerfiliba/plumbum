@@ -1,4 +1,6 @@
 import itertools
+
+
 class FSUser(int):
     """A special object that represents a file-system user. It derives from ``int``, so it behaves
     just like a number (``uid``/``gid``), but also have a ``.name`` attribute that holds the

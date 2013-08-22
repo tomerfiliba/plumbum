@@ -297,7 +297,7 @@ class BaseRemoteMachine(object):
             return None
         statres = out.strip().split(",")
         text_mode = statres.pop(0).lower()
-        res = StatRes(statres)
+        res = StatRes((int(statres[0], 16),) + tuple(int(sr) for sr in statres[1:]))
         res.text_mode = text_mode
         return res
 
