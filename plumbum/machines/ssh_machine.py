@@ -84,7 +84,7 @@ class SshMachine(BaseRemoteMachine):
         else:
             self._fqhost = host
         if port:
-            ssh_args.extend(["-p", str(port)])
+            ssh_args.extend(["-P" if 'plink.exe' in str(ssh_command) else "-p", str(port)])
             scp_args.extend(["-P", str(port)])
         if keyfile:
             ssh_args.extend(["-i", str(keyfile)])
