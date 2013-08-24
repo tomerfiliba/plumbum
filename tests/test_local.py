@@ -392,10 +392,18 @@ for _ in range(%s):
         local.path("counter").delete()
 
     def test_bound_env(self):
-        from plumbum.cmd import printenv
+        try:
+            from plumbum.cmd import printenv
+        except CommandNotFound:
+            self.skipTest("printenv is missing")
         with local.env(FOO = "hello"):
             self.assertEqual(printenv.setenv(BAR = "world")("FOO", "BAR"), "hello\nworld\n")
             self.assertEqual(printenv.setenv(FOO = "sea", BAR = "world")("FOO", "BAR"), "sea\nworld\n")
+    
+    def test_nesting_lists_as_argv(self):
+        from plumbum.cmd import ls
+        c = ls["-l", ["-a", "*.py"]]
+        self.assertEqual(c.formulate()[1:], ['-l', '-a', '*.py'])
 
 
 

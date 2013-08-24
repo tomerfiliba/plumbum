@@ -409,11 +409,10 @@ class ConcreteCommand(BaseCommand):
                     argv.extend(shquote_list(a.formulate(level + 1)))
                 else:
                     argv.extend(a.formulate(level + 1))
+            elif isinstance(a, (list, tuple)):
+                argv.extend(shquote(b) if level >= self.QUOTE_LEVEL else str(b) for b in a)
             else:
-                if level >= self.QUOTE_LEVEL:
-                    argv.append(shquote(a))
-                else:
-                    argv.append(str(a))
+                argv.append(shquote(a) if level >= self.QUOTE_LEVEL else str(a))
         # if self.encoding:
         #    argv = [a.encode(self.encoding) for a in argv if isinstance(a, six.string_types)]
         return argv
