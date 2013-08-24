@@ -84,7 +84,7 @@ class SshMachine(BaseRemoteMachine):
         else:
             self._fqhost = host
         if port:
-            ssh_args.extend(["-P" if 'plink.exe' in str(ssh_command) else "-p", str(port)])
+            ssh_args.extend(["-p", str(port)])
             scp_args.extend(["-P", str(port)])
         if keyfile:
             ssh_args.extend(["-i", str(keyfile)])
@@ -241,6 +241,9 @@ class PuttyMachine(SshMachine):
             ssh_opts = ["-ssh"]
         if user is None:
             user = local.env.user
+        if port is not None:
+            ssh_opts.extend(["-P", str(port)])
+            port = None
         SshMachine.__init__(self, host, user, port, keyfile, ssh_command, scp_command,
             ssh_opts, scp_opts)
 
