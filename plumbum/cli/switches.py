@@ -293,35 +293,37 @@ class Set(object):
         return self.values[obj]
 
 class Predicate(object):
+    """A wrapper for a single-argument function with pretty printing"""
+    def __init__(self, func):
+        self.func = func
     def __str__(self):
-        return self.__class__.__name__
+        return self.func.__name__
+    def __call__(self, val):
+        return self.func(val)
 
-class ExistingDirectory(Predicate):
+@Predicate
+def ExistingDirectory(val):
     """A switch-type validator that ensures that the given argument is an existing directory"""
-    def __call__(self, val):
-        p = local.path(val)
-        if not p.isdir():
-            raise ValueError("%r is not a directory" % (val,))
-        return p
-ExistingDirectory = ExistingDirectory()
+    p = local.path(val)
+    if not p.isdir():
+        raise ValueError("%r is not a directory" % (val,))
+    return p
 
-class ExistingFile(Predicate):
+@Predicate
+def ExistingFile(val):
     """A switch-type validator that ensures that the given argument is an existing file"""
-    def __call__(self, val):
-        p = local.path(val)
-        if not p.isfile():
-            raise ValueError("%r is not a file" % (val,))
-        return p
-ExistingFile = ExistingFile()
+    p = local.path(val)
+    if not p.isfile():
+        raise ValueError("%r is not a file" % (val,))
+    return p
 
-class NonexistentPath(Predicate):
-    """A switch-type validator that ensures that the given argument is an nonexistent path"""
-    def __call__(self, val):
-        p = local.path(val)
-        if p.exists():
-            raise ValueError("%r already exists" % (val,))
-        return p
-NonexistentPath = NonexistentPath()
+@Predicate
+def NonexistentPath(val):
+    """A switch-type validator that ensures that the given argument is a nonexistent path"""
+    p = local.path(val)
+    if p.exists():
+        raise ValueError("%r already exists" % (val,))
+    return p
 
 
 
