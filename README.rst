@@ -1,7 +1,7 @@
 Plumbum: Shell Combinators
 ==========================
 
-Ever wished the wrist-handiness of shell scripts be put into a **real** programming language? 
+Ever wished the compactness of shell scripts be put into a **real** programming language? 
 Say hello to *Plumbum Shell Combinators*. Plumbum (Latin for *lead*, which was used to create 
 pipes back in the day) is a small yet feature-rich library for shell script-like programs in Python. 
 The motto of the library is **"Never write shell scripts again"**, and thus it attempts to mimic 
