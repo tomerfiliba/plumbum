@@ -135,11 +135,14 @@ class Application(object):
 
     @classmethod
     def unbind_switches(cls, *switch_names):
-        """Unbinds the given switch names from this application. For example::
+        """Unbinds the given switch names from this application. For example
+        
+        ::
 
             class MyApp(cli.Application):
                 pass
             MyApp.unbind("--version")
+        
         """
         cls._unbound_switches += tuple(name.lstrip("-") for name in switch_names if name)
 

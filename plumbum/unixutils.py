@@ -1,5 +1,4 @@
 import re
-from plumbum.cmd import mount
 
 
 MOUNT_PATTERN = re.compile(r"(.+?)\s+on\s+(.+?)\s+type\s+(\S+)")
@@ -18,6 +17,8 @@ class MountEntry(object):
 def mount_table():
     """returns the system's current mount table (a list of
     :class:`MountEntry <plumbum.unixutils.MountEntry>` objects)"""
+    from plumbum.cmd import mount
+    
     table = []
     for line in mount().splitlines():
         m = MOUNT_PATTERN.match(line)

@@ -24,8 +24,8 @@ try:
     import fcntl
 except ImportError:
     import msvcrt
-    from pywintypes import error as WinError
     try:
+        from pywintypes import error as WinError
         from win32file import LockFileEx, UnlockFile, OVERLAPPED
         from win32con import LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY
     except ImportError:

@@ -111,6 +111,7 @@ you read it in order.
    utils
    cli
    changelog
+   whatsnew/whatsnew1_3
 
 API Reference
 =============
@@ -123,11 +124,10 @@ missing from the guide, so you might want to consult with the API reference in t
    
    api/cli
    api/commands
-   api/local_machine
+   api/machines
    api/path
-   api/remote_machine
-   api/session
-   api/utils
+   api/atomic
+   api/unixutils
 
 About
 =====

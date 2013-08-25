@@ -258,14 +258,14 @@ class LocalMachine(object):
 
     def daemonic_popen(self, command, cwd = "/"):
         """
-        On POSIX systems
-        ~~~~~~~~~~~~~~~~
+        On POSIX systems:
+        
         Run ``command`` as a UNIX daemon: fork a child process to setpid, redirect std handles to /dev/null,
         umask, close all fds, chdir to ``cwd``, then fork and exec ``command``. Returns a ``Popen`` process that
         can be used to poll/wait for the executed command (but keep in mind that you cannot access std handles)
 
-        On Windows
-        ~~~~~~~~~~
+        On Windows:
+        
         Run ``command`` as a "Windows daemon": detach from controlling console and create a new process group.
         This means that the command will not receive console events and would survive its parent's termination.
         Returns a ``Popen`` object.
