@@ -10,15 +10,21 @@
 * ``atomic``: Atomic file operations (``AtomicFile``, ``AtomicCounterFile`` and ``PidFile``)
 * ``copy`` and ``move``: the ``src`` argument can now be a list of files to move, e.g., ``copy(["foo", "bar"], "/usr/bin")``
 * list local and remote processes
-* cli: better handling of text wrapping in ``cli.Application.help``
+* cli: better handling of text wrapping in the generated help message
 * cli: add a default ``main()`` method that checks for unknown subcommands
 * terminal: initial commit (``get_terminal_size``)
 * packaging: the package was split into subpackages; it grew too big for a flat namespace.
-  imports are not expected to be broken by this change, except for ``plumbum.utils --> plumbum.path.utils``
+  imports are not expected to be broken by this change
 * SshMachine: added ``password`` parameter, which relies on `sshpass <http://linux.die.net/man/1/sshpass>`_ to feed the 
   password to ``ssh``. This is a security risk, but it's occasionally necessary. Use this with caution!
 * Commands now have a ``machine`` attribute that points to the machine they run on
 * Commands gained ``setenv``, which creates a command with a bound environment
+* Remote path: several fixes to ``stat`` (``StatRes``)
+* cli: add lazily-loaded subcommands (e.g., ``MainApp.subcommand("foo", "my.package.foo.FooApp"), which are imported 
+  on demand
+* Paths: added ``relative_to``, which computes the difference between two paths
+* cli: ``Predicate`` became a class decorator (it exists solely for pretty-printing anyway)
+* PuttyMachine: `bugfix <https://github.com/tomerfiliba/plumbum/pull/85>`_
 
 1.2
 ---
