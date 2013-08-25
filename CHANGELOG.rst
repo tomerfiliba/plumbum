@@ -20,7 +20,7 @@
 * Commands now have a ``machine`` attribute that points to the machine they run on
 * Commands gained ``setenv``, which creates a command with a bound environment
 * Remote path: several fixes to ``stat`` (``StatRes``)
-* cli: add lazily-loaded subcommands (e.g., ``MainApp.subcommand("foo", "my.package.foo.FooApp"), which are imported 
+* cli: add lazily-loaded subcommands (e.g., ``MainApp.subcommand("foo", "my.package.foo.FooApp")``), which are imported 
   on demand
 * Paths: added `relative_to and split <https://github.com/tomerfiliba/plumbum/blob/c224058bcefaf5c00fe2295389887c7ebc9d5132/tests/test_local.py#L53>`_,
   which (respectively) computes the difference between two paths and splits paths into lists of nodes
