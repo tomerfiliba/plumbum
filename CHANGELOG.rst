@@ -22,7 +22,8 @@
 * Remote path: several fixes to ``stat`` (``StatRes``)
 * cli: add lazily-loaded subcommands (e.g., ``MainApp.subcommand("foo", "my.package.foo.FooApp"), which are imported 
   on demand
-* Paths: added ``relative_to``, which computes the difference between two paths
+* Paths: added `relative_to and split <https://github.com/tomerfiliba/plumbum/blob/c224058bcefaf5c00fe2295389887c7ebc9d5132/tests/test_local.py#L53>`_,
+  which (respectively) computes the difference between two paths and splits paths into lists of nodes
 * cli: ``Predicate`` became a class decorator (it exists solely for pretty-printing anyway)
 * PuttyMachine: `bugfix <https://github.com/tomerfiliba/plumbum/pull/85>`_
 
