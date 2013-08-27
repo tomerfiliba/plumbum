@@ -1,5 +1,5 @@
-plumbum.machines
-================
+Package plumbum.machines
+========================
 .. automodule:: plumbum.machines.env
    :members:
    :special-members:
