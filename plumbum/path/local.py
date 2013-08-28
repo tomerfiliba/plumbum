@@ -128,7 +128,7 @@ class LocalPath(Path):
             raise TypeError("Cannot copy local path %s to %r" % (self, dst))
         dst = LocalPath(dst)
         if override:
-            dst.remove()
+            dst.delete()
         if self.isdir():
             shutil.copytree(str(self), str(dst))
         else:
