@@ -53,7 +53,7 @@ class RemoteEnv(BaseEnv):
         :param expr: An expression containing home shortcuts
 
         :returns: The expanded string"""
-        if not any(part.startwith("~") for part in expr.split("/")):
+        if not any(part.startswith("~") for part in expr.split("/")):
             return expr
         # we escape all $ signs to avoid expanding env-vars
         return self.remote._session.run("echo %s" % (expr.replace("$", "\\$"),))
