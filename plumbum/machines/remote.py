@@ -45,7 +45,7 @@ class RemoteEnv(BaseEnv):
                      home shortcuts (as ``~/.bashrc``)
 
         :returns: The expanded string"""
-        return self.remote._session.run("echo %s" % (expr,))
+        return self.remote._session.run("echo %s" % (expr,))[0]
 
     def expanduser(self, expr):
         """Expand home shortcuts (e.g., ``~/foo/bar`` or ``~john/foo/bar``)
@@ -56,7 +56,7 @@ class RemoteEnv(BaseEnv):
         if not any(part.startswith("~") for part in expr.split("/")):
             return expr
         # we escape all $ signs to avoid expanding env-vars
-        return self.remote._session.run("echo %s" % (expr.replace("$", "\\$"),))
+        return self.remote._session.run("echo %s" % (expr.replace("$", "\\$"),))[0]
 
     # def clear(self):
     #    BaseEnv.clear(self, *args, **kwargs)
