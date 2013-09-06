@@ -1,12 +1,12 @@
 from __future__ import with_statement
 import six
 import subprocess
+import functools
 from contextlib import contextmanager
 from plumbum.commands.processes import run_proc
 from plumbum.lib import bytes
 from tempfile import TemporaryFile
 from subprocess import PIPE, Popen
-import functools
 
 
 class RedirectionError(Exception):
@@ -285,9 +285,9 @@ class Pipeline(BaseCommand):
         # monkey-patch .wait() to wait on srcproc as well (it's expected to die when dstproc dies)
         dstproc_wait = dstproc.wait
         @functools.wraps(Popen.wait)
-        def wait2():
-            rc = dstproc_wait()
-            srcproc.wait()
+        def wait2(*args, **kwargs):
+            rc = dstproc_wait(*args, **kwargs)
+            srcproc.wait(*args, **kwargs)
             return rc
         dstproc.wait = wait2
         return dstproc
