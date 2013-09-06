@@ -317,7 +317,7 @@ class LocalMachineTest(unittest.TestCase):
         af = AtomicFile("tmp.txt")
 
         code = """from __future__ import with_statement
-from plumbum.atomic import AtomicFile
+from plumbum.fs.atomic import AtomicFile
 af = AtomicFile("tmp.txt")
 try:
     with af.locked(blocking = False):
@@ -333,7 +333,7 @@ except (OSError, IOError):
 
     def test_pid_file(self):
         code = """from __future__ import with_statement
-from plumbum.atomic import PidFile, PidFileTaken
+from plumbum.fs.atomic import PidFile, PidFileTaken
 try:
     with PidFile("mypid"):
         raise ValueError("this should have failed")
@@ -351,7 +351,7 @@ except PidFileTaken:
         num_of_procs = 20
         num_of_increments = 20
 
-        code = """from plumbum.atomic import AtomicCounterFile
+        code = """from plumbum.fs.atomic import AtomicCounterFile
 import time
 time.sleep(0.2)
 afc = AtomicCounterFile.open("counter")

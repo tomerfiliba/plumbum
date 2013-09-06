@@ -126,8 +126,7 @@ missing from the guide, so you might want to consult with the API reference in t
    api/commands
    api/machines
    api/path
-   api/atomic
-   api/unixutils
+   api/fs
 
 About
 =====

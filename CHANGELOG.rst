@@ -1,5 +1,11 @@
+1.4
+---
+* Move ``atomic`` and ``unixutils`` into the new ``fs`` package (file-system related utilities)
+* Dropped ``plumbum.utils`` legacy shortcut in favor of ``plumbum.path.utils``
+* Bugfix: the left-hand-side process of a pipe wasn't waited on, leading to zombies (`#89 <https://github.com/tomerfiliba/plumbum/pull/89>`_)
+
 1.3
------
+---
 * ``Command.popen``: a new argument, ``new_session`` may be passed to ``Command.popen``, which runs the given 
   in a new session (``setsid`` on POSIX, ``CREATE_NEW_PROCESS_GROUP`` on Windows) 
 * ``Command.Popen``: args can now also be a list (previously, it was required to be a tuple). See 

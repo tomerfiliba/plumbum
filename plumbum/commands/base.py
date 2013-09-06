@@ -282,6 +282,7 @@ class Pipeline(BaseCommand):
             srcproc.stdin.close()
         dstproc.srcproc = srcproc
         
+        # monkey-patch .wait() to wait on srcproc as well (it's expected to die when dstproc dies)
         dstproc_wait = dstproc.wait
         @functools.wraps(Popen.wait)
         def wait2():
