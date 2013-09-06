@@ -1,18 +1,18 @@
 import re
 
-
-MOUNT_PATTERN = re.compile(r"(.+?)\s+on\s+(.+?)\s+type\s+(\S+)")
-
 class MountEntry(object):
     """
     Represents a mount entry (device file, mount point and file system type)
     """
-    def __init__(self, dev, point, type):
+    def __init__(self, dev, point, fstype, options):
         self.dev = dev
         self.point = point
-        self.type = type
+        self.fstype = fstype
+        self.options = options.split(",")
     def __str__(self):
-        return "%s on %s, %s" % (self.dev, self.point, self.type)
+        return "%s on %s type %s (%s)" % (self.dev, self.point, self.fstype, ",".join(self.options))
+
+MOUNT_PATTERN = re.compile(r"(.+?)\s+on\s+(.+?)\s+type\s+(\S+)(?:\s+\((.+?)\))?")
 
 def mount_table():
     """returns the system's current mount table (a list of
@@ -31,11 +31,7 @@ def mounted(fs):
     """
     Indicates if a the given filesystem (device file or mount point) is currently mounted
     """
-    table = mount_table()
-    for entry in table:
-        if fs == entry.dev or fs == entry.point:
-            return True
-    return False
+    return any(fs == entry.dev or fs == entry.point for entry in mount_table())
 
 
 

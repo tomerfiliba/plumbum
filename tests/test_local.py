@@ -7,7 +7,7 @@ import signal
 import time
 from plumbum import local, LocalPath, FG, BG, ERROUT
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
-from plumbum.atomic import AtomicFile, AtomicCounterFile, PidFile
+from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
 
 
 if not hasattr(unittest, "skipIf"):
