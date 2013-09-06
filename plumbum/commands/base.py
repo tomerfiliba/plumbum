@@ -5,7 +5,8 @@ from contextlib import contextmanager
 from plumbum.commands.processes import run_proc
 from plumbum.lib import bytes
 from tempfile import TemporaryFile
-from subprocess import PIPE
+from subprocess import PIPE, Popen
+import functools
 
 
 class RedirectionError(Exception):
@@ -280,6 +281,14 @@ class Pipeline(BaseCommand):
         if srcproc.stdin:
             srcproc.stdin.close()
         dstproc.srcproc = srcproc
+        
+        dstproc_wait = dstproc.wait
+        @functools.wraps(Popen.wait)
+        def wait2():
+            rc = dstproc_wait()
+            srcproc.wait()
+            return rc
+        dstproc.wait = wait2
         return dstproc
 
 class BaseRedirection(BaseCommand):
