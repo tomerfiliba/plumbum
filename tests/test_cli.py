@@ -164,6 +164,14 @@ class CLITest(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertIn("hello world", stream.getvalue())
 
+    def test_reset_switchattr(self):
+        inst, rc = TestApp.run(["foo", "--bacon=81", "-e", "bar"], exit=False)
+        self.assertEqual(rc, 0)
+        self.assertEqual(inst.eggs, "bar")
+
+        inst, rc = TestApp.run(["foo", "--bacon=81"], exit=False)
+        self.assertEqual(rc, 0)
+        self.assertEqual(inst.eggs, None)
 
 
 if __name__ == "__main__":
