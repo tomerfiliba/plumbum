@@ -201,13 +201,16 @@ class SwitchAttr(object):
         if inst is None:
             return self
         else:
-            return getattr(inst, self.ATTR_NAME, dict()).get(self, self._default_value)
+            return getattr(inst, self.ATTR_NAME, {}).get(self, self._default_value)
 
     def __set__(self, inst, val):
         if inst is None:
             raise AttributeError("cannot set an unbound SwitchAttr")
         else:
-            inst.__dict__.setdefault(self.ATTR_NAME, dict())[self] = val
+            if not hasattr(inst, self.ATTR_NAME):
+                setattr(inst, self.ATTR_NAME, {self : val})
+            else:
+                getattr(inst, self.ATTR_NAME)[self] = val
 
 class Flag(SwitchAttr):
     """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` for boolean flags. If the flag is not
