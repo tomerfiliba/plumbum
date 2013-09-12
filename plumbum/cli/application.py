@@ -208,7 +208,7 @@ class Application(object):
                     if not argv:
                         raise MissingArgument("Switch %s requires an argument" % (swname,))
                     a = argv.pop(0)
-                    if len(a) > 0 and a[0] == "=":
+                    if a and a[0] == "=":
                         if len(a) >= 2:
                             val = a[1:]
                         else:
