@@ -175,6 +175,8 @@ class SwitchAttr(object):
     :param argname: The switch argument's name (default is ``"VALUE"``)
     :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switch>`
     """
+    ATTR_NAME = '__plumbum_switchattr_dict__'
+
     def __init__(self, names, argtype = str, default = None, list = False, argname = "VALUE", **kwargs):
         self.__doc__ = "Sets an attribute"  # to prevent the help message from showing SwitchAttr's docstring
         if "help" in kwargs and default:
@@ -184,25 +186,28 @@ class SwitchAttr(object):
         listtype = type([])
         if list:
             if default is None:
-                self._value = []
+                self._default_value = []
             elif isinstance(default, (tuple, listtype)):
-                self._value = listtype(default)
+                self._default_value = listtype(default)
             else:
-                self._value = [default]
+                self._default_value = [default]
         else:
-            self._value = default
-    def __call__(self, _, val):
-        self._value = val
-    def __get__(self, cls, inst):
+            self._default_value = default
+
+    def __call__(self, inst, val):
+        self.__set__(inst, val)
+
+    def __get__(self, inst, cls):
         if inst is None:
             return self
         else:
-            return self._value
+            return getattr(inst, self.ATTR_NAME, dict()).get(self, self._default_value)
+
     def __set__(self, inst, val):
         if inst is None:
             raise AttributeError("cannot set an unbound SwitchAttr")
         else:
-            self._value = val
+            inst.__dict__.setdefault(self.ATTR_NAME, dict())[self] = val
 
 class Flag(SwitchAttr):
     """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` for boolean flags. If the flag is not
@@ -219,8 +224,8 @@ class Flag(SwitchAttr):
     """
     def __init__(self, names, default = False, **kwargs):
         SwitchAttr.__init__(self, names, argtype = None, default = default, list = False, **kwargs)
-    def __call__(self, _):
-        self._value = not self._value
+    def __call__(self, inst):
+        self.__set__(inst, not self._default_value)
 
 class CountOf(SwitchAttr):
     """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` that counts the number of
@@ -238,8 +243,8 @@ class CountOf(SwitchAttr):
     """
     def __init__(self, names, default = 0, **kwargs):
         SwitchAttr.__init__(self, names, argtype = None, default = default, list = True, **kwargs)
-    def __call__(self, _, v):
-        self._value = len(v)
+    def __call__(self, inst, v):
+        self.__set__(inst, len(v))
 
 #===================================================================================================
 # Switch type validators
