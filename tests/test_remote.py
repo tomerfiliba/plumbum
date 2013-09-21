@@ -2,10 +2,10 @@ from __future__ import with_statement
 import os
 import socket
 import unittest
-import six
 import time
 import logging
 from plumbum import RemotePath, SshMachine, ProcessExecutionError, local
+from plumbum.lib import six
 
 
 #TEST_HOST = "192.168.1.143"

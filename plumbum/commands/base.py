@@ -1,10 +1,9 @@
 from __future__ import with_statement
-import six
 import subprocess
 import functools
 from contextlib import contextmanager
 from plumbum.commands.processes import run_proc
-from plumbum.lib import bytes
+from plumbum.lib import bytes, six
 from tempfile import TemporaryFile
 from subprocess import PIPE, Popen
 

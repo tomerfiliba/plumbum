@@ -1,7 +1,7 @@
 import os
 import sys
-import six
 import inspect
+from plumbum.lib import six
 from textwrap import TextWrapper
 from plumbum.cli.terminal import get_terminal_size
 from plumbum.cli.switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,

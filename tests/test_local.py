@@ -1,11 +1,11 @@
 from __future__ import with_statement
 import os
 import unittest
-import six
 import sys
 import signal
 import time
 from plumbum import local, LocalPath, FG, BG, ERROUT
+from plumbum.lib import six
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
 

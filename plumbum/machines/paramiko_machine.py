@@ -1,10 +1,9 @@
 import logging
-import six
 import errno
 import socket
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
-from plumbum.lib import _setdoc, bytes
+from plumbum.lib import _setdoc, bytes, six
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath
 try:

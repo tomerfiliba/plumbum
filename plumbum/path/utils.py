@@ -1,6 +1,6 @@
 from __future__ import with_statement
-import six
 from plumbum.path.base import Path
+from plumbum.lib import six
 from plumbum.machines.local import local, LocalPath
 
 

@@ -1,5 +1,5 @@
-import six
 import inspect
+from plumbum.lib import six
 from plumbum import local
 
 

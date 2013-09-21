@@ -1,11 +1,10 @@
 from __future__ import with_statement
-import six
 import time
 import atexit
 import heapq
 from subprocess import Popen
 from threading import Thread
-from plumbum.lib import ascii, bytes, IS_WIN32
+from plumbum.lib import ascii, bytes, IS_WIN32, six
 try:
     from queue import Queue, Empty as QueueEmpty
 except ImportError:

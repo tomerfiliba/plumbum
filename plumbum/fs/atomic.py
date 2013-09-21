@@ -4,12 +4,13 @@ Atomic file operations
 
 from __future__ import with_statement
 import os
-import six
 import threading
 import sys
 import atexit
 from contextlib import contextmanager
 from plumbum.machines.local import local
+from plumbum.lib import six
+
 
 if not hasattr(threading, "get_ident"):
     try:

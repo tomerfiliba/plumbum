@@ -1,8 +1,8 @@
 import time
 import random
 import logging
-import six
 from plumbum.commands import BaseCommand, run_proc
+from plumbum.lib import six
 
 
 class ShellSessionError(Exception):

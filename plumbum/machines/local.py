@@ -6,7 +6,6 @@ import logging
 import stat
 import time
 import platform
-import six
 import re
 from plumbum.path.local import LocalPath, LocalWorkdir
 from tempfile import mkdtemp
@@ -14,7 +13,7 @@ from contextlib import contextmanager
 from plumbum.path.remote import RemotePath
 from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.machines.session import ShellSession
-from plumbum.lib import ProcInfo, IS_WIN32
+from plumbum.lib import ProcInfo, IS_WIN32, six
 from plumbum.commands.daemons import win32_daemonize, posix_daemonize
 from plumbum.machines.env import BaseEnv
 if sys.version_info >= (3, 2):

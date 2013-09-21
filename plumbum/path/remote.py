@@ -1,9 +1,8 @@
 from __future__ import with_statement
 import errno
-import six
 from contextlib import contextmanager
 from plumbum.path.base import Path, FSUser
-from plumbum.lib import _setdoc
+from plumbum.lib import _setdoc, six
 from plumbum.commands import shquote
 
 

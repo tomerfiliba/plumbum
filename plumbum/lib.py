@@ -29,4 +29,30 @@ class ProcInfo(object):
     def __repr__(self):
         return "ProcInfo(%r, %r, %r, %r)" % (self.pid, self.uid, self.stat, self.args)
 
+class six(object):
+    """
+    A light-weight version of six (which works on IronPython)
+    """
+    PY3 = sys.version_info[0] >= 3
+    if PY3:
+        integer_types = int
+        string_types = str
+        MAXSIZE = sys.maxsize
+        @staticmethod
+        def b(s):
+            return s.encode("latin-1")
+        @staticmethod
+        def get_method_function(m):
+            return m.__func__
+    else:
+        integer_types = (int, long)
+        string_types = basestring
+        MAXSIZE = sys.maxint
+        @staticmethod
+        def b(st):
+            return st
+        @staticmethod
+        def get_method_function(m):
+            return m.im_func
+
 
