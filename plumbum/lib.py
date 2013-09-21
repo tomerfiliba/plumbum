@@ -47,7 +47,7 @@ class six(object):
     else:
         integer_types = (int, long)
         string_types = basestring
-        MAXSIZE = sys.maxint
+        MAXSIZE = getattr(sys, "maxsize", sys.maxint)
         @staticmethod
         def b(st):
             return st
