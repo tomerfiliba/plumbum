@@ -45,13 +45,13 @@ class Path(object):
     def __ne__(self, other):
         return not (self == other)
     def __gt__(self, other):
-        return str(self) > set(other)
+        return str(self) > str(other)
     def __ge__(self, other):
-        return str(self) >= set(other)
+        return str(self) >= str(other)
     def __lt__(self, other):
-        return str(self) < set(other)
+        return str(self) < str(other)
     def __le__(self, other):
-        return str(self) <= set(other)
+        return str(self) <= str(other)
     def __hash__(self):
         if self.CASE_SENSITIVE:
             return hash(str(self))

@@ -3,6 +3,7 @@ import random
 import logging
 from plumbum.commands import BaseCommand, run_proc
 from plumbum.lib import six
+import threading
 
 
 class ShellSessionError(Exception):
@@ -123,13 +124,20 @@ class ShellSession(object):
     :param encoding: The encoding to use for the shell session. If ``"auto"``, the underlying
                      process' encoding is used.
     :param isatty: If true, assume the shell has a TTY and that stdout and stderr are unified
+    :param connect_timeout: The timeout to connect to the shell, after which, if no prompt
+                            is seen, the shell process is killed
     """
-    def __init__(self, proc, encoding = "auto", isatty = False):
+    def __init__(self, proc, encoding = "auto", isatty = False, connect_timeout = 5):
         self.proc = proc
         self.encoding = proc.encoding if encoding == "auto" else encoding
         self.isatty = isatty
         self._current = None
+        if connect_timeout:
+            timer = threading.Timer(connect_timeout, self.close)
+            timer.start()
         self.run("")
+        if connect_timeout:
+            timer.cancel()
 
     def __enter__(self):
         return self

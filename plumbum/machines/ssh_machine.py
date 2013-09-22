@@ -136,8 +136,9 @@ class SshMachine(BaseRemoteMachine):
             proc.stderr.close()
 
     @_setdoc(BaseRemoteMachine)
-    def session(self, isatty = False):
-        return ShellSession(self.popen((), ["-tt"] if isatty else ["-T"]), self.encoding, isatty)
+    def session(self, isatty = False, connect_timeout = 5):
+        return ShellSession(self.popen((), ["-tt"] if isatty else ["-T"]),
+            self.encoding, isatty, connect_timeout)
 
     def tunnel(self, lport, dport, lhost = "localhost", dhost = "localhost"):
         r"""Creates an SSH tunnel from the TCP port (``lport``) of the local machine

@@ -214,7 +214,7 @@ class BaseRemoteMachine(object):
             self._python = self["python"]
         return self._python
 
-    def session(self, isatty = False):
+    def session(self, isatty = False, connect_timeout = 5):
         """Creates a new :class:`ShellSession <plumbum.session.ShellSession>` object; this invokes the user's
         shell on the remote machine and executes commands on it over stdin/stdout/stderr"""
         raise NotImplementedError()
