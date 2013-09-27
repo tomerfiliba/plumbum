@@ -3,7 +3,7 @@ import errno
 import socket
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
-from plumbum.lib import _setdoc, bytes, six
+from plumbum.lib import _setdoc, six
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath
 try:
@@ -281,11 +281,9 @@ class ParamikoMachine(BaseRemoteMachine):
         f = self.sftp.open(str(fn), 'rb')
         data = f.read()
         f.close()
-        # if self.encoding and isinstance(data, bytes) and not isinstance(data, str):
-        #    data = data.decode(self.encoding)
         return data
     def _path_write(self, fn, data):
-        if self.encoding and isinstance(data, str) and not isinstance(data, bytes):
+        if self.encoding and isinstance(data, six.unicode_type):
             data = data.encode(self.encoding)
         f = self.sftp.open(str(fn), 'wb')
         f.write(data)

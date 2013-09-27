@@ -1,15 +1,21 @@
 """
-Adapted from https://gist.github.com/jtriley/1108174
-Originally from: http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
+Terminal-related utilities
 """
+import sys
 import os
 import platform
 import subprocess
 from struct import Struct
+from plumbum.lib import six
 
 
 def get_terminal_size():
-    """Get width and height of console; works on linux, os x, windows and cygwin"""
+    """
+    Get width and height of console; works on linux, os x, windows and cygwin
+
+    Adapted from https://gist.github.com/jtriley/1108174
+    Originally from: http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
+    """
     current_os = platform.system()
     if current_os == 'Windows':
         size = _get_terminal_size_windows()
@@ -71,5 +77,106 @@ def _get_terminal_size_linux():
         except Exception:
             return None
     return cr[1], cr[0]
+
+def input(message = ""):                         # @ReservedAssignment                          
+    """Gets free-text input from the user"""
+    sys.stdout.write(message)
+    return sys.stdin.readline()
+
+def ask(question, default = None):
+    """
+    Presents the user with a yes/no question. 
+    
+    :param question: The question to ask
+    :param default: If ``None``, the user must answer. If ``True`` or ``False``, lack of response is 
+                    interpreted as the default option
+    """
+    question = question.rstrip().rstrip("?").rstrip() + "?"
+    if default is None:
+        question += " (y/n) "
+    elif default:
+        question += " [Y/n] "
+    else:
+        question += " [y/N] "
+    
+    while True:
+        try:
+            answer = input(question).strip().lower()
+        except EOFError:
+            answer = None
+        if answer in ("y", "yes"):
+            return True
+        elif answer in ("n", "no"):
+            return True
+        elif not answer and default is not None:
+            return default
+        else:
+            sys.stdout.write("Invalid response, please try again\n")
+
+def choose(question, options, default = None):
+    """Prompts the user with a question and a set of options, from which the user need choose.
+    
+    :param question: The question to ask
+    :param options: A set of options. It can be a list (of strings or two-tuples, mapping text 
+                    to returned-object) or a dict (mapping text to returned-object).``
+    :param default: If ``None``, the user must answer. Otherwise, lack of response is interpreted
+                    as this answer
+    
+    :returns: The 
+    
+    Example::
+    
+        ans = choose("What is your favorite color?", ["blue", "yellow", "green"], default = "yellow")
+        # `ans` will be one of "blue", "yellow" or "green"
+
+        ans = choose("What is your favorite color?", 
+                {"blue" : 0x0000ff, "yellow" : 0xffff00 , "green" : 0x00ff00}, default = 0x00ff00)
+        # this will display "blue", "yellow" and "green" but return a numerical value
+    """
+    if hasattr(options, "items"):
+        options = options.items()
+    sys.stdout.write(question.rstrip() + "\n")
+    choices = {}
+    defindex = None
+    for i, item in enumerate(options, 1):
+        if isinstance(item, (tuple, list)) and len(item) == 2:
+            text = item[0]
+            val = item[1]
+        else:
+            text = item
+            val = item
+        choices[i] = val
+        if default is not None and default == val:
+            defindex = i
+        sys.stdout.write("(%d) %s\n" % (i, text))
+    if default is not None:
+        if defindex is None:
+            msg = "Choice [%s]: " % (default,)
+        else:
+            msg = "Choice [%d]: " % (defindex,)
+    else:
+        msg = "Choice: "
+    while True:
+        try:
+            choice = input(msg).strip()
+        except EOFError:
+            choice = ""
+        if not choice and default:
+            return default
+        try:
+            choice = int(choice)
+            if choice not in choices:
+                raise ValueError()
+        except ValueError:
+            sys.stdout.write("Invalid choice, please try again\n")
+            continue
+        return choices[choice]
+
+    
+
+
+
+
+
 
 

@@ -4,7 +4,7 @@ import atexit
 import heapq
 from subprocess import Popen
 from threading import Thread
-from plumbum.lib import ascii, bytes, IS_WIN32, six
+from plumbum.lib import IS_WIN32, six
 try:
     from queue import Queue, Empty as QueueEmpty
 except ImportError:
@@ -60,10 +60,10 @@ class ProcessExecutionError(EnvironmentError):
         Exception.__init__(self, argv, retcode, stdout, stderr)
         self.argv = argv
         self.retcode = retcode
-        if isinstance(stdout, bytes) and not isinstance(stderr, str):
-            stdout = ascii(stdout)
-        if isinstance(stderr, bytes) and not isinstance(stderr, str):
-            stderr = ascii(stderr)
+        if six.PY3 and isinstance(stdout, six.bytes):
+            stdout = six.ascii(stdout)
+        if six.PY3 and isinstance(stderr, six.bytes):
+            stderr = six.ascii(stderr)
         self.stdout = stdout
         self.stderr = stderr
     def __str__(self):

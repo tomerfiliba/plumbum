@@ -3,7 +3,7 @@ import subprocess
 import functools
 from contextlib import contextmanager
 from plumbum.commands.processes import run_proc
-from plumbum.lib import bytes, six
+from plumbum.lib import six
 from tempfile import TemporaryFile
 from subprocess import PIPE, Popen
 
@@ -378,7 +378,7 @@ class StdinDataRedirection(BaseCommand):
         if "stdin" in kwargs and kwargs["stdin"] != PIPE:
             raise RedirectionError("stdin is already redirected")
         data = self.data
-        if not isinstance(data, bytes) and self._get_encoding() is not None:
+        if isinstance(data, six.unicode_type) and self._get_encoding() is not None:
             data = data.encode(self._get_encoding())
         f = TemporaryFile()
         while data:

@@ -3,21 +3,26 @@ import sys
 import unittest
 from plumbum import cli
 from contextlib import contextmanager
-if sys.version_info[0] >= 3:
+from plumbum.cli.terminal import ask, choose
+from plumbum.lib import six
+# string/unicode issues
+if six.PY3:
     from io import StringIO
 else:
     from StringIO import StringIO
 
 
 @contextmanager
-def captured_stdout():
-    prev = sys.stdout
-    stream = StringIO()
-    sys.stdout = stream
+def captured_stdout(stdin = ""):
+    prevstdin = sys.stdin
+    prevstdout = sys.stdout
+    sys.stdin = StringIO(six.u(stdin))
+    sys.stdout = StringIO()
     try:
-        yield stream
+        yield sys.stdout
     finally:
-        sys.stdout = prev
+        sys.stdin = prevstdin
+        sys.stdout = prevstdout
 
 
 class TestApp(cli.Application):
@@ -174,5 +179,30 @@ class CLITest(unittest.TestCase):
         self.assertEqual(inst.eggs, None)
 
 
+class TestTerminal(unittest.TestCase):
+    def test_ask(self):
+        with captured_stdout("\n") as stream:
+            self.assertTrue(ask("Do you like cats?", default = True))
+        self.assertEqual(stream.getvalue(), "Do you like cats? [Y/n] ")
+        with captured_stdout("\nyes") as stream:
+            self.assertTrue(ask("Do you like cats?"))
+        self.assertEqual(stream.getvalue(), "Do you like cats? (y/n) Invalid response, please try again\nDo you like cats? (y/n) ")
+
+    def test_choose(self):
+        with captured_stdout("foo\n2\n") as stream:
+            self.assertEqual(choose("What is your favorite color?", ["blue", "yellow", "green"]), "yellow")
+        self.assertEqual(stream.getvalue(), "What is your favorite color?\n(1) blue\n(2) yellow\n(3) green\nChoice: Invalid choice, please try again\nChoice: ")
+        with captured_stdout("foo\n2\n") as stream:
+            self.assertEqual(choose("What is your favorite color?", [("blue", 10), ("yellow", 11), ("green", 12)]), 11)
+        self.assertEqual(stream.getvalue(), "What is your favorite color?\n(1) blue\n(2) yellow\n(3) green\nChoice: Invalid choice, please try again\nChoice: ")
+        with captured_stdout("foo\n\n") as stream:
+            self.assertEqual(choose("What is your favorite color?", ["blue", "yellow", "green"], default = "yellow"), "yellow")
+        self.assertEqual(stream.getvalue(), "What is your favorite color?\n(1) blue\n(2) yellow\n(3) green\nChoice [2]: Invalid choice, please try again\nChoice [2]: ")
+
+
 if __name__ == "__main__":
     unittest.main()
+
+
+
+

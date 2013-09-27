@@ -2,7 +2,7 @@ from __future__ import with_statement
 import re
 from contextlib import contextmanager
 from plumbum.commands import CommandNotFound, shquote, ConcreteCommand
-from plumbum.lib import _setdoc, bytes, ProcInfo
+from plumbum.lib import _setdoc, ProcInfo, six
 from plumbum.machines.local import LocalPath
 from tempfile import NamedTemporaryFile
 from plumbum.machines.env import BaseEnv
@@ -327,7 +327,7 @@ class BaseRemoteMachine(object):
     def _path_read(self, fn):
         return self["cat"](fn)
     def _path_write(self, fn, data):
-        if self.encoding and isinstance(data, str) and not isinstance(data, bytes):
+        if self.encoding and isinstance(data, six.unicode_type):
             data = data.encode(self.encoding)
         with NamedTemporaryFile() as f:
             f.write(data)

@@ -1,9 +1,9 @@
 import time
 import random
 import logging
+import threading
 from plumbum.commands import BaseCommand, run_proc
 from plumbum.lib import six
-import threading
 
 
 class ShellSessionError(Exception):
@@ -25,7 +25,7 @@ class MarkedPipe(object):
         self.pipe = pipe
         self.marker = marker
         if six.PY3:
-            self.marker = bytes(self.marker, "ascii")
+            self.marker = six.bytes(self.marker, "ascii")
     def close(self):
         """'Closes' the marked pipe; following calls to ``readline`` will return """""
         # consume everything

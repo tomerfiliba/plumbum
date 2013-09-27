@@ -7,7 +7,6 @@ python:
     - "3.3"
 
 install: 
-    - pip install six
     - pip install paramiko
 
 before_script:
