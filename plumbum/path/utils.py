@@ -43,7 +43,7 @@ def move(src, dst):
             raise ValueError("When using multiple sources, dst %r must be a directory" % (dst,))
         for src2 in src:
             move(src2, dst)
-        return
+        return dst
     elif not isinstance(src, Path):
         src = local.path(src)
 
@@ -52,13 +52,12 @@ def move(src, dst):
             return src.move(dst)
         else:
             return _move(src, dst)
+    elif isinstance(dst, LocalPath):
+        return _move(src, dst)
+    elif src.remote == dst.remote:
+        return src.move(dst)
     else:
-        if isinstance(dst, LocalPath):
-            return _move(src, dst)
-        elif src.remote == dst.remote:
-            return src.move(dst)
-        else:
-            return _move(src, dst)
+        return _move(src, dst)
 
 def copy(src, dst):
     """
@@ -79,7 +78,7 @@ def copy(src, dst):
             raise ValueError("When using multiple sources, dst %r must be a directory" % (dst,))
         for src2 in src:
             copy(src2, dst)
-        return
+        return dst
     elif not isinstance(src, Path):
         src = local.path(src)
 
@@ -89,16 +88,15 @@ def copy(src, dst):
         else:
             dst.remote.upload(src, dst)
             return dst
+    elif isinstance(dst, LocalPath):
+        src.remote.download(src, dst)
+        return dst
+    elif src.remote == dst.remote:
+        return src.copy(dst)
     else:
-        if isinstance(dst, LocalPath):
-            src.remote.download(src, dst)
-            return dst
-        elif src.remote == dst.remote:
-            return src.copy(dst)
-        else:
-            with local.tempdir() as tmp:
-                copy(src, tmp)
-                copy(tmp / src.basename, dst)
-            return dst
+        with local.tempdir() as tmp:
+            copy(src, tmp)
+            copy(tmp / src.basename, dst)
+        return dst
 
 
