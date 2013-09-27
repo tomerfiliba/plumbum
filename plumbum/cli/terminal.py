@@ -138,7 +138,8 @@ def choose(question, options, default = None):
     sys.stdout.write(question.rstrip() + "\n")
     choices = {}
     defindex = None
-    for i, item in enumerate(options, 1):
+    for i, item in enumerate(options):
+        i = i + 1 # python2.5
         if isinstance(item, (tuple, list)) and len(item) == 2:
             text = item[0]
             val = item[1]
