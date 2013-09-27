@@ -133,6 +133,9 @@ class ShellSession(object):
         self.isatty = isatty
         self._current = None
         if connect_timeout:
+            def closer():
+                shell_logger.error("Connection to %s timed out (%d sec)", proc, connect_timeout)
+                self.close()
             timer = threading.Timer(connect_timeout, self.close)
             timer.start()
         self.run("")

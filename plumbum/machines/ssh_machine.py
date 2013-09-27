@@ -61,10 +61,14 @@ class SshMachine(BaseRemoteMachine):
                      NOTE: THIS IS A SECURITY RISK!
 
     :param encoding: the remote machine's encoding (defaults to UTF8)
+    
+    :param connect_timeout: specify a connection timeout (the time until shell prompt is seen).
+                            Set to ``None`` to disable 
     """
 
     def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None,
-            scp_command = None, ssh_opts = (), scp_opts = (), password = None, encoding = "utf8"):
+            scp_command = None, ssh_opts = (), scp_opts = (), password = None, encoding = "utf8",
+            connect_timeout = 10):
 
         if ssh_command is None:
             if password is not None:
@@ -94,7 +98,7 @@ class SshMachine(BaseRemoteMachine):
         scp_args.extend(scp_opts)
         self._ssh_command = ssh_command[tuple(ssh_args)]
         self._scp_command = scp_command[tuple(scp_args)]
-        BaseRemoteMachine.__init__(self, encoding)
+        BaseRemoteMachine.__init__(self, encoding = encoding, connect_timeout = connect_timeout)
 
     def __str__(self):
         return "ssh://%s" % (self._fqhost,)
@@ -136,11 +140,11 @@ class SshMachine(BaseRemoteMachine):
             proc.stderr.close()
 
     @_setdoc(BaseRemoteMachine)
-    def session(self, isatty = False, connect_timeout = 5):
+    def session(self, isatty = False):
         return ShellSession(self.popen((), ["-tt"] if isatty else ["-T"]),
-            self.encoding, isatty, connect_timeout)
+            self.encoding, isatty, self.connect_timeout)
 
-    def tunnel(self, lport, dport, lhost = "localhost", dhost = "localhost"):
+    def tunnel(self, lport, dport, lhost = "localhost", dhost = "localhost", connect_timeout = 5):
         r"""Creates an SSH tunnel from the TCP port (``lport``) of the local machine
         (``lhost``, defaults to ``"localhost"``, but it can be any IP you can ``bind()``)
         to the remote TCP port (``dport``) of the destination machine (``dhost``, defaults
@@ -189,7 +193,7 @@ class SshMachine(BaseRemoteMachine):
         """
         ssh_opts = ["-L", "[%s]:%s:[%s]:%s" % (lhost, lport, dhost, dport)]
         proc = self.popen((), ssh_opts = ssh_opts, new_session = True)
-        return SshTunnel(ShellSession(proc, self.encoding))
+        return SshTunnel(ShellSession(proc, self.encoding, connect_timeout = self.connect_timeout))
 
     def _translate_drive_letter(self, path):
         # replace c:\some\path with /c/some/path
@@ -257,6 +261,7 @@ class PuttyMachine(SshMachine):
 
     @_setdoc(BaseRemoteMachine)
     def session(self, isatty = False):
-        return ShellSession(self.popen((), ["-t"] if isatty else ["-T"]), self.encoding, isatty)
+        return ShellSession(self.popen((), ["-t"] if isatty else ["-T"]), self.encoding, isatty, 
+            self.connect_timeout)
 
 

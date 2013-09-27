@@ -133,11 +133,11 @@ class ParamikoMachine(BaseRemoteMachine):
     :param look_for_keys: set to False to disable searching for discoverable
                           private key files in ``~/.ssh``
 
-    :param timeout: timout for the TCP connect
+    :param connect_timeout: timeout for TCP connection
     """
     def __init__(self, host, user = None, port = None, password = None, keyfile = None,
             load_system_host_keys = True, missing_host_policy = None, encoding = "utf8",
-            look_for_keys = None, timeout = None):
+            look_for_keys = None, connect_timeout = None):
         self.host = host
         kwargs = {}
         if user:
@@ -158,11 +158,11 @@ class ParamikoMachine(BaseRemoteMachine):
             self._client.set_missing_host_key_policy(missing_host_policy)
         if look_for_keys is not None:
             kwargs["look_for_keys"] = look_for_keys
-        if timeout is not None:
-            kwargs["timeout"] = timeout
+        if connect_timeout is not None:
+            kwargs["timeout"] = connect_timeout
         self._client.connect(host, **kwargs)
         self._sftp = None
-        BaseRemoteMachine.__init__(self, encoding)
+        BaseRemoteMachine.__init__(self, encoding, connect_timeout)
 
     def __str__(self):
         return "paramiko://%s" % (self._fqhost,)
