@@ -6,10 +6,8 @@ python:
     - "3.2"
     - "3.3"
 
-install: 
-    - pip install paramiko
-
 before_script:
+    - "pip install paramiko || true"
     - "echo NoHostAuthenticationForLocalhost yes >> ~/.ssh/config"
     - "echo StrictHostKeyChecking no >> ~/.ssh/config"
     - "ssh-keygen -q -f ~/.ssh/id_rsa -N ''"
