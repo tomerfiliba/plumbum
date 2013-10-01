@@ -107,7 +107,7 @@ def ask(question, default = None):
         if answer in ("y", "yes"):
             return True
         elif answer in ("n", "no"):
-            return True
+            return False
         elif not answer and default is not None:
             return default
         else:
