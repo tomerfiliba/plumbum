@@ -234,7 +234,7 @@ will not be able to run the program. ::
 
 .. warning::
    The toolkit invokes the switch functions in the same order in which the switches were given
-   on the command line. It doesn't go as far as computing a topological order on the, but
+   on the command line. It doesn't go as far as computing a topological order on the fly, but
    this will change in the future.
 
 Mutual Exclusion
