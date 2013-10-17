@@ -379,7 +379,9 @@ class Application(object):
     @switch(["-h", "--help"], overridable = True, group = "Meta-switches")
     def help(self):  # @ReservedAssignment
         """Prints this help message and quits"""
-        self.version()
+        if self._get_prog_version():
+            self.version()
+            print("")
         if self.DESCRIPTION:
             print(self.DESCRIPTION.strip())
 
@@ -392,12 +394,12 @@ class Application(object):
             tailargs.append("%s..." % (m_varargs,))
         tailargs = " ".join(tailargs)
 
-        print("")
+        print("Usage:")
         if not self.USAGE:
             if self._subcommands:
-                self.USAGE = "Usage: %(progname)s [SWITCHES] [SUBCOMMAND [SWITCHES]] %(tailargs)s"
+                self.USAGE = "    %(progname)s [SWITCHES] [SUBCOMMAND [SWITCHES]] %(tailargs)s\n"
             else:
-                self.USAGE = "Usage: %(progname)s [SWITCHES] %(tailargs)s"
+                self.USAGE = "    %(progname)s [SWITCHES] %(tailargs)s\n"
         print(self.USAGE % {"progname": self.PROGNAME, "tailargs": tailargs})
 
         by_groups = {}
@@ -428,17 +430,10 @@ class Application(object):
                 if show_groups:
                     print("")
 
-        sw_width = 0
-
-        for si, prefix in switchs(by_groups, False):
-            sw_width = max(sw_width, len(prefix))
-        if sw_width > 60:
-            sw_width = 60
-
+        sw_width = max(len(prefix) for si, prefix in switchs(by_groups, False)) + 4
         cols, _ = get_terminal_size()
-        min_msg_width = 50
         description_indent = "    %s%s%s"
-        wrapper = TextWrapper(width = max(cols - sw_width, min_msg_width) - 2)
+        wrapper = TextWrapper(width = max(cols - min(sw_width, 60), 50) - 2)
         indentation = "\n" + " " * (cols - wrapper.width)
 
         for si, prefix in switchs(by_groups, True):
@@ -490,5 +485,6 @@ class Application(object):
     def version(self):
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
-        print ("%s %s" % (self.PROGNAME, ver if ver is not None else "(no version set)"))
+        print ("%s %s" % (self.PROGNAME, ver if ver is not None else "(version not set)"))
+
 
