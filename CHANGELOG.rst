@@ -1,8 +1,13 @@
 1.4
 ---
-* Move ``atomic`` and ``unixutils`` into the new ``fs`` package (file-system related utilities)
+* Moved ``atomic`` and ``unixutils`` into the new ``fs`` package (file-system related utilities)
 * Dropped ``plumbum.utils`` legacy shortcut in favor of ``plumbum.path.utils``
 * Bugfix: the left-hand-side process of a pipe wasn't waited on, leading to zombies (`#89 <https://github.com/tomerfiliba/plumbum/pull/89>`_)
+* Added ``RelativePath`` (the result of ``Path.relative_to``)
+* Fixed more text alignment issues in ``cli.Application.help()``
+* Introduced ``ask()`` and ``choose`` to ``cli.terminal``
+* Bugfix: Path comparison operators were wrong
+* Added connection timeout to ``RemoteMachine``
 
 1.3
 ---
