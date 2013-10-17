@@ -187,7 +187,8 @@ class Path(object):
         return parts[::-1]
 
     def relative_to(self, source):
-        """Computes the "relative path" require to get from ``source`` to ``self``. For example::
+        """Computes the "relative path" require to get from ``source`` to ``self``. They satisfy the invariant
+        ``source_path + (target_path - source_path) == target_path``. For example::
 
             /var/log/messages - /var/log/messages = []
             /var/log/messages - /var              = [log, messages]
@@ -201,18 +202,58 @@ class Path(object):
         parts = self.split()
         baseparts = source.split()
         ancestors = len(list(itertools.takewhile(lambda p: p[0] == p[1], zip(parts, baseparts))))
-        return [".."] * (len(baseparts) - ancestors) + parts[ancestors:]
+        return RelativePath([".."] * (len(baseparts) - ancestors) + parts[ancestors:])
 
     def __sub__(self, other):
         """Same as ``self.relative_to(other)``"""
         return self.relative_to(other)
 
 
+class RelativePath(object):
+    """
+    Relative paths are the "delta" required to get from one path to another.
+    Note that relative path do not point at anything, and thus are not paths.
+    Therefore they are system agnostic (but closed under addition) 
+    Paths are always absolute and point at "something", whether existent or not.
+    
+    Relative paths are created by subtracting paths Path.relative_to
+    """
+    def __init__(self, parts):
+        self.parts = parts
+    def __str__(self):
+        return "/".join(self.parts)
+    def __iter__(self):
+        return iter(self.parts)
+    def __len__(self):
+        return len(self.parts)
+    def __getitem__(self, index):
+        return self.parts[index]
+    def __repr__(self):
+        return "RelativePath(%r)" % (self.parts,)
 
-
-
-
-
+    def __eq__(self, other):
+        return str(self) == str(other)
+    def __ne__(self, other):
+        return not (self == other)
+    def __gt__(self, other):
+        return str(self) > str(other)
+    def __ge__(self, other):
+        return str(self) >= str(other)
+    def __lt__(self, other):
+        return str(self) < str(other)
+    def __le__(self, other):
+        return str(self) <= str(other)
+    def __hash__(self):
+        return hash(str(self))
+    def __nonzero__(self):
+        return bool(str(self))
+    __bool__ = __nonzero__
+    
+    def up(self, count = 1):
+        return RelativePath(self.parts[:-count])
+    
+    def __radd__(self, path):
+        return path.join(*self.parts)
 
 
 

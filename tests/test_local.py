@@ -8,6 +8,7 @@ from plumbum import local, LocalPath, FG, BG, ERROUT
 from plumbum.lib import six
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
+from plumbum.path import RelativePath
 
 
 if not hasattr(unittest, "skipIf"):
@@ -52,12 +53,15 @@ class LocalPathTest(unittest.TestCase):
 
     def test_relative_to(self):
         p = local.path("/var/log/messages")
-        self.assertEqual(p.relative_to("/var/log/messages"), [])
-        self.assertEqual(p.relative_to("/var/"), ["log", "messages"])
-        self.assertEqual(p.relative_to("/"), ["var", "log", "messages"])
-        self.assertEqual(p.relative_to("/var/tmp"), ["..", "log", "messages"])
-        self.assertEqual(p.relative_to("/opt"), ["..", "var", "log", "messages"])
-        self.assertEqual(p.relative_to("/opt/lib"), ["..", "..", "var", "log", "messages"])
+        self.assertEqual(p.relative_to("/var/log/messages"), RelativePath([]))
+        self.assertEqual(p.relative_to("/var/"), RelativePath(["log", "messages"]))
+        self.assertEqual(p.relative_to("/"), RelativePath(["var", "log", "messages"]))
+        self.assertEqual(p.relative_to("/var/tmp"), RelativePath(["..", "log", "messages"]))
+        self.assertEqual(p.relative_to("/opt"), RelativePath(["..", "var", "log", "messages"]))
+        self.assertEqual(p.relative_to("/opt/lib"), RelativePath(["..", "..", "var", "log", "messages"]))
+        for src in [local.path("/var/log/messages"), local.path("/var"), local.path("/opt/lib")]:
+            delta = p.relative_to(src)
+            self.assertEqual(src + delta, p)
 
 
 class LocalMachineTest(unittest.TestCase):
