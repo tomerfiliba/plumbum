@@ -4,9 +4,8 @@ Terminal-related utilities
 import sys
 import os
 import platform
-import subprocess
 from struct import Struct
-from plumbum.lib import six
+from plumbum import local
 
 
 def get_terminal_size():
@@ -46,9 +45,10 @@ def _get_terminal_size_windows():
 def _get_terminal_size_tput():
     # get terminal width
     # src: http://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
+    from plumbum.cmd import tput
     try:
-        cols = int(subprocess.check_call(['tput', 'cols']))
-        rows = int(subprocess.check_call(['tput', 'lines']))
+        cols = int(tput('cols'))
+        rows = int(tput('lines'))
         return (cols, rows)
     except Exception:
         return None
@@ -78,8 +78,8 @@ def _get_terminal_size_linux():
             return None
     return cr[1], cr[0]
 
-def input(message = ""):                         # @ReservedAssignment                          
-    """Gets free-text input from the user"""
+def readline(message = ""):                          
+    """Gets a line of input from the user (stdin)"""
     sys.stdout.write(message)
     return sys.stdin.readline()
 
@@ -101,7 +101,7 @@ def ask(question, default = None):
     
     while True:
         try:
-            answer = input(question).strip().lower()
+            answer = readline(question).strip().lower()
         except EOFError:
             answer = None
         if answer in ("y", "yes"):
@@ -159,7 +159,7 @@ def choose(question, options, default = None):
         msg = "Choice: "
     while True:
         try:
-            choice = input(msg).strip()
+            choice = readline(msg).strip()
         except EOFError:
             choice = ""
         if not choice and default:
@@ -173,9 +173,83 @@ def choose(question, options, default = None):
             continue
         return choices[choice]
 
-    
+def hexdump(data_or_stream, bytes_per_line = 16, aggregate = True):
+    """Convert the given data (or stream) to hexdump-formatted lines, with possible aggregation of identical lines. 
+    Returns a generator of formatted lines.
+    """
+    if hasattr(data_or_stream, "read"):
+        def read_chunk():
+            while True:
+                buf = data_or_stream.read(bytes_per_line)
+                if not buf:
+                    raise StopIteration()
+                yield buf
+    else:
+        def read_chunk():
+            for i in xrange(0, len(data_or_stream), bytes_per_line):
+                yield data_or_stream[i:i + bytes_per_line]
+    prev = None
+    skipped = False
+    for i, chunk in enumerate(read_chunk()):
+        hexd = " ".join("%02x" % (ord(ch),) for ch in chunk)
+        text = "".join(ch if 32 <= ord(ch) < 127 else "." for ch in chunk)
+        if aggregate and prev == chunk:
+            skipped = True
+            continue
+        prev = chunk
+        if skipped:
+            yield "*"
+        yield "%06x | %s| %s" % (i * bytes_per_line, hexd.ljust(bytes_per_line * 3, " "), text)
+        skipped = False
 
 
+def pager(rows, outfile = None, pagercmd = None):
+    """Opens a pager (e.g., ``less``) to display the given text. Requires a terminal."""
+    if not pagercmd:
+        pagercmd = local["less"]
+
+    if not outfile:
+        outfile = None
+    elif isinstance(outfile, str):
+        outfile = open(outfile, "w")
+    elif not hasattr(outfile, "write"):
+        raise TypeError("outfile must support write()")
+    if hasattr(rows, "splitlines"):
+        rows = rows.splitlines()
+
+    pg = pagercmd.popen(["-RSin"], stdout = None, stderr = None)
+    try:
+        if outfile:
+            pg.stdin.write("Dumping output to %s...\n" % (outfile.name,))
+            pg.stdin.flush()
+
+        for row in rows:
+            line = "%s\n" % (row,)
+            if outfile:
+                outfile.write(line)
+            try:
+                pg.stdin.write(line)
+                pg.stdin.flush()
+            except IOError:
+                break
+        pg.stdin.close()
+        pg.wait()
+    finally:
+        if outfile:
+            try:
+                outfile.close()
+            except Exception:
+                pass
+        try:
+            rows.close()
+        except Exception:
+            pass
+        if pg and pg.poll() is None:
+            try:
+                pg.terminate()
+            except Exception:
+                pass
+            os.system("reset")
 
 
 
