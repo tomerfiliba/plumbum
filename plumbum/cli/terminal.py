@@ -188,7 +188,7 @@ def hexdump(data_or_stream, bytes_per_line = 16, aggregate = True):
                 yield buf
     else:
         def read_chunk():
-            for i in xrange(0, len(data_or_stream), bytes_per_line):
+            for i in range(0, len(data_or_stream), bytes_per_line):
                 yield data_or_stream[i:i + bytes_per_line]
     prev = None
     skipped = False
