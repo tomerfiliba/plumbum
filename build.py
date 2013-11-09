@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from plumbum import local, cli
-from plumbum.utils import delete
+from plumbum.path.utils import delete
 
 
 class BuildProject(cli.Application):

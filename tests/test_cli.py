@@ -3,7 +3,7 @@ import sys
 import unittest
 from plumbum import cli
 from contextlib import contextmanager
-from plumbum.cli.terminal import ask, choose
+from plumbum.cli.terminal import ask, choose, hexdump
 from plumbum.lib import six
 # string/unicode issues
 if six.PY3:
@@ -198,6 +198,17 @@ class TestTerminal(unittest.TestCase):
         with captured_stdout("foo\n\n") as stream:
             self.assertEqual(choose("What is your favorite color?", ["blue", "yellow", "green"], default = "yellow"), "yellow")
         self.assertEqual(stream.getvalue(), "What is your favorite color?\n(1) blue\n(2) yellow\n(3) green\nChoice [2]: Invalid choice, please try again\nChoice [2]: ")
+    
+    def test_hexdump(self):
+        data = "hello world my name is queen marry" + "A" * 66 + "foo bar"
+        output = """\
+000000 | 68 65 6c 6c 6f 20 77 6f 72 6c 64 20 6d 79 20 6e | hello world my n
+000010 | 61 6d 65 20 69 73 20 71 75 65 65 6e 20 6d 61 72 | ame is queen mar
+000020 | 72 79 41 41 41 41 41 41 41 41 41 41 41 41 41 41 | ryAAAAAAAAAAAAAA
+000030 | 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 | AAAAAAAAAAAAAAAA
+*
+000060 | 41 41 41 41 66 6f 6f 20 62 61 72                | AAAAfoo bar"""
+        self.assertEqual("\n".join(hexdump(data)), output)
 
 
 if __name__ == "__main__":

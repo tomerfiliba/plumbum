@@ -90,6 +90,8 @@ def ask(question, default = None):
     :param question: The question to ask
     :param default: If ``None``, the user must answer. If ``True`` or ``False``, lack of response is 
                     interpreted as the default option
+    
+    :returns: the user's choice
     """
     question = question.rstrip().rstrip("?").rstrip() + "?"
     if default is None:
@@ -122,7 +124,7 @@ def choose(question, options, default = None):
     :param default: If ``None``, the user must answer. Otherwise, lack of response is interpreted
                     as this answer
     
-    :returns: The 
+    :returns: The user's choice
     
     Example::
     
@@ -174,15 +176,15 @@ def choose(question, options, default = None):
         return choices[choice]
 
 def hexdump(data_or_stream, bytes_per_line = 16, aggregate = True):
-    """Convert the given data (or stream) to hexdump-formatted lines, with possible aggregation of identical lines. 
-    Returns a generator of formatted lines.
+    """Convert the given bytes (or a stream with a buffering ``read()`` method) to hexdump-formatted lines, 
+    with possible aggregation of identical lines. Returns a generator of formatted lines.
     """
     if hasattr(data_or_stream, "read"):
         def read_chunk():
             while True:
                 buf = data_or_stream.read(bytes_per_line)
                 if not buf:
-                    raise StopIteration()
+                    break
                 yield buf
     else:
         def read_chunk():
@@ -203,30 +205,21 @@ def hexdump(data_or_stream, bytes_per_line = 16, aggregate = True):
         skipped = False
 
 
-def pager(rows, outfile = None, pagercmd = None):
-    """Opens a pager (e.g., ``less``) to display the given text. Requires a terminal."""
+def pager(rows, pagercmd = None):
+    """Opens a pager (e.g., ``less``) to display the given text. Requires a terminal.
+    
+    :param rows: a ``bytes`` or a list/iterator of "rows" (``bytes``)
+    :param pagercmd: the pager program to run. Defaults to ``less -RSin``
+    """
     if not pagercmd:
-        pagercmd = local["less"]
-
-    if not outfile:
-        outfile = None
-    elif isinstance(outfile, str):
-        outfile = open(outfile, "w")
-    elif not hasattr(outfile, "write"):
-        raise TypeError("outfile must support write()")
+        pagercmd = local["less"]["-RSin"]
     if hasattr(rows, "splitlines"):
         rows = rows.splitlines()
 
-    pg = pagercmd.popen(["-RSin"], stdout = None, stderr = None)
+    pg = pagercmd.popen(stdout = None, stderr = None)
     try:
-        if outfile:
-            pg.stdin.write("Dumping output to %s...\n" % (outfile.name,))
-            pg.stdin.flush()
-
         for row in rows:
             line = "%s\n" % (row,)
-            if outfile:
-                outfile.write(line)
             try:
                 pg.stdin.write(line)
                 pg.stdin.flush()
@@ -235,11 +228,6 @@ def pager(rows, outfile = None, pagercmd = None):
         pg.stdin.close()
         pg.wait()
     finally:
-        if outfile:
-            try:
-                outfile.close()
-            except Exception:
-                pass
         try:
             rows.close()
         except Exception:
