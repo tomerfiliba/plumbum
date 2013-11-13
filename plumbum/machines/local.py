@@ -143,16 +143,26 @@ class LocalMachine(object):
     else:
         @classmethod
         def _which(cls, progname):
-            for p in cls.env.path:
-                try:
-                    filelist = dict((n.basename, n) for n in p.list())
-                except OSError:
-                    continue
-                if progname in filelist:
-                    f = filelist[progname]
-                    if not f.stat().st_mode & stat.S_IXUSR:
-                        continue
-                    return f
+            """
+            Code based on the Twisted library MIT Licensed.
+            """
+
+            flags=os.X_OK
+            exts = filter(None, os.environ.get('PATHEXT', '').split(os.pathsep))
+            path = os.environ.get('PATH', None)
+
+            if path is None:
+                return None
+
+            for p in os.environ.get('PATH', '').split(os.pathsep):
+                p = os.path.join(p, progname)
+                if os.access(p, flags):
+                    return LocalPath(p)
+                for e in exts:
+                    pext = p + e
+                    if os.access(pext, flags):
+                        return LocalPath(text)
+
             return None
 
     @classmethod
