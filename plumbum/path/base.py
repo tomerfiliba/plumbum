@@ -1,4 +1,6 @@
 import itertools
+import operator
+import os
 
 
 class FSUser(int):
@@ -159,6 +161,21 @@ class Path(object):
         """Change the mode of path to the numeric mode.
 
         :param mode: file mode as for os.chmod
+        """
+        raise NotImplementedError()
+
+    @staticmethod
+    def _access_mode_to_flags(mode, flags = {"f" : os.F_OK, "w" : os.W_OK, "r" : os.R_OK, "x" : os.X_OK}):
+        if isinstance(mode, str):
+            mode = reduce(operator.or_, [flags[m] for m in mode.lower()], 0)
+        return mode
+    
+    def access(self, mode = 0):
+        """Test file existence or permission bits
+        
+        :param mode: a bitwise-or of access bits, or a string-representation thereof: 
+                     ``'f'``, ``'x'``, ``'r'``, ``'w'`` for ``os.F_OK``, ``os.X_OK``, 
+                     ``os.R_OK``, ``os.W_OK``
         """
         raise NotImplementedError()
 

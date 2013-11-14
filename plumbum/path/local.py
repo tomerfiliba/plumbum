@@ -178,6 +178,10 @@ class LocalPath(Path):
         os.chmod(str(self), mode)
 
     @_setdoc(Path)
+    def access(self, mode = 0):
+        return os.access(str(self), self._access_mode_to_flags(mode))
+
+    @_setdoc(Path)
     def link(self, dst):
         if isinstance(dst, RemotePath):
             raise TypeError("Cannot create a hardlink from local path %s to %r" % (self, dst))

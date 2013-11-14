@@ -180,6 +180,15 @@ class RemotePath(Path):
         self.remote._path_chmod(mode, self)
 
     @_setdoc(Path)
+    def access(self, mode = 0):
+        mode = self._access_mode_to_flags(mode)
+        res = self._path_stat()
+        if res is None:
+            return False
+        mask = res.st_mode & 0x1ff
+        return ((mask >> 6) & mode) or ((mask >> 3) & mode)
+
+    @_setdoc(Path)
     def link(self, dst):
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
