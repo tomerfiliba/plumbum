@@ -194,6 +194,7 @@ class LocalPath(Path):
                 local["cmd"]("/C", "mklink", "/D", "/H", str(dst), str(self))
             else:
                 local["cmd"]("/C", "mklink", "/H", str(dst), str(self))
+
     @_setdoc(Path)
     def symlink(self, dst):
         if isinstance(dst, RemotePath):
@@ -207,6 +208,10 @@ class LocalPath(Path):
                 local["cmd"]("/C", "mklink", "/D", str(dst), str(self))
             else:
                 local["cmd"]("/C", "mklink", str(dst), str(self))
+
+    @_setdoc(Path)
+    def unlink(self):
+        os.unlink(str(self))
 
 
 class LocalWorkdir(LocalPath):
