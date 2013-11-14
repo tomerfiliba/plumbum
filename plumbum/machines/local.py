@@ -144,15 +144,10 @@ class LocalMachine(object):
         @classmethod
         def _which(cls, progname):
             for p in cls.env.path:
-                try:
-                    filelist = dict((n.basename, n) for n in p.list())
-                except OSError:
-                    continue
-                if progname in filelist:
-                    f = filelist[progname]
-                    if not f.stat().st_mode & stat.S_IXUSR:
-                        continue
+                f = p / progname
+                if os.access(str(f), os.X_OK):
                     return f
+
             return None
 
     @classmethod
