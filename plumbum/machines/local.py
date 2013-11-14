@@ -143,25 +143,10 @@ class LocalMachine(object):
     else:
         @classmethod
         def _which(cls, progname):
-            """
-            Code based on the Twisted library MIT Licensed.
-            """
-
-            flags=os.X_OK
-            exts = filter(None, os.environ.get('PATHEXT', '').split(os.pathsep))
-            path = os.environ.get('PATH', None)
-
-            if path is None:
-                return None
-
-            for p in os.environ.get('PATH', '').split(os.pathsep):
-                p = os.path.join(p, progname)
-                if os.access(p, flags):
-                    return LocalPath(p)
-                for e in exts:
-                    pext = p + e
-                    if os.access(pext, flags):
-                        return LocalPath(text)
+            for p in cls.env.path:
+                f = p / progname
+                if os.access(str(f), os.X_OK):
+                    return f
 
             return None
 
