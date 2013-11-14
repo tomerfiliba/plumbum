@@ -131,23 +131,18 @@ class LocalMachine(object):
         def _which(cls, progname):
             progname = progname.lower()
             for p in cls.env.path:
-                try:
-                    filelist = dict((n.basename, n) for n in p.list())
-                except OSError:
-                    continue
                 for ext in cls._EXTENSIONS:
-                    n = progname + ext
-                    if n in filelist:
-                        return filelist[n]
+                    fn = p / (progname + ext)
+                    if fn.access("x"):
+                        return fn
             return None
     else:
         @classmethod
         def _which(cls, progname):
             for p in cls.env.path:
-                f = p / progname
-                if os.access(str(f), os.X_OK):
-                    return f
-
+                fn = p / progname
+                if fn.access("x"):
+                    return fn
             return None
 
     @classmethod
