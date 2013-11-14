@@ -2,6 +2,11 @@ import itertools
 import operator
 import os
 
+try:
+    reduce
+except NameError:
+    from functools import reduce
+
 
 class FSUser(int):
     """A special object that represents a file-system user. It derives from ``int``, so it behaves
