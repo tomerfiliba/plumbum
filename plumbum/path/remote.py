@@ -137,6 +137,8 @@ class RemotePath(Path):
             return
         self.remote._path_delete(self)
 
+    unlink = delete
+
     @_setdoc(Path)
     def move(self, dst):
         if isinstance(dst, RemotePath):

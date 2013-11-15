@@ -113,7 +113,13 @@ class LocalPath(Path):
         if self.isdir():
             shutil.rmtree(str(self))
         else:
-            os.remove(str(self))
+            try:
+                os.remove(str(self))
+            except OSError:
+                # file might already been removed (a race with other threads/processes)
+                _, ex, _ = sys.exc_info()
+                if ex.errno != errno.ENOENT:
+                    raise
 
     @_setdoc(Path)
     def move(self, dst):
@@ -194,6 +200,7 @@ class LocalPath(Path):
                 local["cmd"]("/C", "mklink", "/D", "/H", str(dst), str(self))
             else:
                 local["cmd"]("/C", "mklink", "/H", str(dst), str(self))
+
     @_setdoc(Path)
     def symlink(self, dst):
         if isinstance(dst, RemotePath):
@@ -207,6 +214,16 @@ class LocalPath(Path):
                 local["cmd"]("/C", "mklink", "/D", str(dst), str(self))
             else:
                 local["cmd"]("/C", "mklink", str(dst), str(self))
+
+    @_setdoc(Path)
+    def unlink(self):
+        try:
+            os.unlink(str(self))
+        except OSError:
+            # file might already been removed (a race with other threads/processes)
+            _, ex, _ = sys.exc_info()
+            if ex.errno != errno.ENOENT:
+                raise
 
 
 class LocalWorkdir(LocalPath):

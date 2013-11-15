@@ -190,11 +190,16 @@ class Path(object):
         :param dst: the destination path
         """
         raise NotImplementedError()
+
     def symlink(self, dst):
         """Creates a symbolic link from ``self`` to ``dst``
 
         :param dst: the destination path
         """
+        raise NotImplementedError()
+
+    def unlink(self):
+        """Deletes a symbolic link"""
         raise NotImplementedError()
 
     def split(self):
