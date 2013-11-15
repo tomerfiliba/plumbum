@@ -113,7 +113,13 @@ class LocalPath(Path):
         if self.isdir():
             shutil.rmtree(str(self))
         else:
-            os.remove(str(self))
+            try:
+                os.remove(str(self))
+            except OSError:
+                # file might already been removed (a race with other threads/processes)
+                _, ex, _ = sys.exc_info()
+                if ex.errno != errno.ENOENT:
+                    raise
 
     @_setdoc(Path)
     def move(self, dst):
@@ -211,7 +217,13 @@ class LocalPath(Path):
 
     @_setdoc(Path)
     def unlink(self):
-        os.unlink(str(self))
+        try:
+            os.unlink(str(self))
+        except OSError:
+            # file might already been removed (a race with other threads/processes)
+            _, ex, _ = sys.exc_info()
+            if ex.errno != errno.ENOENT:
+                raise
 
 
 class LocalWorkdir(LocalPath):
