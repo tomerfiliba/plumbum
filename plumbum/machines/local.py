@@ -310,10 +310,10 @@ class LocalMachine(object):
             if pat.search(procinfo.args):
                 yield procinfo 
 
-    def session(self):
+    def session(self, new_session = False):
         """Creates a new :class:`ShellSession <plumbum.session.ShellSession>` object; this
         invokes ``/bin/sh`` and executes commands on it over stdin/stdout/stderr"""
-        return ShellSession(self["sh"].popen())
+        return ShellSession(self["sh"].popen(new_session = new_session))
 
     @contextmanager
     def tempdir(self):

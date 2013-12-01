@@ -118,10 +118,10 @@ class BaseRemoteMachine(object):
     * ``connect_timeout`` - the connection timeout
     """
 
-    def __init__(self, encoding = "utf8", connect_timeout = 10):
+    def __init__(self, encoding = "utf8", connect_timeout = 10, new_session = False):
         self.encoding = encoding
         self.connect_timeout = connect_timeout
-        self._session = self.session()
+        self._session = self.session(new_session = new_session)
         self.uname = self._get_uname()
         self.cwd = RemoteWorkdir(self)
         self.env = RemoteEnv(self)
@@ -216,7 +216,7 @@ class BaseRemoteMachine(object):
             self._python = self["python"]
         return self._python
 
-    def session(self, isatty = False, connect_timeout = None):
+    def session(self, isatty = False, new_session = False):
         """Creates a new :class:`ShellSession <plumbum.session.ShellSession>` object; this invokes the user's
         shell on the remote machine and executes commands on it over stdin/stdout/stderr"""
         raise NotImplementedError()

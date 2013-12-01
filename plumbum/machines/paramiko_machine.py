@@ -182,7 +182,8 @@ class ParamikoMachine(BaseRemoteMachine):
         return self._sftp
 
     @_setdoc(BaseRemoteMachine)
-    def session(self, isatty = False, term = "vt100", width = 80, height = 24):
+    def session(self, isatty = False, term = "vt100", width = 80, height = 24, new_session = False):
+        # new_session is ignored for ParamikoMachine
         chan = self._client.get_transport().open_session()
         if isatty:
             chan.get_pty(term, width, height)

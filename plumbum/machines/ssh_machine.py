@@ -63,12 +63,16 @@ class SshMachine(BaseRemoteMachine):
     :param encoding: the remote machine's encoding (defaults to UTF8)
     
     :param connect_timeout: specify a connection timeout (the time until shell prompt is seen).
-                            Set to ``None`` to disable 
+                            The default is 10 seconds. Set to ``None`` to disable
+
+    :param new_session: whether or not to start the background session as a new
+                        session leader (setsid). This will prevent it from being killed on
+                        Ctrl+C (SIGINT)
     """
 
     def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None,
             scp_command = None, ssh_opts = (), scp_opts = (), password = None, encoding = "utf8",
-            connect_timeout = 10):
+            connect_timeout = 10, new_session = False):
 
         if ssh_command is None:
             if password is not None:
@@ -98,7 +102,8 @@ class SshMachine(BaseRemoteMachine):
         scp_args.extend(scp_opts)
         self._ssh_command = ssh_command[tuple(ssh_args)]
         self._scp_command = scp_command[tuple(scp_args)]
-        BaseRemoteMachine.__init__(self, encoding = encoding, connect_timeout = connect_timeout)
+        BaseRemoteMachine.__init__(self, encoding = encoding, connect_timeout = connect_timeout,
+            new_session = new_session)
 
     def __str__(self):
         return "ssh://%s" % (self._fqhost,)
@@ -140,8 +145,8 @@ class SshMachine(BaseRemoteMachine):
             proc.stderr.close()
 
     @_setdoc(BaseRemoteMachine)
-    def session(self, isatty = False):
-        return ShellSession(self.popen((), ["-tt"] if isatty else ["-T"]),
+    def session(self, isatty = False, new_session = False):
+        return ShellSession(self.popen((), (["-tt"] if isatty else ["-T"]), new_session = new_session),
             self.encoding, isatty, self.connect_timeout)
 
     def tunnel(self, lport, dport, lhost = "localhost", dhost = "localhost", connect_timeout = 5):
@@ -237,7 +242,8 @@ class PuttyMachine(SshMachine):
     Arguments are the same as for :class:`plumbum.machines.remote.SshMachine`
     """
     def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None,
-            scp_command = None, ssh_opts = (), scp_opts = (), encoding = "utf8"):
+            scp_command = None, ssh_opts = (), scp_opts = (), encoding = "utf8",
+            connect_timeout = 10, new_session = False):
         if ssh_command is None:
             ssh_command = local["plink"]
         if scp_command is None:
@@ -249,8 +255,9 @@ class PuttyMachine(SshMachine):
         if port is not None:
             ssh_opts.extend(["-P", str(port)])
             port = None
-        SshMachine.__init__(self, host, user, port, keyfile, ssh_command, scp_command,
-            ssh_opts, scp_opts)
+        SshMachine.__init__(self, host, user, port, keyfile = keyfile, ssh_command = ssh_command,
+            scp_command = scp_command, ssh_opts = ssh_opts, scp_opts = scp_opts, encoding = encoding,
+            connect_timeout = connect_timeout, new_session = new_session)
 
     def __str__(self):
         return "putty-ssh://%s" % (self._fqhost,)
@@ -260,8 +267,8 @@ class PuttyMachine(SshMachine):
         return path
 
     @_setdoc(BaseRemoteMachine)
-    def session(self, isatty = False):
-        return ShellSession(self.popen((), ["-t"] if isatty else ["-T"]), self.encoding, isatty, 
-            self.connect_timeout)
+    def session(self, isatty = False, new_session = False):
+        return ShellSession(self.popen((), (["-t"] if isatty else ["-T"]), new_session = new_session),
+            self.encoding, isatty, self.connect_timeout)
 
 
