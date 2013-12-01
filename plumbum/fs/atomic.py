@@ -240,7 +240,9 @@ class PidFileTaken(SystemExit):
     derives from ``SystemExit``, so unless explicitly handled, it will terminate the process
     cleanly
     """
-    pass
+    def __init__(self, msg, pid):
+        SystemExit.__init__(self, msg)
+        self.pid = pid
 
 class PidFile(object):
     """
@@ -264,6 +266,8 @@ class PidFile(object):
             self.release()
         except Exception:
             pass
+    def close(self):
+        self.atomicfile.close()
 
     def acquire(self):
         """
@@ -282,7 +286,7 @@ class PidFile(object):
                 pid = self.atomicfile.read_shared().strip().decode("utf8")
             except (IOError, OSError):
                 pid = "Unknown"
-            raise PidFileTaken("PID file %r taken by process %s" % (self.atomicfile.path, pid))
+            raise PidFileTaken("PID file %r taken by process %s" % (self.atomicfile.path, pid), pid)
         else:
             self.atomicfile.write_atomic(str(os.getpid()).encode("utf8"))
             atexit.register(self.release)
