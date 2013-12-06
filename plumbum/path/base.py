@@ -120,6 +120,9 @@ class Path(object):
     def isfile(self):
         """Returns ``True`` if this path is a regular file, ``False`` otherwise"""
         raise NotImplementedError()
+    def islink(self):
+        """Returns ``True`` if this path is a symbolic link, ``False`` otherwise"""
+        raise NotImplementedError()
     def exists(self):
         """Returns ``True`` if this path exists, ``False`` otherwise"""
         raise NotImplementedError()

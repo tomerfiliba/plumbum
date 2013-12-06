@@ -95,6 +95,10 @@ class LocalPath(Path):
         return os.path.isfile(str(self))
 
     @_setdoc(Path)
+    def islink(self):
+        return os.path.islink(str(self))
+
+    @_setdoc(Path)
     def exists(self):
         return os.path.exists(str(self))
 
