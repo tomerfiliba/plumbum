@@ -117,6 +117,13 @@ class RemotePath(Path):
         return res.text_mode in ("regular file", "regular empty file")
 
     @_setdoc(Path)
+    def islink(self):
+        res = self.remote._path_stat(self)
+        if not res:
+            return False
+        return res.text_mode == "symbolic link"
+
+    @_setdoc(Path)
     def exists(self):
         return self.remote._path_stat(self) is not None
 
