@@ -91,8 +91,8 @@ class ParamikoPopen(object):
             else:
                 coll.append(line)
         self.wait()
-        stdout = six.b("").join([six.b(s) for s in stdout])
-        stderr = six.b("").join([six.b(s) for s in stderr])
+        stdout = six.b("").join(six.b(s) for s in stdout)
+        stderr = six.b("").join(six.b(s) for s in stderr)
         return stdout, stderr
 
 
