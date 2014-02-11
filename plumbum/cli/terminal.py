@@ -45,8 +45,8 @@ def _get_terminal_size_windows():
 def _get_terminal_size_tput():
     # get terminal width
     # src: http://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
-    from plumbum.cmd import tput
     try:
+        from plumbum.cmd import tput
         cols = int(tput('cols'))
         rows = int(tput('lines'))
         return (cols, rows)
