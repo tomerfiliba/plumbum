@@ -1,6 +1,6 @@
 import logging
 from plumbum import cli, local
-from plumbum.utils import delete, copy
+from plumbum.path.utils import delete, copy
 
 
 logger = logging.getLogger("FileCopier")
