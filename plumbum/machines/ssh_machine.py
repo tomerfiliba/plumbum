@@ -113,7 +113,7 @@ class SshMachine(BaseRemoteMachine):
         cmdline = []
         cmdline.extend(ssh_opts)
         cmdline.append(self._fqhost)
-        if args:
+        if args and hasattr(self, "env"):
             envdelta = self.env.getdelta()
             cmdline.extend(["cd", str(self.cwd), "&&"])
             if envdelta:
@@ -146,7 +146,7 @@ class SshMachine(BaseRemoteMachine):
 
     @_setdoc(BaseRemoteMachine)
     def session(self, isatty = False, new_session = False):
-        return ShellSession(self.popen((), (["-tt"] if isatty else ["-T"]), new_session = new_session),
+        return ShellSession(self.popen(["/bin/sh"], (["-tt"] if isatty else ["-T"]), new_session = new_session),
             self.encoding, isatty, self.connect_timeout)
 
     def tunnel(self, lport, dport, lhost = "localhost", dhost = "localhost", connect_timeout = 5):

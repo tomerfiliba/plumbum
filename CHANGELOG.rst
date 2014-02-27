@@ -1,3 +1,12 @@
+1.4.1
+-----
+* Force ``/bin/sh`` to be the shell in ``SshMachine.session()`` (`#111 <https://github.com/tomerfiliba/plumbum/pull/111>`_)
+* Added ``islink()`` and ``unlink()`` to path objects (`#100 <https://github.com/tomerfiliba/plumbum/pull/100>`_,
+  `#103 <https://github.com/tomerfiliba/plumbum/pull/103>`_)
+* Added ``access`` to path objects
+* Faster ``which`` implementation (`#98 <https://github.com/tomerfiliba/plumbum/pull/98>`_)
+* Several minor bug fixes
+
 1.4
 ---
 * Moved ``atomic`` and ``unixutils`` into the new ``fs`` package (file-system related utilities)
