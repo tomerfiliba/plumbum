@@ -21,9 +21,9 @@ def get_terminal_size():
         if not size:
             # needed for window's python in cygwin's xterm!
             size = _get_terminal_size_tput()
-    elif current_os in ('Linux', 'Darwin') or current_os.startswith('CYGWIN'):
+    elif current_os in ('Linux', 'Darwin', 'FreeBSD') or current_os.startswith('CYGWIN'):
         size = _get_terminal_size_linux()
-    if not size:
+    else:
         size = (80, 25)
     return size
 
