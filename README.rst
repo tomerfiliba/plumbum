@@ -126,3 +126,9 @@ Sample output::
     Include dirs: ['foo/bar', 'spam/eggs']
     Compiling: ('x.cpp', 'y.cpp', 'z.cpp')
 
+
+
+.. image:: https://d2weczhvl823v0.cloudfront.net/tomerfiliba/plumbum/trend.png
+   :alt: Bitdeli badge
+   :target: https://bitdeli.com/free
+
