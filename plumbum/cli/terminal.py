@@ -175,6 +175,33 @@ def choose(question, options, default = None):
             continue
         return choices[choice]
 
+def prompt(question, type = int, default = NotImplemented, validator = lambda val: True):
+    question = question.rstrip(" \t:")
+    if default is not NotImplemented:
+        question += " [%s]" % (default,)
+    question += ": "
+    while True:
+        try:
+            ans = readline(question).strip()
+        except EOFError:
+            ans = ""
+        if not ans:
+            if default is not NotImplemented:
+                #sys.stdout.write("\b%s\n" % (default,))
+                return default
+            else:
+                continue
+        try:
+            ans = type(ans)
+        except (TypeError, ValueError) as ex:
+            sys.stdout.write("Invalid value (%s), please try again\n" % (ex,))
+            continue
+        try:
+            validator(ans)
+        except ValueError as ex:
+            sys.stdout.write("%s, please try again\n" % (ex,))
+        return ans
+
 def hexdump(data_or_stream, bytes_per_line = 16, aggregate = True):
     """Convert the given bytes (or a stream with a buffering ``read()`` method) to hexdump-formatted lines, 
     with possible aggregation of identical lines. Returns a generator of formatted lines.
