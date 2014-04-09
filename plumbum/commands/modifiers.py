@@ -1,3 +1,8 @@
+import os
+from select import select
+from subprocess import PIPE
+import sys
+
 from plumbum.commands.processes import run_proc
 
 
@@ -117,24 +122,56 @@ class FG(ExecutionModifier):
         cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None)
 
 FG = FG()
-"""
-An execution modifier that runs the given command in the foreground, passing it the
-current process' stdin, stdout and stderr. Useful for interactive programs that require
-a TTY. There is no return value.
-
-In order to mimic shell syntax, it applies when you right-and it with a command.
-If you wish to expect a different return code (other than the normal success indicate by 0),
-use ``BG(retcode)``. Example::
-
-    vim & FG       # run vim in the foreground, expecting an exit code of 0
-    vim & FG(7)    # run vim in the foreground, expecting an exit code of 7
-"""
-
-class Tee(object):
-    def __init__(self, *streams):
-        self.streams = streams
 
 
+class TEE(ExecutionModifier):
+    """Run a command, dumping its stdout/stderr to the current process's stdout
+    and stderr, but ALSO return them.  Useful for interactive programs that
+    expect a TTY but also have valuable output.
 
+    Use as:
 
+        ls["-l"] & TEE
 
+    Returns a tuple of (return code, stdout, stderr), just like ``run()``.
+    """
+    def __init__(self, retcode=0, buffered=True):
+        """`retcode` is the return code to expect to mean "success".  Set
+        `buffered` to false to disable line-buffering the output, which may
+        cause stdout and stderr to become more entangled than usual.
+        """
+        self.retcode = retcode
+        self.buffered = buffered
+
+    @classmethod
+    def __call__(cls, *args, **kwargs):
+        return cls(*args, **kwargs)
+
+    def __rand__(self, cmd):
+        with cmd.bgrun(retcode=self.retcode, stdin=None, stdout=PIPE, stderr=PIPE) as p:
+            outbuf = []
+            errbuf = []
+            out = p.stdout
+            err = p.stderr
+            buffers = {out: outbuf, err: errbuf}
+            tee_to = {out: sys.stdout, err: sys.stderr}
+            while p.poll() is None:
+                ready, _, _ = select((out, err), (), ())
+                for fd in ready:
+                    buf = buffers[fd]
+                    data = os.read(fd.fileno(), 4096)
+                    if not data:  # eof
+                        continue
+
+                    # Python conveniently line-buffers stdout and stderr for
+                    # us, so all we need to do is write to them
+                    tee_to[fd].write(data)
+                    # And then "unbuffered" is just flushing after each write
+                    if not self.buffered:
+                        tee_to[fd].flush()
+
+                    buf.append(data)
+
+            return p.returncode, ''.join(outbuf), ''.join(errbuf)
+
+TEE = TEE()
