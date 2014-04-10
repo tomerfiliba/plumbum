@@ -350,6 +350,8 @@ class Application(object):
                 subapp, argv = inst.nested_command
                 subapp.parent = inst
                 inst, retcode = subapp.run(argv, exit = False)
+            
+            inst.cleanup()
 
             if retcode is None:
                 retcode = 0
@@ -375,6 +377,9 @@ class Application(object):
         else:
             print("main() not implemented")
             return 1
+
+    def cleanup(self):
+        """Called after ``main()`` and all subapplications have executed, to perform any necessary cleanup"""
 
     @switch(["-h", "--help"], overridable = True, group = "Meta-switches")
     def help(self):  # @ReservedAssignment
