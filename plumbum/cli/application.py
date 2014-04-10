@@ -351,7 +351,7 @@ class Application(object):
                 subapp.parent = inst
                 inst, retcode = subapp.run(argv, exit = False)
             
-            inst.cleanup()
+            inst.cleanup(retcode)
 
             if retcode is None:
                 retcode = 0
@@ -378,8 +378,11 @@ class Application(object):
             print("main() not implemented")
             return 1
 
-    def cleanup(self):
-        """Called after ``main()`` and all subapplications have executed, to perform any necessary cleanup"""
+    def cleanup(self, retcode):
+        """Called after ``main()`` and all subapplications have executed, to perform any necessary cleanup.
+        
+        :param retcode: the return code of ``main()``
+        """
 
     @switch(["-h", "--help"], overridable = True, group = "Meta-switches")
     def help(self):  # @ReservedAssignment
