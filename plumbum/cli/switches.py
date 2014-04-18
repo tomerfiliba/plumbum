@@ -246,6 +246,7 @@ class CountOf(SwitchAttr):
     """
     def __init__(self, names, default = 0, **kwargs):
         SwitchAttr.__init__(self, names, argtype = None, default = default, list = True, **kwargs)
+        self._default_value = default  # issue #118
     def __call__(self, inst, v):
         self.__set__(inst, len(v))
 
