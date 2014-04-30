@@ -191,7 +191,7 @@ class RemotePath(Path):
     @_setdoc(Path)
     def access(self, mode = 0):
         mode = self._access_mode_to_flags(mode)
-        res = self._path_stat()
+        res = self.remote._path_stat(self)
         if res is None:
             return False
         mask = res.st_mode & 0x1ff
