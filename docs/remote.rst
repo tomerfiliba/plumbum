@@ -161,7 +161,7 @@ overcome this, Plumbum provides integration for `paramiko <https://github.com/pa
 an open-source, pure-Python implementation of the SSH2 protocol. This is the ``ParamikoMachine``, 
 and it works along the lines of the ``SshMachine``::
 
-    >>> from plumbum.paramiko_machine import ParamikoMachine
+    >>> from plumbum.machines.paramiko_machine import ParamikoMachine
     >>> rem = ParamikoMachine("192.168.1.143")
     >>> rem["ls"]
     RemoteCommand(<ParamikoMachine paramiko://192.168.1.143>, <RemotePath /bin/ls>)
@@ -173,7 +173,7 @@ and it works along the lines of the ``SshMachine``::
 
 .. note::
     Using ``ParamikoMachine`` requires paramiko to be installed on your system. Also, you have
-    to explicitly import it (``from plumbum.paramiko_machine import ParamikoMachine``) as paramiko
+    to explicitly import it (``from plumbum.machines.paramiko_machine import ParamikoMachine``) as paramiko
     is quite heavy.
 
     Refer to :class:`the API docs <plumbum.paramiko_machine.ParamikoMachine>` for more details.
