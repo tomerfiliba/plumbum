@@ -66,6 +66,7 @@ class RemoteEnv(BaseEnv):
         """Returns the difference between the this environment and the original environment of
         the remote machine"""
         self._curr["PATH"] = self.path.join()
+
         delta = {}
         for k, v in self._curr.items():
             if k not in self._orig:
@@ -73,6 +74,10 @@ class RemoteEnv(BaseEnv):
         for k, v in self._orig.items():
             if k not in self._curr:
                 delta[k] = ""
+            else:
+                if v != self._curr[k]:
+                    delta[k] = self._curr[k]
+
         return delta
 
 
@@ -182,9 +187,10 @@ class BaseRemoteMachine(object):
             alternatives.append(progname.replace("_", "-"))
             alternatives.append(progname.replace("_", "."))
         for name in alternatives:
-            rc, out, _ = self._session.run("which %s" % (shquote(name),), retcode = None)
-            if rc == 0:
-                return self.path(out.strip())
+            for p in self.env.path:
+                fn = p / progname
+                if fn.access("x"):
+                    return fn
 
         raise CommandNotFound(progname, self.env.path)
 

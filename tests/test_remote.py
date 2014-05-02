@@ -5,6 +5,7 @@ import unittest
 import time
 import logging
 from plumbum import RemotePath, SshMachine, ProcessExecutionError, local
+from plumbum import CommandNotFound
 from plumbum.lib import six
 
 
@@ -80,8 +81,7 @@ s.close()
             r_grep = rem["grep"]
 
             self.assertTrue(".bashrc" in r_ls("-a").splitlines())
-
-            with rem.cwd(os.path.dirname(__file__)):
+            with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
                 cmd = r_ssh["localhost", "cd", rem.cwd, "&&", r_ls | r_grep["\\.py"]]
                 self.assertTrue("'|'" in str(cmd))
                 self.assertTrue("test_remote.py" in cmd())
@@ -114,6 +114,13 @@ s.close()
                     self.assertEqual(out.strip(), "baba")
                 out = rem.python("-c", "import os;print(os.environ['FOOBAR72'])")
                 self.assertEqual(out.strip(), "lala")
+
+            # path manipulation
+            self.assertRaises(CommandNotFound, rem.which, "dummy-executable")
+            with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
+                rem.env.path.insert(0, rem.cwd / "not-in-path")
+                p = rem.which("dummy-executable")
+                self.assertEqual(p, rem.cwd / "not-in-path" / "dummy-executable")
 
     def test_read_write(self):
         with self._connect() as rem:
