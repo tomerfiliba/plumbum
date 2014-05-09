@@ -231,9 +231,9 @@ class LocalMachineTest(unittest.TestCase):
         with local.tempdir() as dir:
             self.assertTrue(dir.isdir())
             data = six.b("hello world")
-            with open(str(dir / "test.txt"), "w") as f:
+            with open(str(dir / "test.txt"), "wb") as f:
                 f.write(data)
-            with open(str(dir / "test.txt"), "r") as f:
+            with open(str(dir / "test.txt"), "rb") as f:
                 self.assertEqual(f.read(), data)
 
         self.assertFalse(dir.exists())
