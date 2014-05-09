@@ -188,7 +188,7 @@ class BaseRemoteMachine(object):
             alternatives.append(progname.replace("_", "."))
         for name in alternatives:
             for p in self.env.path:
-                fn = p / progname
+                fn = p / name
                 if fn.access("x"):
                     return fn
 
