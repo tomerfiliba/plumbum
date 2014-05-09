@@ -48,7 +48,7 @@ class RemotePathTest(unittest.TestCase):
         with self._connect() as rem:
             with rem.tempdir() as dir:
                 p = dir / "foo.txt"
-                p.write("hello")
+                p.write(six.b("hello"))
                 # because we're connected to localhost, we expect UID and GID to be the same
                 self.assertEqual(p.uid, os.getuid())
                 self.assertEqual(p.gid, os.getgid())
@@ -126,7 +126,7 @@ s.close()
         with self._connect() as rem:
             with rem.tempdir() as dir:
                 self.assertTrue(dir.isdir())
-                data = "hello world"
+                data = six.b("hello world")
                 (dir / "foo.txt").write(data)
                 self.assertEqual((dir / "foo.txt").read(), data)
 

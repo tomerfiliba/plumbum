@@ -333,7 +333,10 @@ class BaseRemoteMachine(object):
         self._session.run(" ".join(args))
 
     def _path_read(self, fn):
-        return self["cat"](fn)
+        data = self["cat"](fn)
+        if self.encoding and isinstance(data, six.unicode_type):
+            data = data.decode(self.encoding)
+        return data
     def _path_write(self, fn, data):
         if self.encoding and isinstance(data, six.unicode_type):
             data = data.encode(self.encoding)

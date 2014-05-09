@@ -157,7 +157,7 @@ class LocalPath(Path):
                     raise
 
     @_setdoc(Path)
-    def open(self, mode = "r"):
+    def open(self, mode = "rb"):
         return open(str(self), mode)
 
     @_setdoc(Path)
@@ -167,7 +167,7 @@ class LocalPath(Path):
 
     @_setdoc(Path)
     def write(self, data):
-        with self.open("w") as f:
+        with self.open("wb") as f:
             f.write(data)
 
     @_setdoc(Path)

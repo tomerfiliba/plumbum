@@ -41,7 +41,7 @@ class LocalPathTest(unittest.TestCase):
     def test_chown(self):
         with local.tempdir() as dir:
             p = dir / "foo.txt"
-            p.write("hello")
+            p.write(six.b("hello"))
             self.assertEqual(p.uid, os.getuid())
             self.assertEqual(p.gid, os.getgid())
             p.chown(p.uid.name)
@@ -230,16 +230,17 @@ class LocalMachineTest(unittest.TestCase):
         from plumbum.cmd import cat
         with local.tempdir() as dir:
             self.assertTrue(dir.isdir())
+            data = six.b("hello world")
             with open(str(dir / "test.txt"), "w") as f:
-                f.write("hello world")
+                f.write(data)
             with open(str(dir / "test.txt"), "r") as f:
-                self.assertEqual(f.read(), "hello world")
+                self.assertEqual(f.read(), data)
 
         self.assertFalse(dir.exists())
 
     def test_read_write(self):
         with local.tempdir() as tmp:
-            data = "hello world"
+            data = six.b("hello world")
             (tmp / "foo.txt").write(data)
             self.assertEqual((tmp / "foo.txt").read(), data)
     
@@ -248,7 +249,7 @@ class LocalMachineTest(unittest.TestCase):
             src = tmp / "foo.txt"
             dst1 = tmp / "bar.txt"
             dst2 = tmp / "spam.txt"
-            data = "hello world"
+            data = six.b("hello world")
             src.write(data)
             src.link(dst1)
             self.assertEqual(data, dst1.read())
