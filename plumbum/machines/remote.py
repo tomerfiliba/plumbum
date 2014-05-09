@@ -335,7 +335,7 @@ class BaseRemoteMachine(object):
     def _path_read(self, fn):
         data = self["cat"](fn)
         if self.encoding and isinstance(data, six.unicode_type):
-            data = data.decode(self.encoding)
+            data = data.encode(self.encoding)
         return data
     def _path_write(self, fn, data):
         if self.encoding and isinstance(data, six.unicode_type):
