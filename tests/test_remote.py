@@ -200,8 +200,11 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
 
 
 
-if not six.PY3:
+try:
     import paramiko
+except ImportError:
+    print("Paramiko not avilable")
+else:
     from plumbum.machines.paramiko_machine import ParamikoMachine
 
     class TestParamikoMachine(unittest.TestCase, BaseRemoteMachineTest):
