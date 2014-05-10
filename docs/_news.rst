@@ -1,3 +1,6 @@
+* **2014.05.10**: Version 1.4.2 released. This is a maintenance release with mostly minor bug fixes, mostly revolving
+  around Paramiko/Python 3 integration.
+
 * **2014.02.28**: Version 1.4.1 released. This is a maintenance release with mostly minor bug fixes and some new
   features to the Path class.
 
@@ -5,6 +8,3 @@
   module
 
   .. note:: ``plumbum.utils`` became ``plumbum.path.utils``
-
-* **2013.08.25**: Version 1.3 released with bug fixes and loads of new features. Note: the package was
-  reorganized internally; it should work out-of-the-box, but some specific imports might have moved
