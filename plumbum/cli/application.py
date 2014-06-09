@@ -389,11 +389,12 @@ class Application(object):
         
         :param retcode: the return code of ``main()``
         """
+
     @switch(["--help-all"], overridable = True, group = "Meta-switches")
     def helpall(self):
-        """Prints the help messages of all subcommands and quits"""
+        """Print help messages of all subcommands and quit"""
         self.help()
-        print "\n"
+        print("")
 
         if self._subcommands:
             for name, subcls in sorted(self._subcommands.items()):
