@@ -464,7 +464,7 @@ class Application(object):
         sw_width = max(len(prefix) for si, prefix in switchs(by_groups, False)) + 4
         cols, _ = get_terminal_size()
         description_indent = "    %s%s%s"
-        wrapper = TextWrapper(width = max(cols - min(sw_width, 60), 50) - 2)
+        wrapper = TextWrapper(width = max(cols - min(sw_width, 60), 50) - 6)
         indentation = "\n" + " " * (cols - wrapper.width)
 
         for si, prefix in switchs(by_groups, True):
@@ -516,6 +516,8 @@ class Application(object):
     def version(self):
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
-        print ("%s %s" % (self.PROGNAME, ver if ver is not None else "(version not set)"))
-
-
+        if sys.stdout.isatty() and os.name == "posix":
+            fmt = "\033[0;36m%s\033[0m %s"
+        else:
+            fmt = "%s %s"
+        print (fmt % (self.PROGNAME, ver if ver is not None else "(version not set)"))
