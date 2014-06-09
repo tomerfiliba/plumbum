@@ -493,5 +493,8 @@ class Application(object):
     def version(self):
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
-        print ("\033[0;36m%s\033[0m %s" % (self.PROGNAME, ver if ver is not None else "(version not set)"))
-
+        if sys.stdout.isatty() and os.name == "posix":
+            fmt = "\033[0;36m%s\033[0m %s"
+        else:
+            fmt = "%s %s"
+        print (fmt % (self.PROGNAME, ver if ver is not None else "(version not set)"))
