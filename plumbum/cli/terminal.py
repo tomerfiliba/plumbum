@@ -23,7 +23,8 @@ def get_terminal_size():
             size = _get_terminal_size_tput()
     elif current_os in ('Linux', 'Darwin', 'FreeBSD') or current_os.startswith('CYGWIN'):
         size = _get_terminal_size_linux()
-    else:
+    
+    if size is None: # we'll assume the standard 80x25 if for any reason we don't know the terminal size
         size = (80, 25)
     return size
 
