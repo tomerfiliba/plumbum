@@ -409,6 +409,9 @@ for _ in range(%s):
         from plumbum.cmd import ls
         c = ls["-l", ["-a", "*.py"]]
         self.assertEqual(c.formulate()[1:], ['-l', '-a', '*.py'])
+    
+    def test_contains(self):
+        self.assertTrue("ls" in local, "Expected to find `ls`")
 
 
 

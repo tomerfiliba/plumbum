@@ -215,6 +215,17 @@ class BaseRemoteMachine(object):
         else:
             raise TypeError("cmd must not be a LocalPath: %r" % (cmd,))
 
+    def __contains__(self, cmd):
+        """Tests for the existance of the command, e.g., ``"ls" in remote_machine``.
+        ``cmd`` can be anything acceptable by ``__getitem__``.
+        """
+        try:
+            self[cmd]
+        except CommandNotFound:
+            return False
+        else:
+            return True
+
     @property
     def python(self):
         """A command that represents the default remote python interpreter"""

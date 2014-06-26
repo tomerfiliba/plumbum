@@ -197,6 +197,17 @@ class LocalMachine(object):
                 return LocalCommand(self.which(cmd))
         else:
             raise TypeError("cmd must not be a RemotePath: %r" % (cmd,))
+    
+    def __contains__(self, cmd):
+        """Tests for the existance of the command, e.g., ``"ls" in plumbum.local``.
+        ``cmd`` can be anything acceptable by ``__getitem__``.
+        """
+        try:
+            self[cmd]
+        except CommandNotFound:
+            return False
+        else:
+            return True
 
     def _popen(self, executable, argv, stdin = PIPE, stdout = PIPE, stderr = PIPE,
             cwd = None, env = None, new_session = False, **kwargs):

@@ -132,6 +132,10 @@ s.close()
 
             self.assertFalse(dir.exists())
 
+    def test_contains(self):
+        with self._connect() as rem:
+            self.assertTrue("ls" in rem, "Expected to find `ls`")
+
 
 class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
     def _connect(self):
