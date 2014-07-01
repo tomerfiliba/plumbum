@@ -54,7 +54,11 @@ class LocalModule(ModuleType):
     """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
     __all__ = ()  # to make help() happy
     __package__ = __name__
-    __getattr__ = local.__getitem__
+    def __getattr__(o, name):
+        try:
+            return local[name]
+        except CommandNotFound:
+            raise AttributeError(name)
     __path__ = []
     __file__ = __file__
 
