@@ -65,6 +65,9 @@ class LocalPathTest(unittest.TestCase):
 
 
 class LocalMachineTest(unittest.TestCase):
+    def test_getattr(self):
+        self.assertEqual(getattr(plumbum.cmd, 'does_not_exist', 1), 1)
+        
     def test_imports(self):
         from plumbum.cmd import ls
         self.assertTrue("test_local.py" in local["ls"]().splitlines())
