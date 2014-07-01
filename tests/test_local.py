@@ -66,8 +66,9 @@ class LocalPathTest(unittest.TestCase):
 
 class LocalMachineTest(unittest.TestCase):
     def test_getattr(self):
+        import plumbum
         self.assertEqual(getattr(plumbum.cmd, 'does_not_exist', 1), 1)
-        
+
     def test_imports(self):
         from plumbum.cmd import ls
         self.assertTrue("test_local.py" in local["ls"]().splitlines())
@@ -77,7 +78,7 @@ class LocalMachineTest(unittest.TestCase):
 
         try:
             from plumbum.cmd import non_exist1N9 #@UnresolvedImport @UnusedImport
-        except CommandNotFound:
+        except (ImportError, CommandNotFound):
             pass
         else:
             self.fail("from plumbum.cmd import non_exist1N9")
@@ -246,7 +247,7 @@ class LocalMachineTest(unittest.TestCase):
             data = six.b("hello world")
             (tmp / "foo.txt").write(data)
             self.assertEqual((tmp / "foo.txt").read(), data)
-    
+
     def test_links(self):
         with local.tempdir() as tmp:
             src = tmp / "foo.txt"
@@ -258,14 +259,14 @@ class LocalMachineTest(unittest.TestCase):
             self.assertEqual(data, dst1.read())
             src.symlink(dst2)
             self.assertEqual(data, dst2.read())
-    
+
     def test_as_user(self):
         with local.as_root():
             local["date"]()
-    
+
     def test_list_processes(self):
         self.assertTrue(list(local.list_processes()))
-    
+
     def test_pgrep(self):
         self.assertTrue(list(local.pgrep("python")))
 
@@ -281,7 +282,7 @@ class LocalMachineTest(unittest.TestCase):
             pass
         else:
             self.fail("Expected KeyboardInterrupt")
-    
+
     @unittest.skipIf(not sys.stdin.isatty(), "Not a TTY")
     def test_same_sesion(self):
         from plumbum.cmd import sleep
@@ -290,7 +291,7 @@ class LocalMachineTest(unittest.TestCase):
         self._generate_sigint()
         time.sleep(1)
         self.assertIsNot(p.poll(), None)
-    
+
     @unittest.skipIf(not sys.stdin.isatty(), "Not a TTY")
     def test_new_session(self):
         from plumbum.cmd import sleep
@@ -300,7 +301,7 @@ class LocalMachineTest(unittest.TestCase):
         time.sleep(1)
         self.assertIs(p.poll(), None)
         p.terminate()
-    
+
     def test_local_daemon(self):
         from plumbum.cmd import sleep
         proc = local.daemonic_popen(sleep[5])
@@ -407,12 +408,12 @@ for _ in range(%s):
         with local.env(FOO = "hello"):
             self.assertEqual(printenv.setenv(BAR = "world")("FOO", "BAR"), "hello\nworld\n")
             self.assertEqual(printenv.setenv(FOO = "sea", BAR = "world")("FOO", "BAR"), "sea\nworld\n")
-    
+
     def test_nesting_lists_as_argv(self):
         from plumbum.cmd import ls
         c = ls["-l", ["-a", "*.py"]]
         self.assertEqual(c.formulate()[1:], ['-l', '-a', '*.py'])
-    
+
     def test_contains(self):
         self.assertTrue("ls" in local, "Expected to find `ls`")
 
