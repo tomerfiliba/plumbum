@@ -354,12 +354,11 @@ class Application(object):
                 f(inst, *a)
             if not inst.nested_command or inst.CALL_MAIN_IF_NESTED_COMMAND:
                 retcode = inst.main(*tailargs)
+                inst.cleanup(retcode)
             if not retcode and inst.nested_command:
                 subapp, argv = inst.nested_command
                 subapp.parent = inst
                 inst, retcode = subapp.run(argv, exit = False)
-            
-            inst.cleanup(retcode)
 
             if retcode is None:
                 retcode = 0

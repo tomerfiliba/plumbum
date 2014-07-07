@@ -49,9 +49,14 @@ class TestApp(cli.Application):
 
 class Geet(cli.Application):
     debug = cli.Flag("--debug")
-    
+    cleanups = []
     def main(self):
+        del self.cleanups[:]
         print ("hi this is geet main")
+
+    def cleanup(self, retcode):
+        self.cleanups.append(1)
+        print("geet cleaning up with rc = %s" % (retcode,))
 
 class GeetAdd(cli.Application):
     def main(self, *files):
@@ -65,6 +70,10 @@ class GeetCommit(cli.Application):
             return "committing in debug"
         else:
             return "committing"
+
+    def cleanup(self, retcode):
+        self.parent.cleanups.append(2)
+        print("geet commit cleaning up with rc = %s" % (retcode,))
 
 # python 2.5 compatibility (otherwise, could be used as a decorator)
 Geet.subcommand("add", GeetAdd)
@@ -125,14 +134,18 @@ class CLITest(unittest.TestCase):
     def test_subcommands(self):
         _, rc = Geet.run(["geet", "--debug"], exit = False)
         self.assertEqual(rc, 0)
+        self.assertEqual(Geet.cleanups, [1])
         _, rc = Geet.run(["geet", "--debug", "add", "foo.txt", "bar.txt"], exit = False)
         self.assertEqual(rc, ("adding", ("foo.txt", "bar.txt")))
+        self.assertEqual(Geet.cleanups, [1])
         _, rc = Geet.run(["geet", "--debug", "commit"], exit = False)
         self.assertEqual(rc, "committing in debug")
+        self.assertEqual(Geet.cleanups, [1, 2])
         _, rc = Geet.run(["geet", "--help"], exit = False)
         self.assertEqual(rc, 0)
         _, rc = Geet.run(["geet", "commit", "--help"], exit = False)
         self.assertEqual(rc, 0)
+        self.assertEqual(Geet.cleanups, [1])
     
     def test_unbind(self):
         with captured_stdout() as stream:
