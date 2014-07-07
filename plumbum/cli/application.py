@@ -1,6 +1,7 @@
 import os
 import sys
 import inspect
+import functools
 from plumbum.lib import six
 from textwrap import TextWrapper
 from plumbum.cli.terminal import get_terminal_size
@@ -352,14 +353,18 @@ class Application(object):
         else:
             for f, a in ordered:
                 f(inst, *a)
+
+            cleanup = None
             if not inst.nested_command or inst.CALL_MAIN_IF_NESTED_COMMAND:
                 retcode = inst.main(*tailargs)
+                cleanup = functools.partial(inst.cleanup, retcode)
             if not retcode and inst.nested_command:
                 subapp, argv = inst.nested_command
                 subapp.parent = inst
                 inst, retcode = subapp.run(argv, exit = False)
-            
-            inst.cleanup(retcode)
+
+            if cleanup:
+                cleanup()
 
             if retcode is None:
                 retcode = 0
