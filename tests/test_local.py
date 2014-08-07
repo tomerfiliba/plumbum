@@ -417,7 +417,8 @@ for _ in range(%s):
     def test_contains(self):
         self.assertTrue("ls" in local, "Expected to find `ls`")
 
-
+    def test_issue_139(self):
+        LocalPath(local.cwd)
 
 if __name__ == "__main__":
     unittest.main()

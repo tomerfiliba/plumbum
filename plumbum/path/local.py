@@ -41,7 +41,9 @@ class LocalPath(Path):
             raise TypeError("LocalPath cannot be constructed from %r" % (parts,))
         self._path = os.path.normpath(os.path.join(*(str(p) for p in parts)))
     def __new__(cls, *parts):
-        if len(parts) == 1 and isinstance(parts[0], cls):
+        if len(parts) == 1 and \
+                isinstance(parts[0], cls) and \
+                not isinstance(parts[0], LocalWorkdir):
             return parts[0]
         return object.__new__(cls)
     def __str__(self):
