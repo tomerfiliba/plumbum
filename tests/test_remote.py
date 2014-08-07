@@ -180,8 +180,8 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
         with self._connect() as rem:
             printenv = rem["printenv"]
             with rem.env(FOO = "hello"):
-                self.assertEqual(printenv.setenv(BAR = "world")("FOO", "BAR"), "hello\nworld\n")
-                self.assertEqual(printenv.setenv(FOO = "sea", BAR = "world")("FOO", "BAR"), "sea\nworld\n")
+                self.assertEqual(printenv.with_env(BAR = "world")("FOO", "BAR"), "hello\nworld\n")
+                self.assertEqual(printenv.with_env(FOO = "sea", BAR = "world")("FOO", "BAR"), "sea\nworld\n")
 
     def test_sshpass(self):
         with local.as_root():

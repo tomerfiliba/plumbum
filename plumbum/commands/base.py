@@ -92,11 +92,13 @@ class BaseCommand(object):
     def _get_encoding(self):
         raise NotImplementedError()
 
-    def setenv(self, **envvars):
-        """Creates a BoundEnvCommand with the given environment variables"""
+    def with_env(self, **envvars):
+        """Returns a BoundEnvCommand with the given environment variables"""
         if not envvars:
             return self
         return BoundEnvCommand(self, envvars)
+
+    setenv = with_env
 
     @property
     def machine(self):
