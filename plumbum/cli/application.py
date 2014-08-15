@@ -137,6 +137,10 @@ class Application(object):
                     self._switches_by_name[name] = swinfo
                     self._switches_by_func[swinfo.func] = swinfo
 
+    @property
+    def root_app(self):
+        return (self.parent.root_app if self.parent else self)
+
     @classmethod
     def unbind_switches(cls, *switch_names):
         """Unbinds the given switch names from this application. For example
