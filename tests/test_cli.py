@@ -191,6 +191,9 @@ class CLITest(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertEqual(inst.eggs, None)
 
+    def test_invoke(self):
+        inst, rc = TestApp.invoke("arg1", "arg2", eggs="sunny", bacon=10, verbose=2)
+        self.assertEqual((inst.eggs, inst.verbose, inst.tailargs), ("sunny", 2, ("arg1", "arg2")))
 
 class TestTerminal(unittest.TestCase):
     def test_ask(self):

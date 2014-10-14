@@ -7,7 +7,7 @@ from textwrap import TextWrapper
 from plumbum.cli.terminal import get_terminal_size
 from plumbum.cli.switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,
     MissingMandatorySwitch, SwitchCombinationError, PositionalArgumentsError, switch,
-    SubcommandError)
+    SubcommandError, Flag, CountOf)
 
 
 class ShowHelp(SwitchError):
@@ -136,6 +136,7 @@ class Application(object):
                         raise SwitchError("Switch %r already defined and is not overridable" % (name,))
                     self._switches_by_name[name] = swinfo
                     self._switches_by_func[swinfo.func] = swinfo
+
 
     @classmethod
     def unbind_switches(cls, *switch_names):
@@ -373,6 +374,46 @@ class Application(object):
             sys.exit(retcode)
         else:
             return inst, retcode
+
+    @classmethod
+    def invoke(cls, *args, **switches):
+        """Invoke this application as a function call"""
+
+        inst = cls("")
+        swfuncs = {}
+        for index, (swname, val) in enumerate(switches.items(), 1):
+            switch = getattr(cls, swname)
+            swinfo = inst._switches_by_func[switch._switch_info.func]
+            if isinstance(switch, CountOf):
+                p = (range(val),)
+            elif swinfo.list and not hasattr(val, "__iter__"):
+                raise SwitchError("Switch %r must be of type 'list'" % swname)
+            elif not swinfo.argtype:
+                if val not in (True, False, None):
+                    raise SwitchError("Switch %r must be of type 'bool'" % swname)
+                p = ()
+            else:
+                p = (val,)
+            swfuncs[swinfo.func] = SwitchParseInfo(swname, p, index)
+
+        ordered, tailargs = inst._validate_args(swfuncs, args)
+        for f, a in ordered:
+            f(inst, *a)
+
+        cleanup = None
+        if not inst.nested_command or inst.CALL_MAIN_IF_NESTED_COMMAND:
+            retcode = inst.main(*tailargs)
+            cleanup = functools.partial(inst.cleanup, retcode)
+        if not retcode and inst.nested_command:
+            subapp, argv = inst.nested_command
+            subapp.parent = inst
+            inst, retcode = subapp.run(argv, exit = False)
+
+        if cleanup:
+            cleanup()
+
+        return inst, retcode
+
 
     def main(self, *args):
         """Implement me (no need to call super)"""
