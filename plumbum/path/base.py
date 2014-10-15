@@ -74,16 +74,22 @@ class Path(object):
     def up(self, count = 1):
         """Go up in ``count`` directories (the default is 1)"""
         return self.join("../" * count)
-    def walk(self, filter = lambda p: True):  # @ReservedAssignment
+    def walk(self, filter = lambda p: True, dir_filter = lambda p: True):  # @ReservedAssignment
         """traverse all (recursive) sub-elements under this directory, that match the given filter.
         By default, the filter accepts everything; you can provide a custom filter function that
-        takes a path as an argument and returns a boolean"""
+        takes a path as an argument and returns a boolean
+        
+        :param filter: the filter (predicate function) for matching results. Only paths matching 
+                       this predicate are returned. Defaults to everything.
+        :param dir_filter: the filter (predicate function) for matching directories. Only directories
+                           matching this predicate are recursed into. Defaults to everything.
+        """
         for p in self.list():
             if filter(p):
                 yield p
-                if p.isdir():
-                    for p2 in p.walk(filter):
-                        yield p2
+            if p.isdir() and dir_filter(p):
+                for p2 in p.walk(filter, dir_filter):
+                    yield p2
 
     @property
     def basename(self):
