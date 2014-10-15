@@ -144,6 +144,9 @@ class LocalPath(Path):
         if self.isdir():
             shutil.copytree(str(self), str(dst))
         else:
+            dst_dir = LocalPath(dst).dirname
+            if not dst_dir.exists():
+                dst_dir.mkdir()
             shutil.copy2(str(self), str(dst))
         return dst
 
