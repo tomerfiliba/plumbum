@@ -167,8 +167,8 @@ class LocalPath(Path):
 
     @_setdoc(Path)
     def read(self, encoding=None):
-        with self.open() as f:
-            data = f.read("rb")
+        with self.open("rb") as f:
+            data = f.read()
             if encoding:
                 data = data.decode(encoding)
             return data
