@@ -166,12 +166,17 @@ class LocalPath(Path):
         return open(str(self), mode)
 
     @_setdoc(Path)
-    def read(self):
+    def read(self, encoding=None):
         with self.open() as f:
-            return f.read()
+            data = f.read("rb")
+            if encoding:
+                data = data.decode(encoding)
+            return data
 
     @_setdoc(Path)
-    def write(self, data):
+    def write(self, data, encoding=None):
+        if encoding:
+            data = data.encode(encoding)
         with self.open("wb") as f:
             f.write(data)
 

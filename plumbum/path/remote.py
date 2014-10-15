@@ -175,10 +175,15 @@ class RemotePath(Path):
         self.remote._path_mkdir(self)
 
     @_setdoc(Path)
-    def read(self):
-        return self.remote._path_read(self)
+    def read(self, encoding=None):
+        data = self.remote._path_read(self)
+        if encoding:
+            data = data.decode(encoding)
+        return data
     @_setdoc(Path)
-    def write(self, data):
+    def write(self, data, encoding=None):
+        if encoding:
+            data = data.encode(encoding)
         self.remote._path_write(self, data)
 
     @_setdoc(Path)

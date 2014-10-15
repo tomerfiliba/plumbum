@@ -6,7 +6,9 @@
 * CLI: add ``root_app`` property (`#141 <https://github.com/tomerfiliba/plumbum/pull/141>`_)
 * Machines: ``getattr`` now raises ``AttributeError`` instead of `CommandNotFound` (`#135 <https://github.com/tomerfiliba/plumbum/pull/135>`_)
 * Paths: bugfix to ``cwd`` interaction with ``Path`` (`#142 <https://github.com/tomerfiliba/plumbum/pull/142>`_)
+* Paths: read/write now accept an optional encoding parameter (`#148 <https://github.com/tomerfiliba/plumbum/pull/148>`_)
 * Commands: renamed ``setenv`` to ``with_env`` (`#143 <https://github.com/tomerfiliba/plumbum/pull/143>`_)
+* Commands: pipelines will now fail with ``ProcessExecutionError`` if the source process fails (`#145 <https://github.com/tomerfiliba/plumbum/pull/145>`_)
 
 1.4.2
 -----

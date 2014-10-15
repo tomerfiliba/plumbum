@@ -62,6 +62,15 @@ class LocalPathTest(unittest.TestCase):
         for src in [local.path("/var/log/messages"), local.path("/var"), local.path("/opt/lib")]:
             delta = p.relative_to(src)
             self.assertEqual(src + delta, p)
+    
+    def test_read_write(self):
+        with local.tempdir() as dir:
+            f = dir / "test.txt"
+            #self.assertRaises(TypeError, f.write(u"hello world\u05e9\u05dc\u05d5\u05dd", ))
+            text = u"hello world\u05e9\u05dc\u05d5\u05dd"
+            f.write(text, "utf8")
+            text2 = f.read("utf8")
+            self.assertEqual(text, text2)
 
 
 class LocalMachineTest(unittest.TestCase):
@@ -423,6 +432,7 @@ for _ in range(%s):
     def test_pipeline_failure(self):
         from plumbum.cmd import ls, head
         self.assertRaises(ProcessExecutionError, (ls["--no-such-option"] | head))
+    
 
 if __name__ == "__main__":
     unittest.main()

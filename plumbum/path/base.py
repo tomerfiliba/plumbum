@@ -149,11 +149,13 @@ class Path(object):
     def open(self, mode = "r"):
         """opens this path as a file"""
         raise NotImplementedError()
-    def read(self):
-        """returns the contents of this file"""
+    def read(self, encoding=None):
+        """returns the contents of this file. By default the data is binary (``bytes``), but you can
+        specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
         raise NotImplementedError()
-    def write(self, data):
-        """writes the given data to this file"""
+    def write(self, data, encoding=None):
+        """writes the given data to this file. By default the data is expected to be binary (``bytes``), 
+        but you can specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
         raise NotImplementedError()
     def chown(self, owner = None, group = None, recursive = None):
         """Change ownership of this path.
@@ -246,7 +248,7 @@ class RelativePath(object):
     Therefore they are system agnostic (but closed under addition) 
     Paths are always absolute and point at "something", whether existent or not.
     
-    Relative paths are created by subtracting paths Path.relative_to
+    Relative paths are created by subtracting paths (``Path.relative_to``)
     """
     def __init__(self, parts):
         self.parts = parts
