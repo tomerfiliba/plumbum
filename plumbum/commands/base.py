@@ -289,7 +289,6 @@ class Pipeline(BaseCommand):
         def wait2(*args, **kwargs):
             rc_dst = dstproc_wait(*args, **kwargs)
             rc_src = srcproc.wait(*args, **kwargs)
-            print(dstproc.stderr.read())
             dstproc.returncode = rc_src or rc_dst
             return dstproc.returncode
         dstproc.wait = wait2
