@@ -419,6 +419,10 @@ for _ in range(%s):
 
     def test_issue_139(self):
         LocalPath(local.cwd)
+    
+    def test_pipeline_failure(self):
+        from plumbum.cmd import ls, head
+        self.assertRaises(ProcessExecutionError, (ls["--no-such-option"] | head))
 
 if __name__ == "__main__":
     unittest.main()
