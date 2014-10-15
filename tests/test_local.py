@@ -66,8 +66,7 @@ class LocalPathTest(unittest.TestCase):
     def test_read_write(self):
         with local.tempdir() as dir:
             f = dir / "test.txt"
-            #self.assertRaises(TypeError, f.write(u"hello world\u05e9\u05dc\u05d5\u05dd", ))
-            text = u"hello world\u05e9\u05dc\u05d5\u05dd"
+            text = six.b('hello world\xd7\xa9\xd7\x9c\xd7\x95\xd7\x9d').decode("utf8")
             f.write(text, "utf8")
             text2 = f.read("utf8")
             self.assertEqual(text, text2)
