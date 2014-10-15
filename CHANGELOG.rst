@@ -1,3 +1,23 @@
+1.4.3
+-----
+* CLI: add ``invoke``, which allows you to programmatically run applications (`#149 <https://github.com/tomerfiliba/plumbum/pull/149>`_)
+* CLI: add ``--help-all`` and various cosmetic fixes: (`#125 <https://github.com/tomerfiliba/plumbum/pull/125>`_),
+  (`#126 <https://github.com/tomerfiliba/plumbum/pull/126>`_), (`#127 <https://github.com/tomerfiliba/plumbum/pull/127>`_)
+* CLI: add ``root_app`` property (`#141 <https://github.com/tomerfiliba/plumbum/pull/141>`_)
+* Machines: ``getattr`` now raises ``AttributeError`` instead of `CommandNotFound` (`#135 <https://github.com/tomerfiliba/plumbum/pull/135>`_)
+* Paths: bugfix to ``cwd`` interaction with ``Path`` (`#142 <https://github.com/tomerfiliba/plumbum/pull/142>`_)
+* Commands: renamed ``setenv`` to ``with_env`` (`#143 <https://github.com/tomerfiliba/plumbum/pull/143>`_)
+
+1.4.2
+-----
+* Paramiko now supports Python 3, enabled support in Plumbum 
+* Terminal: added ``prompt()``, bugfix to ``get_terminal_size()`` (`#113 <https://github.com/tomerfiliba/plumbum/pull/113>`_)
+* CLI: added ``cleanup()``, which is called after ``main()`` returns
+* CLI: bugfix to ``CountOf`` (`#118 <https://github.com/tomerfiliba/plumbum/pull/118>`_)
+* Commands: Add a TEE modifier (`#117 <https://github.com/tomerfiliba/plumbum/pull/117>`_)
+* Remote machines: bugfix to ``which``, bugfix to remote environment variables (`#122 <https://github.com/tomerfiliba/plumbum/pull/122>`_)
+* Path: ``read()``/``write()`` now operate on bytes
+
 1.4.1
 -----
 * Force ``/bin/sh`` to be the shell in ``SshMachine.session()`` (`#111 <https://github.com/tomerfiliba/plumbum/pull/111>`_)
