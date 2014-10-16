@@ -145,6 +145,10 @@ class LocalMachine(object):
                     return fn
             return None
 
+    def __add__(self, other):
+        from plumbum.machines import multi
+        return multi.MultiMachine(self, other)
+
     @classmethod
     def which(cls, progname):
         """Looks up a program in the ``PATH``. If the program is not found, raises
