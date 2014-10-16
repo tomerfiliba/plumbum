@@ -1,17 +1,6 @@
 from __future__ import with_statement
 from contextlib import contextmanager
 
-try:
-    from contextlib import nested
-except ImportError:
-    from contextlib import ExitStack
-
-    @contextmanager
-    def nested(*contexts):
-        with ExitStack() as stack:
-            yield [stack.enter_context(ctx) for ctx in contexts]
-
-
 from plumbum.machines import LocalMachine, BaseRemoteMachine
 from plumbum.machines.session import ShellSession
 from plumbum.commands.base import BaseCommand
@@ -112,3 +101,50 @@ class MultiMachine(MultiProxy):
     @property
     def python(self):
         return MultiCommand(m.python for m in self)
+
+
+
+try:
+    from contextlib import nested
+except ImportError:
+    nested = None
+
+if not nested:
+    try:
+        from contextlib import ExitStack
+    except ImportError:
+        nested = None
+    else:
+        @contextmanager
+        def nested(*managers):
+            with ExitStack() as stack:
+                yield [stack.enter_context(ctx) for ctx in managers]
+
+if not nested:
+    # we're probably on python 3.2, so we'll need to redefine the deprecated 'nested' function
+
+    import sys
+
+    @contextmanager
+    def nested(*managers):
+        exits = []
+        vars = []
+        exc = (None, None, None)
+        try:
+            for mgr in managers:
+                exit, enter = mgr.__exit__, mgr.__enter__
+                vars.append(enter())
+                exits.append(exit)
+            yield vars
+        except:
+            exc = sys.exc_info()
+        finally:
+            while exits:
+                exit = exits.pop()
+                try:
+                    if exit(*exc):
+                        exc = (None, None, None)
+                except:
+                    exc = sys.exc_info()
+            if exc != (None, None, None):
+                raise exc[0], exc[1], exc[2]
