@@ -147,4 +147,5 @@ if not nested:
                 except:
                     exc = sys.exc_info()
             if exc != (None, None, None):
-                raise exc[0], exc[1], exc[2]
+                e, v, t = exc
+                raise v.with_traceback(t)
