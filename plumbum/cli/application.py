@@ -144,13 +144,13 @@ class Application(object):
     @classmethod
     def unbind_switches(cls, *switch_names):
         """Unbinds the given switch names from this application. For example
-        
+
         ::
 
             class MyApp(cli.Application):
                 pass
             MyApp.unbind("--version")
-        
+
         """
         cls._unbound_switches += tuple(name.lstrip("-") for name in switch_names if name)
 
@@ -380,7 +380,14 @@ class Application(object):
 
     @classmethod
     def invoke(cls, *args, **switches):
-        """Invoke this application as a function call"""
+        """Invoke this application programmatically (as a function), in the same way ``run()``
+        would. There are two key differences: the return value of ``main()`` is not converted to
+        an integer (returned as-is), and exceptions are not swallowed either.
+
+        :param args: any positional arguments for ``main()``
+        :param switches: command-line switches are passed as keyword arguments,
+                         e.g., ``foo=5`` for ``--foo=5``
+        """
 
         inst = cls("")
         swfuncs = {}
@@ -390,10 +397,11 @@ class Application(object):
             if isinstance(switch, CountOf):
                 p = (range(val),)
             elif swinfo.list and not hasattr(val, "__iter__"):
-                raise SwitchError("Switch %r must be of type 'list'" % swname)
+                raise SwitchError("Switch %r must be a sequence (iterable)" % (swname,))
             elif not swinfo.argtype:
-                if val not in (True, False, None):
-                    raise SwitchError("Switch %r must be of type 'bool'" % swname)
+                # a flag
+                if val not in (True, False, None, Flag):
+                    raise SwitchError("Switch %r is a boolean flag" % (swname,))
                 p = ()
             else:
                 p = (val,)
@@ -417,7 +425,6 @@ class Application(object):
 
         return inst, retcode
 
-
     def main(self, *args):
         """Implement me (no need to call super)"""
         if self._subcommands:
@@ -437,7 +444,7 @@ class Application(object):
 
     def cleanup(self, retcode):
         """Called after ``main()`` and all subapplications have executed, to perform any necessary cleanup.
-        
+
         :param retcode: the return code of ``main()``
         """
 

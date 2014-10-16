@@ -34,11 +34,11 @@ class TestApp(cli.Application):
     def bacon(self, param):
         """give me some bacon"""
         print ("!!b", param)
-    
+
     eggs = cli.SwitchAttr(["e"], str, help = "sets the eggs attribute")
     verbose = cli.CountOf(["v"], help = "increases the verbosity level")
-    benedict = cli.CountOf(["--benedict"], help = """a very long help message with lots of 
-        useless information that nobody would ever want to read, but heck, we need to test 
+    benedict = cli.CountOf(["--benedict"], help = """a very long help message with lots of
+        useless information that nobody would ever want to read, but heck, we need to test
         text wrapping in help messages as well""")
 
     def main(self, *args):
@@ -64,7 +64,7 @@ class GeetAdd(cli.Application):
 
 class GeetCommit(cli.Application):
     message = cli.Flag("-m", str)
-    
+
     def main(self):
         if self.parent.debug:
             return "committing in debug"
@@ -106,7 +106,7 @@ if not hasattr(unittest.TestCase, "assertIn"):
             assert member not in container
     unittest.TestCase.assertIn = assertIn
     unittest.TestCase.assertNotIn = assertNotIn
-    
+
 
 class CLITest(unittest.TestCase):
     def test_meta_switches(self):
@@ -114,23 +114,23 @@ class CLITest(unittest.TestCase):
         self.assertEqual(rc, 0)
         _, rc = TestApp.run(["foo", "--version"], exit = False)
         self.assertEqual(rc, 0)
-    
+
     def test_okay(self):
         _, rc = TestApp.run(["foo", "--bacon=81"], exit = False)
         self.assertEqual(rc, 0)
 
-        inst, rc = TestApp.run(["foo", "--bacon=81", "-a", "-v", "-e", "7", "-vv", 
+        inst, rc = TestApp.run(["foo", "--bacon=81", "-a", "-v", "-e", "7", "-vv",
             "--", "lala", "-e", "7"], exit = False)
         self.assertEqual(rc, 0)
         self.assertEqual(inst.eggs, "7")
-    
+
     def test_failures(self):
         _, rc = TestApp.run(["foo"], exit = False)
         self.assertEqual(rc, 2)
 
         _, rc = TestApp.run(["foo", "--bacon=hello"], exit = False)
         self.assertEqual(rc, 2)
-    
+
     def test_subcommands(self):
         _, rc = Geet.run(["geet", "--debug"], exit = False)
         self.assertEqual(rc, 0)
@@ -146,7 +146,7 @@ class CLITest(unittest.TestCase):
         _, rc = Geet.run(["geet", "commit", "--help"], exit = False)
         self.assertEqual(rc, 0)
         self.assertEqual(Geet.cleanups, [1])
-    
+
     def test_unbind(self):
         with captured_stdout() as stream:
             _, rc = Sample.run(["sample", "--help"], exit = False)
@@ -159,12 +159,12 @@ class CLITest(unittest.TestCase):
             _, rc = Sample.run(["sample"], exit = False)
         self.assertEqual(rc, 1)
         self.assertIn("No sub-command given", stream.getvalue())
-        
+
         with captured_stdout() as stream:
             _, rc = Sample.run(["sample", "pimple"], exit = False)
         self.assertEqual(rc, 1)
         self.assertIn("Unknown sub-command 'pimple'", stream.getvalue())
-        
+
         with captured_stdout() as stream:
             _, rc = Sample.run(["sample", "mumble"], exit = False)
         self.assertEqual(rc, 1)
@@ -214,7 +214,7 @@ class TestTerminal(unittest.TestCase):
         with captured_stdout("foo\n\n") as stream:
             self.assertEqual(choose("What is your favorite color?", ["blue", "yellow", "green"], default = "yellow"), "yellow")
         self.assertEqual(stream.getvalue(), "What is your favorite color?\n(1) blue\n(2) yellow\n(3) green\nChoice [2]: Invalid choice, please try again\nChoice [2]: ")
-    
+
     def test_hexdump(self):
         data = "hello world my name is queen marry" + "A" * 66 + "foo bar"
         output = """\
