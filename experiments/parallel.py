@@ -1,4 +1,5 @@
 from plumbum.commands.base import BaseCommand
+from plumbum.commands.processes import CommandNotFound, ProcessExecutionError
 
 
 def make_concurrent(self, rhs):
@@ -66,14 +67,53 @@ class ConcurrentCommand(BaseCommand):
         assert not args, "Cannot pass args to ConcurrentCommand.popen"
         return ConcurrentPopen([cmd.popen(**kwargs) for cmd in self.commands])
 
+class Cluster(object):
+    def __init__(self, *machines):
+        self.machines = list(machines)
+    def __enter__(self):
+        return self
+    def __exit__(self, t, v, tb):
+        self.close()
+    def close(self):
+        for mach in self.machines:
+            mach.close()
+        del self.machines[:]
+
+    def add_machine(self, machine):
+        self.machines.append(machine)
+    def which(self, progname):
+        return [mach.which(progname) for mach in self.machines]
+    def path(self, *parts):
+        return [mach.path(*parts) for mach in self.machines]
+    def __getitem__(self, progname):
+        if not isinstance(progname, str):
+            raise TypeError("progname must be a string, not %r" % (type(progname,)))
+        return ConcurrentCommand(*(mach[progname] for mach in self.machines))
+    def __contains__(self, cmd):
+        try:
+            self[cmd]
+        except CommandNotFound:
+            return False
+        else:
+            return True
+
 
 if __name__ == "__main__":
+    from plumbum import local
     from plumbum.cmd import ls, date, sleep
     c = ls & date & sleep[1]
     print(c())
 
     c = ls & date & sleep[1] & sleep["-z"]
-    print(c.run())
+    try:
+        c()
+    except ProcessExecutionError as ex:
+        print(ex)
+    else:
+        assert False
+
+    clst = Cluster(local, local, local)
+    print(clst["ls"]())
 
 
 

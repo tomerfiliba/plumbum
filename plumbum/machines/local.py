@@ -3,7 +3,6 @@ import os
 import sys
 import subprocess
 import logging
-import stat
 import time
 import platform
 import re
@@ -16,6 +15,7 @@ from plumbum.machines.session import ShellSession
 from plumbum.lib import ProcInfo, IS_WIN32, six
 from plumbum.commands.daemons import win32_daemonize, posix_daemonize
 from plumbum.machines.env import BaseEnv
+
 if sys.version_info >= (3, 2):
     # python 3.2 has the new-and-improved subprocess module
     from subprocess import Popen, PIPE
@@ -152,7 +152,7 @@ class LocalMachine(object):
 
         :param progname: The program's name. Note that if underscores (``_``) are present
                          in the name, and the exact name is not found, they will be replaced
-                         in turn by hyphens (``-``) then periods (``.``), and the name will 
+                         in turn by hyphens (``-``) then periods (``.``), and the name will
                          be looked up again for each alternative
 
         :returns: A :class:`LocalPath <plumbum.machines.local.LocalPath>`
@@ -197,7 +197,7 @@ class LocalMachine(object):
                 return LocalCommand(self.which(cmd))
         else:
             raise TypeError("cmd must not be a RemotePath: %r" % (cmd,))
-    
+
     def __contains__(self, cmd):
         """Tests for the existance of the command, e.g., ``"ls" in plumbum.local``.
         ``cmd`` can be anything acceptable by ``__getitem__``.
@@ -215,7 +215,7 @@ class LocalMachine(object):
             if has_new_subprocess:
                 kwargs["start_new_session"] = True
             elif subprocess.mswindows:
-                kwargs["creationflags"] = kwargs.get("creationflags", 0) | subprocess.CREATE_NEW_PROCESS_GROUP 
+                kwargs["creationflags"] = kwargs.get("creationflags", 0) | subprocess.CREATE_NEW_PROCESS_GROUP
             else:
                 def preexec_fn(prev_fn = kwargs.get("preexec_fn", lambda: None)):
                     os.setsid()
@@ -230,7 +230,7 @@ class LocalMachine(object):
             else:
                 sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # @UndefinedVariable
                 sui.wShowWindow = subprocess.SW_HIDE  # @UndefinedVariable
-        
+
         if not has_new_subprocess and "close_fds" not in kwargs:
             if subprocess.mswindows and (stdin is not None or stdout is not None or stderr is not None):
                 # we can't close fds if we're on windows and we want to redirect any std handle
@@ -259,13 +259,13 @@ class LocalMachine(object):
     def daemonic_popen(self, command, cwd = "/"):
         """
         On POSIX systems:
-        
+
         Run ``command`` as a UNIX daemon: fork a child process to setpid, redirect std handles to /dev/null,
         umask, close all fds, chdir to ``cwd``, then fork and exec ``command``. Returns a ``Popen`` process that
         can be used to poll/wait for the executed command (but keep in mind that you cannot access std handles)
 
         On Windows:
-        
+
         Run ``command`` as a "Windows daemon": detach from controlling console and create a new process group.
         This means that the command will not receive console events and would survive its parent's termination.
         Returns a ``Popen`` object.
@@ -296,7 +296,7 @@ class LocalMachine(object):
             statidx = header.index('Status')
             useridx = header.index('User Name')
             for row in rows:
-                yield ProcInfo(int(row[pididx]), row[useridx].decode("utf8"), 
+                yield ProcInfo(int(row[pididx]), row[useridx].decode("utf8"),
                     row[statidx].decode("utf8"), row[imgidx].decode("utf8"))
     else:
         def list_processes(self):
@@ -319,7 +319,7 @@ class LocalMachine(object):
         pat = re.compile(pattern)
         for procinfo in self.list_processes():
             if pat.search(procinfo.args):
-                yield procinfo 
+                yield procinfo
 
     def session(self, new_session = False):
         """Creates a new :class:`ShellSession <plumbum.session.ShellSession>` object; this
