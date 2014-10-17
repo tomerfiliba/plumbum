@@ -282,7 +282,7 @@ class Pipeline(BaseCommand):
         if srcproc.stdin:
             srcproc.stdin.close()
         dstproc.srcproc = srcproc
-        
+
         # monkey-patch .wait() to wait on srcproc as well (it's expected to die when dstproc dies)
         dstproc_wait = dstproc.wait
         @functools.wraps(Popen.wait)
@@ -406,10 +406,6 @@ class ConcreteCommand(BaseCommand):
         return str(self.executable)
     def _get_encoding(self):
         return self.encoding
-
-    @property
-    def machine(self):
-        return self.cmd.machine
 
     def formulate(self, level = 0, args = ()):
         argv = [str(self.executable)]
