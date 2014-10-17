@@ -33,7 +33,7 @@ if not hasattr(Popen, "kill"):
                 if rc == _subprocess.STILL_ACTIVE:
                     raise
                 self.returncode = rc
-        
+
         Popen.kill = _Popen_terminate
         Popen.terminate = _Popen_terminate
     else:
@@ -67,8 +67,8 @@ class ProcessExecutionError(EnvironmentError):
         self.stdout = stdout
         self.stderr = stderr
     def __str__(self):
-        stdout = "\n         | ".join(self.stdout.splitlines())
-        stderr = "\n         | ".join(self.stderr.splitlines())
+        stdout = "\n         | ".join(str(self.stdout).splitlines())
+        stderr = "\n         | ".join(str(self.stderr).splitlines())
         lines = ["Command line: %r" % (self.argv,), "Exit code: %s" % (self.retcode)]
         if stdout:
             lines.append("Stdout:  | %s" % (stdout,))
