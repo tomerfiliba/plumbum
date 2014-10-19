@@ -1,5 +1,8 @@
+from contextlib import contextmanager
+
 from plumbum.commands.base import BaseCommand
 from plumbum.commands.processes import run_proc, CommandNotFound, ProcessExecutionError
+
 
 def make_concurrent(self, rhs):
     if not isinstance(rhs, BaseCommand):
@@ -119,6 +122,15 @@ class Cluster(object):
     def session(self):
         return ClusterSession(*(mach.session() for mach in self))
 
+    @contextmanager
+    def as_user(self, user=None):
+        with nested(*(mach.as_user(user) for mach in self)):
+            yield self
+
+    def as_root(self):
+        return self.as_user()
+
+
 class ClusterSession(object):
 
     def __init__(self, *sessions):
@@ -176,8 +188,41 @@ if __name__ == "__main__":
     assert(len(set(ret))==3)
 
 
+try:
+    from contextlib import nested
+except ImportError:
+    try:
+        from contextlib import ExitStack
+    except ImportError:
+        # we're probably on python 3.2, so we'll need to redefine the deprecated 'nested' function
 
-
-
-
-
+        import sys
+        @contextmanager
+        def nested(*managers):
+            exits = []
+            vars = []
+            exc = (None, None, None)
+            try:
+                for mgr in managers:
+                    exit, enter = mgr.__exit__, mgr.__enter__
+                    vars.append(enter())
+                    exits.append(exit)
+                yield vars
+            except:
+                exc = sys.exc_info()
+            finally:
+                while exits:
+                    exit = exits.pop()
+                    try:
+                        if exit(*exc):
+                            exc = (None, None, None)
+                    except:
+                        exc = sys.exc_info()
+                if exc != (None, None, None):
+                    e, v, t = exc
+                    raise v.with_traceback(t)
+    else:
+        @contextmanager
+        def nested(*managers):
+            with ExitStack() as stack:
+                yield [stack.enter_context(ctx) for ctx in managers]

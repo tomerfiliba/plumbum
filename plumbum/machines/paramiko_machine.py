@@ -204,7 +204,10 @@ class ParamikoMachine(BaseRemoteMachine):
         if envdelta:
             argv.append("env")
             argv.extend("%s=%s" % (k, v) for k, v in envdelta.items())
-        argv.extend(args.formulate())
+        args = args.formulate()
+        if self._as_user_stack:
+            args, executable = self._as_user_stack[-1](args)
+        argv.extend(args)
         cmdline = " ".join(argv)
         logger.debug(cmdline)
         si, so, se = self._client.exec_command(cmdline, 1)

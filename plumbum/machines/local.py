@@ -210,7 +210,7 @@ class LocalMachine(object):
             return True
 
     def _popen(self, executable, argv, stdin = PIPE, stdout = PIPE, stderr = PIPE,
-            cwd = None, env = None, new_session = False, **kwargs):
+            cwd = None, env = None, new_session = False, ignore_user_stack=False, **kwargs):
         if new_session:
             if has_new_subprocess:
                 kwargs["start_new_session"] = True
@@ -245,7 +245,7 @@ class LocalMachine(object):
         if isinstance(env, BaseEnv):
             env = env.getdict()
 
-        if self._as_user_stack:
+        if not ignore_user_stack and self._as_user_stack:
             argv, executable = self._as_user_stack[-1](argv)
 
         logger.debug("Running %r", argv)
