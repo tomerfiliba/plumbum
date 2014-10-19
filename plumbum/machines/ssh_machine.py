@@ -119,11 +119,13 @@ class SshMachine(BaseRemoteMachine):
             if envdelta:
                 cmdline.append("env")
                 cmdline.extend("%s=%s" % (k, v) for k, v in envdelta.items())
-            if isinstance(args, (tuple, list)):
-                cmdline.extend(args)
-            else:
-                cmdline.append(args)
-        return self._ssh_command[tuple(cmdline)].popen(**kwargs)
+            if not isinstance(args, (tuple, list)):
+                args = [args]
+            if self._as_user_stack:
+                args, executable = self._as_user_stack[-1](args)
+            cmdline.extend(args)
+
+        return self._ssh_command[tuple(cmdline)].popen(ignore_user_stack=True, **kwargs)
 
     def nohup(self, command):
         """
