@@ -135,6 +135,22 @@ class ParamikoMachine(BaseRemoteMachine):
 
     :param connect_timeout: timeout for TCP connection
     """
+
+    class RemoteCommand(BaseRemoteMachine.RemoteCommand):
+        def __or__(self, *_):
+            raise NotImplementedError("Not supported with ParamikoMachine")
+        def __gt__(self, *_):
+            raise NotImplementedError("Not supported with ParamikoMachine")
+        def __rshift__(self, *_):
+            raise NotImplementedError("Not supported with ParamikoMachine")
+        def __ge__(self, *_):
+            raise NotImplementedError("Not supported with ParamikoMachine")
+        def __lt__(self, *_):
+            raise NotImplementedError("Not supported with ParamikoMachine")
+        def __lshift__(self, *_):
+            raise NotImplementedError("Not supported with ParamikoMachine")
+
+
     def __init__(self, host, user = None, port = None, password = None, keyfile = None,
             load_system_host_keys = True, missing_host_policy = None, encoding = "utf8",
             look_for_keys = None, connect_timeout = None):
