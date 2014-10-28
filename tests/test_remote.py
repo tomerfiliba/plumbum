@@ -82,7 +82,7 @@ s.close()
 
             self.assertTrue(".bashrc" in r_ls("-a").splitlines())
             with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
-                cmd = r_ssh["localhost", "cd", rem.cwd, "&&", r_ls | r_grep["\\.py"]]
+                cmd = r_ssh["localhost", "cd", rem.cwd, "&&", r_ls, "|", r_grep["\\.py"]]
                 self.assertTrue("'|'" in str(cmd))
                 self.assertTrue("test_remote.py" in cmd())
                 self.assertTrue("test_remote.py" in [f.basename for f in rem.cwd // "*.py"])
@@ -229,7 +229,15 @@ else:
                 data = s.recv(100)
                 s.close()
                 self.assertEqual(data, six.b("hello world"))
-    
+
+        def test_piping(self):
+            with self._connect() as rem:
+                try:
+                    cmd = rem["ls"] | rem["cat"]
+                except NotImplementedError:
+                    pass
+                else:
+                    assert False, "Should not pipe"
 
 
 if __name__ == "__main__":

@@ -123,6 +123,10 @@ class BaseRemoteMachine(object):
     * ``connect_timeout`` - the connection timeout
     """
 
+    # allow inheritors to override the RemoteCommand class
+    RemoteCommand = RemoteCommand
+
+
     def __init__(self, encoding = "utf8", connect_timeout = 10, new_session = False):
         self.encoding = encoding
         self.connect_timeout = connect_timeout
@@ -204,14 +208,14 @@ class BaseRemoteMachine(object):
         """
         if isinstance(cmd, RemotePath):
             if cmd.remote is self:
-                return RemoteCommand(self, cmd)
+                return self.RemoteCommand(self, cmd)
             else:
                 raise TypeError("Given path does not belong to this remote machine: %r" % (cmd,))
         elif not isinstance(cmd, LocalPath):
             if "/" in cmd or "\\" in cmd:
-                return RemoteCommand(self, self.path(cmd))
+                return self.RemoteCommand(self, self.path(cmd))
             else:
-                return RemoteCommand(self, self.which(cmd))
+                return self.RemoteCommand(self, self.which(cmd))
         else:
             raise TypeError("cmd must not be a LocalPath: %r" % (cmd,))
 
