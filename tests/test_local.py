@@ -431,7 +431,10 @@ for _ in range(%s):
     def test_pipeline_failure(self):
         from plumbum.cmd import ls, head
         self.assertRaises(ProcessExecutionError, (ls["--no-such-option"] | head))
-    
+
+    def test_issue_154(self):
+        self.assertEqual(local["echo"]("\u2018hello\u2018"), "\u2018hello\u2018\n")
+
 
 if __name__ == "__main__":
     unittest.main()

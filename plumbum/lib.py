@@ -34,7 +34,7 @@ class six(object):
         
         @staticmethod
         def b(s):
-            return s.encode("latin-1")
+            return s.encode("latin-1", "replace")
         @staticmethod
         def u(s):
             return s
