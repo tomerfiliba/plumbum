@@ -202,6 +202,9 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
             with local.as_root():
                 local["userdel"]("-r", "testuser")
 
+    def test_issue_154(self):
+        with self._connect() as rem:
+            self.assertEqual(rem["echo"]("\u2018hello\u2018"), "\u2018hello\u2018\n")
 
 
 try:
@@ -229,7 +232,10 @@ else:
                 data = s.recv(100)
                 s.close()
                 self.assertEqual(data, six.b("hello world"))
-    
+
+        def test_issue_154(self):
+            with self._connect() as rem:
+                self.assertEqual(rem["echo"]("\u2018hello\u2018"), "?hello?\n")
 
 
 if __name__ == "__main__":
