@@ -223,13 +223,19 @@ class LocalMachine(object):
                 kwargs["preexec_fn"] = preexec_fn
 
         if subprocess.mswindows and "startupinfo" not in kwargs and stdin not in (sys.stdin, None):
-            kwargs["startupinfo"] = sui = subprocess.STARTUPINFO()
-            if hasattr(subprocess, "_subprocess"):
-                sui.dwFlags |= subprocess._subprocess.STARTF_USESHOWWINDOW  # @UndefinedVariable
-                sui.wShowWindow = subprocess._subprocess.SW_HIDE  # @UndefinedVariable
-            else:
-                sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # @UndefinedVariable
-                sui.wShowWindow = subprocess.SW_HIDE  # @UndefinedVariable
+            from plumbum.machines._windows import get_pe_subsystem, IMAGE_SUBSYSTEM_WINDOWS_CUI
+            subsystem = get_pe_subsystem(str(executable))
+
+            if subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI:
+                # don't open a new console
+                sui = subprocess.STARTUPINFO()
+                kwargs["startupinfo"] = sui
+                if hasattr(subprocess, "_subprocess"):
+                    sui.dwFlags |= subprocess._subprocess.STARTF_USESHOWWINDOW  # @UndefinedVariable
+                    sui.wShowWindow = subprocess._subprocess.SW_HIDE  # @UndefinedVariable
+                else:
+                    sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # @UndefinedVariable
+                    sui.wShowWindow = subprocess.SW_HIDE  # @UndefinedVariable
 
         if not has_new_subprocess and "close_fds" not in kwargs:
             if subprocess.mswindows and (stdin is not None or stdout is not None or stderr is not None):
