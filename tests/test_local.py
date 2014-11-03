@@ -195,6 +195,30 @@ class LocalMachineTest(unittest.TestCase):
         from plumbum.cmd import sleep
         self.assertRaises(ProcessTimedOut, sleep, 10, timeout = 5)
 
+    def test_iter_lines_timeout(self):
+        from plumbum.cmd import ping
+
+        try:
+            for i, (out, err) in enumerate(ping["127.0.0.1", "-i", 0.5].iter_lines(timeout=2)):
+                print("out:", out)
+                print("err:", err)
+        except ProcessTimedOut:
+            self.assertTrue(i > 3)
+        else:
+            self.fail("Expected a timeout")
+
+
+    def test_iter_lines_error(self):
+        from plumbum.cmd import ls
+        try:
+            for i, lines in enumerate(ls["--bla"].iter_lines()):
+                pass
+            self.assertEqual(i, 1)
+        except ProcessExecutionError:
+            ex = sys.exc_info()[1]
+            self.assertTrue(ex.stderr.startswith("/bin/ls: unrecognized option '--bla'"))
+        else:
+            self.fail("Expected an execution error")
 
     def test_modifiers(self):
         from plumbum.cmd import ls, grep
