@@ -2,7 +2,7 @@ from __future__ import with_statement
 import subprocess
 import functools
 from contextlib import contextmanager
-from plumbum.commands.processes import run_proc
+from plumbum.commands.processes import run_proc, iter_lines
 from plumbum.lib import six
 from tempfile import TemporaryFile
 from subprocess import PIPE, Popen
@@ -213,6 +213,44 @@ class BaseCommand(object):
         """
         with self.bgrun(args, **kwargs) as p:
             return p.run()
+
+    def iter_lines(self, args = (), **kwargs):
+        """Runs the given command (equivalent to run()) and yields a tuples of (out, err) line pairs.
+        If the exit code of the process does not match the expected one, :class:`ProcessExecutionError
+        <plumbum.commands.ProcessExecutionError>` is raised.
+
+        :param args: Any arguments to be passed to the process (a tuple)
+
+        :param retcode: The expected return code of this process (defaults to 0).
+                        In order to disable exit-code validation, pass ``None``. It may also
+                        be a tuple (or any iterable) of expected exit codes.
+
+                        .. note:: this argument must be passed as a keyword argument.
+
+        :param timeout: The maximal amount of time (in seconds) to allow the process to run.
+                        ``None`` means no timeout is imposed; otherwise, if the process hasn't
+                        terminated after that many seconds, the process will be forcefully
+                        terminated an exception will be raised
+
+                        .. note:: this argument must be passed as a keyword argument.
+
+        :param linesize: Maximum number of characters to read from stdout/stderr at each iteration.
+                        ``-1`` (default) reads until a b'\\n' is encountered.
+
+                        .. note:: this argument must be passed as a keyword argument.
+
+        :param kwargs: Any keyword-arguments to be passed to the ``Popen`` constructor
+
+        :returns: An iterator of (out, err) line tuples.
+        """
+
+        retcode = kwargs.pop("retcode", 0)
+        timeout = kwargs.pop("timeout", None)
+        linesize = kwargs.pop("linesize", -1)
+
+        with self.bgrun(args, **kwargs) as popen:
+            for lines in iter_lines(popen, retcode=retcode, timeout=timeout, linesize=linesize):
+                yield lines
 
 
 class BoundCommand(BaseCommand):

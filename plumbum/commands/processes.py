@@ -10,6 +10,11 @@ try:
 except ImportError:
     from Queue import Queue, Empty as QueueEmpty
 
+try:
+    from io import StringIO
+except ImportError:
+    from cStringIO import StringIO
+
 
 if not hasattr(Popen, "kill"):
     # python 2.5 compatibility
@@ -151,6 +156,10 @@ bgthd = Thread(target = _timeout_thread_func, name = "PlumbumTimeoutThread")
 bgthd.setDaemon(True)
 bgthd.start()
 
+def _register_proc_timeout(proc, timeout):
+    if timeout is not None:
+        _timeout_queue.put((proc, time.time() + timeout))
+
 def _shutdown_bg_threads():
     global _shutting_down
     _shutting_down = True
@@ -181,8 +190,7 @@ def run_proc(proc, retcode, timeout = None):
 
     :returns: A tuple of (return code, stdout, stderr)
     """
-    if timeout is not None:
-        _timeout_queue.put((proc, time.time() + timeout))
+    _register_proc_timeout(proc, timeout)
     stdout, stderr = proc.communicate()
     proc._end_time = time.time()
     if not stdout:
@@ -193,6 +201,80 @@ def run_proc(proc, retcode, timeout = None):
         stdout = stdout.decode(proc.encoding, "ignore")
         stderr = stderr.decode(proc.encoding, "ignore")
 
+    return _check_process(proc, retcode, timeout, stdout, stderr)
+
+
+#===================================================================================================
+# iter_lines
+#===================================================================================================
+def iter_lines(proc, retcode = 0, timeout = None, linesize = -1):
+    """Runs the given process (equivalent to run_proc()) and yields a tuples of (out, err) line pairs.
+    If the exit code of the process does not match the expected one, :class:`ProcessExecutionError
+    <plumbum.commands.ProcessExecutionError>` is raised.
+
+    :param retcode: The expected return code of this process (defaults to 0).
+                    In order to disable exit-code validation, pass ``None``. It may also
+                    be a tuple (or any iterable) of expected exit codes.
+
+    :param timeout: The maximal amount of time (in seconds) to allow the process to run.
+                    ``None`` means no timeout is imposed; otherwise, if the process hasn't
+                    terminated after that many seconds, the process will be forcefully
+                    terminated an exception will be raised
+
+    :param linesize: Maximum number of characters to read from stdout/stderr at each iteration.
+                    ``-1`` (default) reads until a b'\\n' is encountered.
+
+    :returns: An iterator of (out, err) line tuples.
+    """
+
+    encoding = getattr(proc, "encoding", None)
+    if encoding:
+        read_stream = lambda s: s.readline(linesize).decode(encoding).rstrip()
+    else:
+        read_stream = lambda s: s.readline(linesize)
+
+    _register_proc_timeout(proc, timeout)
+
+    try:
+        from selectors import DefaultSelector, EVENT_READ
+    except ImportError:
+        # Pre Python 3.4 implementation
+        def _iter_lines():
+            from select import select
+            while True:
+                rlist, _, _ = select([proc.stdout, proc.stderr], [], [])
+                for stream in rlist:
+                    yield (stream is proc.stderr), read_stream(stream)
+                if proc.poll() is not None:
+                    break
+    else:
+        # Python 3.4 implementation
+        sel = DefaultSelector()
+
+        sel.register(proc.stdout, EVENT_READ, 0)
+        sel.register(proc.stderr, EVENT_READ, 1)
+        def _iter_lines():
+            while True:
+                for key, mask in sel.select():
+                    yield key.data, read_stream(key.fileobj)
+                if proc.poll() is not None:
+                    break
+
+    buffers = [StringIO(), StringIO()]
+    for t, line in _iter_lines():
+        ret = [None, None]
+        ret[t] = line
+        buffers[t].write(line + "\n")
+        yield ret
+
+    # this will take care of checking return code and timeouts
+    _check_process(proc, retcode, timeout, *(s.getvalue() for s in buffers))
+
+
+#===================================================================================================
+# _check_process
+#===================================================================================================
+def _check_process(proc, retcode, timeout, stdout, stderr):
     if getattr(proc, "_timed_out", False):
         raise ProcessTimedOut("Process did not terminate within %s seconds" % (timeout,),
             getattr(proc, "argv", None))
@@ -206,6 +288,3 @@ def run_proc(proc, retcode, timeout = None):
             raise ProcessExecutionError(getattr(proc, "argv", None), proc.returncode,
                 stdout, stderr)
     return proc.returncode, stdout, stderr
-
-
-
