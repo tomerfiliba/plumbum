@@ -5,6 +5,8 @@ import heapq
 from subprocess import Popen
 from threading import Thread
 from plumbum.lib import IS_WIN32, six
+from itertools import chain
+
 try:
     from queue import Queue, Empty as QueueEmpty
 except ImportError:
@@ -229,9 +231,9 @@ def iter_lines(proc, retcode = 0, timeout = None, linesize = -1):
 
     encoding = getattr(proc, "encoding", None)
     if encoding:
-        read_stream = lambda s: s.readline(linesize).decode(encoding).rstrip()
+        decode = lambda s: s.decode(encoding).rstrip()
     else:
-        read_stream = lambda s: s.readline(linesize)
+        decode = lambda s: s
 
     _register_proc_timeout(proc, timeout)
 
@@ -244,7 +246,7 @@ def iter_lines(proc, retcode = 0, timeout = None, linesize = -1):
             while True:
                 rlist, _, _ = select([proc.stdout, proc.stderr], [], [])
                 for stream in rlist:
-                    yield (stream is proc.stderr), read_stream(stream)
+                    yield (stream is proc.stderr), decode(stream.readline(linesize))
                 if proc.poll() is not None:
                     break
     else:
@@ -255,13 +257,20 @@ def iter_lines(proc, retcode = 0, timeout = None, linesize = -1):
         sel.register(proc.stderr, EVENT_READ, 1)
         def _iter_lines():
             while True:
+                key = None
                 for key, mask in sel.select():
-                    yield key.data, read_stream(key.fileobj)
+                    yield key.data, decode(key.fileobj.readline(linesize))
                 if proc.poll() is not None:
                     break
 
+    def _iter_tails():
+        for line in proc.stdout:
+            yield 0, decode(line)
+        for line in proc.stderr:
+            yield 1, decode(line)
+
     buffers = [StringIO(), StringIO()]
-    for t, line in _iter_lines():
+    for t, line in chain(_iter_lines(), _iter_tails()):
         ret = [None, None]
         ret[t] = line
         buffers[t].write(line + "\n")
