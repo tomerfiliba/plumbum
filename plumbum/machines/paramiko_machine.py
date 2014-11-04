@@ -6,6 +6,7 @@ from plumbum.machines.session import ShellSession
 from plumbum.lib import _setdoc, six
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath
+from plumbum.commands.processes import iter_lines
 try:
     # Sigh... we need to gracefully-import paramiko for Sphinx builds, etc
     import paramiko
@@ -95,6 +96,12 @@ class ParamikoPopen(object):
         stderr = six.b("").join(six.b(s) for s in stderr)
         return stdout, stderr
 
+    def iter_lines(self, timeout=None, **kwargs):
+        if timeout is not None:
+            raise NotImplementedError("The 'timeout' parameter is not supported with ParamikoMachine")
+        return iter_lines(self, _iter_lines=_iter_lines, **kwargs)
+
+    __iter__ = iter_lines
 
 class ParamikoMachine(BaseRemoteMachine):
     """
@@ -149,7 +156,6 @@ class ParamikoMachine(BaseRemoteMachine):
             raise NotImplementedError("Not supported with ParamikoMachine")
         def __lshift__(self, *_):
             raise NotImplementedError("Not supported with ParamikoMachine")
-
 
     def __init__(self, host, user = None, port = None, password = None, keyfile = None,
             load_system_host_keys = True, missing_host_policy = None, encoding = "utf8",
@@ -223,7 +229,7 @@ class ParamikoMachine(BaseRemoteMachine):
         argv.extend(args.formulate())
         cmdline = " ".join(argv)
         logger.debug(cmdline)
-        si, so, se = self._client.exec_command(cmdline, 1)
+        si, so, se = streams = self._client.exec_command(cmdline, 1)
         return ParamikoPopen(argv, si, so, se, self.encoding, stdin_file = stdin,
             stdout_file = stdout, stderr_file = stderr)
 
@@ -327,4 +333,39 @@ class SocketCompatibleChannel(object):
         return self._chan.recv(count)
 
 
+###################################################################################################
+# Custom iter_lines for paramiko.Channel
+###################################################################################################
+def _iter_lines(proc, decode, linesize):
 
+    try:
+        from selectors import DefaultSelector, EVENT_READ
+    except ImportError:
+        # Pre Python 3.4 implementation
+        from select import select
+        def selector():
+            while True:
+                rlist, _, _ = select([proc.stdout.channel], [], [])
+                for _ in rlist:
+                    yield
+    else:
+        # Python 3.4 implementation
+        def selector():
+            sel = DefaultSelector()
+            sel.register(proc.stdout.channel, EVENT_READ)
+            while True:
+                for key, mask in sel.select():
+                    yield
+
+    for _ in selector():
+        if proc.stdout.channel.recv_ready():
+            yield 0, decode(six.b(proc.stdout.readline(linesize)))
+        if proc.stdout.channel.recv_stderr_ready():
+            yield 1, decode(six.b(proc.stderr.readline(linesize)))
+        if proc.poll() is not None:
+            break
+
+    for line in proc.stdout:
+        yield 0, decode(six.b(line))
+    for line in proc.stderr:
+        yield 1, decode(six.b(line))

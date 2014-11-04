@@ -1,10 +1,11 @@
 from __future__ import with_statement
+import sys
 import os
 import socket
 import unittest
 import time
 import logging
-from plumbum import RemotePath, SshMachine, ProcessExecutionError, local
+from plumbum import RemotePath, SshMachine, ProcessExecutionError, local, ProcessTimedOut
 from plumbum import CommandNotFound
 from plumbum.lib import six
 
@@ -135,6 +136,35 @@ s.close()
     def test_contains(self):
         with self._connect() as rem:
             self.assertTrue("ls" in rem, "Expected to find `ls`")
+
+    def test_iter_lines_timeout(self):
+        with self._connect() as rem:
+            try:
+                for i, (out, err) in enumerate(rem["ping"]["127.0.0.1", "-i", 0.5].popen().iter_lines(timeout=2)):
+                    print("out:", out)
+                    print("err:", err)
+            except NotImplementedError:
+                try:
+                    self.skipTest(sys.exc_info()[1])
+                except AttributeError:
+                    return
+            except ProcessTimedOut:
+                self.assertTrue(i > 3)
+            else:
+                self.fail("Expected a timeout")
+
+
+    def test_iter_lines_error(self):
+        with self._connect() as rem:
+            try:
+                for i, lines in enumerate(rem["ls"]["--bla"].popen()):
+                    pass
+                self.assertEqual(i, 1)
+            except ProcessExecutionError:
+                ex = sys.exc_info()[1]
+                self.assertTrue(ex.stderr.startswith("/bin/ls: unrecognized option '--bla'"))
+            else:
+                self.fail("Expected an execution error")
 
 
 class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):

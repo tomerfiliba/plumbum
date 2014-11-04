@@ -6,6 +6,7 @@ import logging
 import time
 import platform
 import re
+from functools import partial
 from plumbum.path.local import LocalPath, LocalWorkdir
 from tempfile import mkdtemp
 from contextlib import contextmanager
@@ -14,6 +15,7 @@ from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.machines.session import ShellSession
 from plumbum.lib import ProcInfo, IS_WIN32, six
 from plumbum.commands.daemons import win32_daemonize, posix_daemonize
+from plumbum.commands.processes import iter_lines
 from plumbum.machines.env import BaseEnv
 
 if sys.version_info >= (3, 2):
@@ -29,6 +31,10 @@ else:
         from subprocess import Popen, PIPE
         has_new_subprocess = False
 
+class IterablePopen(Popen):
+    iter_lines = iter_lines
+    def __iter__(self):
+        return self.iter_lines()
 
 logger = logging.getLogger("plumbum.local")
 
@@ -255,7 +261,7 @@ class LocalMachine(object):
             argv, executable = self._as_user_stack[-1](argv)
 
         logger.debug("Running %r", argv)
-        proc = Popen(argv, executable = str(executable), stdin = stdin, stdout = stdout,
+        proc = IterablePopen(argv, executable = str(executable), stdin = stdin, stdout = stdout,
             stderr = stderr, cwd = str(cwd), env = env, **kwargs)  # bufsize = 4096
         proc._start_time = time.time()
         proc.encoding = self.encoding
