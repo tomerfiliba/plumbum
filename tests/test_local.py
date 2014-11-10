@@ -785,6 +785,9 @@ for _ in range(%s):
         with pytest.raises(ProcessExecutionError):
             (ls["--no-such-option"] | head)()
 
+    def test_cmd(self):
+        local.cmd.ls("/tmp")
+
     def test_pipeline_retcode(self):
         "From PR #288"
         from plumbum.cmd import echo, grep

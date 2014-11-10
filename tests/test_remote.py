@@ -216,6 +216,10 @@ s.close()
                 filenames = [f.name for f in rem.cwd // ("*with space.txt")]
                 assert "file with space.txt" in filenames
 
+    def test_cmd(self):
+        with self._connect() as rem:
+            rem.cmd.ls("/tmp")
+
     @pytest.mark.usefixtures("testdir")
     def test_download_upload(self):
         with self._connect() as rem:
