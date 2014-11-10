@@ -81,3 +81,18 @@ class BaseMachine(object):
                        stderr=None,
                        append=True):
         raise NotImplementedError("This is not implemented on this machine!")
+
+    class Cmd(object):
+
+        def __init__(self, machine):
+            self._machine = machine
+
+        def __getattr__(self, name):
+            try:
+                return self._machine[name]
+            except CommandNotFound:
+                raise AttributeError(name)
+
+    @property
+    def cmd(self):
+        return self.Cmd(self)
