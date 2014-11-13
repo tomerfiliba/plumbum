@@ -177,6 +177,7 @@ class BaseCommand(object):
             try:
                 return run_proc(p, retcode, timeout)
             finally:
+                del p.run  # to break cyclic reference p -> cell -> p
                 for f in [p.stdin, p.stdout, p.stderr]:
                     try:
                         f.close()
