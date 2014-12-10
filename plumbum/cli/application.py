@@ -149,7 +149,7 @@ class Application(object):
 
             class MyApp(cli.Application):
                 pass
-            MyApp.unbind("--version")
+            MyApp.unbind_switches("--version")
 
         """
         cls._unbound_switches += tuple(name.lstrip("-") for name in switch_names if name)
