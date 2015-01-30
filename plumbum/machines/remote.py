@@ -15,7 +15,7 @@ class RemoteEnv(BaseEnv):
     __slots__ = ["_orig", "remote"]
     def __init__(self, remote):
         self.remote = remote
-        self._curr = dict(line.split("=", 1) for line in self.remote._session.run("env")[1].splitlines())
+        self._curr = dict(line.split("=", 1) for line in self.remote._session.run("env -0")[1].split("\x00"))
         self._orig = self._curr.copy()
         BaseEnv.__init__(self, self.remote.path, ":")
 
