@@ -15,7 +15,8 @@ class RemoteEnv(BaseEnv):
     __slots__ = ["_orig", "remote"]
     def __init__(self, remote):
         self.remote = remote
-        self._curr = dict(line.split("=", 1) for line in self.remote._session.run("env -0")[1].split("\x00"))
+        self._curr = dict(line.split("=", 1) for line in
+                self.remote._session.run("env -0; echo")[1].split("\x00") if "=" in line)
         self._orig = self._curr.copy()
         BaseEnv.__init__(self, self.remote.path, ":")
 
@@ -181,7 +182,7 @@ class BaseRemoteMachine(object):
 
         :param progname: The program's name. Note that if underscores (``_``) are present
                          in the name, and the exact name is not found, they will be replaced
-                         in turn by hyphens (``-``) then periods (``.``), and the name will 
+                         in turn by hyphens (``-``) then periods (``.``), and the name will
                          be looked up again for each alternative
 
         :returns: A :class:`RemotePath <plumbum.path.local.RemotePath>`
@@ -274,7 +275,7 @@ class BaseRemoteMachine(object):
         for line in lines:
             parts = line.strip().split()
             yield ProcInfo(int(parts[0]), int(parts[1]), parts[2], " ".join(parts[3:]))
-    
+
     def pgrep(self, pattern):
         """
         Process grep: return information about all processes whose command-line args match the given regex pattern
@@ -282,7 +283,7 @@ class BaseRemoteMachine(object):
         pat = re.compile(pattern)
         for procinfo in self.list_processes():
             if pat.search(procinfo.args):
-                yield procinfo 
+                yield procinfo
 
     @contextmanager
     def tempdir(self):
