@@ -179,7 +179,7 @@ class SwitchAttr(object):
 
     def __init__(self, names, argtype = str, default = None, list = False, argname = "VALUE", **kwargs):
         self.__doc__ = "Sets an attribute"  # to prevent the help message from showing SwitchAttr's docstring
-        if "help" in kwargs and default:
+        if "help" in kwargs and default and argtype is not None:
             kwargs["help"] += "; the default is %r" % (default,)
 
         switch(names, argtype = argtype, argname = argname, list = list, **kwargs)(self)
