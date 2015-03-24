@@ -5,6 +5,7 @@ import heapq
 from subprocess import Popen
 from threading import Thread
 from plumbum.lib import IS_WIN32, six
+
 try:
     from queue import Queue, Empty as QueueEmpty
 except ImportError:
@@ -51,6 +52,55 @@ if not hasattr(Popen, "kill"):
         Popen.kill = _Popen_kill
         Popen.terminate = _Popen_kill
         Popen.send_signal = _Popen_send_signal
+
+#===================================================================================================
+# utility functions
+#===================================================================================================
+def _check_process(proc, retcode, timeout, stdout, stderr):
+    if getattr(proc, "_timed_out", False):
+        raise ProcessTimedOut("Process did not terminate within %s seconds" % (timeout,),
+            getattr(proc, "argv", None))
+
+    if retcode is not None:
+        if hasattr(retcode, "__contains__"):
+            if proc.returncode not in retcode:
+                raise ProcessExecutionError(getattr(proc, "argv", None), proc.returncode,
+                    stdout, stderr)
+        elif proc.returncode != retcode:
+            raise ProcessExecutionError(getattr(proc, "argv", None), proc.returncode,
+                stdout, stderr)
+    return proc.returncode, stdout, stderr
+
+def _iter_lines(proc, decode, linesize):
+    try:
+        from selectors import DefaultSelector, EVENT_READ
+    except ImportError:
+        # Pre Python 3.4 implementation
+        from select import select
+        def selector():
+            while True:
+                rlist, _, _ = select([proc.stdout, proc.stderr], [], [])
+                for stream in rlist:
+                    yield (stream is proc.stderr), decode(stream.readline(linesize))
+    else:
+        # Python 3.4 implementation
+        def selector():
+            sel = DefaultSelector()
+            sel.register(proc.stdout, EVENT_READ, 0)
+            sel.register(proc.stderr, EVENT_READ, 1)
+            while True:
+                for key, mask in sel.select():
+                    yield key.data, decode(key.fileobj.readline(linesize))
+
+    for ret in selector():
+        yield ret
+        if proc.poll() is not None:
+            break
+    for line in proc.stdout:
+        yield 0, decode(line)
+    for line in proc.stderr:
+        yield 1, decode(line)
+
 
 #===================================================================================================
 # Exceptions
@@ -207,7 +257,7 @@ def run_proc(proc, retcode, timeout = None):
 #===================================================================================================
 # iter_lines
 #===================================================================================================
-def iter_lines(proc, retcode = 0, timeout = None, linesize = -1):
+def iter_lines(proc, retcode = 0, timeout = None, linesize = -1, _iter_lines = _iter_lines):
     """Runs the given process (equivalent to run_proc()) and yields a tuples of (out, err) line pairs.
     If the exit code of the process does not match the expected one, :class:`ProcessExecutionError
     <plumbum.commands.ProcessExecutionError>` is raised.
@@ -229,39 +279,14 @@ def iter_lines(proc, retcode = 0, timeout = None, linesize = -1):
 
     encoding = getattr(proc, "encoding", None)
     if encoding:
-        read_stream = lambda s: s.readline(linesize).decode(encoding).rstrip()
+        decode = lambda s: s.decode(encoding).rstrip()
     else:
-        read_stream = lambda s: s.readline(linesize)
+        decode = lambda s: s
 
     _register_proc_timeout(proc, timeout)
 
-    try:
-        from selectors import DefaultSelector, EVENT_READ
-    except ImportError:
-        # Pre Python 3.4 implementation
-        def _iter_lines():
-            from select import select
-            while True:
-                rlist, _, _ = select([proc.stdout, proc.stderr], [], [])
-                for stream in rlist:
-                    yield (stream is proc.stderr), read_stream(stream)
-                if proc.poll() is not None:
-                    break
-    else:
-        # Python 3.4 implementation
-        sel = DefaultSelector()
-
-        sel.register(proc.stdout, EVENT_READ, 0)
-        sel.register(proc.stderr, EVENT_READ, 1)
-        def _iter_lines():
-            while True:
-                for key, mask in sel.select():
-                    yield key.data, read_stream(key.fileobj)
-                if proc.poll() is not None:
-                    break
-
     buffers = [StringIO(), StringIO()]
-    for t, line in _iter_lines():
+    for t, line in _iter_lines(proc, decode, linesize):
         ret = [None, None]
         ret[t] = line
         buffers[t].write(line + "\n")
@@ -269,22 +294,3 @@ def iter_lines(proc, retcode = 0, timeout = None, linesize = -1):
 
     # this will take care of checking return code and timeouts
     _check_process(proc, retcode, timeout, *(s.getvalue() for s in buffers))
-
-
-#===================================================================================================
-# _check_process
-#===================================================================================================
-def _check_process(proc, retcode, timeout, stdout, stderr):
-    if getattr(proc, "_timed_out", False):
-        raise ProcessTimedOut("Process did not terminate within %s seconds" % (timeout,),
-            getattr(proc, "argv", None))
-
-    if retcode is not None:
-        if hasattr(retcode, "__contains__"):
-            if proc.returncode not in retcode:
-                raise ProcessExecutionError(getattr(proc, "argv", None), proc.returncode,
-                    stdout, stderr)
-        elif proc.returncode != retcode:
-            raise ProcessExecutionError(getattr(proc, "argv", None), proc.returncode,
-                stdout, stderr)
-    return proc.returncode, stdout, stderr
