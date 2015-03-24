@@ -15,8 +15,24 @@ class RemoteEnv(BaseEnv):
     __slots__ = ["_orig", "remote"]
     def __init__(self, remote):
         self.remote = remote
-        self._curr = dict(line.split("=", 1) for line in
-                self.remote._session.run("env -0; echo")[1].split("\x00") if "=" in line)
+        session = remote._session
+        # GNU env has a -0 argument; use it if present. Otherwise,
+        # fall back to calling printenv on each (possible) variable
+        # from plain env.
+        env0 = session.run("env -0; echo")
+        if env0[0] == 0 and not env0[2].rstrip():
+            self._curr = dict(line.split('=', 1)
+                              for line in env0[1].split('\x00')
+                              if '=' in line)
+        else:
+            lines = session.run("env; echo")[1].splitlines()
+            split = (line.split('=', 1) for line in lines)
+            keys = (line[0] for line in split if len(line)>1)
+            runs = ((key, session.run('printenv "%s"; echo' % key))
+                    for key in keys)
+            self._curr = dict((key, run[1].rstrip('\n')) for (key, run) in runs
+                              if run[0] == 0 and run[1].rstrip('\n')
+                              and not run[2])
         self._orig = self._curr.copy()
         BaseEnv.__init__(self, self.remote.path, ":")
 
