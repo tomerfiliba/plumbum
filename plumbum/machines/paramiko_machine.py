@@ -153,7 +153,7 @@ class ParamikoMachine(BaseRemoteMachine):
 
     def __init__(self, host, user = None, port = None, password = None, keyfile = None,
             load_system_host_keys = True, missing_host_policy = None, encoding = "utf8",
-            look_for_keys = None, connect_timeout = None):
+            look_for_keys = None, connect_timeout = None, keep_alive = 0):
         self.host = host
         kwargs = {}
         if user:
@@ -177,6 +177,7 @@ class ParamikoMachine(BaseRemoteMachine):
         if connect_timeout is not None:
             kwargs["timeout"] = connect_timeout
         self._client.connect(host, **kwargs)
+        self._keep_alive = keep_alive
         self._sftp = None
         BaseRemoteMachine.__init__(self, encoding, connect_timeout)
 
@@ -200,7 +201,9 @@ class ParamikoMachine(BaseRemoteMachine):
     @_setdoc(BaseRemoteMachine)
     def session(self, isatty = False, term = "vt100", width = 80, height = 24, new_session = False):
         # new_session is ignored for ParamikoMachine
-        chan = self._client.get_transport().open_session()
+        trans = self._client.get_transport()
+        trans.set_keepalive(self._keep_alive)
+        chan = trans.open_session()
         if isatty:
             chan.get_pty(term, width, height)
             chan.set_combine_stderr()
@@ -285,7 +288,9 @@ class ParamikoMachine(BaseRemoteMachine):
         if ipv6 and dhost == "localhost":
             dhost = "::1"
         srcaddr = ("::1", 0, 0, 0) if ipv6 else ("127.0.0.1", 0)
-        chan = self._client.get_transport().open_channel('direct-tcpip', (dhost, dport), srcaddr)
+        trans = self._client.get_transport()
+        trans.set_keepalive(self._keep_alive)
+        chan = trans.open_channel('direct-tcpip', (dhost, dport), srcaddr)
         return SocketCompatibleChannel(chan)
 
     #
