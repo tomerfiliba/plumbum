@@ -34,8 +34,8 @@ class Future(object):
     def __repr__(self):
         return "<Future %r (%s)>" % (self.proc.argv, self._returncode if self.ready() else "running",)
     def poll(self):
-        """Polls the underlying process for termination; returns ``None`` if still running,
-        or the process' returncode if terminated"""
+        """Polls the underlying process for termination; returns ``False`` if still running,
+        or ``True`` if terminated"""
         if self.proc.poll() is not None:
             self.wait()
         return self._returncode is not None
