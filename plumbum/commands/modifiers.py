@@ -165,13 +165,15 @@ class TEE(ExecutionModifier):
 
                     # Python conveniently line-buffers stdout and stderr for
                     # us, so all we need to do is write to them
-                    tee_to[fd].write(data)
+                    tee_to[fd].write(data.decode('utf-8'))
                     # And then "unbuffered" is just flushing after each write
                     if not self.buffered:
                         tee_to[fd].flush()
 
                     buf.append(data)
 
-            return p.returncode, ''.join(outbuf), ''.join(errbuf)
+            stdout = ''.join([x.decode('utf-8') for x in outbuf])
+            stderr = ''.join([x.decode('utf-8') for x in errbuf])
+            return p.returncode, stdout, stderr
 
 TEE = TEE()
