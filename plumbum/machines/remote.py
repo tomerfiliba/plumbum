@@ -327,12 +327,17 @@ class BaseRemoteMachine(object):
         return matches
 
     def _path_getuid(self, fn):
-        return self._session.run("stat -c '%u,%U' " + shquote(fn))[1].strip().split(",")
+        stat_cmd = "stat -c '%u,%U' " if self.uname != 'Darwin' else "stat -f '%u,%Su' "
+        return self._session.run(stat_cmd + shquote(fn))[1].strip().split(",")
     def _path_getgid(self, fn):
-        return self._session.run("stat -c '%g,%G' " + shquote(fn))[1].strip().split(",")
+        stat_cmd = "stat -c '%g,%G' " if self.uname != 'Darwin' else "stat -f '%g,%Sg' "
+        return self._session.run(stat_cmd + shquote(fn))[1].strip().split(",")
     def _path_stat(self, fn):
-        rc, out, _ = self._session.run("stat -c '%F,%f,%i,%d,%h,%u,%g,%s,%X,%Y,%Z' " + shquote(fn),
-            retcode = None)
+        if self.uname != 'Darwin':
+            stat_cmd = "stat -c '%F,%f,%i,%d,%h,%u,%g,%s,%X,%Y,%Z' "
+        else:
+            stat_cmd = "stat -f '%HT,%Xp,%i,%d,%l,%u,%g,%z,%a,%m,%c' "
+        rc, out, _ = self._session.run(stat_cmd + shquote(fn), retcode = None)
         if rc != 0:
             return None
         statres = out.strip().split(",")
