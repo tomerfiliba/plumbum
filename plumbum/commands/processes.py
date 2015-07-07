@@ -24,7 +24,7 @@ def _check_process(proc, retcode, timeout, stdout, stderr):
     return proc.returncode, stdout, stderr
 
 
-def _iter_lines(proc, decode, linesize):
+def _iter_lines(proc, decode, linesize, line_timeout=None):
     try:
         from selectors import DefaultSelector, EVENT_READ
     except ImportError:
@@ -33,7 +33,9 @@ def _iter_lines(proc, decode, linesize):
 
         def selector():
             while True:
-                rlist, _, _ = select([proc.stdout, proc.stderr], [], [])
+                rlist, _, _ = select([proc.stdout, proc.stderr], [], [], line_timeout)
+                if not rlist and line_timeout:
+                    raise ProcessLineTimedOut("popen line timeout expired", getattr(proc, "argv", None), getattr(proc, "machine", None))
                 for stream in rlist:
                     yield (stream is proc.stderr), decode(
                         stream.readline(linesize))
@@ -44,7 +46,10 @@ def _iter_lines(proc, decode, linesize):
             sel.register(proc.stdout, EVENT_READ, 0)
             sel.register(proc.stderr, EVENT_READ, 1)
             while True:
-                for key, mask in sel.select():
+                ready = sel.select(line_timeout)
+                if not ready and line_timeout:
+                    raise ProcessLineTimedOut("popen line timeout expired", getattr(proc, "argv", None), getattr(proc, "machine", None))
+                for key, mask in ready:
                     yield key.data, decode(key.fileobj.readline(linesize))
 
     for ret in selector():
@@ -99,6 +104,15 @@ class ProcessTimedOut(Exception):
     def __init__(self, msg, argv):
         Exception.__init__(self, msg, argv)
         self.argv = argv
+
+
+class ProcessLineTimedOut(Exception):
+    """Raises by :func:`iter_lines <plumbum.commands.iter_lines>` when a ``line_timeout`` has been
+    specified and it has elapsed before the process yielded another line"""
+    def __init__(self, msg, argv, machine):
+        Exception.__init__(self, msg, argv, machine)
+        self.argv = argv
+        self.machine = machine
 
 
 class CommandNotFound(AttributeError):
@@ -239,7 +253,8 @@ def iter_lines(proc,
                retcode=0,
                timeout=None,
                linesize=-1,
-               _iter_lines=_iter_lines):
+               _iter_lines=_iter_lines,
+               line_timeout=None):
     """Runs the given process (equivalent to run_proc()) and yields a tuples of (out, err) line pairs.
     If the exit code of the process does not match the expected one, :class:`ProcessExecutionError
     <plumbum.commands.ProcessExecutionError>` is raised.
@@ -268,7 +283,7 @@ def iter_lines(proc,
     _register_proc_timeout(proc, timeout)
 
     buffers = [StringIO(), StringIO()]
-    for t, line in _iter_lines(proc, decode, linesize):
+    for t, line in _iter_lines(proc, decode, linesize, line_timeout):
         ret = [None, None]
         ret[t] = line
         buffers[t].write(line + "\n")
