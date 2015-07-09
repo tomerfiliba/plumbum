@@ -384,6 +384,4 @@ class BaseRemoteMachine(object):
             self.upload(f.name, fn)
 
     def _path_link(self, src, dst, symlink):
-        self._session.run("ln -s %s %s" % ("-s" if symlink else "", shquote(src), shquote(dst)))
-
-
+        self._session.run("ln %s %s %s" % ("-s" if symlink else "", shquote(src), shquote(dst)))
