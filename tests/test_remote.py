@@ -33,6 +33,7 @@ if not hasattr(unittest, "skipIf"):
 class RemotePathTest(unittest.TestCase):
     def _connect(self):
         return SshMachine(TEST_HOST)
+        
 
     def test_basename(self):
         name = RemotePath(self._connect(), "/some/long/path/to/file.txt").basename
@@ -43,6 +44,27 @@ class RemotePathTest(unittest.TestCase):
         name = RemotePath(self._connect(), "/some/long/path/to/file.txt").dirname
         self.assertTrue(isinstance(name, RemotePath))
         self.assertEqual("/some/long/path/to", str(name))
+        
+    def test_suffix(self):
+        p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
+        p2 = RemotePath(self._connect(), "file.tar.gz")
+        strcmp = lambda a,b: self.assertEqual(str(a),str(b))
+        self.assertEqual(p1.suffix, ".txt")
+        self.assertEqual(p1.suffixes, [".txt"])
+        self.assertEqual(p2.suffix, ".gz")
+        self.assertEqual(p2.suffixes, [".tar",".gz"])
+        strcmp(p1.with_suffix(".tar.gz"), RemotePath(self._connect(), "/some/long/path/to/file.tar.gz"))
+        strcmp(p2.with_suffix(".other"), RemotePath(self._connect(), "file.tar.other"))
+        strcmp(p2.with_suffix(".other", 2), RemotePath(self._connect(), "file.other"))
+        strcmp(p2.with_suffix(".other", 0), RemotePath(self._connect(), "file.tar.gz.other"))
+        strcmp(p2.with_suffix(".other", None), RemotePath(self._connect(), "file.other"))
+        
+    def test_newname(self):
+        p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
+        p2 = RemotePath(self._connect(), "file.tar.gz")
+        strcmp = lambda a,b: self.assertEqual(str(a),str(b))
+        strcmp(p1.with_name("something.tar"), RemotePath(self._connect(), "/some/long/path/to/something.tar"))
+        strcmp(p2.with_name("something.tar"), RemotePath(self._connect(), "something.tar"))
 
     @unittest.skipIf(not hasattr(os, "chown"), "os.chown not supported")
     def test_chown(self):
