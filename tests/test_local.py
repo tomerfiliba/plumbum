@@ -50,6 +50,25 @@ class LocalPathTest(unittest.TestCase):
     def test_split(self):
         p = local.path("/var/log/messages")
         self.assertEqual(p.split(), ["var", "log", "messages"])
+        
+    def test_suffix(self):
+        p1 = local.path("/some/long/path/to/file.txt")
+        p2 = local.path("file.tar.gz")
+        self.assertEqual(p1.suffix, ".txt")
+        self.assertEqual(p1.suffixes, [".txt"])
+        self.assertEqual(p2.suffix, ".gz")
+        self.assertEqual(p2.suffixes, [".tar",".gz"])
+        self.assertEqual(p1.with_suffix(".tar.gz"), local.path("/some/long/path/to/file.tar.gz"))
+        self.assertEqual(p2.with_suffix(".other"), local.path("file.tar.other"))
+        self.assertEqual(p2.with_suffix(".other", 2), local.path("file.other"))
+        self.assertEqual(p2.with_suffix(".other", 0), local.path("file.tar.gz.other"))
+        self.assertEqual(p2.with_suffix(".other", None), local.path("file.other"))
+        
+    def test_newname(self):
+        p1 = local.path("/some/long/path/to/file.txt")
+        p2 = local.path("file.tar.gz")
+        self.assertEqual(p1.with_name("something.tar"), local.path("/some/long/path/to/something.tar"))
+        self.assertEqual(p2.with_name("something.tar"), local.path("something.tar"))
 
     def test_relative_to(self):
         p = local.path("/var/log/messages")

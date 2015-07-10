@@ -117,6 +117,8 @@ etc. ::
     <LocalPath c:\windows\notepad.exe>
     >>> (p / "notepad.exe").isfile()
     True
+    >>> (p / "notepad.exe").with_suffix(".dll")
+    <LocalPath c:\windows\notepad.dll>
     >>> for p2, _ in zip(p, range(3)):
     ...     print p2
     ...
@@ -129,6 +131,7 @@ etc. ::
     [<LocalPath c:\windows\apppatch\acgenral.dll>, ...]
     >>> local.cwd / "docs" // "*.rst"
     [<LocalPath d:\workspace\plumbum\docs\cli.rst>, ...]
+
 
 If you need to **copy**, **move**, or **delete** paths, see the :ref:`utils modules <guide-utils>`
 

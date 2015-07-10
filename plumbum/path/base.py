@@ -99,6 +99,16 @@ class Path(object):
     def dirname(self):
         """The dirname component of this path"""
         raise NotImplementedError()
+        
+    @property
+    def suffix(self):
+        """The suffix of this file"""
+        raise NotImplementedError()
+    @property
+    def suffixes(self):
+        """This is a list of all suffixes"""
+        raise NotImplementedError()
+        
     @property
     def uid(self):
         """The user that owns this path. The returned value is a :class:`FSUser <plumbum.path.FSUser>`
@@ -133,6 +143,15 @@ class Path(object):
         """Returns ``True`` if this path exists, ``False`` otherwise"""
         raise NotImplementedError()
     def stat(self):
+        raise NotImplementedError()
+    def with_name(self, name):
+        """Returns a path with the name replaced"""
+        raise NotImplementedError()
+    def with_suffix(self, suffix, depth=1):
+        """Returns a path with the suffix replaced. Up to last ``depth`` suffixes will be
+        replaces. None will replace all suffixes. If there are less than ``depth`` suffixes,
+        this will replace all suffixes. ``.tar.gz`` is an example where ``depth=2`` or
+        ``depth=None`` is useful"""
         raise NotImplementedError()
     def glob(self, pattern):
         """Returns a (possibly empty) list of paths that matched the glob-pattern under this path"""
