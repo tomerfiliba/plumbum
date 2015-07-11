@@ -4,7 +4,7 @@ import unittest
 import sys
 import signal
 import time
-from plumbum import local, LocalPath, FG, BG, ERROUT
+from plumbum import local, LocalPath, FG, BG, TF, RETCODE, ERROUT
 from plumbum.lib import six
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
@@ -50,7 +50,7 @@ class LocalPathTest(unittest.TestCase):
     def test_split(self):
         p = local.path("/var/log/messages")
         self.assertEqual(p.split(), ["var", "log", "messages"])
-        
+
     def test_suffix(self):
         p1 = local.path("/some/long/path/to/file.txt")
         p2 = local.path("file.tar.gz")
@@ -63,7 +63,7 @@ class LocalPathTest(unittest.TestCase):
         self.assertEqual(p2.with_suffix(".other", 2), local.path("file.other"))
         self.assertEqual(p2.with_suffix(".other", 0), local.path("file.tar.gz.other"))
         self.assertEqual(p2.with_suffix(".other", None), local.path("file.other"))
-        
+
     def test_newname(self):
         p1 = local.path("/some/long/path/to/file.txt")
         p2 = local.path("file.tar.gz")
@@ -81,7 +81,7 @@ class LocalPathTest(unittest.TestCase):
         for src in [local.path("/var/log/messages"), local.path("/var"), local.path("/opt/lib")]:
             delta = p.relative_to(src)
             self.assertEqual(src + delta, p)
-    
+
     def test_read_write(self):
         with local.tempdir() as dir:
             f = dir / "test.txt"
@@ -245,7 +245,15 @@ class LocalMachineTest(unittest.TestCase):
         f.wait()
         self.assertTrue("test_local.py" in f.stdout.splitlines())
 
-        (ls["-a"] | grep["local"]) & FG
+        command = (ls["-a"] | grep["local"])
+        command_false = (ls["-a"] | grep["not_a_file_here"])
+        command & FG
+        self.assertTrue(command & TF)
+        self.assertFalse(command_false & TF)
+        self.assertEqual(command & RETCODE, 0)
+        self.assertEqual(command_false & RETCODE, 1)
+
+
 
     def test_arg_expansion(self):
         from plumbum.cmd import ls
@@ -470,11 +478,11 @@ for _ in range(%s):
 
     def test_issue_139(self):
         LocalPath(local.cwd)
-    
+
     def test_pipeline_failure(self):
         from plumbum.cmd import ls, head
         self.assertRaises(ProcessExecutionError, (ls["--no-such-option"] | head))
-    
+
 
 if __name__ == "__main__":
     unittest.main()

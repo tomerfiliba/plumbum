@@ -217,6 +217,34 @@ class TF(ExecutionModifier):
 TF = TF()
 
 
+class RETCODE(ExecutionModifier):
+    """
+    An execution modifier that runs the given command, causing it to run and return the retcode.
+    This is useful for working with bash commands that have important retcodes but not very
+    useful output.
 
-# TODO: Add RETCODE modifier, causing a command to return it's return code (like subprocess.call)
+    If you want to run the process in the forground, then use ``RETCODE(FG=True)``.
+
+    Example::
+
+        local['touch']['/root/test'] & RETCODE # Returns 1, since this cannot be touched
+        local['touch']['/root/test'] & RETCODE(FG=True) * Returns 1, will show error message
+    """
+
+    def __init__(self,  FG=False):
+        """`FG` to True to run in the foreground.
+        """
+        self.foreground = FG
+
+    @classmethod
+    def __call__(cls, *args, **kwargs):
+        return cls(*args, **kwargs)
+
+    def __rand__(self, cmd):
+            if self.foreground:
+                return cmd.run(retcode = None, stdin = None, stdout = None, stderr = None)[0]
+            else:
+                return cmd.run(retcode = None)[0]
+
+RETCODE = RETCODE()
 
