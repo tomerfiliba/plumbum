@@ -129,6 +129,25 @@ one you passed::
    If you wish to accept several valid exit codes, ``retcode`` may be a tuple or a list. 
    For instance, ``grep("foo", "myfile.txt", retcode = (0, 2))``   
 
+
+If you need the value of the exit code, there are two ways to do it. You can call ``.run(retcode=None)``
+(or any other valid retcode value) on a command, you will get a tuple ``(retcode, stdin, stdout)``. If
+you just need the recode, or want to check the retcode, there are two special objects that can be applied
+to your command to run it and get or test the retcode. For example::
+
+    >>> cat["non/existing.file"] & RETCODE
+    1
+    >>> cat["non/existing.file"] & TF
+    False
+    >>> cat["non/existing.file"] & TF(1)
+    True
+
+.. note::
+   If you want to run these commands in the foreground (see below), you can give
+   ``FG=True`` to ``TF`` or ``RETCODE``.
+   For instance, ``cat["non/existing.file"] & TF(1,FG=True)``
+    
+
 Run and Popen
 -------------
 Notice that calling commands (or chained-commands) only returns their ``stdout``. In order to

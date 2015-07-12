@@ -3,7 +3,7 @@ from select import select
 from subprocess import PIPE
 import sys
 
-from plumbum.commands.processes import run_proc
+from plumbum.commands.processes import run_proc, ProcessExecutionError
 
 
 #===================================================================================================
@@ -112,7 +112,7 @@ class FG(ExecutionModifier):
 
     In order to mimic shell syntax, it applies when you right-and it with a command.
     If you wish to expect a different return code (other than the normal success indicate by 0),
-    use ``BG(retcode)``. Example::
+    use ``FG(retcode)``. Example::
 
         vim & FG       # run vim in the foreground, expecting an exit code of 0
         vim & FG(7)    # run vim in the foreground, expecting an exit code of 7
@@ -137,7 +137,7 @@ class TEE(ExecutionModifier):
     """
     def __init__(self, retcode=0, buffered=True):
         """`retcode` is the return code to expect to mean "success".  Set
-        `buffered` to false to disable line-buffering the output, which may
+        `buffered` to False to disable line-buffering the output, which may
         cause stdout and stderr to become more entangled than usual.
         """
         self.retcode = retcode
@@ -175,3 +175,76 @@ class TEE(ExecutionModifier):
             return p.returncode, ''.join(outbuf), ''.join(errbuf)
 
 TEE = TEE()
+
+class TF(ExecutionModifier):
+    """
+    An execution modifier that runs the given command, but returns True/False depending on the retcode.
+    This returns True if the expected exit code is returned, and false if it is not.
+    This is useful for checking true/false bash commands.
+
+    If you wish to expect a different return code (other than the normal success indicate by 0),
+    use ``TF(retcode)``. If you want to run the process in the forground, then use
+    ``TF(FG=True)``.
+
+    Example::
+
+        local['touch']['/root/test'] & TF * Returns False, since this cannot be touched
+        local['touch']['/root/test'] & TF(1) # Returns True
+        local['touch']['/root/test'] & TF(FG=True) * Returns False, will show error message
+    """
+
+    def __init__(self, retcode=0, FG=False):
+        """`retcode` is the return code to expect to mean "success".  Set
+        `FG` to True to run in the foreground.
+        """
+        self.retcode = retcode
+        self.foreground = FG
+
+    @classmethod
+    def __call__(cls, *args, **kwargs):
+        return cls(*args, **kwargs)
+
+    def __rand__(self, cmd):
+        try:
+            if self.foreground:
+                cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None)
+            else:
+                cmd(retcode = self.retcode)
+            return True
+        except ProcessExecutionError:
+            return False
+
+TF = TF()
+
+
+class RETCODE(ExecutionModifier):
+    """
+    An execution modifier that runs the given command, causing it to run and return the retcode.
+    This is useful for working with bash commands that have important retcodes but not very
+    useful output.
+
+    If you want to run the process in the forground, then use ``RETCODE(FG=True)``.
+
+    Example::
+
+        local['touch']['/root/test'] & RETCODE # Returns 1, since this cannot be touched
+        local['touch']['/root/test'] & RETCODE(FG=True) * Returns 1, will show error message
+    """
+
+    def __init__(self,  FG=False):
+        """`FG` to True to run in the foreground.
+        """
+        self.foreground = FG
+
+    @classmethod
+    def __call__(cls, *args, **kwargs):
+        return cls(*args, **kwargs)
+
+    def __rand__(self, cmd):
+            if self.foreground:
+                return cmd.run(retcode = None, stdin = None, stdout = None, stderr = None)[0]
+            else:
+                return cmd.run(retcode = None)[0]
+
+RETCODE = RETCODE()
+
