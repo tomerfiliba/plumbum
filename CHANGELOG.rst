@@ -5,10 +5,15 @@
   (`#126 <https://github.com/tomerfiliba/plumbum/pull/126>`_), (`#127 <https://github.com/tomerfiliba/plumbum/pull/127>`_)
 * CLI: add ``root_app`` property (`#141 <https://github.com/tomerfiliba/plumbum/pull/141>`_)
 * Machines: ``getattr`` now raises ``AttributeError`` instead of `CommandNotFound` (`#135 <https://github.com/tomerfiliba/plumbum/pull/135>`_)
+* Paramiko ``keep_alive`` support (`#186 <https://github.com/tomerfiliba/plumbum/pull/186>`_)
+* Paramiko does not support piping explicitly now (`#160 <https://github.com/tomerfiliba/plumbum/pull/160>`_)
 * Paths: bugfix to ``cwd`` interaction with ``Path`` (`#142 <https://github.com/tomerfiliba/plumbum/pull/142>`_)
 * Paths: read/write now accept an optional encoding parameter (`#148 <https://github.com/tomerfiliba/plumbum/pull/148>`_)
+* Paths: Suffix support similar to the Python 3.4 standard library ``pathlib`` (`#198 <https://github.com/tomerfiliba/plumbum/pull/198>`_)
 * Commands: renamed ``setenv`` to ``with_env`` (`#143 <https://github.com/tomerfiliba/plumbum/pull/143>`_)
 * Commands: pipelines will now fail with ``ProcessExecutionError`` if the source process fails (`#145 <https://github.com/tomerfiliba/plumbum/pull/145>`_)
+* Commands: added ``TF`` and ``RETCODE`` modifiers (`#202 <https://github.com/tomerfiliba/plumbum/pull/202>`_)
+* Experimental concurrent machine support in ``experimental/parallel.py``
 
 1.4.2
 -----
