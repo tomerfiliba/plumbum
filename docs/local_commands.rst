@@ -139,9 +139,9 @@ one you passed::
 
 
 If you need the value of the exit code, there are two ways to do it. You can call ``.run(retcode=None)``
-(or any other valid retcode value) on a command, you will get a tuple ``(retcode, stdin, stdout)``. If
-you just need the recode, or want to check the retcode, there are two special objects that can be applied
-to your command to run it and get or test the retcode. For example::
+(or any other valid retcode value) on a command, you will get a tuple ``(retcode, stdin, stdout)`` (see
+`Run and Popen`_. If you just need the recode, or want to check the retcode, there are two special
+objects that can be applied to your command to run it and get or test the retcode. For example::
 
     >>> cat["non/existing.file"] & RETCODE
     1
@@ -151,7 +151,7 @@ to your command to run it and get or test the retcode. For example::
     True
 
 .. note::
-   If you want to run these commands in the foreground (see below), you can give
+   If you want to run these commands in the foreground (see `Background and Foreground`_), you can give
    ``FG=True`` to ``TF`` or ``RETCODE``.
    For instance, ``cat["non/existing.file"] & TF(1,FG=True)``
     
