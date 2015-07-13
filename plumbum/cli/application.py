@@ -8,6 +8,7 @@ from plumbum.cli.terminal import get_terminal_size
 from plumbum.cli.switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,
     MissingMandatorySwitch, SwitchCombinationError, PositionalArgumentsError, switch,
     SubcommandError, Flag, CountOf)
+from plumbum.cli.color import COLOR
 
 
 class ShowHelp(SwitchError):
@@ -100,6 +101,7 @@ class Application(object):
     DESCRIPTION = None
     VERSION = None
     USAGE = None
+    NAME_COLOR = COLOR.FG.CYAN
     CALL_MAIN_IF_NESTED_COMMAND = True
 
     parent = None
@@ -575,8 +577,5 @@ class Application(object):
     def version(self):
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
-        if sys.stdout.isatty() and os.name == "posix":
-            fmt = "\033[0;36m%s\033[0m %s"
-        else:
-            fmt = "%s %s"
-        print (fmt % (self.PROGNAME, ver if ver is not None else "(version not set)"))
+        program_name = self.NAME_COLOR + self.PROGNAME + COLOR.RESET
+        print (self.PROGNAME, ver if ver is not None else "(version not set)")
