@@ -1,11 +1,12 @@
 import logging
 import errno
+import stat
 import socket
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
 from plumbum.lib import _setdoc, six
 from plumbum.path.local import LocalPath
-from plumbum.path.remote import RemotePath
+from plumbum.path.remote import RemotePath, StatRes
 from plumbum.commands.processes import iter_lines
 try:
     # Sigh... we need to gracefully-import paramiko for Sphinx builds, etc
@@ -316,6 +317,21 @@ class ParamikoMachine(BaseRemoteMachine):
         f = self.sftp.open(str(fn), 'wb')
         f.write(data)
         f.close()
+    def _path_stat(self, fn):
+        try:
+            st = self.sftp.stat(str(fn))
+        except IOError as e:
+            if e.errno == errno.ENOENT:
+                return None
+            raise OSError(e.errno)
+        res = StatRes((st.st_mode, 0, 0, 0, st.st_uid, st.st_gid,
+                       st.st_size, st.st_atime, st.st_mtime, 0))
+
+        if stat.S_ISDIR(st.st_mode):
+            res.text_mode = 'directory'
+        if stat.S_ISREG(st.st_mode):
+            res.text_mode = 'regular file'
+        return res
 
 
 
