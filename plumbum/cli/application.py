@@ -324,9 +324,10 @@ class Application(object):
         return ordered, tailargs
 
     @classmethod
-    def run(cls, argv = sys.argv, exit = True):  # @ReservedAssignment
+    def run(cls, argv = None, exit = True):  # @ReservedAssignment
         """
-        Runs the application, taking the arguments from ``sys.argv`` by default. If ``exit`` is
+        Runs the application, taking the arguments from ``sys.argv`` by default if
+        nothing is passed. If ``exit`` is
         ``True`` (the default), the function will exit with the appropriate return code;
         otherwise it will return a tuple of ``(inst, retcode)``, where ``inst`` is the
         application instance created internally by this function and ``retcode`` is the
@@ -336,6 +337,8 @@ class Application(object):
            Setting ``exit`` to ``False`` is intendend for testing/debugging purposes only -- do
            not override it other situations.
         """
+        if argv is None:
+            argv = sys.argv
         argv = list(argv)
         inst = cls(argv.pop(0))
         retcode = 0
