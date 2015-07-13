@@ -128,6 +128,14 @@ one you passed::
 .. note::
    If you wish to accept several valid exit codes, ``retcode`` may be a tuple or a list. 
    For instance, ``grep("foo", "myfile.txt", retcode = (0, 2))``   
+   
+   If you need to have both the output/error and the exit code (using exceptions would provide either 
+   but not both), you can use the `run` method, which will provide all of them
+   
+   >>>  cat["non/existing.file"].run(retcode=None)
+   (1, u'', u'/bin/cat: non/existing.file: No such file or directory\n')
+
+   
 
 
 If you need the value of the exit code, there are two ways to do it. You can call ``.run(retcode=None)``
