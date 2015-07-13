@@ -196,9 +196,9 @@ class SshMachine(BaseRemoteMachine):
                 sock.connect(("localhost", 1234))
                 # sock is now tunneled to megazord:5678
         """
-        ssh_opts = ["-L", "[%s]:%s:[%s]:%s" % (lhost, lport, dhost, dport)]
+        ssh_opts = ["-L", "%s:%s:%s:%s" % (lhost, lport, dhost, dport)]
         proc = self.popen((), ssh_opts = ssh_opts, new_session = True)
-        return SshTunnel(ShellSession(proc, self.encoding, connect_timeout = self.connect_timeout))
+        return SshTunnel(ShellSession(proc, self.encoding, connect_timeout = self.connect_timeout, isatty=True))
 
     def _translate_drive_letter(self, path):
         # replace c:\some\path with /c/some/path
@@ -243,7 +243,7 @@ class PuttyMachine(SshMachine):
     """
     def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None,
             scp_command = None, ssh_opts = (), scp_opts = (), encoding = "utf8",
-            connect_timeout = 10, new_session = False):
+            connect_timeout = 10, new_session = False, password=None):
         if ssh_command is None:
             ssh_command = local["plink"]
         if scp_command is None:
@@ -255,6 +255,11 @@ class PuttyMachine(SshMachine):
         if port is not None:
             ssh_opts.extend(["-P", str(port)])
             port = None
+        if password:
+            scp_opts = []
+            ssh_opts = []
+            scp_opts.extend(["-pw", password])
+            ssh_opts.extend(["-pw", password])
         SshMachine.__init__(self, host, user, port, keyfile = keyfile, ssh_command = ssh_command,
             scp_command = scp_command, ssh_opts = ssh_opts, scp_opts = scp_opts, encoding = encoding,
             connect_timeout = connect_timeout, new_session = new_session)
