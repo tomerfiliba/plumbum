@@ -7,3 +7,6 @@ __pycache__
 /plumbum.egg-info
 /build
 *.class
+*.ropeproject
+*.swp
+*~
