@@ -13,6 +13,19 @@ class TestColor(unittest.TestCase):
     def testColorStrings(self):
         self.assertEqual('\033[0m', COLOR.RESET)
         self.assertEqual('\033[1m', COLOR.BOLD)
+        self.assertEqual('\033[39m', COLOR.FG.RESET)
+
+    def testNegateIsReset(self):
+        self.assertEqual(COLOR.RESET, -COLOR)
+        self.assertEqual(COLOR.FG.RESET, -COLOR.FG)
+        self.assertEqual(COLOR.BG.RESET, -COLOR.BG)
+
+    def testLoadColorByName(self):
+        self.assertEqual(COLOR['LightBlue'], COLOR.FG['LightBlue'])
+        self.assertEqual(COLOR.BG['light_green'], COLOR.BG['LightGreen'])
+        self.assertEqual(COLOR['DeepSkyBlue1'], COLOR['#00afff'])
+        self.assertEqual(COLOR['DeepSkyBlue1'], COLOR[39])
+
 
     def testUndoColor(self):
         self.assertEqual('\033[39m', -COLOR.FG)
@@ -38,6 +51,8 @@ class TestColor(unittest.TestCase):
     def testLackOfColor(self):
         Style.use_color = False
         self.assertEqual('', COLOR.FG.RED)
+        self.assertEqual('', -COLOR.FG)
+        self.assertEqual('', COLOR.FG['LightBlue'])
 
     def testVisualColors(self):
         print()

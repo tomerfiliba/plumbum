@@ -146,7 +146,7 @@ class _COLOR_NAMES(object):
     def __getitem__(self, val):
         """Shortcut to provide way to access extended colors by number, name, or html hex code"""
         try:
-            self.from_name(val)
+            return self.from_name(val)
         except KeyError:
             return self.extended(val)
 
@@ -161,42 +161,38 @@ class _COLOR_NAMES(object):
     def __rsub__(self, other):
         return other + (-self)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        """This resets a FG/BG color or all colors,
+        due to different definition of RESET."""
+
+        Style.stdout.write(self.RESET)
+        return False
+
 # Adding the color name shortcuts
 for item in _simple_colors:
     setattr(_COLOR_NAMES, item.upper(), property(partial(_get_style_color, item)))
 
-class COLOR(object):
+class COLOR(_COLOR_NAMES):
 
     """Holds font styles, FG and BG objects representing colors, and
     imitates the FG object to some degree."""
 
     def __init__(self):
-        self.val = 30
+        self.val = 30 # This acts like FG color
 
         self.FG = _COLOR_NAMES(30)
         self.BG = _COLOR_NAMES(40)
 
         self.DO_NOTHING = Style('')
 
-    def __iter__(self):
-        return self.FG.__iter__()
-
     def __call__(self, color):
+        """Calling COLOR is a shortcut for Style(color)"""
         return Style(color)
 
-    def __getitem__(self, item):
-        return self.FG[item]
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        Style.stdout.write(Style.ansi_color(0))
-        return False
-
-
-for item in _simple_colors:
-    setattr(COLOR, item.upper(), property(partial(_get_style_color,  item)))
 for item in _simple_attributes:
     setattr(COLOR, item.upper(), property(partial(_get_style_attribute, item)))
 
