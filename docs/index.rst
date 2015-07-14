@@ -78,7 +78,7 @@ you encounter or to request features. The library is released under the permissi
 Requirements
 ------------
 
-Plumbum supports **Python 2.5-3.3** and has been 
+Plumbum supports **Python 2.5-3.4** and has been 
 tested on **Linux** and **Windows** machines. Any Unix-like machine should work fine out of the box,
 but on Windows, you'll probably want to install a decent `coreutils <http://en.wikipedia.org/wiki/Coreutils>`_ 
 environment and add it to your ``PATH``. I can recommend `mingw <http://mingw.org/>`_ (which comes 
@@ -111,7 +111,6 @@ you read it in order.
    utils
    cli
    changelog
-   whatsnew/whatsnew1_3
 
 API Reference
 =============

@@ -7,7 +7,7 @@
 * Machines: ``getattr`` now raises ``AttributeError`` instead of `CommandNotFound` (`#135 <https://github.com/tomerfiliba/plumbum/pull/135>`_)
 * Paramiko: ``keep_alive`` support (`#186 <https://github.com/tomerfiliba/plumbum/pull/186>`_)
 * Paramiko: does not support piping explicitly now (`#160 <https://github.com/tomerfiliba/plumbum/pull/160>`_)
-* Parmaiko: Added pure SFTP backend, gives STFP v4+ support (`#160 <https://github.com/tomerfiliba/plumbum/pull/160>`_)
+* Parmaiko: Added pure SFTP backend, gives STFP v4+ support (`#188 <https://github.com/tomerfiliba/plumbum/pull/188>`_)
 * Paths: bugfix to ``cwd`` interaction with ``Path`` (`#142 <https://github.com/tomerfiliba/plumbum/pull/142>`_)
 * Paths: read/write now accept an optional encoding parameter (`#148 <https://github.com/tomerfiliba/plumbum/pull/148>`_)
 * Paths: Suffix support similar to the Python 3.4 standard library ``pathlib`` (`#198 <https://github.com/tomerfiliba/plumbum/pull/198>`_)

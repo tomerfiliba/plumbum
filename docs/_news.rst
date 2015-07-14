@@ -1,3 +1,7 @@
+* **soon**: Version 1.4.3 released. This release is a collection of smaller features and bug fixes.
+
+ .. note:: ``setenv`` has been renamed ``with_env``
+
 * **2014.05.10**: Version 1.4.2 released. This is a maintenance release with mostly minor bug fixes, mostly revolving
   around Paramiko/Python 3 integration.
 

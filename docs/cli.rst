@@ -121,7 +121,7 @@ As demonstrated in the example above, switch functions may take no arguments (no
 specify the argument's *type*. If you require no special validation, simply pass ``str``; 
 otherwise, you may pass any type (or any callable, in fact) that will take a string and convert 
 it to a meaningful object. If conversion is not possible, the type (or callable) is expected to
-raise either ``TypeError` or ``ValueError``.
+raise either ``TypeError`` or ``ValueError``.
 
 For instance ::
 
