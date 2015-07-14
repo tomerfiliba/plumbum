@@ -84,8 +84,8 @@ Colors are supported through the class level attributes
 ``COLOR_GROUPS[]``, and
 ``COLOR_GROUPS_BODY[]``,
 which should contain Style objects. The dictionaries support custom colors
-for named groups. The default is for only one color, ``COLOR_PROGNAME = COLOR.CYAN`` (to match
-previous behavior), but if you just want more colorful defaults, subclass ``cli.ColorfulApplication``.
+for named groups. The default is COLOR.DO_NOTHING, but if you just want more
+colorful defaults, subclass ``cli.ColorfulApplication``.
 
 .. versionadded:: 1.5
 

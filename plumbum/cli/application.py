@@ -90,7 +90,7 @@ class Application(object):
 
     * ``USAGE`` - the usage line (shown in help)
 
-    * ``COLOR_PROGNAME`` - the color to print the name in, defaults to ``CYAN``
+    * ``COLOR_PROGNAME`` - the color to print the name in, defaults to ``DO_NOTHING``
 
     * ``COLOR_PROGNAME`` - the color to print the discription in, defaults to ``DO_NOTHING``
 
@@ -121,7 +121,7 @@ class Application(object):
     DESCRIPTION = None
     VERSION = None
     USAGE = None
-    COLOR_PROGNAME = COLOR.CYAN
+    COLOR_PROGNAME = COLOR.DO_NOTHING
     COLOR_DISCRIPTION = COLOR.DO_NOTHING
     COLOR_VERSION = COLOR.DO_NOTHING
     COLOR_HEADING = COLOR.DO_NOTHING
