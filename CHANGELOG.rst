@@ -1,6 +1,7 @@
 1.5.0
 -----
 * Color: new module for working with ANSI color codes for colored output
+* CLI: Added color support
 
 1.4.3
 -----

@@ -73,6 +73,21 @@ class-level attributes, such as ``PROGNAME``, ``VERSION`` and ``DESCRIPTION``. F
     class MyApp(cli.Application):
         PROGNAME = "Foobar"
         VERSION = "7.3"
+        
+Colors are supported through the class level attributes
+``COLOR_PROGNAME``,
+``COLOR_DISCRIPTION``,
+``COLOR_VERSION``,
+``COLOR_HEADING``,
+``COLOR_USAGE``,
+``COLOR_SUBCOMMANDS``,
+``COLOR_GROUPS[]``, and
+``COLOR_GROUPS_BODY[]``,
+which should contain Style objects. The dictionaries support custom colors
+for named groups. The default is for only one color, ``COLOR_PROGNAME = COLOR.CYAN`` (to match
+previous behavior), but if you just want more colorful defaults, subclass ``cli.ColorfulApplication``.
+
+.. versionadded:: 1.5
 
 Switch Functions
 ----------------
