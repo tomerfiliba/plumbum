@@ -8,3 +8,6 @@ Package plumbum.cli
 
 .. automodule:: plumbum.cli.terminal
    :members:
+
+.. automodule:: plumbum.cli.color
+   :members:

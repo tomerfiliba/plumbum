@@ -577,5 +577,5 @@ class Application(object):
     def version(self):
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
-        program_name = self.NAME_COLOR + self.PROGNAME + COLOR.RESET
+        program_name = self.NAME_COLOR(self.PROGNAME)
         print (self.PROGNAME, ver if ver is not None else "(version not set)")

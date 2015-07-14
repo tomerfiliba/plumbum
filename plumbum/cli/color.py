@@ -3,40 +3,54 @@ Color-related utilities. Feel free to use any color library on
 the ``with_color`` statement.
 
 The ``COLOR`` object provides ``BG`` and ``FG`` to access colors,
-and ``ATTRIBUTE`` and ``RESTORE`` to access attributes like bold and
+and attributes like bold and
 underlined text. It also provides ``RESET`` to recover the normal font.
 
-With the ``color_str`` string subclass being used, any color can be
+With the ``Style`` string subclass being used, any color can be
 directly called or given to a with statement.
 """
 
-from __future__ import with_statement
+from __future__ import with_statement, print_function
 import sys
 import os
 from contextlib import contextmanager
 
 # This can be manually forced using plumbum.cli.color.USE_COLOR = True
 USE_COLOR = sys.stdout.isatty() and os.name == "posix"
+STDOUT = sys.stdout
 
 
-class color_str(str):
-
+class Style(str):
     """This class allows the color change strings to be called directly
     to write them to stdout, and can be called in a with statement."""
 
-    def __call__(self, wrap_this=None):
+
+    def negate(self):
+        """This negates the effect of the current color"""
+        return self.__class__(self._remove() if USE_COLOR else '')
+
+    def now(self, wrap_this=None):
+        STDOUT.write(self.wrap(wrap_this))
+
+    def wrap(self, wrap_this=None):
         if wrap_this is None:
-            sys.stdout.write(self)
-            return self
+            return self if USE_COLOR else self.__class__('')
         else:
             if USE_COLOR:
                 return self + wrap_this - self
             else:
                 return wrap_this
 
+    def __call__(self, wrap_this=None):
+        """This sets the color (no arguments) or wraps a str (1 arg)"""
+        if wrap_this is None:
+            self.now()
+        else:
+            return self.wrap(wrap_this)
+
     def __neg__(self):
         """This negates the effect of the current color"""
-        return self.__class__(self._remove() if USE_COLOR else '')
+        return self.negate()
 
     def __rsub__(self, other):
         """Implemented to make using negatives easier"""
@@ -44,6 +58,8 @@ class color_str(str):
 
     def _remove(self):
         """Don't use directly. Will find best match for negative of current color."""
+        if self == '':
+            return ''
         try:
             if self[:2] == '\033[' and self[-1] == 'm':
                 v = self[2:-1].split(';')
@@ -63,23 +79,23 @@ class color_str(str):
 
     def __enter__(self):
         if USE_COLOR:
-            sys.stdout.write(self)
+            STDOUT.write(self)
         return self
 
     def __exit__(self, type, value, traceback):
         if USE_COLOR:
-            sys.stdout.write(-self)
+            STDOUT.write(-self)
         return False
 
 
 def ansi_color(n):
     """Return an ANSI escape sequence given a number."""
-    return color_str('\033[' + str(n) + 'm') if USE_COLOR else color_str('')
+    return Style('\033[' + str(n) + 'm') if USE_COLOR else Style('')
 
 
 def extended_ansi_color(n, begin=38):
     """Return an ANSI extended color given number."""
-    return color_str('\033[' + str(begin) + ';5;' + str(n) + 'm') if USE_COLOR else color_str('')
+    return Style('\033[' + str(begin) + ';5;' + str(n) + 'm') if USE_COLOR else Style('')
 
 
 class _COLOR_NAMES(object):
@@ -149,15 +165,16 @@ class COLOR(object):
         self.WHITE = self.FG.WHITE
 
         self.RESET = ansi_color(0)
+        self.DO_NOTHING = Style('')
 
     def __call__(self, color):
-        return color_str(color)
+        return Style(color)
 
     def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
-        sys.stdout.write(ansi_color(0))
+        STDOUT.write(ansi_color(0))
         return False
 
 
@@ -169,14 +186,15 @@ def with_color(color='', out=None):
     """Sets the color to a given color or style,
     resets when done,
     even if an exception is thrown. Optional ``out`` to give a
-    different output channel (defaults to sys.stdout)."""
+    different output channel (defaults to STDOUT, which is set
+    to sys.stdout)."""
 
     if out is None:
-        out = sys.stdout
+        out = STDOUT
     out.write(str(color))
     try:
         yield
     finally:
         out.write(ansi_color(0))
 
-__all__ = ['COLOR', 'with_color', 'ansi_color', 'extended_ansi_color', 'color_str', 'USE_COLOR']
+__all__ = ['COLOR', 'with_color', 'ansi_color', 'extended_ansi_color', 'Style', 'USE_COLOR', 'STDOUT']
