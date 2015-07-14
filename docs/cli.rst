@@ -444,6 +444,31 @@ Here's an example of running this application::
     committing...
 
 
+Color tools
+-----------
+.. versionadded:: 1.4.3
+
+A built in color module provides quick, clean access to ANSI colors for your scripts. They are
+accessed through the ``COLOR`` object. For example::
+
+    from plumbum import COLOR
+    with COLOR.FG.RED:
+        print('This is in red')
+        COLOR.FG.GREEN()
+        print('This is green')
+    print('This is completly restored, even if an exception is thrown!')
+    print(COLOR.FG.YELLOW('This is yellow') + ' And this is normal again')
+    with COLOR:
+        print('It is always a good idea to be in a context manager, to avoid being',
+              'left with a colored terminal if there is an exception!')
+        COLOR.FG.RED()
+        print(COLOR.BOLD + "This is red, bold, and exciting!" - COLOR.BOLD + " And this is red only.")
+        print(COLOR.BG.CYAN + "This is red on a cyan background." + COLOR.RESET)
+        print(COLOR.FG[42] + "If your terminal supports 256 colors, this is colorful!" + COLOR.RESET)
+        print('Colors made ' + COLOR.UNDERLINE + 'easy!')
+
+The name of a script is automatically colored with the `.COLOR_NAME` property. Other properties may be added.
+
 See Also
 --------
 * `filecopy.py <https://github.com/tomerfiliba/plumbum/blob/master/examples/filecopy.py>`_ example

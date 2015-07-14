@@ -1,5 +1,6 @@
 1.4.3
 -----
+* CLI: add ``COLOR``, which allows simple access to ANSI color sequences 
 * CLI: add ``invoke``, which allows you to programmatically run applications (`#149 <https://github.com/tomerfiliba/plumbum/pull/149>`_)
 * CLI: add ``--help-all`` and various cosmetic fixes: (`#125 <https://github.com/tomerfiliba/plumbum/pull/125>`_),
   (`#126 <https://github.com/tomerfiliba/plumbum/pull/126>`_), (`#127 <https://github.com/tomerfiliba/plumbum/pull/127>`_)
