@@ -1,3 +1,7 @@
+1.5.0
+-----
+* Color: new module for working with ANSI color codes for colored output
+
 1.4.3
 -----
 * CLI: add ``COLOR``, which allows simple access to ANSI color sequences 

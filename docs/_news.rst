@@ -1,3 +1,5 @@
+* **planned**: Version 1.5.0 released. This release added the ``plumbum.color`` module.
+
 * **soon**: Version 1.4.3 released. This release is a collection of smaller features and bug fixes.
 
  .. note:: ``setenv`` has been renamed ``with_env``

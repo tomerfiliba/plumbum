@@ -14,32 +14,36 @@ from __future__ import with_statement, print_function
 import sys
 import os
 from contextlib import contextmanager
-
-# This can be manually forced using plumbum.cli.color.USE_COLOR = True
-USE_COLOR = sys.stdout.isatty() and os.name == "posix"
-STDOUT = sys.stdout
+from plumbum.color.names import names, html, camel_names
+from plumbum.color.names import _simple_colors, _simple_attributes
+from functools import partial
 
 
 class Style(str):
     """This class allows the color change strings to be called directly
-    to write them to stdout, and can be called in a with statement."""
+    to write them to stdout, and can be called in a with statement.
+    The use_color property causes this to return '' for colors, but only on
+    new instances of the object."""
 
+    use_color = sys.stdout.isatty() and os.name == "posix"
+    stdout = sys.stdout
 
     def negate(self):
         """This negates the effect of the current color"""
-        return self.__class__(self._remove() if USE_COLOR else '')
+        return self.__class__(self._remove() if self.__class__.use_color else '')
 
     def now(self, wrap_this=None):
-        STDOUT.write(self.wrap(wrap_this))
+        self.stdout.write(self.wrap(wrap_this))
 
     def wrap(self, wrap_this=None):
         if wrap_this is None:
-            return self if USE_COLOR else self.__class__('')
+            return self if self.__class__.use_color else self.__class__('')
         else:
-            if USE_COLOR:
+            if self.__class__.use_color:
                 return self + wrap_this - self
             else:
                 return wrap_this
+
 
     def __call__(self, wrap_this=None):
         """This sets the color (no arguments) or wraps a str (1 arg)"""
@@ -78,57 +82,73 @@ class Style(str):
         return '\033[0m'
 
     def __enter__(self):
-        if USE_COLOR:
-            STDOUT.write(self)
+        if self.__class__.use_color:
+            self.stdout.write(self)
         return self
 
     def __exit__(self, type, value, traceback):
-        if USE_COLOR:
-            STDOUT.write(-self)
+        if self.__class__.use_color:
+            self.stdout.write(-self)
         return False
 
 
-def ansi_color(n):
-    """Return an ANSI escape sequence given a number."""
-    return Style('\033[' + str(n) + 'm') if USE_COLOR else Style('')
+    @classmethod
+    def ansi_color(cls, n):
+        """Return an ANSI escape sequence given a number."""
+        return cls('\033[' + str(n) + 'm') if cls.use_color else cls('')
+
+    @classmethod
+    def extended_ansi_color(cls, n, begin=38):
+        """Return an ANSI extended color given number."""
+        return cls('\033[' + str(begin) + ';5;' + str(n) + 'm') if cls.use_color else cls('')
 
 
-def extended_ansi_color(n, begin=38):
-    """Return an ANSI extended color given number."""
-    return Style('\033[' + str(begin) + ';5;' + str(n) + 'm') if USE_COLOR else Style('')
+def _get_style_color(color, ob):
+    'Gets a color, intended to be used in discriptor protocol'
+    return Style.ansi_color(_simple_colors[color]+ob.val)
+
+
+def _get_style_attribute(attribute, ob):
+    'Gets an attribute, intended to be used in discriptor protocol'
+    return Style.ansi_color(_simple_attributes[attribute])
 
 
 class _COLOR_NAMES(object):
 
     """This creates color names given a modifier value (FG, BG)"""
 
+
     def __init__(self, val):
         self.val = val
-        self.BLACK = ansi_color(0+self.val)
-        self.RED = ansi_color(1+self.val)
-        self.GREEN = ansi_color(2+self.val)
-        self.YELLOW = ansi_color(3+self.val)
-        self.BLUE = ansi_color(4+self.val)
-        self.MAGENTA = ansi_color(5+self.val)
-        self.CYAN = ansi_color(6+self.val)
-        self.WHITE = ansi_color(7+self.val)
-        self.RESET = ansi_color(9+self.val)
+
+    def from_name(self, name):
+        'Gets the index of a name, raises key error if not found'
+        if name in names:
+            return Style.extended_ansi_color(names.index(name), self.val + 8)
+        if name in camel_names:
+            return Style.extended_ansi_color(camel_names.index(name), self.val + 8)
+        if name in html:
+            return Style.extended_ansi_color(html.index(name, 1), self.val + 8) # Assuming second #000000 is better
+        raise KeyError(name)
 
     def regular(self, val):
         """Access colors by value."""
-        return ansi_color(val + self.val)
+        return Style.ansi_color(val + self.val)
 
     def extended(self, val):
         """Return the extended color scheme color for a value."""
-        return extended_ansi_color(val, self.val + 8)
+        return Style.extended_ansi_color(val, self.val + 8)
 
     def __call__(self, val):
         """Shortcut to provide way to access colors by number"""
         return self.regular(val)
 
     def __getitem__(self, val):
-        """Shortcut to provide way to access extended colors by number"""
-        return self.extended(val)
+        """Shortcut to provide way to access extended colors by number, name, or html hex code"""
+        try:
+            self.from_name(val)
+        except KeyError:
+            return self.extended(val)
 
     def __iter__(self):
         """Iterates through all colors in extended colorset."""
@@ -141,41 +161,44 @@ class _COLOR_NAMES(object):
     def __rsub__(self, other):
         return other + (-self)
 
+# Adding the color name shortcuts
+for item in _simple_colors:
+    setattr(_COLOR_NAMES, item.upper(), property(partial(_get_style_color, item)))
 
 class COLOR(object):
 
+    """Holds font styles, FG and BG objects representing colors, and
+    imitates the FG object to some degree."""
+
     def __init__(self):
-        self.BOLD = ansi_color(1)
-        self.DIM = ansi_color(2)
-        self.UNDERLINE = ansi_color(4)
-        self.BLINK = ansi_color(5)
-        self.REVERSE = ansi_color(7)
-        self.HIDDEN = ansi_color(8)
+        self.val = 30
 
         self.FG = _COLOR_NAMES(30)
         self.BG = _COLOR_NAMES(40)
 
-        self.BLACK = self.FG.BLACK
-        self.RED = self.FG.RED
-        self.GREEN = self.FG.GREEN
-        self.YELLOW = self.FG.YELLOW
-        self.BLUE = self.FG.BLUE
-        self.MAGENTA = self.FG.MAGENTA
-        self.CYAN = self.FG.CYAN
-        self.WHITE = self.FG.WHITE
-
-        self.RESET = ansi_color(0)
         self.DO_NOTHING = Style('')
+
+    def __iter__(self):
+        return self.FG.__iter__()
 
     def __call__(self, color):
         return Style(color)
+
+    def __getitem__(self, item):
+        return self.FG[item]
 
     def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
-        STDOUT.write(ansi_color(0))
+        Style.stdout.write(Style.ansi_color(0))
         return False
+
+
+for item in _simple_colors:
+    setattr(COLOR, item.upper(), property(partial(_get_style_color,  item)))
+for item in _simple_attributes:
+    setattr(COLOR, item.upper(), property(partial(_get_style_attribute, item)))
 
 
 COLOR = COLOR()
@@ -186,15 +209,14 @@ def with_color(color='', out=None):
     """Sets the color to a given color or style,
     resets when done,
     even if an exception is thrown. Optional ``out`` to give a
-    different output channel (defaults to STDOUT, which is set
-    to sys.stdout)."""
+    different output channel (defaults to sys.stdout)."""
 
     if out is None:
-        out = STDOUT
+        out = sys.stdout
     out.write(str(color))
     try:
         yield
     finally:
-        out.write(ansi_color(0))
+        out.write(Style.ansi_color(0))
 
-__all__ = ['COLOR', 'with_color', 'ansi_color', 'extended_ansi_color', 'Style', 'USE_COLOR', 'STDOUT']
+__all__ = ['COLOR', 'with_color', 'Style']

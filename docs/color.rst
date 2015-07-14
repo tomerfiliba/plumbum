@@ -1,0 +1,346 @@
+.. _guide-color:
+
+Color tools
+===========
+
+.. versionadded:: 1.5.0
+
+
+A built in color module provides quick, clean access to ANSI colors for your scripts. They are
+accessed through the ``COLOR`` object, which is a collection of ``Style`` objects. The ``COLOR`` object has the following properties:
+
+    ``FG`` and ``BG``
+      The forground and background colors, reset to default with ``COLOR.FG.RESET``
+      or ``-COLOR.FG`` and likewise for ``BG``. (Named forground colors are available
+      directly as well). The primary colors, ``BLACK``, ``RED``, ``GREEN``, ``YELLOW``,
+      ``BLUE``, ``MAGENTA``, ``CYAN``, ``WHITE``, as well as ``RESET``, are available.
+      You can also access colors numerically with ``COLOR.FG(n)``, for the standard colors,
+      and ``COLOR.FG[n]`` for the extended 256 color codes, and likewise for ``BG``.
+    ``BOLD``, ``DIM``, ``UNDERLINE``, ``BLINK``, ``REVERSE``, and ``HIDDEN``
+      All the `ASNI` modifiers are available, as well as their negations, sush as ``-COLOR.BOLD``, etc.
+    ``RESET``
+      The global reset will restore all properties at once.
+    ``DO_NOTHING``
+      Does nothing at all, but otherwise acts like any ``Style`` object. It is its own inverse. Useful for ``cli`` properties.
+
+A color can be used directly as if it was a string,
+or called for immediate printing to ``stdout``. Calling a
+color with an argument will wrap the string in the color and the matching negation.
+Any color can be used as the target of a with statement, and normal color
+will be restored on exiting the with statement, even with an Exception. 
+ 
+An example of the usage of ``COLOR``::
+
+    from plumbum import COLOR
+    with COLOR.FG.RED:
+        print('This is in red')
+        COLOR.FG.GREEN()
+        print('This is green')
+    print('This is completly restored, even if an exception is thrown!')
+
+We could have used the shortcut ``COLOR.GREEN()`` instead. You can also use ``COLOR``
+directly as a context manager if you only want the restoring ability, and if you call
+``COLOR(...)``, you can manually pass in any ANSI escape sequence.
+
+Further examples of manipulations possible with the library::
+
+    print(COLOR.FG.YELLOW('This is yellow') + ' And this is normal again')
+    with COLOR:
+        print('It is always a good idea to be in a context manager, to avoid being',
+              'left with a colored terminal if there is an exception!')
+        COLOR.FG.RED()
+        print(COLOR.BOLD("This is red, bold, and exciting!"), "And this is red only.")
+        print(COLOR.BG.CYAN + "This is red on a cyan background." + COLOR.RESET)
+        print(COLOR.FG[42] + "If your terminal supports 256 colors, this is colorful!" + COLOR.RESET)
+        COLOR.YELLOW()
+        print('Colors made', COLOR.UNDERLINE + 'very' - COLOR.UNDERLINE, 'easy!')
+
+The name of a script is automatically colored with the ``.COLOR_NAME`` property. Other style properties may be added; they will be set to ``COLOR.DO_NOTHING``, but can be overriden by your class. Any callable can be used to provide formats.
+
+.. note::
+    The color library looks for a tty terminal and posix operating
+    system and only creates colors if those are found. If you want to manually
+    enable or disable color, you can set ``plumbum.color.Style.use_color = True``
+    (or ``False``); however, this will only
+    affect new objects or manipulations. All Style color objects are dynamically
+    generated, so this usually is not a problem.
+
+
+256 color support
+-----------------
+
+The library support 256 colors through numbers, names or HEX html codes. You can access them
+as COLOR.FG[12], COLOR.FG['Light_Blue'], COLOR.FG['LightBlue'], or COLOR.FG['#0000FF']. The supported colors are
+
+.. raw:: html
+
+    <ol start=0>
+    <li><font color="#000000">&#x25a0</font> <code>#000000</code> Black</li>
+    <li><font color="#800000">&#x25a0</font> <code>#800000</code> Red</li>
+    <li><font color="#008000">&#x25a0</font> <code>#008000</code> Green</li>
+    <li><font color="#808000">&#x25a0</font> <code>#808000</code> Yellow</li>
+    <li><font color="#000080">&#x25a0</font> <code>#000080</code> Blue</li>
+    <li><font color="#800080">&#x25a0</font> <code>#800080</code> Magenta</li>
+    <li><font color="#008080">&#x25a0</font> <code>#008080</code> Cyan</li>
+    <li><font color="#c0c0c0">&#x25a0</font> <code>#c0c0c0</code> LightGray</li>
+    <li><font color="#808080">&#x25a0</font> <code>#808080</code> DarkGray</li>
+    <li><font color="#ff0000">&#x25a0</font> <code>#ff0000</code> LightRed</li>
+    <li><font color="#00ff00">&#x25a0</font> <code>#00ff00</code> LightGreen</li>
+    <li><font color="#ffff00">&#x25a0</font> <code>#ffff00</code> LightYellow</li>
+    <li><font color="#0000ff">&#x25a0</font> <code>#0000ff</code> LightBlue</li>
+    <li><font color="#ff00ff">&#x25a0</font> <code>#ff00ff</code> LightMagenta</li>
+    <li><font color="#00ffff">&#x25a0</font> <code>#00ffff</code> LightCyan</li>
+    <li><font color="#ffffff">&#x25a0</font> <code>#ffffff</code> White</li>
+    <li><font color="#000000">&#x25a0</font> <code>#000000</code> Grey0</li>
+    <li><font color="#00005f">&#x25a0</font> <code>#00005f</code> NavyBlue</li>
+    <li><font color="#000087">&#x25a0</font> <code>#000087</code> DarkBlue</li>
+    <li><font color="#0000af">&#x25a0</font> <code>#0000af</code> Blue3</li>
+    <li><font color="#0000d7">&#x25a0</font> <code>#0000d7</code> Blue3</li>
+    <li><font color="#0000ff">&#x25a0</font> <code>#0000ff</code> Blue1</li>
+    <li><font color="#005f00">&#x25a0</font> <code>#005f00</code> DarkGreen</li>
+    <li><font color="#005f5f">&#x25a0</font> <code>#005f5f</code> DeepSkyBlue4</li>
+    <li><font color="#005f87">&#x25a0</font> <code>#005f87</code> DeepSkyBlue4</li>
+    <li><font color="#005faf">&#x25a0</font> <code>#005faf</code> DeepSkyBlue4</li>
+    <li><font color="#005fd7">&#x25a0</font> <code>#005fd7</code> DodgerBlue3</li>
+    <li><font color="#005fff">&#x25a0</font> <code>#005fff</code> DodgerBlue2</li>
+    <li><font color="#008700">&#x25a0</font> <code>#008700</code> Green4</li>
+    <li><font color="#00875f">&#x25a0</font> <code>#00875f</code> SpringGreen4</li>
+    <li><font color="#008787">&#x25a0</font> <code>#008787</code> Turquoise4</li>
+    <li><font color="#0087af">&#x25a0</font> <code>#0087af</code> DeepSkyBlue3</li>
+    <li><font color="#0087d7">&#x25a0</font> <code>#0087d7</code> DeepSkyBlue3</li>
+    <li><font color="#0087ff">&#x25a0</font> <code>#0087ff</code> DodgerBlue1</li>
+    <li><font color="#00af00">&#x25a0</font> <code>#00af00</code> Green3</li>
+    <li><font color="#00af5f">&#x25a0</font> <code>#00af5f</code> SpringGreen3</li>
+    <li><font color="#00af87">&#x25a0</font> <code>#00af87</code> DarkCyan</li>
+    <li><font color="#00afaf">&#x25a0</font> <code>#00afaf</code> LightSeaGreen</li>
+    <li><font color="#00afd7">&#x25a0</font> <code>#00afd7</code> DeepSkyBlue2</li>
+    <li><font color="#00afff">&#x25a0</font> <code>#00afff</code> DeepSkyBlue1</li>
+    <li><font color="#00d700">&#x25a0</font> <code>#00d700</code> Green3</li>
+    <li><font color="#00d75f">&#x25a0</font> <code>#00d75f</code> SpringGreen3</li>
+    <li><font color="#00d787">&#x25a0</font> <code>#00d787</code> SpringGreen2</li>
+    <li><font color="#00d7af">&#x25a0</font> <code>#00d7af</code> Cyan3</li>
+    <li><font color="#00d7d7">&#x25a0</font> <code>#00d7d7</code> DarkTurquoise</li>
+    <li><font color="#00d7ff">&#x25a0</font> <code>#00d7ff</code> Turquoise2</li>
+    <li><font color="#00ff00">&#x25a0</font> <code>#00ff00</code> Green1</li>
+    <li><font color="#00ff5f">&#x25a0</font> <code>#00ff5f</code> SpringGreen2</li>
+    <li><font color="#00ff87">&#x25a0</font> <code>#00ff87</code> SpringGreen1</li>
+    <li><font color="#00ffaf">&#x25a0</font> <code>#00ffaf</code> MediumSpringGreen</li>
+    <li><font color="#00ffd7">&#x25a0</font> <code>#00ffd7</code> Cyan2</li>
+    <li><font color="#00ffff">&#x25a0</font> <code>#00ffff</code> Cyan1</li>
+    <li><font color="#5f0000">&#x25a0</font> <code>#5f0000</code> DarkRed</li>
+    <li><font color="#5f005f">&#x25a0</font> <code>#5f005f</code> DeepPink4</li>
+    <li><font color="#5f0087">&#x25a0</font> <code>#5f0087</code> Purple4</li>
+    <li><font color="#5f00af">&#x25a0</font> <code>#5f00af</code> Purple4</li>
+    <li><font color="#5f00d7">&#x25a0</font> <code>#5f00d7</code> Purple3</li>
+    <li><font color="#5f00ff">&#x25a0</font> <code>#5f00ff</code> BlueViolet</li>
+    <li><font color="#5f5f00">&#x25a0</font> <code>#5f5f00</code> Orange4</li>
+    <li><font color="#5f5f5f">&#x25a0</font> <code>#5f5f5f</code> Grey37</li>
+    <li><font color="#5f5f87">&#x25a0</font> <code>#5f5f87</code> MediumPurple4</li>
+    <li><font color="#5f5faf">&#x25a0</font> <code>#5f5faf</code> SlateBlue3</li>
+    <li><font color="#5f5fd7">&#x25a0</font> <code>#5f5fd7</code> SlateBlue3</li>
+    <li><font color="#5f5fff">&#x25a0</font> <code>#5f5fff</code> RoyalBlue1</li>
+    <li><font color="#5f8700">&#x25a0</font> <code>#5f8700</code> Chartreuse4</li>
+    <li><font color="#5f875f">&#x25a0</font> <code>#5f875f</code> DarkSeaGreen4</li>
+    <li><font color="#5f8787">&#x25a0</font> <code>#5f8787</code> PaleTurquoise4</li>
+    <li><font color="#5f87af">&#x25a0</font> <code>#5f87af</code> SteelBlue</li>
+    <li><font color="#5f87d7">&#x25a0</font> <code>#5f87d7</code> SteelBlue3</li>
+    <li><font color="#5f87ff">&#x25a0</font> <code>#5f87ff</code> CornflowerBlue</li>
+    <li><font color="#5faf00">&#x25a0</font> <code>#5faf00</code> Chartreuse3</li>
+    <li><font color="#5faf5f">&#x25a0</font> <code>#5faf5f</code> DarkSeaGreen4</li>
+    <li><font color="#5faf87">&#x25a0</font> <code>#5faf87</code> CadetBlue</li>
+    <li><font color="#5fafaf">&#x25a0</font> <code>#5fafaf</code> CadetBlue</li>
+    <li><font color="#5fafd7">&#x25a0</font> <code>#5fafd7</code> SkyBlue3</li>
+    <li><font color="#5fafff">&#x25a0</font> <code>#5fafff</code> SteelBlue1</li>
+    <li><font color="#5fd700">&#x25a0</font> <code>#5fd700</code> Chartreuse3</li>
+    <li><font color="#5fd75f">&#x25a0</font> <code>#5fd75f</code> PaleGreen3</li>
+    <li><font color="#5fd787">&#x25a0</font> <code>#5fd787</code> SeaGreen3</li>
+    <li><font color="#5fd7af">&#x25a0</font> <code>#5fd7af</code> Aquamarine3</li>
+    <li><font color="#5fd7d7">&#x25a0</font> <code>#5fd7d7</code> MediumTurquoise</li>
+    <li><font color="#5fd7ff">&#x25a0</font> <code>#5fd7ff</code> SteelBlue1</li>
+    <li><font color="#5fff00">&#x25a0</font> <code>#5fff00</code> Chartreuse2</li>
+    <li><font color="#5fff5f">&#x25a0</font> <code>#5fff5f</code> SeaGreen2</li>
+    <li><font color="#5fff87">&#x25a0</font> <code>#5fff87</code> SeaGreen1</li>
+    <li><font color="#5fffaf">&#x25a0</font> <code>#5fffaf</code> SeaGreen1</li>
+    <li><font color="#5fffd7">&#x25a0</font> <code>#5fffd7</code> Aquamarine1</li>
+    <li><font color="#5fffff">&#x25a0</font> <code>#5fffff</code> DarkSlateGray2</li>
+    <li><font color="#870000">&#x25a0</font> <code>#870000</code> DarkRed</li>
+    <li><font color="#87005f">&#x25a0</font> <code>#87005f</code> DeepPink4</li>
+    <li><font color="#870087">&#x25a0</font> <code>#870087</code> DarkMagenta</li>
+    <li><font color="#8700af">&#x25a0</font> <code>#8700af</code> DarkMagenta</li>
+    <li><font color="#8700d7">&#x25a0</font> <code>#8700d7</code> DarkViolet</li>
+    <li><font color="#8700ff">&#x25a0</font> <code>#8700ff</code> Purple</li>
+    <li><font color="#875f00">&#x25a0</font> <code>#875f00</code> Orange4</li>
+    <li><font color="#875f5f">&#x25a0</font> <code>#875f5f</code> LightPink4</li>
+    <li><font color="#875f87">&#x25a0</font> <code>#875f87</code> Plum4</li>
+    <li><font color="#875faf">&#x25a0</font> <code>#875faf</code> MediumPurple3</li>
+    <li><font color="#875fd7">&#x25a0</font> <code>#875fd7</code> MediumPurple3</li>
+    <li><font color="#875fff">&#x25a0</font> <code>#875fff</code> SlateBlue1</li>
+    <li><font color="#878700">&#x25a0</font> <code>#878700</code> Yellow4</li>
+    <li><font color="#87875f">&#x25a0</font> <code>#87875f</code> Wheat4</li>
+    <li><font color="#878787">&#x25a0</font> <code>#878787</code> Grey53</li>
+    <li><font color="#8787af">&#x25a0</font> <code>#8787af</code> LightSlateGrey</li>
+    <li><font color="#8787d7">&#x25a0</font> <code>#8787d7</code> MediumPurple</li>
+    <li><font color="#8787ff">&#x25a0</font> <code>#8787ff</code> LightSlateBlue</li>
+    <li><font color="#87af00">&#x25a0</font> <code>#87af00</code> Yellow4</li>
+    <li><font color="#87af5f">&#x25a0</font> <code>#87af5f</code> DarkOliveGreen3</li>
+    <li><font color="#87af87">&#x25a0</font> <code>#87af87</code> DarkSeaGreen</li>
+    <li><font color="#87afaf">&#x25a0</font> <code>#87afaf</code> LightSkyBlue3</li>
+    <li><font color="#87afd7">&#x25a0</font> <code>#87afd7</code> LightSkyBlue3</li>
+    <li><font color="#87afff">&#x25a0</font> <code>#87afff</code> SkyBlue2</li>
+    <li><font color="#87d700">&#x25a0</font> <code>#87d700</code> Chartreuse2</li>
+    <li><font color="#87d75f">&#x25a0</font> <code>#87d75f</code> DarkOliveGreen3</li>
+    <li><font color="#87d787">&#x25a0</font> <code>#87d787</code> PaleGreen3</li>
+    <li><font color="#87d7af">&#x25a0</font> <code>#87d7af</code> DarkSeaGreen3</li>
+    <li><font color="#87d7d7">&#x25a0</font> <code>#87d7d7</code> DarkSlateGray3</li>
+    <li><font color="#87d7ff">&#x25a0</font> <code>#87d7ff</code> SkyBlue1</li>
+    <li><font color="#87ff00">&#x25a0</font> <code>#87ff00</code> Chartreuse1</li>
+    <li><font color="#87ff5f">&#x25a0</font> <code>#87ff5f</code> LightGreen</li>
+    <li><font color="#87ff87">&#x25a0</font> <code>#87ff87</code> LightGreen</li>
+    <li><font color="#87ffaf">&#x25a0</font> <code>#87ffaf</code> PaleGreen1</li>
+    <li><font color="#87ffd7">&#x25a0</font> <code>#87ffd7</code> Aquamarine1</li>
+    <li><font color="#87ffff">&#x25a0</font> <code>#87ffff</code> DarkSlateGray1</li>
+    <li><font color="#af0000">&#x25a0</font> <code>#af0000</code> Red3</li>
+    <li><font color="#af005f">&#x25a0</font> <code>#af005f</code> DeepPink4</li>
+    <li><font color="#af0087">&#x25a0</font> <code>#af0087</code> MediumVioletRed</li>
+    <li><font color="#af00af">&#x25a0</font> <code>#af00af</code> Magenta3</li>
+    <li><font color="#af00d7">&#x25a0</font> <code>#af00d7</code> DarkViolet</li>
+    <li><font color="#af00ff">&#x25a0</font> <code>#af00ff</code> Purple</li>
+    <li><font color="#af5f00">&#x25a0</font> <code>#af5f00</code> DarkOrange3</li>
+    <li><font color="#af5f5f">&#x25a0</font> <code>#af5f5f</code> IndianRed</li>
+    <li><font color="#af5f87">&#x25a0</font> <code>#af5f87</code> HotPink3</li>
+    <li><font color="#af5faf">&#x25a0</font> <code>#af5faf</code> MediumOrchid3</li>
+    <li><font color="#af5fd7">&#x25a0</font> <code>#af5fd7</code> MediumOrchid</li>
+    <li><font color="#af5fff">&#x25a0</font> <code>#af5fff</code> MediumPurple2</li>
+    <li><font color="#af8700">&#x25a0</font> <code>#af8700</code> DarkGoldenrod</li>
+    <li><font color="#af875f">&#x25a0</font> <code>#af875f</code> LightSalmon3</li>
+    <li><font color="#af8787">&#x25a0</font> <code>#af8787</code> RosyBrown</li>
+    <li><font color="#af87af">&#x25a0</font> <code>#af87af</code> Grey63</li>
+    <li><font color="#af87d7">&#x25a0</font> <code>#af87d7</code> MediumPurple2</li>
+    <li><font color="#af87ff">&#x25a0</font> <code>#af87ff</code> MediumPurple1</li>
+    <li><font color="#afaf00">&#x25a0</font> <code>#afaf00</code> Gold3</li>
+    <li><font color="#afaf5f">&#x25a0</font> <code>#afaf5f</code> DarkKhaki</li>
+    <li><font color="#afaf87">&#x25a0</font> <code>#afaf87</code> NavajoWhite3</li>
+    <li><font color="#afafaf">&#x25a0</font> <code>#afafaf</code> Grey69</li>
+    <li><font color="#afafd7">&#x25a0</font> <code>#afafd7</code> LightSteelBlue3</li>
+    <li><font color="#afafff">&#x25a0</font> <code>#afafff</code> LightSteelBlue</li>
+    <li><font color="#afd700">&#x25a0</font> <code>#afd700</code> Yellow3</li>
+    <li><font color="#afd75f">&#x25a0</font> <code>#afd75f</code> DarkOliveGreen3</li>
+    <li><font color="#afd787">&#x25a0</font> <code>#afd787</code> DarkSeaGreen3</li>
+    <li><font color="#afd7af">&#x25a0</font> <code>#afd7af</code> DarkSeaGreen2</li>
+    <li><font color="#afd7d7">&#x25a0</font> <code>#afd7d7</code> LightCyan3</li>
+    <li><font color="#afd7ff">&#x25a0</font> <code>#afd7ff</code> LightSkyBlue1</li>
+    <li><font color="#afff00">&#x25a0</font> <code>#afff00</code> GreenYellow</li>
+    <li><font color="#afff5f">&#x25a0</font> <code>#afff5f</code> DarkOliveGreen2</li>
+    <li><font color="#afff87">&#x25a0</font> <code>#afff87</code> PaleGreen1</li>
+    <li><font color="#afffaf">&#x25a0</font> <code>#afffaf</code> DarkSeaGreen2</li>
+    <li><font color="#afffd7">&#x25a0</font> <code>#afffd7</code> DarkSeaGreen1</li>
+    <li><font color="#afffff">&#x25a0</font> <code>#afffff</code> PaleTurquoise1</li>
+    <li><font color="#d70000">&#x25a0</font> <code>#d70000</code> Red3</li>
+    <li><font color="#d7005f">&#x25a0</font> <code>#d7005f</code> DeepPink3</li>
+    <li><font color="#d70087">&#x25a0</font> <code>#d70087</code> DeepPink3</li>
+    <li><font color="#d700af">&#x25a0</font> <code>#d700af</code> Magenta3</li>
+    <li><font color="#d700d7">&#x25a0</font> <code>#d700d7</code> Magenta3</li>
+    <li><font color="#d700ff">&#x25a0</font> <code>#d700ff</code> Magenta2</li>
+    <li><font color="#d75f00">&#x25a0</font> <code>#d75f00</code> DarkOrange3</li>
+    <li><font color="#d75f5f">&#x25a0</font> <code>#d75f5f</code> IndianRed</li>
+    <li><font color="#d75f87">&#x25a0</font> <code>#d75f87</code> HotPink3</li>
+    <li><font color="#d75faf">&#x25a0</font> <code>#d75faf</code> HotPink2</li>
+    <li><font color="#d75fd7">&#x25a0</font> <code>#d75fd7</code> Orchid</li>
+    <li><font color="#d75fff">&#x25a0</font> <code>#d75fff</code> MediumOrchid1</li>
+    <li><font color="#d78700">&#x25a0</font> <code>#d78700</code> Orange3</li>
+    <li><font color="#d7875f">&#x25a0</font> <code>#d7875f</code> LightSalmon3</li>
+    <li><font color="#d78787">&#x25a0</font> <code>#d78787</code> LightPink3</li>
+    <li><font color="#d787af">&#x25a0</font> <code>#d787af</code> Pink3</li>
+    <li><font color="#d787d7">&#x25a0</font> <code>#d787d7</code> Plum3</li>
+    <li><font color="#d787ff">&#x25a0</font> <code>#d787ff</code> Violet</li>
+    <li><font color="#d7af00">&#x25a0</font> <code>#d7af00</code> Gold3</li>
+    <li><font color="#d7af5f">&#x25a0</font> <code>#d7af5f</code> LightGoldenrod3</li>
+    <li><font color="#d7af87">&#x25a0</font> <code>#d7af87</code> Tan</li>
+    <li><font color="#d7afaf">&#x25a0</font> <code>#d7afaf</code> MistyRose3</li>
+    <li><font color="#d7afd7">&#x25a0</font> <code>#d7afd7</code> Thistle3</li>
+    <li><font color="#d7afff">&#x25a0</font> <code>#d7afff</code> Plum2</li>
+    <li><font color="#d7d700">&#x25a0</font> <code>#d7d700</code> Yellow3</li>
+    <li><font color="#d7d75f">&#x25a0</font> <code>#d7d75f</code> Khaki3</li>
+    <li><font color="#d7d787">&#x25a0</font> <code>#d7d787</code> LightGoldenrod2</li>
+    <li><font color="#d7d7af">&#x25a0</font> <code>#d7d7af</code> LightYellow3</li>
+    <li><font color="#d7d7d7">&#x25a0</font> <code>#d7d7d7</code> Grey84</li>
+    <li><font color="#d7d7ff">&#x25a0</font> <code>#d7d7ff</code> LightSteelBlue1</li>
+    <li><font color="#d7ff00">&#x25a0</font> <code>#d7ff00</code> Yellow2</li>
+    <li><font color="#d7ff5f">&#x25a0</font> <code>#d7ff5f</code> DarkOliveGreen1</li>
+    <li><font color="#d7ff87">&#x25a0</font> <code>#d7ff87</code> DarkOliveGreen1</li>
+    <li><font color="#d7ffaf">&#x25a0</font> <code>#d7ffaf</code> DarkSeaGreen1</li>
+    <li><font color="#d7ffd7">&#x25a0</font> <code>#d7ffd7</code> Honeydew2</li>
+    <li><font color="#d7ffff">&#x25a0</font> <code>#d7ffff</code> LightCyan1</li>
+    <li><font color="#ff0000">&#x25a0</font> <code>#ff0000</code> Red1</li>
+    <li><font color="#ff005f">&#x25a0</font> <code>#ff005f</code> DeepPink2</li>
+    <li><font color="#ff0087">&#x25a0</font> <code>#ff0087</code> DeepPink1</li>
+    <li><font color="#ff00af">&#x25a0</font> <code>#ff00af</code> DeepPink1</li>
+    <li><font color="#ff00d7">&#x25a0</font> <code>#ff00d7</code> Magenta2</li>
+    <li><font color="#ff00ff">&#x25a0</font> <code>#ff00ff</code> Magenta1</li>
+    <li><font color="#ff5f00">&#x25a0</font> <code>#ff5f00</code> OrangeRed1</li>
+    <li><font color="#ff5f5f">&#x25a0</font> <code>#ff5f5f</code> IndianRed1</li>
+    <li><font color="#ff5f87">&#x25a0</font> <code>#ff5f87</code> IndianRed1</li>
+    <li><font color="#ff5faf">&#x25a0</font> <code>#ff5faf</code> HotPink</li>
+    <li><font color="#ff5fd7">&#x25a0</font> <code>#ff5fd7</code> HotPink</li>
+    <li><font color="#ff5fff">&#x25a0</font> <code>#ff5fff</code> MediumOrchid1</li>
+    <li><font color="#ff8700">&#x25a0</font> <code>#ff8700</code> DarkOrange</li>
+    <li><font color="#ff875f">&#x25a0</font> <code>#ff875f</code> Salmon1</li>
+    <li><font color="#ff8787">&#x25a0</font> <code>#ff8787</code> LightCoral</li>
+    <li><font color="#ff87af">&#x25a0</font> <code>#ff87af</code> PaleVioletRed1</li>
+    <li><font color="#ff87d7">&#x25a0</font> <code>#ff87d7</code> Orchid2</li>
+    <li><font color="#ff87ff">&#x25a0</font> <code>#ff87ff</code> Orchid1</li>
+    <li><font color="#ffaf00">&#x25a0</font> <code>#ffaf00</code> Orange1</li>
+    <li><font color="#ffaf5f">&#x25a0</font> <code>#ffaf5f</code> SandyBrown</li>
+    <li><font color="#ffaf87">&#x25a0</font> <code>#ffaf87</code> LightSalmon1</li>
+    <li><font color="#ffafaf">&#x25a0</font> <code>#ffafaf</code> LightPink1</li>
+    <li><font color="#ffafd7">&#x25a0</font> <code>#ffafd7</code> Pink1</li>
+    <li><font color="#ffafff">&#x25a0</font> <code>#ffafff</code> Plum1</li>
+    <li><font color="#ffd700">&#x25a0</font> <code>#ffd700</code> Gold1</li>
+    <li><font color="#ffd75f">&#x25a0</font> <code>#ffd75f</code> LightGoldenrod2</li>
+    <li><font color="#ffd787">&#x25a0</font> <code>#ffd787</code> LightGoldenrod2</li>
+    <li><font color="#ffd7af">&#x25a0</font> <code>#ffd7af</code> NavajoWhite1</li>
+    <li><font color="#ffd7d7">&#x25a0</font> <code>#ffd7d7</code> MistyRose1</li>
+    <li><font color="#ffd7ff">&#x25a0</font> <code>#ffd7ff</code> Thistle1</li>
+    <li><font color="#ffff00">&#x25a0</font> <code>#ffff00</code> Yellow1</li>
+    <li><font color="#ffff5f">&#x25a0</font> <code>#ffff5f</code> LightGoldenrod1</li>
+    <li><font color="#ffff87">&#x25a0</font> <code>#ffff87</code> Khaki1</li>
+    <li><font color="#ffffaf">&#x25a0</font> <code>#ffffaf</code> Wheat1</li>
+    <li><font color="#ffffd7">&#x25a0</font> <code>#ffffd7</code> Cornsilk1</li>
+    <li><font color="#ffffff">&#x25a0</font> <code>#ffffff</code> Grey100</li>
+    <li><font color="#080808">&#x25a0</font> <code>#080808</code> Grey3</li>
+    <li><font color="#121212">&#x25a0</font> <code>#121212</code> Grey7</li>
+    <li><font color="#1c1c1c">&#x25a0</font> <code>#1c1c1c</code> Grey11</li>
+    <li><font color="#262626">&#x25a0</font> <code>#262626</code> Grey15</li>
+    <li><font color="#303030">&#x25a0</font> <code>#303030</code> Grey19</li>
+    <li><font color="#3a3a3a">&#x25a0</font> <code>#3a3a3a</code> Grey23</li>
+    <li><font color="#444444">&#x25a0</font> <code>#444444</code> Grey27</li>
+    <li><font color="#4e4e4e">&#x25a0</font> <code>#4e4e4e</code> Grey30</li>
+    <li><font color="#585858">&#x25a0</font> <code>#585858</code> Grey35</li>
+    <li><font color="#626262">&#x25a0</font> <code>#626262</code> Grey39</li>
+    <li><font color="#6c6c6c">&#x25a0</font> <code>#6c6c6c</code> Grey42</li>
+    <li><font color="#767676">&#x25a0</font> <code>#767676</code> Grey46</li>
+    <li><font color="#808080">&#x25a0</font> <code>#808080</code> Grey50</li>
+    <li><font color="#8a8a8a">&#x25a0</font> <code>#8a8a8a</code> Grey54</li>
+    <li><font color="#949494">&#x25a0</font> <code>#949494</code> Grey58</li>
+    <li><font color="#9e9e9e">&#x25a0</font> <code>#9e9e9e</code> Grey62</li>
+    <li><font color="#a8a8a8">&#x25a0</font> <code>#a8a8a8</code> Grey66</li>
+    <li><font color="#b2b2b2">&#x25a0</font> <code>#b2b2b2</code> Grey70</li>
+    <li><font color="#bcbcbc">&#x25a0</font> <code>#bcbcbc</code> Grey74</li>
+    <li><font color="#c6c6c6">&#x25a0</font> <code>#c6c6c6</code> Grey78</li>
+    <li><font color="#d0d0d0">&#x25a0</font> <code>#d0d0d0</code> Grey82</li>
+    <li><font color="#dadada">&#x25a0</font> <code>#dadada</code> Grey85</li>
+    <li><font color="#e4e4e4">&#x25a0</font> <code>#e4e4e4</code> Grey89</li>
+    <li><font color="#eeeeee">&#x25a0</font> <code>#eeeeee</code> Grey93</li>
+    </ol>
+
+Style object
+------------
+
+The library works through the Style object. It is a subclass of ``str`` that adds color
+related methods.
+
+
+See Also
+--------
+* `colored <https://pypi.python.org/pypi/colored>`_ Another library with 256 color support
+* `colorama <https://pypi.python.org/pypi/colorama>`_ A library that supports colored text on Windows

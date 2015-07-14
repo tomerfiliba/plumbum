@@ -54,7 +54,7 @@ and cross-platform**.
 Apart from :ref:`shell-like syntax <guide-local-commands>` and :ref:`handy shortcuts <guide-utils>`, 
 the library provides local and :ref:`remote <guide-remote-commands>` command execution (over SSH), 
 local and remote file-system :ref:`paths <guide-paths>`, easy working-directory and 
-environment :ref:`manipulation <guide-local-machine>`, and a programmatic 
+environment :ref:`manipulation <guide-local-machine>`, quick access to ANSI :ref:`colors <guide-color>`, and a programmatic 
 :ref:`guide-cli` application toolkit. Now let's see some code!
 
 News
@@ -110,6 +110,7 @@ you read it in order.
    remote
    utils
    cli
+   color
    changelog
 
 API Reference
@@ -126,6 +127,7 @@ missing from the guide, so you might want to consult with the API reference in t
    api/machines
    api/path
    api/fs
+   api/color
 
 About
 =====

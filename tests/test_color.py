@@ -1,9 +1,14 @@
 from __future__ import with_statement, print_function
 import unittest
-from plumbum.cli import COLOR, with_color
+from plumbum import COLOR
+from plumbum.color import with_color
+from plumbum.color.color import Style
 
 
 class TestColor(unittest.TestCase):
+
+    def setUp(self):
+        Style.use_color = True
 
     def testColorStrings(self):
         self.assertEqual('\033[0m', COLOR.RESET)
@@ -29,6 +34,10 @@ class TestColor(unittest.TestCase):
             self.assertEqual('\033[49m', -COLOR.BG[i])
         self.assertEqual('\033[0m', -COLOR.RESET)
         self.assertEqual('\033[0m', -COLOR('this is random'))
+
+    def testLackOfColor(self):
+        Style.use_color = False
+        self.assertEqual('', COLOR.FG.RED)
 
     def testVisualColors(self):
         print()

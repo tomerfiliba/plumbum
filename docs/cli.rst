@@ -444,59 +444,6 @@ Here's an example of running this application::
     committing...
 
 
-Color tools
------------
-.. versionadded:: 1.4.3
-
-A built in color module provides quick, clean access to ANSI colors for your scripts. They are
-accessed through the ``COLOR`` object, which is a collection of ``Style`` objects. The ``COLOR`` object has the following properties:
-
-    ``FG`` and ``BG``
-      The forground and background colors, reset to default with ``COLOR.FG.RESET`` or ``-COLOR.FG`` and likewise for ``BG``. (Named forground colors are available directly as well). The primary colors, ``BLACK``, ``RED``, ``GREEN``, ``YELLOW``, ``BLUE``, ``MAGENTA``,
-      ``CYAN``, ``WHITE``, as well as ``RESET``, are available.
-      You can also access colors numerically with ``COLOR.FG(n)``, for the standard colors, and ``COLOR.FG[n]`` for the extended 256 color codes, and likewise for ``BG``.
-    ``BOLD``, ``DIM``, ``UNDERLINE``, ``BLINK``, ``REVERSE``, and ``HIDDEN``
-      All the `ASNI` modifiers are available, as well as their negations, sush as ``-COLOR.BOLD``, etc.
-    ``RESET``
-      The global reset will restore all properties at once.
-    ``DO_NOTHING``
-      Does nothing at all, but otherwise acts like any ``Style`` object. It is its own inverse. Useful for ``cli`` properties.
-
-A color can be used directly as if it was a string,
-or called for immediate printing to stdout. Calling a
-color with an argument will wrap the string in the color and the matching negation.
-Any color can be used as the target of a with statement, and normal color will be restored on exiting the with statement, even with an Exception. 
- 
-An example of the usage of ``COLOR``::
-
-    from plumbum import COLOR
-    with COLOR.FG.RED:
-        print('This is in red')
-        COLOR.FG.GREEN()
-        print('This is green')
-    print('This is completly restored, even if an exception is thrown!')
-
-We could have used the shortcut ``COLOR.GREEN()`` instead. You can also use COLOR directly as a context manager if you only want the restoring ability, and if you call ``COLOR(...)``, you can manually pass in any ANSI escape sequence.
-
-Further examples of manipulations possible with the library::
-
-    print(COLOR.FG.YELLOW('This is yellow') + ' And this is normal again')
-    with COLOR:
-        print('It is always a good idea to be in a context manager, to avoid being',
-              'left with a colored terminal if there is an exception!')
-        COLOR.FG.RED()
-        print(COLOR.BOLD("This is red, bold, and exciting!"), "And this is red only.")
-        print(COLOR.BG.CYAN + "This is red on a cyan background." + COLOR.RESET)
-        print(COLOR.FG[42] + "If your terminal supports 256 colors, this is colorful!" + COLOR.RESET)
-        COLOR.YELLOW()
-        print('Colors made', COLOR.UNDERLINE + 'very' - COLOR.UNDERLINE, 'easy!')
-
-The name of a script is automatically colored with the ``.COLOR_NAME`` property. Other style properties may be added; they will be set to ``COLOR.DO_NOTHING``, but can be overriden by your class. Any callable can be used to provide formats.
-
-.. note::
-    The color library looks for a tty terminal and posix operating system. If you want to manually
-    enable or disable color, you can set ``plumbum.cli.color.USE_COLOR`` to True or False explicitly.
-    The same is true for ``plumbum.cli.color.STDOUT=sys.stdout``.
 
 See Also
 --------

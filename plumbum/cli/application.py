@@ -8,7 +8,7 @@ from plumbum.cli.terminal import get_terminal_size
 from plumbum.cli.switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,
     MissingMandatorySwitch, SwitchCombinationError, PositionalArgumentsError, switch,
     SubcommandError, Flag, CountOf)
-from plumbum.cli.color import COLOR
+from plumbum.color import COLOR
 
 
 class ShowHelp(SwitchError):

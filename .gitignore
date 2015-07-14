@@ -8,3 +8,5 @@ __pycache__
 /build
 *.class
 *.ropeproject
+*.swp
+*~

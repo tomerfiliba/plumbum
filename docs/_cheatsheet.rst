@@ -106,3 +106,19 @@ Sample output::
     Include dirs: ['foo/bar', 'spam/eggs']
     Compiling: ('x.cpp', 'y.cpp', 'z.cpp')
 
+**Color controls**::
+
+    from plumbum import COLOR
+    with COLOR.RED:
+        print("Warning! I said " + COLOR.BOLD("WARNING") + "!")
+    print("That was an", COLOR.GREEN + "important" - COLOR.GREEN, "warning!")
+
+Sample output:
+
+.. raw:: html
+
+    <div class="highlight">
+    <pre><code><font color="red">Warning! I said <b>WARNING</b>!</font>
+    That was an <font color="green">important</font> warning!</code></pre>
+    </div>
+
