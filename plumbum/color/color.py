@@ -56,9 +56,16 @@ class Style(str):
         """This negates the effect of the current color"""
         return self.negate()
 
+    def __sub__(self, other):
+       """Implemented to make muliple Style objects work"""
+       return self + (-other)
+
     def __rsub__(self, other):
         """Implemented to make using negatives easier"""
         return other + (-self)
+
+    def __add__(self, other):
+       return self.__class__(super(Style, self).__add__(other))
 
     def _remove(self):
         """Don't use directly. Will find best match for negative of current color."""
@@ -77,6 +84,8 @@ class Style(str):
                         return '\033['+str(n[0]+20)+'m'
                     elif n[0] in (21, 22, 24, 25, 27, 28):
                         return '\033['+str(n[0]-20)+'m'
+                else:
+                    return ''
         except ValueError:
             pass
         return '\033[0m'

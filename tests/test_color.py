@@ -26,6 +26,9 @@ class TestColor(unittest.TestCase):
         self.assertEqual(COLOR['DeepSkyBlue1'], COLOR['#00afff'])
         self.assertEqual(COLOR['DeepSkyBlue1'], COLOR[39])
 
+    def testMultiColor(self):
+        sumcolor = COLOR.BOLD + COLOR.BLUE
+        self.assertEqual(COLOR.RESET, -sumcolor)
 
     def testUndoColor(self):
         self.assertEqual('\033[39m', -COLOR.FG)
