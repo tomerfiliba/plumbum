@@ -33,7 +33,6 @@ if not hasattr(unittest, "skipIf"):
 class RemotePathTest(unittest.TestCase):
     def _connect(self):
         return SshMachine(TEST_HOST)
-        
 
     def test_basename(self):
         name = RemotePath(self._connect(), "/some/long/path/to/file.txt").basename
@@ -44,7 +43,7 @@ class RemotePathTest(unittest.TestCase):
         name = RemotePath(self._connect(), "/some/long/path/to/file.txt").dirname
         self.assertTrue(isinstance(name, RemotePath))
         self.assertEqual("/some/long/path/to", str(name))
-        
+
     def test_suffix(self):
         p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
         p2 = RemotePath(self._connect(), "file.tar.gz")
@@ -58,7 +57,7 @@ class RemotePathTest(unittest.TestCase):
         strcmp(p2.with_suffix(".other", 2), RemotePath(self._connect(), "file.other"))
         strcmp(p2.with_suffix(".other", 0), RemotePath(self._connect(), "file.tar.gz.other"))
         strcmp(p2.with_suffix(".other", None), RemotePath(self._connect(), "file.other"))
-        
+
     def test_newname(self):
         p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
         p2 = RemotePath(self._connect(), "file.tar.gz")
@@ -212,6 +211,13 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
 
             p.communicate()
 
+    def test_get(self):
+        with self._connect() as rem:
+            self.assertEqual(str(rem['ls']),str(rem.get('ls')))
+            self.assertEqual(str(rem['ls']),str(rem.get('not_a_valid_process_234','ls')))
+            self.assertTrue('ls' in rem)
+            self.assertFalse('not_a_valid_process_234' in rem)
+
     def test_list_processes(self):
         with self._connect() as rem:
             self.assertTrue(list(rem.list_processes()))
@@ -266,7 +272,7 @@ else:
     class TestParamikoMachine(unittest.TestCase, BaseRemoteMachineTest):
         def _connect(self):
             return ParamikoMachine(TEST_HOST, missing_host_policy = paramiko.AutoAddPolicy())
-        
+
         def test_tunnel(self):
             with self._connect() as rem:
                 p = rem.python["-c", self.TUNNEL_PROG].popen()
@@ -275,7 +281,7 @@ else:
                 except ValueError:
                     print(p.communicate())
                     raise
-                
+
                 s = rem.connect_sock(port)
                 s.send(six.b("world"))
                 data = s.recv(100)
