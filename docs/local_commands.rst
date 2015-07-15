@@ -156,7 +156,6 @@ objects that can be applied to your command to run it and get or test the retcod
    For instance, ``cat["non/existing.file"] & TF(1,FG=True)``
 
 .. versionadded:: 1.4.3
-    
 
 Run and Popen
 -------------
