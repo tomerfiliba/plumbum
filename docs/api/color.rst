@@ -1,5 +1,6 @@
 Package plumbum.color
-===================
+=====================
+
 .. automodule:: plumbum.color.color
    :members:
 

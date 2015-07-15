@@ -6,7 +6,6 @@ You can access the index of the colors with names.index(name). You can access th
 rgb values with r=int(html[n][1:3],16), etc.
 '''
 
-
 _named_colors = '''\
 0,black,#000000
 1,red,#800000
@@ -292,3 +291,14 @@ _simple_attributes = dict(
     hidden=8
     )
 
+def print_html_table():
+    """Prints html names for documentation"""
+    print(r'<ol start=0>')
+    for i in range(256):
+        name = camel_names[i]
+        val = html[i]
+        print(r'  <li><font color="' + val
+                + r'">&#x25a0</font> <code>' + val
+                + r'</code> ' + name
+                + r'</li>')
+    print(r'</ol>')

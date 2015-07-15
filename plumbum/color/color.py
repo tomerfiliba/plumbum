@@ -182,11 +182,11 @@ class ColorCollection(object):
 
 # Adding the color name shortcuts
 for item in _simple_colors:
-    setattr(ColorCollection, item.upper(), property(partial(_get_style_color, item)))
+    setattr(ColorCollection, item.upper(), property(partial(_get_style_color, item), doc='Shortcut for '+item))
 
-class COLOR(ColorCollection):
+class Colors(ColorCollection):
 
-    """Holds font styles, FG and BG objects representing colors, and
+    """Singleton. Holds font styles, FG and BG objects representing colors, and
     imitates the FG object to some degree."""
 
     def __init__(self):
@@ -203,10 +203,10 @@ class COLOR(ColorCollection):
 
 
 for item in _simple_attributes:
-    setattr(COLOR, item.upper(), property(partial(_get_style_attribute, item)))
+    setattr(Colors, item.upper(), property(partial(_get_style_attribute, item), doc='Shortcut for '+item))
 
 
-COLOR = COLOR()
+COLOR = Colors()
 
 
 @contextmanager
