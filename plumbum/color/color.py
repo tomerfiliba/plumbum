@@ -122,7 +122,7 @@ def _get_style_attribute(attribute, ob):
     return Style.ansi_color(_simple_attributes[attribute])
 
 
-class _COLOR_NAMES(object):
+class ColorCollection(object):
 
     """This creates color names given a modifier value (FG, BG)"""
 
@@ -182,9 +182,9 @@ class _COLOR_NAMES(object):
 
 # Adding the color name shortcuts
 for item in _simple_colors:
-    setattr(_COLOR_NAMES, item.upper(), property(partial(_get_style_color, item)))
+    setattr(ColorCollection, item.upper(), property(partial(_get_style_color, item)))
 
-class COLOR(_COLOR_NAMES):
+class COLOR(ColorCollection):
 
     """Holds font styles, FG and BG objects representing colors, and
     imitates the FG object to some degree."""
@@ -192,8 +192,8 @@ class COLOR(_COLOR_NAMES):
     def __init__(self):
         self.val = 30 # This acts like FG color
 
-        self.FG = _COLOR_NAMES(30)
-        self.BG = _COLOR_NAMES(40)
+        self.FG = ColorCollection(30)
+        self.BG = ColorCollection(40)
 
         self.DO_NOTHING = Style('')
 
@@ -224,4 +224,4 @@ def with_color(color='', out=None):
     finally:
         out.write(Style.ansi_color(0))
 
-__all__ = ['COLOR', 'with_color', 'Style']
+__all__ = ['COLOR', 'ColorCollection', 'with_color', 'Style']
