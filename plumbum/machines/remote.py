@@ -5,6 +5,7 @@ from plumbum.commands import CommandNotFound, shquote, ConcreteCommand
 from plumbum.lib import _setdoc, ProcInfo, six
 from plumbum.machines.local import LocalPath
 from tempfile import NamedTemporaryFile
+from plumbum.machines.base import BaseMachine
 from plumbum.machines.env import BaseEnv
 from plumbum.path.remote import RemotePath, RemoteWorkdir, StatRes
 
@@ -127,7 +128,7 @@ class ClosedRemote(object):
         raise ClosedRemoteMachine("%r has been closed" % (self._obj,))
 
 
-class BaseRemoteMachine(object):
+class BaseRemoteMachine(BaseMachine):
     """Represents a *remote machine*; serves as an entry point to everything related to that
     remote machine, such as working directory and environment manipulation, command creation,
     etc.
@@ -235,17 +236,6 @@ class BaseRemoteMachine(object):
                 return self.RemoteCommand(self, self.which(cmd))
         else:
             raise TypeError("cmd must not be a LocalPath: %r" % (cmd,))
-
-    def __contains__(self, cmd):
-        """Tests for the existance of the command, e.g., ``"ls" in remote_machine``.
-        ``cmd`` can be anything acceptable by ``__getitem__``.
-        """
-        try:
-            self[cmd]
-        except CommandNotFound:
-            return False
-        else:
-            return True
 
     @property
     def python(self):
