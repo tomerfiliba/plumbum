@@ -265,23 +265,58 @@ _named_colors = '''\
 255,grey_93,#eeeeee
 '''
 
-names = [n.split(',')[1] for n in _named_colors.split()]
-html = [n.split(',')[2] for n in _named_colors.split()]
-camel_names = [n.replace('_', ' ').title().replace(' ','') for n in names]
+color_names_full = [n.split(',')[1] for n in _named_colors.split()]
+color_html_full = [n.split(',')[2] for n in _named_colors.split()]
 
-_simple_colors = dict(
-    black=0,
-    red=1,
-    green=2,
-    yellow=3,
-    blue=4,
-    magenta=5,
-    cyan=6,
-    white=7,
-    reset=9
-)
+main_named_colors = slice(0,16)
+normal_colors = slice(16,232)
+grey_colors = slice(232,256)
 
-_simple_attributes = dict(
+def _distance_to_color(r, g, b, color):
+    rgb = (int(color[1:3],16), int(color[3:5],16), int(color[5:7],16))
+    """This computes the distance to a color, should be minimized"""
+    return (r-rgb[0])**2 + (g-rgb[1])**2 + (b-rgb[2])**2
+
+
+def find_nearest_color(r, g, b):
+    """This is a slow way to find the nearest color."""
+    distances = [_distance_to_color(r, g, b, color) for color in color_html_full]
+    return  min(range(len(distances)), key=distances.__getitem__)
+
+def find_nearest_simple_color(r, g, b):
+    """This will only return simple colors!
+    Breaks the colorspace into cubes, returns color"""
+    midlevel = 0x40 # Since bright is not included
+
+    # The colors are originised so that it is a
+    # 3D cube, black at 0,0,0, white at 1,1,1
+    # Compressed to linear_integers r,g,b
+    # [[[0,1],[2,3]],[[4,5],[6,7]]]
+    # r*1 + g*2 + b*4
+    return (r>=midlevel)*1 + (g>=midlevel)*2 + (b>=midlevel)*4
+
+
+def from_html(color):
+    if len(color) != 7:
+        raise ValueError("Invalid length of html code")
+    return (int(color[1:3],16), int(color[3:5],16), int(color[5:7],16))
+
+color_names_simple = [
+    'black',
+    'red',
+    'green',
+    'yellow',
+    'blue',
+    'magenta',
+    'cyan',
+    'white',
+]
+"""Simple colors, remember that reset is #9"""
+
+color_html_simple = color_html_full[:7] + [color_html_full[15]]
+
+
+attributes_simple = dict(
     reset=0,
     bold=1,
     dim=2,
@@ -295,8 +330,8 @@ def print_html_table():
     """Prints html names for documentation"""
     print(r'<ol start=0>')
     for i in range(256):
-        name = camel_names[i]
-        val = html[i]
+        name = color_names_full[i]
+        val = color_html_full[i]
         print(r'  <li><font color="' + val
                 + r'">&#x25a0</font> <code>' + val
                 + r'</code> ' + name

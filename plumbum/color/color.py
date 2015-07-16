@@ -10,14 +10,15 @@ With the ``Style`` string subclass being used, any color can be
 directly called or given to a with statement.
 """
 
-from __future__ import with_statement, print_function
+from __future__ import print_function
 import sys
 import os
 from contextlib import contextmanager
-from plumbum.color.names import names, html, camel_names
-from plumbum.color.names import _simple_colors, _simple_attributes
+from plumbum.color.names import color_names_full as names, color_html_full as html
+from plumbum.color.names import color_names_simple as simple_colors, attributes_simple as simple_attributes
 from functools import partial
 
+camel_names = [n.replace('_',' ').title().replace(' ','') for n in names]
 
 class Style(str):
     """This class allows the color change strings to be called directly
@@ -114,12 +115,12 @@ class Style(str):
 
 def _get_style_color(color, ob):
     'Gets a color, intended to be used in discriptor protocol'
-    return Style.ansi_color(_simple_colors[color]+ob.val)
+    return Style.ansi_color((simple_colors.index(color) if color != 'reset' else 9) +ob.val)
 
 
 def _get_style_attribute(attribute, ob):
     'Gets an attribute, intended to be used in discriptor protocol'
-    return Style.ansi_color(_simple_attributes[attribute])
+    return Style.ansi_color(simple_attributes[attribute])
 
 
 class ColorCollection(object):
@@ -129,6 +130,10 @@ class ColorCollection(object):
 
     def __init__(self, val):
         self.val = val
+
+    @property
+    def RESET(self):
+        return _get_style_color('reset',self)
 
     def from_name(self, name):
         'Gets the index of a name, raises key error if not found'
@@ -181,7 +186,7 @@ class ColorCollection(object):
         return False
 
 # Adding the color name shortcuts
-for item in _simple_colors:
+for item in simple_colors:
     setattr(ColorCollection, item.upper(), property(partial(_get_style_color, item), doc='Shortcut for '+item))
 
 class Colors(ColorCollection):
@@ -202,7 +207,7 @@ class Colors(ColorCollection):
         return Style(color)
 
 
-for item in _simple_attributes:
+for item in simple_attributes:
     setattr(Colors, item.upper(), property(partial(_get_style_attribute, item), doc='Shortcut for '+item))
 
 
