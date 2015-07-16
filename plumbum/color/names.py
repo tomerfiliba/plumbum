@@ -317,7 +317,6 @@ color_html_simple = color_html_full[:7] + [color_html_full[15]]
 
 
 attributes_simple = dict(
-    reset=0,
     bold=1,
     dim=2,
     underline=4,

@@ -1,6 +1,6 @@
 from __future__ import with_statement, print_function
 import unittest
-from plumbum.color.base import BaseColor, Color
+from plumbum.color.base import Style, Color
 from plumbum.color.names import find_nearest_color, color_html_full, find_nearest_simple_color
 
 
@@ -9,7 +9,7 @@ class TestNearestColor(unittest.TestCase):
         self.assertEqual(find_nearest_color(0,0,0),0)
         for n,color in enumerate(color_html_full):
             # Ignoring duplicates
-            if n not in {16,  21,  46,  51, 196, 201, 226, 231, 244}:
+            if n not in (16, 21, 46, 51, 196, 201, 226, 231, 244):
                 rgb = (int(color[1:3],16), int(color[3:5],16), int(color[5:7],16))
                 self.assertEqual(find_nearest_color(*rgb),n)
 
@@ -30,32 +30,32 @@ class TestColorLoad(unittest.TestCase):
         Color.use_color = True
 
     def test_rgb(self):
-        blue = BaseColor(0,0,255) # Red, Green, Blue
+        blue = Color(0,0,255) # Red, Green, Blue
         self.assertEqual(blue.r, 0)
         self.assertEqual(blue.g, 0)
         self.assertEqual(blue.b, 255)
 
     def test_simple_name(self):
-        green = BaseColor.from_simple('green')
+        green = Color.from_simple('green')
         self.assertEqual(green.number, 2)
 
     def test_different_names(self):
-        self.assertEqual(BaseColor('Dark Blue'),
-                         BaseColor('Dark_Blue'))
-        self.assertEqual(BaseColor('Dark_blue'),
-                         BaseColor('Dark_Blue'))
-        self.assertEqual(BaseColor('DARKBLUE'),
-                         BaseColor('Dark_Blue'))
-        self.assertEqual(BaseColor('DarkBlue'),
-                         BaseColor('Dark_Blue'))
-        self.assertEqual(BaseColor('Dark Green'),
-                         BaseColor('Dark_Green'))
+        self.assertEqual(Color('Dark Blue'),
+                         Color('Dark_Blue'))
+        self.assertEqual(Color('Dark_blue'),
+                         Color('Dark_Blue'))
+        self.assertEqual(Color('DARKBLUE'),
+                         Color('Dark_Blue'))
+        self.assertEqual(Color('DarkBlue'),
+                         Color('Dark_Blue'))
+        self.assertEqual(Color('Dark Green'),
+                         Color('Dark_Green'))
 
     def test_loading_methods(self):
-        self.assertEqual(BaseColor("Yellow"),
-                         BaseColor.from_full("Yellow"))
-        self.assertNotEqual(BaseColor.from_full("yellow"),
-                            BaseColor.from_simple("yellow"))
+        self.assertEqual(Color("Yellow"),
+                         Color.from_full("Yellow"))
+        self.assertNotEqual(Color.from_full("yellow"),
+                            Color.from_simple("yellow"))
 
 
 class TestANSIColor(unittest.TestCase):
@@ -66,6 +66,15 @@ class TestANSIColor(unittest.TestCase):
         self.assertEqual(str(Color('reset')), '\033[39m')
         self.assertEqual(str(Color('green')), '\033[38;5;2m')
         self.assertEqual(str(Color.from_simple('red')), '\033[31m')
+
+class TestStyle(unittest.TestCase):
+    def setUp(self):
+        Color.use_color = True
+
+    def test_style(self):
+        pass
+
+
 
 if __name__ == '__main__':
     unittest.main()

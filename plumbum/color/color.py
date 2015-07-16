@@ -120,7 +120,7 @@ def _get_style_color(color, ob):
 
 def _get_style_attribute(attribute, ob):
     'Gets an attribute, intended to be used in discriptor protocol'
-    return Style.ansi_color(simple_attributes[attribute])
+    return Style.ansi_color(simple_attributes[attribute] if attribute != 'reset' else 0)
 
 
 class ColorCollection(object):
@@ -189,7 +189,7 @@ class ColorCollection(object):
 for item in simple_colors:
     setattr(ColorCollection, item.upper(), property(partial(_get_style_color, item), doc='Shortcut for '+item))
 
-class Colors(ColorCollection):
+class ColorFactory(ColorCollection):
 
     """Singleton. Holds font styles, FG and BG objects representing colors, and
     imitates the FG object to some degree."""
@@ -208,10 +208,11 @@ class Colors(ColorCollection):
 
 
 for item in simple_attributes:
-    setattr(Colors, item.upper(), property(partial(_get_style_attribute, item), doc='Shortcut for '+item))
+    setattr(ColorFactory, item.upper(), property(partial(_get_style_attribute, item), doc='Shortcut for '+item))
+setattr(ColorFactory, 'reset'.upper(), property(partial(_get_style_attribute, 'reset'), doc='Shortcut for reset'))
 
 
-COLOR = Colors()
+COLOR = ColorFactory()
 
 
 @contextmanager

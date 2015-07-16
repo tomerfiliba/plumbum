@@ -13,20 +13,18 @@ directly called or given to a with statement.
 from __future__ import print_function
 import sys
 import os
-from contextlib import contextmanager
 from plumbum.color.names import color_names_full, color_html_full
 from plumbum.color.names import color_names_simple, color_html_simple,  attributes_simple,  from_html
 from plumbum.color.names import find_nearest_color, find_nearest_simple_color
-from functools import partial
 
 _lower_camel_names = [n.replace('_', '') for n in color_names_full]
 
 class ColorNotFound(AttributeError):
     pass
 
-class BaseColor(object):
-    """This class stores the idea of a color, rather than a specific implementation.
-    It provides as many different representations as possible, and can be subclassed.
+class Color(object):
+    """This class stores the idea of a color, rather than a specific implementation (though it's __str__ is ANSI).
+    It provides as many different tools for representations as possible, and can be subclassed.
     It is not meant to be mutible. .from_any provides a quick-init shortcut.
 
     Possible colors::
@@ -177,33 +175,84 @@ class BaseColor(object):
     def __repr__(self):
         return "<{0}: {1} {2}>".format(self.__class__.__name__, self.name, self.rgb)
 
-    def __str__(self):
-        return self.name
-
     def __eq__(self, other):
         if self.reset:
             return other.reset
         else:
-            return self.number == other.number and self.rgb == other.rgb and self.simple == other.simple
+            return (self.number == other.number
+                    and self.rgb == other.rgb
+                    and self.simple == other.simple)
 
-
-class ANSIColor(BaseColor):
     @property
     def ansi_sequence(self):
         if not self.__class__.use_color:
             return ''
+        else:
+            return '\033[' + ';'.join(map(str, self.ansi_codes)) + 'm'
 
+    @property
+    def ansi_codes(self):
         ansi_addition = 30 if self.fg else 40
 
         if self.reset:
-            return '\033[' + str(ansi_addition+9) + 'm'
+            return (ansi_addition+9,)
         elif self.simple:
-            return '\033[' + str(self.number+ansi_addition) + 'm'
+            return (self.number+ansi_addition,)
         else:
-            return '\033[' +str(ansi_addition+8) + ';5;' + str(self.number) + 'm'
+            return (ansi_addition+8, 5, self.number)
+
 
     def __str__(self):
         return self.ansi_sequence
 
 
-Color = ANSIColor
+
+class Style(object):
+
+    def __init__(self, attributes=None, fgcolor=None, bgcolor=None, reset=False):
+        self.attributes = attributes if attributes is not None else dict()
+        self.fg = fgcolor
+        self.bg = bgcolor
+        self.reset = reset
+
+    @property
+    def ansi_codes(self):
+        if self.reset:
+            return [0]
+
+        codes = []
+        for attribute in self.attributes:
+            if self.attributes[attribute]:
+                codes.append(attributes_simple[attribute])
+            else:
+                codes.append(20+attributes_simple[attribute])
+
+        if self.fg:
+            codes.extend(self.fg.ansi_codes)
+
+        if self.bg:
+            self.bg.fg = False
+            codes.extend(self.bg.ansi_codes)
+
+        return codes
+
+    @property
+    def ansi_sequence(self):
+        if not Color.use_color:
+            return ''
+        else:
+            return '\033[' + ';'.join(map(str, self.ansi_codes)) + 'm'
+
+    def __repr__(self):
+        return "<{0}>".format(self.__class__.__name__)
+
+    def __eq__(self, other):
+        if self.reset:
+            return other.reset
+        else:
+            return (self.attributes == other.attributes
+                    and self.fg == other.fg
+                    and self.bg == other.bg)
+
+    def __str__(self):
+        return self.ansi_sequence
