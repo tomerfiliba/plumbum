@@ -1,4 +1,4 @@
-* **2015.07.17**: Version 1.5.0 released. This release brings a host of bug fixes, code cleanups and some experimental new features (be sure to check the changelog). Also, say hi to `Henry Schreiner <https://github.com/henryiii>`_, who has joined as a collaborator of the project.
+* **2015.07.17**: Version 1.5.0 released. This release brings a host of bug fixes, code cleanups and some experimental new features (be sure to check the changelog). Also, say hi to `Henry Schreiner <https://github.com/henryiii>`_, who has joined as a member of the project.
 
   .. note:: ``setenv`` has been renamed ``with_env``
 
