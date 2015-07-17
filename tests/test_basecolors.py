@@ -1,6 +1,6 @@
 from __future__ import with_statement, print_function
 import unittest
-from plumbum.color.base import Style, Color
+from plumbum.color.styles import ANSIStyle, Color, AttributeNotFound, ColorNotFound
 from plumbum.color.names import find_nearest_color, color_html_full, find_nearest_simple_color
 
 
@@ -26,8 +26,6 @@ class TestNearestColor(unittest.TestCase):
 
 
 class TestColorLoad(unittest.TestCase):
-    def setUp(self):
-        Color.use_color = True
 
     def test_rgb(self):
         blue = Color(0,0,255) # Red, Green, Blue
@@ -60,19 +58,20 @@ class TestColorLoad(unittest.TestCase):
 
 class TestANSIColor(unittest.TestCase):
     def setUp(self):
-        Color.use_color = True
+        ANSIStyle.use_color = True
 
     def test_ansi(self):
-        self.assertEqual(str(Color('reset')), '\033[39m')
-        self.assertEqual(str(Color('green')), '\033[38;5;2m')
-        self.assertEqual(str(Color.from_simple('red')), '\033[31m')
+        self.assertEqual(str(ANSIStyle(fgcolor=Color('reset'))), '\033[39m')
+        self.assertEqual(str(ANSIStyle(fgcolor=Color('green'))), '\033[38;5;2m')
+        self.assertEqual(str(ANSIStyle(fgcolor=Color.from_simple('red'))), '\033[31m')
 
 class TestStyle(unittest.TestCase):
     def setUp(self):
-        Color.use_color = True
+        ANSIStyle.use_color = True
 
-    def test_style(self):
+    def test_InvalidAttributes(self):
         pass
+
 
 
 

@@ -268,10 +268,46 @@ _named_colors = '''\
 color_names_full = [n.split(',')[1] for n in _named_colors.split()]
 color_html_full = [n.split(',')[2] for n in _named_colors.split()]
 
+color_names_simple = [
+    'black',
+    'red',
+    'green',
+    'yellow',
+    'blue',
+    'magenta',
+    'cyan',
+    'white',
+]
+"""Simple colors, remember that reset is #9"""
+
+color_html_simple = color_html_full[:7] + [color_html_full[15]]
+
+# Common segments of colors in full table
 main_named_colors = slice(0,16)
 normal_colors = slice(16,232)
 grey_colors = slice(232,256)
 
+# Attributes
+
+valid_attributes = set((
+    'bold',
+    'dim',
+    'underline',
+    'blink',
+    'reverse',
+    'hidden'
+    ))
+
+attributes_ansi = dict(
+    bold=1,
+    dim=2,
+    underline=4,
+    blink=5,
+    reverse=7,
+    hidden=8
+    )
+
+#Functions to be used for color name operations
 def _distance_to_color(r, g, b, color):
     rgb = (int(color[1:3],16), int(color[3:5],16), int(color[5:7],16))
     """This computes the distance to a color, should be minimized"""
@@ -301,29 +337,8 @@ def from_html(color):
         raise ValueError("Invalid length of html code")
     return (int(color[1:3],16), int(color[3:5],16), int(color[5:7],16))
 
-color_names_simple = [
-    'black',
-    'red',
-    'green',
-    'yellow',
-    'blue',
-    'magenta',
-    'cyan',
-    'white',
-]
-"""Simple colors, remember that reset is #9"""
-
-color_html_simple = color_html_full[:7] + [color_html_full[15]]
 
 
-attributes_simple = dict(
-    bold=1,
-    dim=2,
-    underline=4,
-    blink=5,
-    reverse=7,
-    hidden=8
-    )
 
 def print_html_table():
     """Prints html names for documentation"""

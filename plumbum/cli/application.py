@@ -502,7 +502,7 @@ class Application(object):
             self.version()
             print("")
         if self.DESCRIPTION:
-            print(self.COLOR_DISCRIPTION(self.DESCRIPTION.strip() + '\n'))
+            print(self.COLOR_DISCRIPTION[self.DESCRIPTION.strip() + '\n'])
 
         m_args, m_varargs, _, m_defaults = inspect.getargspec(self.main)
         tailargs = m_args[1:]  # skip self
@@ -514,7 +514,7 @@ class Application(object):
         tailargs = " ".join(tailargs)
 
         with self.COLOR_USAGE:
-            print(self.COLOR_HEADING("Usage:"))
+            print(self.COLOR_HEADING["Usage:"])
             if not self.USAGE:
                 if self._subcommands:
                     self.USAGE = "    %(progname)s [SWITCHES] [SUBCOMMAND [SWITCHES]] %(tailargs)s\n"
@@ -610,8 +610,8 @@ class Application(object):
     def version(self):
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
-        ver_name = self.COLOR_VERSION(ver if ver is not None else "(version not set)")
-        program_name = self.COLOR_PROGNAME(self.PROGNAME)
+        ver_name = self.COLOR_VERSION[ver if ver is not None else "(version not set)"]
+        program_name = self.COLOR_PROGNAME[self.PROGNAME]
         print('%s %s' % (program_name, ver_name))
 
 
