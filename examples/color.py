@@ -16,4 +16,6 @@ with COLOR:
         print(color + ' ', end='')
     COLOR.RESET()
     print()
-    print('Colors can be reset ' + COLOR.UNDERLINE + 'Too!')
+    print('Colors can be reset ' + COLOR.UNDERLINE['Too!'])
+    for color in COLOR.simple_colorful:
+        print(color["This is in color!"])

@@ -32,11 +32,13 @@ class Color(object):
 
     Possible colors::
 
-        blue = ColorBase(0,0,255) # Red, Green, Blue
-        green = ColorBase.from_full("green") # Case insensitive name, from large colorset
-        red = ColorBase.from_full(1) # Color number
-        white = ColorBase.from_html("#FFFFFF") # HTML supported
-        yellow = ColorBase.from_simple("red") # Simple colorset
+        reset = Color() # The reset color by default
+        background_reset = Color(fg=False) # Can be a background color
+        blue = Color(0,0,255) # Red, Green, Blue
+        green = Color.from_full("green") # Case insensitive name, from large colorset
+        red = Color.from_full(1) # Color number
+        white = Color.from_html("#FFFFFF") # HTML supported
+        yellow = Color.from_simple("red") # Simple colorset
 
 
     The attributes are:
@@ -56,7 +58,7 @@ class Color(object):
         self.reset = True # Starts as reset color
         self.rgb = (0,0,0)
         self.simple = False
-        self.exact = True # Sets to false if interpolation done
+        self.exact = True # Set to False if interpolation done
 
         if r_or_color is not None and None in (g,b):
             try:
@@ -182,7 +184,7 @@ class Color(object):
         name = ' Simple' if self.simple else ''
         name += '' if self.fg else ' Background'
         name += ' ' + self.name.replace('_',' ').title()
-        name += '' if self.exact else (" "+str(self.rgb))
+        name += '' if self.exact else ' ' + self.html_hex_code
         return name[1:]
 
     def __eq__(self, other):
@@ -212,10 +214,17 @@ class Color(object):
             return (ansi_addition+8, 5, self.number)
 
     @property
-    def html_hex_code(self):
-        if reset:
+    def html_hex_code_nearest(self):
+        if self.reset:
             return '#000000'
         return color_html_simple[self.number] if self.simple else color_html_full[self.number]
+
+    @property
+    def html_hex_code(self):
+        if self.reset:
+            return '#000000'
+        else:
+            return '#' + '{0[0]:02X}{0[1]:02X}{0[2]:02X}'.format(self.rgb)
 
     def __str__(self):
         return self.name
@@ -323,13 +332,26 @@ class Style(object):
         return other + other.__class__(self)
 
     def wrap(self, wrap_this):
+        """Wrap a sting in this style and its inverse."""
         return self + wrap_this - self
 
-    def __call__(self, printable=None):
+    def now(self, *printable):
+        """This is a shortcut to print color immediatly to the stdout.
+        If called without arguments, this will change the Style immediatly.
+        If called with an argument, will print that argument to stdout wrapped
+        in Style."""
         if printable:
-            self.stdout.write(self.wrap(printable))
+            self.stdout.write(self.wrap(' '.join(map(str,printable))))
         else:
             self.stdout.write(str(self))
+
+    def __call__(self, *printable):
+        """Without arguments, this will change the current stdout color instantly.
+        With arguments, they will be wrapped in style and returned."""
+        if printable:
+            return self.wrap(*printable)
+        else:
+            self.now()
 
     def __getitem__(self, wrap_this):
         """The [] syntax is supported for wrapping"""
@@ -392,8 +414,6 @@ class Style(object):
 
     def __str__(self):
         raise NotImplemented("This is a base style, does not have an representation")
-
-    # TODO: Support buffer interface?
 
 
     @classmethod

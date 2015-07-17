@@ -77,6 +77,11 @@ class ColorFactory(object):
     def __repr__(self):
         return "<{0}>".format(self.__class__.__name__)
 
+    @property
+    def simple_colorful(self):
+        """List over the six simple actual colors."""
+        return [self.simple(i) for i in range(1,7)]
+
 class StyleFactory(ColorFactory):
 
     """Factory for styles. Holds font styles, FG and BG objects representing colors, and
