@@ -15,13 +15,29 @@ and serves as a factory for command objects::
     <LocalCommand c:\windows\notepad.exe>
 
 If you don't specify a full path, the program is searched for in your system's ``PATH`` (and if no
-match is found, an exception is raised). Otherwise, the full path is used as given. Once you have
-a ``Command`` object, you can execute it like a normal function::
+match is found, a ``CommandNotFound`` exception is raised). Otherwise, the full path is used as given.
+Once you have a ``Command`` object, you can execute it like a normal function::
 
     >>> ls()
     'README.rst\nplumbum\nsetup.py\ntests\ntodo.txt\n'
     >>> ls("-a")
     '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\n[...]'
+
+.. _fallbacks:
+
+If you use the ``.get()`` method instead of ``[]``, you can include fallbacks to try if the
+first command does not exist on the machine. This can be used to get one of several
+equivalent commands, or it can be used to check for common locations of a command if
+not in the path. For example::
+
+    pandoc = local.get('pandoc',
+                       '~/AppData/Local/Pandoc/pandoc.exe',
+                       '/Program Files/Pandoc/pandoc.exe',
+                       '/Program Files (x86)/Pandoc/pandoc.exe')
+
+An exception is still raised if none of the commands are found.
+
+.. versionadded:: 1.5.1
 
 .. _import-hack:
 
@@ -248,4 +264,5 @@ In this example, we first ssh to ``somehost``, from it we ssh to ``anotherhost``
 we run the command chain. As you can see, ``|`` and the backslashes have been quoted, to prevent 
 them from executing on the first-level shell; this way, they would safey get to the 
 second-level shell.
+
 
