@@ -1,4 +1,4 @@
-* **planned**: Version 1.4.3 coming soon. This release is a collection of smaller features and bug fixes.
+* **planned**: Version 1.5.0 coming soon. This release is a collection of small features and bug fixes.
 
  .. note:: ``setenv`` has been renamed ``with_env``
 
