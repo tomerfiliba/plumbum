@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/tomerfiliba/plumbum.svg?branch=master
+    :target: https://travis-ci.org/tomerfiliba/plumbum
+
 Plumbum: Shell Combinators
 ==========================
 
