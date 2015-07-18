@@ -98,5 +98,7 @@ class StyleFactory(ColorFactory):
 
         for item in style.attribute_names:
             setattr(self, item.upper(), style(attributes={item:True}))
-            setattr(self, "NON_"+item.upper(), style(attributes={item:False}))
 
+    def from_ansi(self, ansi_sequence):
+        """Calling this is a shortcut for creating a style from an ANSI sequence."""
+        return self._style.from_ansi(ansi_sequence)

@@ -24,6 +24,9 @@ class ColorNotFound(Exception):
 class AttributeNotFound(Exception):
     pass
 
+class ResetNotSupported(Exception):
+    pass
+
 
 class Color(object):
     """This class stores the idea of a color, rather than a specific implementation.
@@ -180,10 +183,15 @@ class Color(object):
         else:
             return color_names_full[self.number]
 
+    @property
+    def name_camelcase(self):
+        """The camelcase name of the color"""
+        return self.name.replace("_", " ").title().replace(" ","")
+
     def __repr__(self):
         name = ' Simple' if self.simple else ''
         name += '' if self.fg else ' Background'
-        name += ' ' + self.name.replace('_',' ').title()
+        name += ' ' + self.name_camelcase
         name += '' if self.exact else ' ' + self.html_hex_code
         return name[1:]
 
@@ -197,10 +205,7 @@ class Color(object):
 
     @property
     def ansi_sequence(self):
-        if not self.__class__.use_color:
-            return ''
-        else:
-            return '\033[' + ';'.join(map(str, self.ansi_codes)) + 'm'
+        return '\033[' + ';'.join(map(str, self.ansi_codes)) + 'm'
 
     @property
     def ansi_codes(self):
@@ -235,9 +240,8 @@ class Style(object):
     """This class allows the color changes to be called directly
     to write them to stdout, ``[]`` calls to wrap colors (or the ``.wrap`` method)
     and can be called in a with statement.
-    The ``use_color`` property causes this to return '' for colors"""
+    """
 
-    use_color = sys.stdout.isatty() and os.name == "posix"
     stdout = sys.stdout
     color_class = Color
     attribute_names = valid_attributes # a set of valid names
@@ -283,6 +287,11 @@ class Style(object):
             other.bg = self.bg.__class__()
 
         return other
+
+    @property
+    def RESET(self):
+        """Shortcut to access reset as a property."""
+        return self.invert()
 
     def __copy__(self):
         """Copy is supported, will make dictionary and colors unique."""
@@ -419,12 +428,13 @@ class Style(object):
     @classmethod
     def from_ansi(cls, ansi_string):
         """This generated a style from an ansi string."""
-        result = self.__class__()
+        result = cls()
         reg = re.compile('\033' + r'\[([\d;]+)m')
         res = reg.search(ansi_string)
-        for group in res.groups:
+        for group in res.groups():
             sequence = map(int,group.split(';'))
             result.add_ansi(sequence)
+        return result
 
     def add_ansi(self, sequence):
         """Adds a sequence of ansi numbers to the class"""
@@ -432,7 +442,7 @@ class Style(object):
         values = iter(sequence)
         try:
             while True:
-                value = next(value)
+                value = next(values)
                 if value == 38 or value == 48:
                     fg = value == 38
                     if next(values) != 5:
@@ -444,13 +454,13 @@ class Style(object):
                         self.bg = self.color_class.from_full(value, fg=False)
                 elif value==0:
                     self.reset = True
-                elif value in ansi_attributes.values():
-                    for name in ansi_attributes:
-                        if value == ansi_attributes[name]:
+                elif value in attributes_ansi.values():
+                    for name in attributes_ansi:
+                        if value == attributes_ansi[name]:
                             self.attributes[name] = True
-                elif value in (20+n for n in ansi_attributes.values()):
-                    for name in ansi_attributes:
-                        if value == ansi_attributes[name] + 20:
+                elif value in (20+n for n in attributes_ansi.values()):
+                    for name in attributes_ansi:
+                        if value == attributes_ansi[name] + 20:
                             self.attributes[name] = False
                 elif 30 <= value <= 37:
                     self.fg = self.color_class.from_simple(value-30)
@@ -467,6 +477,14 @@ class Style(object):
 
 
 class ANSIStyle(Style):
+    """This is a subclass for ANSI styles. Use it to get
+    color on sys.stdout tty terminals on posix systems.
+
+    set ``use_color = True/False`` if you want to control color
+    for anything using this Style."""
+
+    use_color = sys.stdout.isatty() and os.name == "posix"
+
     attribute_names = set(attributes_ansi)
 
     def __str__(self):
@@ -475,3 +493,34 @@ class ANSIStyle(Style):
         else:
             return ''
 
+class HTMLStyle(Style):
+    """This was meant to be a demo of subclassing Style, but
+    actually can be a handy way to quicky color html text."""
+
+    attribute_names = set(('bold','em'))
+
+    def __str__(self):
+        if self.reset:
+            raise ResetNotSupported("HTML does not support global resets!")
+
+        result = ''
+
+        if self.fg and not self.fg.reset:
+            result += '<font color="{0}">'.format(self.fg.html_hex_code)
+        if self.bg and not self.bg.reset:
+            result += '<span style="background-color: {0}">'.format(self.fg.html_hex_code)
+        if 'bold' in self.attributes and self.attributes['bold']:
+            result += '<b>'
+        if 'em' in self.attributes and self.attributes['em']:
+            result += '<em>'
+
+        if self.fg and self.fg.reset:
+            result += '</font>'
+        if self.bg and self.bg.reset:
+            result += '</span>'
+        if 'bold' in self.attributes and not self.attributes['bold']:
+            result += '</b>'
+        if 'em' in self.attributes and not self.attributes['em']:
+            result += '</em>'
+
+        return result

@@ -1,3 +1,7 @@
+In development
+--------------
+* Color: Added color module, support for color added to cli
+
 1.5.0
 -----
 * Removed support for Python 2.5. (Travis CI does not support it anymore)

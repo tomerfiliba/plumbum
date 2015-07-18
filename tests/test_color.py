@@ -2,7 +2,7 @@ from __future__ import with_statement, print_function
 import unittest
 from plumbum import COLOR
 from plumbum.color.styles import ANSIStyle as Style
-
+from plumbum.color import HTMLCOLOR
 
 class TestColor(unittest.TestCase):
 
@@ -27,7 +27,30 @@ class TestColor(unittest.TestCase):
 
     def testMultiColor(self):
         sumcolor = COLOR.BOLD + COLOR.BLUE
-        self.assertEqual(COLOR.NON_BOLD + COLOR.FG.RESET, -sumcolor)
+        self.assertEqual(COLOR.BOLD.RESET + COLOR.FG.RESET, -sumcolor)
+
+    def testSums(self):
+        # Sums should not be communitave, last one is used
+        self.assertEqual(COLOR.RED, COLOR.BLUE + COLOR.RED)
+        self.assertEqual(COLOR.BG.GREEN, COLOR.BG.RED + COLOR.BG.GREEN)
+
+    def testFromAnsi(self):
+        for color in COLOR.simple_colorful:
+            self.assertEqual(color, COLOR.from_ansi(str(color)))
+        for color in COLOR.BG.simple_colorful:
+            self.assertEqual(color, COLOR.from_ansi(str(color)))
+        for color in COLOR:
+            self.assertEqual(color, COLOR.from_ansi(str(color)))
+        for color in COLOR.BG:
+            self.assertEqual(color, COLOR.from_ansi(str(color)))
+        for color in (COLOR.BOLD, COLOR.UNDERLINE, COLOR.BLINK):
+            self.assertEqual(color, COLOR.from_ansi(str(color)))
+
+        color = COLOR.BOLD + COLOR.FG.GREEN + COLOR.BG.BLUE + COLOR.UNDERLINE
+        self.assertEqual(color, COLOR.from_ansi(str(color)))
+        color = COLOR.RESET
+        self.assertEqual(color, COLOR.from_ansi(str(color)))
+
 
     def testUndoColor(self):
         self.assertEqual('\033[39m', -COLOR.FG)
@@ -45,6 +68,9 @@ class TestColor(unittest.TestCase):
             self.assertEqual('\033[39m', -COLOR.FG[i])
             self.assertEqual('\033[49m', -COLOR.BG[i])
         self.assertEqual('\033[0m', -COLOR.RESET)
+        self.assertEqual(COLOR.DO_NOTHING, -COLOR.DO_NOTHING)
+
+        self.assertEqual(COLOR.BOLD.RESET, -COLOR.BOLD)
 
     def testLackOfColor(self):
         Style.use_color = False
@@ -70,6 +96,10 @@ class TestColor(unittest.TestCase):
         print(COLOR.FG.GREEN + "Hi, " + COLOR.BG[23]
               + "This is on a BG" - COLOR.BG + " and this is not")
         COLOR.RESET()
+
+    def test_html(self):
+        self.assertEqual(HTMLCOLOR.RED("This is tagged"),
+                '<font color="#800000">This is tagged</font>')
 
 if __name__ == '__main__':
     unittest.main()
