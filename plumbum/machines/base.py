@@ -23,6 +23,8 @@ class BaseMachine(object):
             command = self[cmd]
             if not command.executable.exists():
                 raise CommandNotFound(cmd,command.executable)
+            else:
+                return command
         except CommandNotFound:
             if othercommands:
                 return self.get(othercommands[0],*othercommands[1:])
