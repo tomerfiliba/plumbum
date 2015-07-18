@@ -35,7 +35,8 @@ not in the path. For example::
                        '/Program Files/Pandoc/pandoc.exe',
                        '/Program Files (x86)/Pandoc/pandoc.exe')
 
-An exception is still raised if none of the commands are found.
+An exception is still raised if none of the commands are found. Unlike ``[]`` access,
+an exception will be raised if the executable does not exist.
 
 .. versionadded:: 1.5.1
 

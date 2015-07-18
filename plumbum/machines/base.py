@@ -8,18 +8,21 @@ class BaseMachine(object):
 
 
     def get(self, cmd, *othercommands):
-        """This works a little like the .get method with dict's, only
+        """This works a little like the ``.get`` method with dict's, only
         it supports an unlimited number of arguments, since later arguments
         are tried as commands and could also fail. It
         will try to call the first command, and if that is not found,
-        it will call the next, etc.
+        it will call the next, etc. Will raise if no file named for the
+        executable if a path is given, unlike ``[]`` access.
 
         Usage::
 
             best_zip = local.get('pigz','gzip')
         """
         try:
-            return self[cmd]
+            command = self[cmd]
+            if not command.executable.exists():
+                raise CommandNotFound(cmd,command.executable)
         except CommandNotFound:
             if othercommands:
                 return self.get(othercommands[0],*othercommands[1:])
