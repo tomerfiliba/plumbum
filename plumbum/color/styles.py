@@ -254,10 +254,19 @@ class Style(object):
         It will use current sys.stdout if set to None (default).
         """
         return self.__class__._stdout if self.__class__._stdout is not None else sys.stdout
+    @classmethod
+    def set_stdout(cls, stdout = None):
+        """This is basically a class property, but I can't really
+        do a true class propery without metaclasses, which have different
+        syntax in Python2 and Python3."""
+        cls._stdout = stdout
 
     @stdout.setter
     def stdout(self, newout):
         self.__class__._stdout = newout
+    @classmethod
+    def get_stdout(cls):
+        return cls._stdout if cls._stdout is not None else sys.stdout
 
     def __init__(self, attributes=None, fgcolor=None, bgcolor=None, reset=False):
         self.attributes = attributes if attributes is not None else dict()
