@@ -71,7 +71,7 @@ class ColorFactory(object):
         due to different definition of RESET for the
         factories."""
 
-        self._style.stdout.write(str(self.RESET))
+        self._style().stdout.write(str(self.RESET))
         return False
 
     def __repr__(self):

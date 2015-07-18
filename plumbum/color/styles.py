@@ -29,7 +29,8 @@ class ResetNotSupported(Exception):
 
 
 class Color(object):
-    """This class stores the idea of a color, rather than a specific implementation.
+    """\
+    This class stores the idea of a color, rather than a specific implementation.
     It provides as many different tools for representations as possible, and can be subclassed
     to add more represenations. ``.from_any`` provides a quick-init shortcut.
 
@@ -242,9 +243,21 @@ class Style(object):
     and can be called in a with statement.
     """
 
-    stdout = sys.stdout
     color_class = Color
     attribute_names = valid_attributes # a set of valid names
+    _stdout = None
+
+    @property
+    def stdout(self):
+        """\
+        This property will allow custom, class level control of stdout.
+        It will use current sys.stdout if set to None (default).
+        """
+        return self.__class__._stdout if self.__class__._stdout is not None else sys.stdout
+
+    @stdout.setter
+    def stdout(self, newout):
+        self.__class__._stdout = newout
 
     def __init__(self, attributes=None, fgcolor=None, bgcolor=None, reset=False):
         self.attributes = attributes if attributes is not None else dict()
@@ -305,6 +318,7 @@ class Style(object):
     def __neg__(self):
         """This negates the effect of the current color"""
         return self.invert()
+    __invert__ = __neg__
 
     def __sub__(self, other):
        """Implemented to make muliple Style objects work"""
@@ -343,6 +357,13 @@ class Style(object):
     def wrap(self, wrap_this):
         """Wrap a sting in this style and its inverse."""
         return self + wrap_this - self
+
+    def __lshift__(self, other):
+        """This class support "String:" << color << color2 syntax"""
+        return self + other
+
+    __rlshift__ = wrap
+
 
     def now(self, *printable):
         """This is a shortcut to print color immediatly to the stdout.
