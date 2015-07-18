@@ -508,7 +508,7 @@ class HTMLStyle(Style):
         if self.fg and not self.fg.reset:
             result += '<font color="{0}">'.format(self.fg.html_hex_code)
         if self.bg and not self.bg.reset:
-            result += '<span style="background-color: {0}">'.format(self.fg.html_hex_code)
+            result += '<span style="background-color: {0}">'.format(self.bg.html_hex_code)
         if 'bold' in self.attributes and self.attributes['bold']:
             result += '<b>'
         if 'em' in self.attributes and self.attributes['em']:
