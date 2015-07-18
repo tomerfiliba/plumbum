@@ -1,6 +1,7 @@
 In development
 --------------
 * Color: Added color module, support for color added to cli
+* Machines: Added ``.get()`` method for checking several commands.
 
 1.5.0
 -----

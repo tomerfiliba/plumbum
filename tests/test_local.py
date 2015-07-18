@@ -9,6 +9,7 @@ from plumbum.lib import six
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
 from plumbum.path import RelativePath
+import plumbum
 
 
 if not hasattr(unittest, "skipIf"):
@@ -93,8 +94,12 @@ class LocalPathTest(unittest.TestCase):
 
 class LocalMachineTest(unittest.TestCase):
     def test_getattr(self):
-        import plumbum
-        self.assertEqual(getattr(plumbum.cmd, 'does_not_exist', 1), 1)
+        pb = plumbum
+        self.assertEqual(getattr(pb.cmd, 'does_not_exist', 1), 1)
+        ls_cmd1 = pb.cmd.non_exist1N9 if hasattr(pb.cmd, 'non_exist1N9') else pb.cmd.ls
+        ls_cmd2 = getattr(pb.cmd, 'non_exist1N9', pb.cmd.ls)
+        self.assertEqual(str(ls_cmd1), str(local['ls']))
+        self.assertEqual(str(ls_cmd2), str(local['ls']))
 
     def test_imports(self):
         from plumbum.cmd import ls
@@ -115,14 +120,7 @@ class LocalMachineTest(unittest.TestCase):
         self.assertEqual(str(local['ls']),str(local.get('non_exist1N9', 'ls')))
         self.assertRaises(CommandNotFound, lambda: local.get("non_exist1N9"))
         self.assertRaises(CommandNotFound, lambda: local.get("non_exist1N9", "non_exist1N8"))
-
-    def test_getattr(self):
-        """Testing issue / feature request #193"""
-        import plumbum as pb
-        ls_cmd1 = pb.cmd.non_exist1N9 if hasattr(pb.cmd, 'non_exist1N9') else pb.cmd.ls
-        ls_cmd2 = getattr(pb.cmd, 'non_exist1N9', pb.cmd.ls)
-        self.assertEqual(str(ls_cmd1), str(local['ls']))
-        self.assertEqual(str(ls_cmd2), str(local['ls']))
+        self.assertRaises(CommandNotFound, lambda: local.get("non_exist1N9", "/tmp/non_exist1N8"))
 
     def test_cwd(self):
         from plumbum.cmd import ls
