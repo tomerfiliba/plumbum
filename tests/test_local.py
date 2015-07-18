@@ -93,7 +93,7 @@ class LocalPathTest(unittest.TestCase):
 
 class LocalMachineTest(unittest.TestCase):
     def test_getattr(self):
-        import plumbum
+        import plumbum as pb
         self.assertEqual(getattr(pb.cmd, 'does_not_exist', 1), 1)
         ls_cmd1 = pb.cmd.non_exist1N9 if hasattr(pb.cmd, 'non_exist1N9') else pb.cmd.ls
         ls_cmd2 = getattr(pb.cmd, 'non_exist1N9', pb.cmd.ls)
