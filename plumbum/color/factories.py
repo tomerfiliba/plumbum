@@ -100,6 +100,15 @@ class StyleFactory(ColorFactory):
         for item in style.attribute_names:
             setattr(self, item.upper(), style(attributes={item:True}))
 
+    @property
+    def use_color(self):
+        """Shortcut for setting color usage on Style"""
+        return self._style.use_color
+
+    @use_color.setter
+    def use_color(self, val):
+        self._style.use_color = val
+
     def from_ansi(self, ansi_sequence):
         """Calling this is a shortcut for creating a style from an ANSI sequence."""
         return self._style.from_ansi(ansi_sequence)

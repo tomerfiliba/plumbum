@@ -119,6 +119,7 @@ class TestColor(unittest.TestCase):
         self.assertEqual("This is tagged" << HTMLCOLOR.RED + HTMLCOLOR.EM, twin_tagged)
         self.assertEqual("This is tagged" << HTMLCOLOR.EM << HTMLCOLOR.RED, twin_tagged)
         self.assertEqual(HTMLCOLOR.EM * HTMLCOLOR.RED * "This is tagged", twin_tagged)
+        self.assertEqual(HTMLCOLOR.RED << "This should be wrapped", "This should be wrapped" << HTMLCOLOR.RED)
 
 if __name__ == '__main__':
     unittest.main()

@@ -374,7 +374,7 @@ class Style(object):
     """This class supports ``"String:" << color`` syntax"""
 
     __rmul__ = wrap
-    """This class supports ``"String:" * color`` syntax"""
+    """This class supports ``"String:" * color`` syntax. Buggy in some versions of python"""
 
     def now(self, *printable):
         """\
