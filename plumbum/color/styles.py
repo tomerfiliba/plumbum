@@ -264,7 +264,7 @@ class Style(object):
         self.fg = fgcolor
         self.bg = bgcolor
         self.reset = reset
-        invalid_attributes = set(self.attributes) - self.attribute_names
+        invalid_attributes = set(self.attributes) - set(self.attribute_names)
         if len(invalid_attributes) > 0:
             raise AttributeNotFound("Attribute(s) not valid: " + ", ".join(invalid_attributes))
 
@@ -358,22 +358,44 @@ class Style(object):
         """Wrap a sting in this style and its inverse."""
         return self + wrap_this - self
 
-    def __lshift__(self, other):
-        """This class support "String:" << color << color2 syntax"""
-        return self + other
+    def __mul__(self, other):
+        """This class supports ``color * color2`` syntax,
+        and ``color * "String" syntax too.``"""
+        if type(self) == type(other):
+            return self + other
+        else:
+            return self.wrap(other)
+
+    __lshift__ = __mul__
+    """This class supports ``color << color2`` syntax. It also supports
+    ``"color << "String"`` syntax too. """
 
     __rlshift__ = wrap
+    """This class supports ``"String:" << color`` syntax"""
 
+    __rmul__ = wrap
+    """This class supports ``"String:" * color`` syntax"""
 
     def now(self, *printable):
-        """This is a shortcut to print color immediatly to the stdout.
+        """\
+        This is a shortcut to print color immediatly to the stdout.
         If called without arguments, this will change the Style immediatly.
         If called with an argument, will print that argument to stdout wrapped
         in Style."""
+
         if printable:
             self.stdout.write(self.wrap(' '.join(map(str,printable))))
         else:
             self.stdout.write(str(self))
+
+    def line(self, *printable):
+        """\
+        This will print out a line of colored text. Similar to .now, except for
+        printing a newline at the end."""
+        if printable:
+            self.stdout.write(self.wrap(' '.join(map(str, printable))) + '\n')
+        else:
+            self.stdout.write(str(self) + '\n')
 
     def __call__(self, *printable):
         """Without arguments, this will change the current stdout color instantly.
@@ -506,7 +528,7 @@ class ANSIStyle(Style):
 
     use_color = sys.stdout.isatty() and os.name == "posix"
 
-    attribute_names = set(attributes_ansi)
+    attribute_names = attributes_ansi
 
     def __str__(self):
         if self.use_color:
@@ -518,30 +540,29 @@ class HTMLStyle(Style):
     """This was meant to be a demo of subclassing Style, but
     actually can be a handy way to quicky color html text."""
 
-    attribute_names = set(('bold','em'))
+    attribute_names = dict(bold='b', em='em', li='li', underline='span style="text-decoration: underline;"', code='code', ol='ol start=0')
 
     def __str__(self):
+
         if self.reset:
             raise ResetNotSupported("HTML does not support global resets!")
 
         result = ''
 
-        if self.fg and not self.fg.reset:
-            result += '<font color="{0}">'.format(self.fg.html_hex_code)
         if self.bg and not self.bg.reset:
             result += '<span style="background-color: {0}">'.format(self.bg.html_hex_code)
-        if 'bold' in self.attributes and self.attributes['bold']:
-            result += '<b>'
-        if 'em' in self.attributes and self.attributes['em']:
-            result += '<em>'
+        if self.fg and not self.fg.reset:
+            result += '<font color="{0}">'.format(self.fg.html_hex_code)
+        for attr in sorted(self.attributes):
+            if self.attributes[attr]:
+                result += '<' + self.attribute_names[attr] + '>'
 
+        for attr in reversed(sorted(self.attributes)):
+            if not self.attributes[attr]:
+                result += '</' + self.attribute_names[attr].split(" ")[0] + '>'
         if self.fg and self.fg.reset:
             result += '</font>'
         if self.bg and self.bg.reset:
             result += '</span>'
-        if 'bold' in self.attributes and not self.attributes['bold']:
-            result += '</b>'
-        if 'em' in self.attributes and not self.attributes['em']:
-            result += '</em>'
 
         return result

@@ -44,7 +44,8 @@ The ``COLOR`` object has the following properties:
 A color can be used directly as if it was a string, for adding to strings or printing.
 Calling a color without an argument will send the color to stdout. Calling a
 color with an argument will wrap the string in the color and the matching negation.
-(to avoid accedintally sending a color to stdout, you can also use `[]` syntax).
+(to avoid accedintally sending a color to stdout, you can also use `[]` syntax). You
+can also wrap a string in a color using ``<<`` or ``*`` syntax.
 Any color can be used as the target of a with statement, and normal color
 will be restored on exiting the with statement, even when an Exception occurs.
  
@@ -116,34 +117,28 @@ HTML Subclass Example
 For example, if you wanted to create an HTMLStyle and HTMLCOLOR, you could do::
 
     class HTMLStyle(Style):
-
-        attribute_names = set(('bold','em'))
+        attribute_names = dict(bold='b', em='em', li='li', code='code')
 
         def __str__(self):
-            if self.reset:
-                raise ResetNotSupported("HTML does not support global resets!") 
             result = ''
-    
-            if self.fg and not self.fg.reset:
-                result += '<font color="{0}">'.format(self.fg.html_hex_code)
+
             if self.bg and not self.bg.reset:
                 result += '<span style="background-color: {0}">'.format(self.bg.html_hex_code)
-            if 'bold' in self.attributes and self.attributes['bold']:
-                result += '<b>'
-            if 'em' in self.attributes and self.attributes['em']:
-                result += '<em>'
-    
+            if self.fg and not self.fg.reset:
+                result += '<font color="{0}">'.format(self.fg.html_hex_code)
+            for attr in sorted(self.attributes):
+                if self.attributes[attr]:
+                    result += '<' + self.attribute_names[attr] + '>'
+     
+            for attr in reversed(sorted(self.attributes)):
+                if not self.attributes[attr]:
+                    result += '</' + self.attribute_names[attr].split()[0] + '>'
             if self.fg and self.fg.reset:
                 result += '</font>'
             if self.bg and self.bg.reset:
                 result += '</span>'
-            if 'bold' in self.attributes and not self.attributes['bold']:
-                result += '</b>'
-            if 'em' in self.attributes and not self.attributes['em']:
-                result += '</em>'
-    
-            return result
 
+            return result
 
     HTMLCOLOR = StyleFactory(HTMLStyle)
     
@@ -151,20 +146,19 @@ This doesn't support global RESETs, but otherwise is a working implementation. T
 
 An example of usage::
 
-    >>> (HTMLCOLOR.BOLD + HTMLCOLOR.RED)("This is colored text")
-    '<font color="#800000"><b>This is colored text</font></b>'
+    >>> "This is colored text" << HTMLCOLOR.BOLD + HTMLCOLOR.RED
+    '<font color="#800000"><b>This is colored text</b></font>'
 
 
 The above colortable can be generated with::
 
     with open('_color_list.html', 'wt') as f:
-        print('<ol start=0>', file=f)
-        for color in HTMLCOLOR:
-            print("  <li>{0} <code>{1}</code> {2} </li>"
-                  .format(color("&#x25a0"),
-                          color.fg.html_hex_code,
-                          color.fg.name_camelcase), file=f)
-        print('</ol>', file=f)
+        with HTMLCOLOR.OL:
+            for color in HTMLCOLOR:
+                HTMLCOLOR.LI.line(
+                    "&#x25a0" << color,
+                    color.fg.html_hex_code << HTMLCOLOR.CODE,
+                    color.fg.name_camelcase)
 
 
 .. note::

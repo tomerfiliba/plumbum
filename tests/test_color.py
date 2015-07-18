@@ -51,9 +51,21 @@ class TestColor(unittest.TestCase):
         color = COLOR.RESET
         self.assertEqual(color, COLOR.from_ansi(str(color)))
 
+    def testWrappedColor(self):
+        string = 'This is a string'
+        wrapped = '\033[31mThis is a string\033[39m'
+        self.assertEqual(COLOR.RED.wrap(string), wrapped)
+        self.assertEqual(string << COLOR.RED, wrapped)
+        self.assertEqual(COLOR.RED(string), wrapped)
+        self.assertEqual(COLOR.RED[string], wrapped)
+
+        newcolor = COLOR.BLUE + COLOR.UNDERLINE
+        self.assertEqual(newcolor(string), string << newcolor)
+        self.assertEqual(newcolor(string), string << COLOR.BLUE + COLOR.UNDERLINE)
 
     def testUndoColor(self):
         self.assertEqual('\033[39m', -COLOR.FG)
+        self.assertEqual('\033[39m', ~COLOR.FG)
         self.assertEqual('\033[39m', ''-COLOR.FG)
         self.assertEqual('\033[49m', -COLOR.BG)
         self.assertEqual('\033[49m', ''-COLOR.BG)
@@ -98,8 +110,15 @@ class TestColor(unittest.TestCase):
         COLOR.RESET()
 
     def test_html(self):
-        self.assertEqual(HTMLCOLOR.RED("This is tagged"),
-                '<font color="#800000">This is tagged</font>')
+        red_tagged = '<font color="#800000">This is tagged</font>'
+        self.assertEqual(HTMLCOLOR.RED("This is tagged"), red_tagged)
+        self.assertEqual("This is tagged" << HTMLCOLOR.RED, red_tagged)
+        self.assertEqual("This is tagged" * HTMLCOLOR.RED, red_tagged)
+
+        twin_tagged = '<font color="#800000"><em>This is tagged</em></font>'
+        self.assertEqual("This is tagged" << HTMLCOLOR.RED + HTMLCOLOR.EM, twin_tagged)
+        self.assertEqual("This is tagged" << HTMLCOLOR.EM << HTMLCOLOR.RED, twin_tagged)
+        self.assertEqual(HTMLCOLOR.EM * HTMLCOLOR.RED * "This is tagged", twin_tagged)
 
 if __name__ == '__main__':
     unittest.main()

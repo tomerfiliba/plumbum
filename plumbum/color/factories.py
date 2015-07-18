@@ -58,6 +58,7 @@ class ColorFactory(object):
     def __neg__(self):
         """Allows clearing a color"""
         return self.RESET
+    __invert__ = __neg__
 
     def __rsub__(self, other):
         return other + (-self)
@@ -102,3 +103,11 @@ class StyleFactory(ColorFactory):
     def from_ansi(self, ansi_sequence):
         """Calling this is a shortcut for creating a style from an ANSI sequence."""
         return self._style.from_ansi(ansi_sequence)
+
+    @property
+    def stdout(self):
+        """This is a shortcut for getting stdout from a class without an instance."""
+        return self._style._stdout if self._style._stdout is not None else sys.stdout
+    @stdout.setter
+    def stdout(self, newout):
+        self._style._stdout = newout
