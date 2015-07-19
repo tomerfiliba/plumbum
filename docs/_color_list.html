@@ -1,3 +1,44 @@
+<style  type="text/css">
+
+div.columnwrapper li {
+margin: 0 0 0 3.5em;
+}
+
+
+div.columnwrapper ol {
+    -moz-column-width: 18em;
+    -moz-column-gap: 10px;
+    -webkit-column-width: 18em;
+    -webkit-column-gap: 10px;
+    column-width: 18em;
+    column-gap: 10px;
+}
+
+
+@media only screen and (max-device-width: 480px) {
+div.columnwrapper ol {
+    -moz-column-width: 480px;
+    -moz-column-gap: 0;
+    -webkit-column-width: 480px;
+    -webkit-column-gap: 0;
+    column-width: 480px;
+    column-gap: 0;
+}
+}
+
+@media only screen and (max-device-width: 640px) {
+div.columnwrapper ol {
+    -moz-column-width: 480px;
+    -moz-column-gap: 0;
+    -webkit-column-width: 480px;
+    -webkit-column-gap: 0;
+    column-width: 480px;
+    column-gap: 0;
+}
+}
+
+</style>
+<div class="columnwrapper">
 <ol start=0>
   <li><font color="#000000">&#x25a0</font> <code>#000000</code> Black</li>
   <li><font color="#800000">&#x25a0</font> <code>#800000</code> Red</li>
@@ -256,3 +297,5 @@
   <li><font color="#e4e4e4">&#x25a0</font> <code>#e4e4e4</code> Grey89</li>
   <li><font color="#eeeeee">&#x25a0</font> <code>#eeeeee</code> Grey93</li>
 </ol>
+</div>
+<div style="clear: both;"></div>
