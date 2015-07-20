@@ -11,6 +11,14 @@ class TestANSIColor(unittest.TestCase):
     def setUp(self):
         COLOR.use_color = True
 
+    def testColorSlice(self):
+        vals = COLOR[:8]
+        self.assertEqual(len(vals),8)
+        self.assertEqual(vals[1], COLOR.RED)
+        vals = COLOR[40:50]
+        self.assertEqual(len(vals),10)
+        self.assertEqual(vals[1], COLOR.full(41))
+
     def testColorStrings(self):
         self.assertEqual('\033[0m', COLOR.RESET)
         self.assertEqual('\033[1m', COLOR.BOLD)

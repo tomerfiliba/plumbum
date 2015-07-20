@@ -5,10 +5,8 @@ Color-related factories. They produce Styles.
 
 from __future__ import print_function
 import sys
-import os
-from functools import partial
-from contextlib import contextmanager
 from plumbum.color.names import color_names
+from plumbum.color.styles import ColorNotFound
 
 __all__ = ['ColorFactory', 'StyleFactory']
 
@@ -47,18 +45,27 @@ class ColorFactory(object):
 
 
     def __getitem__(self, val):
-        """Shortcut to provide way to access extended colors."""
+        """\
+        Shortcut to provide way to access colors numerically or by slice.
+        If end <= 16, will stay to simple ansi version."""
         try:
+            (start, stop, stride) = val.indices(256)
+            if stop <= 16:
+                return [self.simple(v) for v in range(start, stop, stride)]
+            else:
+                return [self.full(v) for v in range(start, stop, stride)]
+        except AttributeError:
             return self.full(val)
-        except ColorNotFound:
-            return self.hex(val)
 
     def __call__(self, val):
-        """Shortcut to provide way to access simple colors."""
+        """Shortcut to provide way to access colors."""
         try:
             return self.simple(val)
         except ColorNotFound:
-            return self.hex(val)
+            try:
+                return self.full(val)
+            except ColorNotFound:
+                return self.hex(val)
 
     def __iter__(self):
         """Iterates through all colors in extended colorset."""
