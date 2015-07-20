@@ -57,13 +57,17 @@ class TestANSIColor(unittest.TestCase):
         self.assertEqual(COLOR.BG.GREEN, COLOR.BG.RED + COLOR.BG.GREEN)
 
     def testFromAnsi(self):
-        for color in COLOR.simple_colorful:
+        for color in COLOR[1:7]:
             self.assertEqual(color, COLOR.from_ansi(str(color)))
-        for color in COLOR.BG.simple_colorful:
+        for color in COLOR.BG[1:7]:
             self.assertEqual(color, COLOR.from_ansi(str(color)))
         for color in COLOR:
             self.assertEqual(color, COLOR.from_ansi(str(color)))
         for color in COLOR.BG:
+            self.assertEqual(color, COLOR.from_ansi(str(color)))
+        for color in COLOR[:16]:
+            self.assertEqual(color, COLOR.from_ansi(str(color)))
+        for color in COLOR.BG[:16]:
             self.assertEqual(color, COLOR.from_ansi(str(color)))
         for color in (COLOR.BOLD, COLOR.UNDERLINE, COLOR.ITALICS):
             self.assertEqual(color, COLOR.from_ansi(str(color)))

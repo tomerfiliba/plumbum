@@ -77,7 +77,7 @@ class Color(object):
     def _init_number(self):
         """Should always be called after filling in r, g, b. Color will not be a reset color anymore."""
         if self.simple:
-            self.number = find_nearest_simple_color(*self.rgb)
+            self.number = find_nearest_color(self.rgb[0], self.rgb[1], self.rgb[2], slice(0,16))
             self.exact = self.rgb == from_html(color_html[self.number])
         else:
             self.number = find_nearest_color(*self.rgb)
@@ -526,9 +526,9 @@ class Style(object):
                 elif 40 <= value <= 47:
                     self.bg = self.color_class.from_simple(value-40, fg=False)
                 elif 90 <= value <= 97:
-                    self.fg = self.color_class.from_simple(value-90)
+                    self.fg = self.color_class.from_simple(value-90+8)
                 elif 100 <= value <= 107:
-                    self.bg = self.color_class.from_simple(value-100, fg=False)
+                    self.bg = self.color_class.from_simple(value-100+8, fg=False)
                 elif value == 39:
                     self.fg = self.color_class()
                 elif value == 49:

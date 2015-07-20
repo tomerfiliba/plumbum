@@ -21,7 +21,7 @@ class ColorFactory(object):
         self._style = style
         self.RESET = style.from_color(style.color_class(fg=fg))
 
-        # Adding the color name shortcuts for forground colors
+        # Adding the color name shortcuts for foreground colors
         for item in color_names[:16]:
             setattr(self, item.upper(), style.from_color(style.color_class.from_simple(item, fg=fg)))
 
@@ -47,7 +47,7 @@ class ColorFactory(object):
     def __getitem__(self, val):
         """\
         Shortcut to provide way to access colors numerically or by slice.
-        If end <= 16, will stay to simple ansi version."""
+        If end <= 16, will stay to simple ANSI version."""
         try:
             (start, stop, stride) = val.indices(256)
             if stop <= 16:

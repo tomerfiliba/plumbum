@@ -22,7 +22,7 @@ class TestVisualColor(unittest.TestCase):
 
     def testVisualColors(self):
         print()
-        for c in (COLOR.FG(x) for x in range(1, 6)):
+        for c in COLOR.FG[:16]:
             with c:
                 print('Cycle color test', end=' ')
             print(' - > back to normal')
