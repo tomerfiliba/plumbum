@@ -3,6 +3,7 @@ import unittest
 from plumbum import COLOR
 from plumbum.color.styles import ANSIStyle as Style
 from plumbum.color import HTMLCOLOR
+import sys
 
 class TestColor(unittest.TestCase):
 
@@ -19,10 +20,22 @@ class TestColor(unittest.TestCase):
         self.assertEqual(COLOR.FG.RESET, -COLOR.FG)
         self.assertEqual(COLOR.BG.RESET, -COLOR.BG)
 
+    def testShifts(self):
+        self.assertEqual("This" << COLOR.RED, "This" >> COLOR.RED)
+        self.assertEqual("This" << COLOR.RED, "This" << COLOR.RED)
+        if sys.version_info >= (2, 7):
+            self.assertEqual("This" << COLOR.RED, "This" * COLOR.RED)
+        self.assertEqual("This" << COLOR.RED, COLOR.RED << "This")
+        self.assertEqual("This" << COLOR.RED, COLOR.RED << "This")
+        self.assertEqual("This" << COLOR.RED, COLOR.RED * "This")
+        self.assertEqual(COLOR.RED.wrap("This"), "This" << COLOR.RED)
+
     def testLoadColorByName(self):
         self.assertEqual(COLOR['LightBlue'], COLOR.FG['LightBlue'])
         self.assertEqual(COLOR.BG['light_green'], COLOR.BG['LightGreen'])
         self.assertEqual(COLOR['DeepSkyBlue1'], COLOR['#00afff'])
+        self.assertEqual(COLOR['DeepSkyBlue1'], COLOR.hex('#00afff'))
+
         self.assertEqual(COLOR['DeepSkyBlue1'], COLOR[39])
 
     def testMultiColor(self):

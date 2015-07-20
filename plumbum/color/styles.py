@@ -68,7 +68,7 @@ class Color(object):
             try:
                 self._from_full(r_or_color)
             except ColorNotFound:
-                self._from_html(r_or_color)
+                self._from_hex(r_or_color)
 
 
         elif None not in (r_or_color, g, b):
@@ -147,14 +147,14 @@ class Color(object):
         self._init_number()
 
     @classmethod
-    def from_html(cls, color, fg=True):
+    def from_hex(cls, color, fg=True):
         """Converts #123456 values to colors."""
 
         self = cls(fg=fg)
-        self._from_html(color)
+        self._from_hex(color)
         return self
 
-    def _from_html(self, color):
+    def _from_hex(self, color):
         try:
             self.rgb = from_html(color)
         except (TypeError, ValueError):
@@ -246,6 +246,7 @@ class Style(object):
     color_class = Color
     attribute_names = valid_attributes # a set of valid names
     _stdout = None
+    end = '\n'
 
     @property
     def stdout(self):
@@ -319,6 +320,7 @@ class Style(object):
         """This negates the effect of the current color"""
         return self.invert()
     __invert__ = __neg__
+    """This allows ~color == -color."""
 
     def __sub__(self, other):
        """Implemented to make muliple Style objects work"""
@@ -334,7 +336,8 @@ class Style(object):
         the string concatiation of a style.
 
         Addition is non-communitive, with the rightmost Style property
-        being taken if both have the same property."""
+        being taken if both have the same property.
+        (Not safe)"""
         if type(self) == type(other):
             result = copy(other)
 
@@ -351,7 +354,7 @@ class Style(object):
             return other.__class__(self) + other
 
     def __radd__(self, other):
-        """This only gets called if the string is on the left side."""
+        """This only gets called if the string is on the left side. (Not safe)"""
         return other + other.__class__(self)
 
     def wrap(self, wrap_this):
@@ -366,44 +369,54 @@ class Style(object):
         else:
             return self.wrap(other)
 
-    __lshift__ = __mul__
-    """This class supports ``color << color2`` syntax. It also supports
-    ``"color << "String"`` syntax too. """
+    __rmul__ = wrap
+    """This class supports ``"String:" * color`` syntax, excpet in Python 2.6 due to bug with that Python."""
 
     __rlshift__ = wrap
     """This class supports ``"String:" << color`` syntax"""
 
-    __rmul__ = wrap
-    """This class supports ``"String:" * color`` syntax. Buggy in some versions of python"""
+    __lshift__ = __mul__
+    """This class supports ``color << color2`` syntax. It also supports
+    ``"color << "String"`` syntax too. """
 
-    def now(self, *printable):
+    __rrshift__ = wrap
+    """This class supports ``"String:" >> color`` syntax"""
+
+    __rshift__ = __mul__
+    """This class supports ``color >> "String"`` syntax. It also supports
+    ``"color >> color2`` syntax too. """
+
+
+    def __call__(self, wrap_this = None):
         """\
-        This is a shortcut to print color immediatly to the stdout.
-        If called without arguments, this will change the Style immediatly.
-        If called with an argument, will print that argument to stdout wrapped
-        in Style."""
+        This is a shortcut to print color immediatly to the stdout. (Not safe)
+        If called with an argument, will wrap that argument."""
 
-        if printable:
-            self.stdout.write(self.wrap(' '.join(map(str,printable))))
-        else:
-            self.stdout.write(str(self))
-
-    def line(self, *printable):
-        """\
-        This will print out a line of colored text. Similar to .now, except for
-        printing a newline at the end."""
-        if printable:
-            self.stdout.write(self.wrap(' '.join(map(str, printable))) + '\n')
-        else:
-            self.stdout.write(str(self) + '\n')
-
-    def __call__(self, *printable):
-        """Without arguments, this will change the current stdout color instantly.
-        With arguments, they will be wrapped in style and returned."""
-        if printable:
-            return self.wrap(*printable)
+        if wrap_this is not None:
+            return self.wrap(wrap_this)
         else:
             self.now()
+
+    def now(self):
+        '''Immediatly writes color to stdout. (Not safe)'''
+        self.stdout.write(str(self))
+
+    def print(*printables, **kargs):
+        """\
+        This acts like print; will print that argument to stdout wrapped
+        in Style with the same syntax as the print function in 3.4."""
+
+        end = kargs.get('end', self.end)
+        sep = kargs.get('sep', ' ')
+        file = kargs.get('file', self.stdout)
+        flush = kargs.get('flush', False)
+        file.write(self.wrap(sep.join(map(str,printables))) + end)
+        if flush:
+            file.flush()
+
+
+    print_ = print
+    """Shortcut just in case user not using __future__"""
 
     def __getitem__(self, wrap_this):
         """The [] syntax is supported for wrapping"""
@@ -541,6 +554,7 @@ class HTMLStyle(Style):
     actually can be a handy way to quicky color html text."""
 
     attribute_names = dict(bold='b', em='em', li='li', underline='span style="text-decoration: underline;"', code='code', ol='ol start=0')
+    end = '<br/>\n'
 
     def __str__(self):
 

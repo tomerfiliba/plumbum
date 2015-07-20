@@ -333,7 +333,7 @@ def find_nearest_simple_color(r, g, b):
 
 
 def from_html(color):
-    if len(color) != 7:
+    if len(color) != 7 or color[0] != '#':
         raise ValueError("Invalid length of html code")
     return (int(color[1:3],16), int(color[3:5],16), int(color[5:7],16))
 

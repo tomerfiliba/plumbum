@@ -42,6 +42,10 @@ class ColorFactory(object):
         """Return the extended color scheme color for a value."""
         return self._style.from_color(self._style.color_class(r, g, b, fg=self._fg))
 
+    def hex(self, hexcode):
+        """Return the extended color scheme color for a value."""
+        return self._style.from_color(self._style.color_class.from_hex(hexcode, fg=self._fg))
+
 
     def __getitem__(self, val):
         """Shortcut to provide way to access extended colors."""

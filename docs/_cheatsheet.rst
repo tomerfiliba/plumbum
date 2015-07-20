@@ -108,17 +108,22 @@ Sample output::
 
 **Color controls**::
 
-    from plumbum import COLOR
     with COLOR.RED:
-        print("Warning! I said " + COLOR.BOLD("WARNING") + "!")
-    print("That was an", COLOR.GREEN + "important" - COLOR.GREEN, "warning!")
+        print("This library provides safe, flexible color access.")
+            print("Color", "(and styles in general)" << COLOR.BOLD, "are easy!")
+            print("The simple 8 colors or", 'All 265' << COLOR['Orchid'] + COLOR.UNDERLINE, 'can be used.')
+            print("Unsafe " + COLOR.BG['DarkKhaki'] + "color access" - COLOR.BG + " is available too.")
 
 Sample output:
 
 .. raw:: html
 
     <div class="highlight">
-    <pre><code><font color="red">Warning! I said <b>WARNING</b>!</font>
-    That was an <font color="green">important</font> warning!</code></pre>
+    <code>
+    <pre><font color="#800000">This library provides safe color access.
+    Color <b>(and styles in general)</b> are easy!
+    </font>The simple 8 colors or <font color="#D75FD7"><span style="text-decoration: underline;">All 265</span></font> can be used.
+    Unsafe <span style="background-color: #AFAF5F">color access</span> is available too.</pre>
+    </code>
     </div>
 
