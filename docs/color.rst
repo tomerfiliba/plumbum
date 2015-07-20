@@ -117,7 +117,7 @@ These produce strings that can be further manipulated or printed.
   that takes preference over concatination is prefered. However, a bug in Python 2.6 causes right
   multiplication with a string, such as ``"string" * color``, to be impossible to implement.
   This was fixed in all newer Pythons. If you are not planning on `supporting Python
-  2.6 http://www.curiousefficiency.org/posts/2015/04/stop-supporting-python26.html>`_, feel
+  2.6 <http://www.curiousefficiency.org/posts/2015/04/stop-supporting-python26.html>`_, feel
   free to use this method.
 
 Finally, you can also print a color to stdout directly using ``color("string")``. This
