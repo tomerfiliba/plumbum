@@ -5,10 +5,10 @@ from plumbum.color.styles import ANSIStyle as Style
 from plumbum.color import HTMLCOLOR
 import sys
 
-class TestColor(unittest.TestCase):
+class TestANSIColor(unittest.TestCase):
 
     def setUp(self):
-        Style.use_color = True
+        COLOR.use_color = True
 
     def testColorStrings(self):
         self.assertEqual('\033[0m', COLOR.RESET)
@@ -103,7 +103,26 @@ class TestColor(unittest.TestCase):
         self.assertEqual('', -COLOR.FG)
         self.assertEqual('', COLOR.FG['LightBlue'])
 
-    def testVisualColors(self):
+
+            
+class TestVisualColor(unittest.TestCase):
+
+    def setUp(self):
+        try:
+            import colorama
+            colorama.init()
+            self.colorama = colorama
+            COLOR.use_color = True
+            print()
+            print("Colorama initialized")
+        except ImportError:
+            self.colorama = None
+            
+    def tearDown(self):
+        if self.colorama:
+            self.colorama.deinit()
+            
+    def testVisualColors(self):            
         print()
         for c in (COLOR.FG(x) for x in range(1, 6)):
             with c:
@@ -114,14 +133,16 @@ class TestColor(unittest.TestCase):
                   + COLOR.BOLD + "Bold "
                   - COLOR.BOLD + "Normal")
         print("Reset all")
-
+        
     def testToggleColors(self):
         print()
-        print(COLOR.FG.RED("this is in red"), "but this is not")
+        print(COLOR.FG.RED("This is in red"), "but this is not")
         print(COLOR.FG.GREEN + "Hi, " + COLOR.BG[23]
               + "This is on a BG" - COLOR.BG + " and this is not")
+        COLOR.YELLOW.print("This is printed from color.")
         COLOR.RESET()
 
+class TestHTMLColor(unittest.TestCase):
     def test_html(self):
         red_tagged = '<font color="#800000">This is tagged</font>'
         self.assertEqual(HTMLCOLOR.RED("This is tagged"), red_tagged)

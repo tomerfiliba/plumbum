@@ -44,6 +44,14 @@ from plumbum import cli
 # from plumbum.color import Style
 # Style.use_color = False
 
+try:
+    import colorama
+    colorama.init()
+    from plumbum import COLOR
+    COLOR.use_color = True
+except ImportError:
+    pass
+
 class Geet(cli.ColorfulApplication):
     """The l33t version control"""
     PROGNAME = "geet"
