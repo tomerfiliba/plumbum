@@ -1,13 +1,13 @@
 from __future__ import with_statement, print_function
 import unittest
 from plumbum.color.styles import ANSIStyle, Color, AttributeNotFound, ColorNotFound
-from plumbum.color.names import find_nearest_color, color_html_full, find_nearest_simple_color
+from plumbum.color.names import find_nearest_color, color_html, find_nearest_simple_color
 
 
 class TestNearestColor(unittest.TestCase):
     def test_exact(self):
         self.assertEqual(find_nearest_color(0,0,0),0)
-        for n,color in enumerate(color_html_full):
+        for n,color in enumerate(color_html):
             # Ignoring duplicates
             if n not in (16, 21, 46, 51, 196, 201, 226, 231, 244):
                 rgb = (int(color[1:3],16), int(color[3:5],16), int(color[5:7],16))
