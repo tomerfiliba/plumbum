@@ -106,13 +106,14 @@ Sample output::
     Include dirs: ['foo/bar', 'spam/eggs']
     Compiling: ('x.cpp', 'y.cpp', 'z.cpp')
 
-**Color controls**::
+**Color controls** ::
 
+    from plumbum import COLOR
     with COLOR.RED:
         print("This library provides safe, flexible color access.")
-            print("Color", "(and styles in general)" << COLOR.BOLD, "are easy!")
-            print("The simple 8 colors or", 'All 265' << COLOR['Orchid'] + COLOR.UNDERLINE, 'can be used.')
-            print("Unsafe " + COLOR.BG['DarkKhaki'] + "color access" - COLOR.BG + " is available too.")
+        print("Color", "(and styles in general)" << COLOR.BOLD, "are easy!")
+    print("The simple 8 colors or", 'All 265' << COLOR['Orchid'] + COLOR.UNDERLINE, 'can be used.')
+    print("Unsafe " + COLOR.BG['DarkKhaki'] + "color access" - COLOR.BG + " is available too.")
 
 Sample output:
 

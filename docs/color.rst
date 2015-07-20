@@ -57,7 +57,7 @@ Style manipulations
 Safe color manipulations refer to changes that reset themselves at some point. Unsafe manipulations
 must be manually reset, and can leave your terminal color in an unreadable state if you forget
 to reset the color or encounter an exception. If you do get the color unset on a terminal, the
-following, typed into the command line, will restore it::
+following, typed into the command line, will restore it:
 
 .. code:: bash
 
@@ -66,9 +66,9 @@ following, typed into the command line, will restore it::
 Unsafe Manipulation
 ^^^^^^^^^^^^^^^^^^^
 
-Styles have two unsafe operations: Concatenation (with ``+``) and calling ``.now()`` without
+Styles have two unsafe operations: Concatenation (with ``+`` and a string) and calling ``.now()`` without
 arguments (directly calling a style is also a shortcut for ``.now``). These two
-operations do not restore normal color to the terminal. To protect their use,
+operations do not restore normal color to the terminal by themselves. To protect their use,
 you should always use a context manager around any unsafe operation.
 
 An example of the usage of unsafe ``COLOR`` manipulations inside a context manager::
@@ -120,8 +120,10 @@ These produce strings that can be further manipulated or printed.
   2.6 <http://www.curiousefficiency.org/posts/2015/04/stop-supporting-python26.html>`_, feel
   free to use this method.
 
-Finally, you can also print a color to stdout directly using ``color("string")``. This
-has the same syntax as the Python 3 print function.
+Finally, you can also print a color to stdout directly using ``color.print("string")``. This
+has the same syntax as the Python 3 print function. In Python 2, if you do not have
+``from __future__ import print_function`` enabled, ``color.print_("string")`` is provided as
+an alternative, following the PyQT convention for method names that match reserved Python syntax.
 
 An example of safe manipulations::
 
@@ -146,7 +148,11 @@ Output:
     </font>Not red color or bold.<br/>
     <font color="#800080"><b>This is bold and colorful!</b></font> And this is not.</p>
 
+Style Combinations
+^^^^^^^^^^^^^^^^^^
 
+You can combine styles with ``+``, ``*``, ``<<``, or ``>>``, and they will create a new combined Style object. Colors will not be "summed" or otherwise combined; the rightmost color will be used (this matches the expected effect of
+applying the Styles individually to the strings). However, combined Styles are intelligent and know how to reset just the properties that they contain. As you have seen in the example above, the combined style ``(COLOR.MAGENTA + COLOR.BOLD)`` can be used in any way a normal Style can.
 
 256 Color Support
 =================
@@ -180,14 +186,14 @@ you need to initialize an object of ``StyleFactory`` with your intended Style. F
 
     COLOR = StyleFactory(ANSIStyle)
 
-HTML Subclass Example
-^^^^^^^^^^^^^^^^^^^^^
+Subclassing Style
+^^^^^^^^^^^^^^^^^
 
 For example, if you wanted to create an HTMLStyle and HTMLCOLOR, you could do::
 
     class HTMLStyle(Style):
         attribute_names = dict(bold='b', em='em', li='li', code='code')
-        end = '<br/>'
+        end = '<br/>\n'
 
         def __str__(self):
             result = ''
@@ -236,7 +242,7 @@ The above color table can be generated with::
     ``HTMLStyle`` is implemented in the library, as well, with the
     ``HTMLCOLOR`` object available in ``plumbum.color``. It was used
     to create the colored output in this document, with small changes
-    because ``COLOR.RESET`` cannot supported with HTML.
+    because ``COLOR.RESET`` cannot be supported with HTML.
 
 See Also
 ========

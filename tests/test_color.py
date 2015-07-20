@@ -1,7 +1,8 @@
+#!/usr/bin/env python
 from __future__ import with_statement, print_function
 import unittest
 from plumbum import COLOR
-from plumbum.color.styles import ANSIStyle as Style
+from plumbum.color.styles import ANSIStyle as Style, ColorNotFound
 from plumbum.color import HTMLCOLOR
 import sys
 
@@ -103,44 +104,31 @@ class TestANSIColor(unittest.TestCase):
         self.assertEqual('', -COLOR.FG)
         self.assertEqual('', COLOR.FG['LightBlue'])
 
+    def testFromHex(self):
+        self.assertEqual(str(COLOR.hex('#020201')),str(COLOR.hex('#020202')))
+        self.assertRaises(ColorNotFound, lambda: COLOR.hex('asdf'))
+        self.assertRaises(ColorNotFound, lambda: COLOR.hex('#1234Z2'))
+        self.assertRaises(ColorNotFound, lambda: COLOR.hex(12))
 
-            
-class TestVisualColor(unittest.TestCase):
+    def testDirectCall(self):
+        COLOR.BLUE()
 
-    def setUp(self):
-        try:
-            import colorama
-            colorama.init()
-            self.colorama = colorama
-            COLOR.use_color = True
-            print()
-            print("Colorama initialized")
-        except ImportError:
-            self.colorama = None
-            
-    def tearDown(self):
-        if self.colorama:
-            self.colorama.deinit()
-            
-    def testVisualColors(self):            
-        print()
-        for c in (COLOR.FG(x) for x in range(1, 6)):
-            with c:
-                print('Cycle color test', end=' ')
-            print(' - > back to normal')
-        with COLOR:
-            print(COLOR.FG.GREEN + "Green "
-                  + COLOR.BOLD + "Bold "
-                  - COLOR.BOLD + "Normal")
-        print("Reset all")
-        
-    def testToggleColors(self):
-        print()
-        print(COLOR.FG.RED("This is in red"), "but this is not")
-        print(COLOR.FG.GREEN + "Hi, " + COLOR.BG[23]
-              + "This is on a BG" - COLOR.BG + " and this is not")
-        COLOR.YELLOW.print("This is printed from color.")
-        COLOR.RESET()
+        if not hasattr(sys.stdout, "getvalue"):
+            self.fail("Need to run in buffered mode!")
+
+        output = sys.stdout.getvalue().strip()
+        self.assertEquals(output,str(COLOR.BLUE))
+
+
+    def testPrint(self):
+        COLOR.YELLOW.print('This is printed to stdout')
+
+        if not hasattr(sys.stdout, "getvalue"):
+            self.fail("Need to run in buffered mode!")
+
+        output = sys.stdout.getvalue().strip()
+        self.assertEquals(output,str(COLOR.YELLOW('This is printed to stdout')))
+
 
 class TestHTMLColor(unittest.TestCase):
     def test_html(self):
@@ -156,4 +144,4 @@ class TestHTMLColor(unittest.TestCase):
         self.assertEqual(HTMLCOLOR.RED << "This should be wrapped", "This should be wrapped" << HTMLCOLOR.RED)
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(buffer=True)
