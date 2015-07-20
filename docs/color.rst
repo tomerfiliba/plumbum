@@ -162,7 +162,7 @@ applying the Styles individually to the strings). However, combined Styles are i
 =================
 
 While this library supports full 24 bit colors through escape sequences,
-the library has speciall support for the "full" 256 colorset through numbers,
+the library has special support for the "full" 256 colorset through numbers,
 names or HEX html codes. Even if you use 24 bit color, the closest name is displayed
 in the ``repr``. You can access the colors as
 as ``COLOR.FG(12)``, ``COLOR.FG('Light_Blue')``, ``COLOR.FG('LightBlue')``, or ``COLOR.FG('#0000FF')``.
