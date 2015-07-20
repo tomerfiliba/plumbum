@@ -29,12 +29,12 @@ The ``COLOR`` object has the following properties:
     ``FG`` and ``BG``
       The foreground and background colors, reset to default with ``COLOR.FG.RESET``
       or ``~COLOR.FG`` and likewise for ``BG``. (Named foreground colors are available
-      directly as well). The primary colors, ``BLACK``, ``RED``, ``GREEN``, ``YELLOW``,
-      ``BLUE``, ``MAGENTA``, ``CYAN``, ``WHITE``, as well as ``RESET``, are available.
-      You can also access colors numerically with ``COLOR.FG(n)``, for the standard colors,
-      and ``COLOR.FG[n]`` for the extended 256 color codes, and likewise for ``BG``. These
+      directly as well). The first 16 primary colors, ``BLACK``, ``RED``, ``GREEN``, ``YELLOW``,
+      ``BLUE``, ``MAGENTA``, ``CYAN``, etc, as well as ``RESET``, are available.
+      You can also access colors numerically with ``COLOR.FG(n)`` or  ``COLOR.FG(n)``
+      with the extended 256 color codes. These
       are ``ColorFactory`` instances.
-    ``BOLD``, ``DIM``, ``UNDERLINE``, ``BLINK``, ``REVERSE``, and ``HIDDEN``
+    ``BOLD``, ``DIM``, ``UNDERLINE``, ``ITALICS``, ``REVERSE``, ``STRIKEOUT``, and ``HIDDEN``
       All the `ANSI` modifiers are available, as well as their negations, such as ``~COLOR.BOLD`` or ``COLOR.BOLD.RESET``, etc.
     ``RESET``
       The global reset will restore all properties at once.
@@ -47,9 +47,11 @@ will restore the foreground and background color, respectively). Although it doe
 some of the same things as a Style, its primary purpose is to generate Styles.  
 
 If you call ``COLOR.from_ansi(seq)``, you can manually pass in any `ANSI` escape sequence,
-even complex or combined ones. ``COLOR.rgb(r,g,b)`` will find the closest color from an
+even complex or combined ones. ``COLOR.rgb(r,g,b)`` will create a color from an
 input red, green, and blue values (integers from 0-255). ``COLOR.hex(code)`` will allow
-you to input an html style hex sequence. These work on ``FG`` and ``BG`` too.
+you to input an html style hex sequence. These work on ``FG`` and ``BG`` too. The ``repr`` of
+styles is smart and will show you the closest color to the one you selected if you didn't exactly
+select a color through RGB. 
 
 Style manipulations
 ===================
@@ -67,7 +69,7 @@ Unsafe Manipulation
 ^^^^^^^^^^^^^^^^^^^
 
 Styles have two unsafe operations: Concatenation (with ``+`` and a string) and calling ``.now()`` without
-arguments (directly calling a style is also a shortcut for ``.now``). These two
+arguments (directly calling a style without arguments is also a shortcut for ``.now()``). These two
 operations do not restore normal color to the terminal by themselves. To protect their use,
 you should always use a context manager around any unsafe operation.
 
@@ -120,7 +122,9 @@ These produce strings that can be further manipulated or printed.
   2.6 <http://www.curiousefficiency.org/posts/2015/04/stop-supporting-python26.html>`_, feel
   free to use this method.
 
-Finally, you can also print a color to stdout directly using ``color.print("string")``. This
+Finally, you can also print a color to stdout directly using ``color("string")`` or
+``color.print("string")``. Since the first can be an unsafe operation if you forget an arguement,
+you may prefer the latter. This
 has the same syntax as the Python 3 print function. In Python 2, if you do not have
 ``from __future__ import print_function`` enabled, ``color.print_("string")`` is provided as
 an alternative, following the PyQT convention for method names that match reserved Python syntax.
@@ -157,8 +161,14 @@ applying the Styles individually to the strings). However, combined Styles are i
 256 Color Support
 =================
 
-The library support 256 colors through numbers, names or HEX html codes. You can access them
-as ``COLOR.FG[12]``, ``COLOR.FG['Light_Blue']``, ``COLOR.FG['LightBlue']``, or ``COLOR.FG['#0000FF']``. The supported colors are:
+While this library supports full 24 bit colors through escape sequences,
+the library has speciall support for the "full" 256 colorset through numbers,
+names or HEX html codes. Even if you use 24 bit color, the closest name is displayed
+in the ``repr``. You can access the colors as
+as ``COLOR.FG(12)``, ``COLOR.FG('Light_Blue')``, ``COLOR.FG('LightBlue')``, or ``COLOR.FG('#0000FF')``.
+You can also iterate or slice the ``COLOR``, ``COLOR.FG``, or ``COLOR.BG`` objects. Slicing even
+intelegently downgrades to the simple version of the codes if it is within the first 16 elements.
+The supported colors are:
 
 .. raw:: html
     :file: _color_list.html
@@ -249,4 +259,4 @@ See Also
 
 * `colored <https://pypi.python.org/pypi/colored>`_ Another library with 256 color support
 * `colorama <https://pypi.python.org/pypi/colorama>`_ A library that supports colored text on Windows,
-    can be combined with Plumbum.color (if you force ``use_color``)
+    can be combined with Plumbum.color (if you force ``use_color``, doesn't support all extended colors)

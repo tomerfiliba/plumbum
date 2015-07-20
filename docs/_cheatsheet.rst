@@ -112,7 +112,8 @@ Sample output::
     with COLOR.RED:
         print("This library provides safe, flexible color access.")
         print("Color", "(and styles in general)" << COLOR.BOLD, "are easy!")
-    print("The simple 8 colors or", 'All 265' << COLOR['Orchid'] + COLOR.UNDERLINE, 'can be used.')
+    print("The simple 16 colors or", '256 named colors,' << COLOR['Orchid'] + COLOR.UNDERLINE,
+          "or full hex colors" << COLOR("#129240"), 'can be used.')
     print("Unsafe " + COLOR.BG['DarkKhaki'] + "color access" - COLOR.BG + " is available too.")
 
 Sample output:
@@ -123,7 +124,7 @@ Sample output:
     <code>
     <pre><font color="#800000">This library provides safe color access.
     Color <b>(and styles in general)</b> are easy!
-    </font>The simple 8 colors or <font color="#D75FD7"><span style="text-decoration: underline;">All 265</span></font> can be used.
+    </font>The simple 16 colors, <font color="#D75FD7"><span style="text-decoration: underline;">256 named colors,</span></font> <font color="#129240">or full hex colors</font> can be used.
     Unsafe <span style="background-color: #AFAF5F">color access</span> is available too.</pre>
     </code>
     </div>

@@ -135,7 +135,8 @@ Sample output::
     with COLOR.RED:
         print("This library provides safe, flexible color access.")
         print("Color", "(and styles in general)" << COLOR.BOLD, "are easy!")
-    print("The simple 8 colors or", 'All 265' << COLOR['Orchid'] + COLOR.UNDERLINE, 'can be used.')
+    print("The simple 16 colors or", '256 named colors,' << COLOR['Orchid'] + COLOR.UNDERLINE,
+          "or full hex colors" << COLOR("#129240"), 'can be used.')
     print("Unsafe " + COLOR.BG['DarkKhaki'] + "color access" - COLOR.BG + " is available too.")
 
 
