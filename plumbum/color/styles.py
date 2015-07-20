@@ -401,7 +401,7 @@ class Style(object):
         '''Immediatly writes color to stdout. (Not safe)'''
         self.stdout.write(str(self))
 
-    def print(*printables, **kargs):
+    def print(self, *printables, **kargs):
         """\
         This acts like print; will print that argument to stdout wrapped
         in Style with the same syntax as the print function in 3.4."""
