@@ -5,7 +5,9 @@ from plumbum import COLOR
 
 with COLOR.FG.RED:
     print('This is in red')
+
 print('This is completly restored, even if an exception is thrown!')
+
 with COLOR:
     print('It is always a good idea to be in a context manager, to avoid being',
           'left with a colored terminal if there is an exception!')
@@ -20,3 +22,4 @@ with COLOR:
     print('Colors can be reset ' + COLOR.UNDERLINE['Too!'])
     for color in COLOR[:16]:
         print(color["This is in color!"])
+
