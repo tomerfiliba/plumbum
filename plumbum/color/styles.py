@@ -7,19 +7,18 @@ import sys
 import os
 import re
 from copy import copy
-from plumbum.color.names import color_names_full, color_html_full
-from plumbum.color.names import color_names_simple, color_html_simple, valid_attributes, from_html
+from plumbum.color.names import color_names, color_html
+from plumbum.color.names import color_codes_simple, from_html
 from plumbum.color.names import find_nearest_color, find_nearest_simple_color, attributes_ansi
 
 __all__ = ['Color', 'Style', 'ANSIStyle', 'ColorNotFound', 'AttributeNotFound']
 
 
-_lower_camel_names = [n.replace('_', '') for n in color_names_full]
+_lower_camel_names = [n.replace('_', '') for n in color_names]
 
 
 class ColorNotFound(Exception):
     pass
-
 
 class AttributeNotFound(Exception):
     pass
@@ -49,8 +48,8 @@ class Color(object):
         self.fg: Foreground if True, background if not
         self.reset: True it this is a reset color (following atts don't matter if True)
         self.rgb: The red/green/blue tuple for this color
-        self.simple: Simple 6 color mode
-        self.number: The color number given the mode, closest to rgb if not exact
+        self.simple: If true will stay to 16 color mode.
+        self.number: The color number given the mode, closest to rgb if not exact, gives closest name in full mode.
 
         """
 
@@ -79,10 +78,10 @@ class Color(object):
         """Should always be called after filling in r, g, b. Color will not be a reset color anymore."""
         if self.simple:
             self.number = find_nearest_simple_color(*self.rgb)
-            self.exact = self.rgb == from_html(color_html_simple[self.number])
+            self.exact = self.rgb == from_html(color_html[self.number])
         else:
             self.number = find_nearest_color(*self.rgb)
-            self.exact = self.rgb == from_html(color_html_full[self.number])
+            self.exact = self.rgb == from_html(color_html[self.number])
 
         self.reset = False
 
@@ -99,15 +98,15 @@ class Color(object):
         except AttributeError:
             pass
 
-        if color == 'reset' or color==9:
+        if color == 'reset':
             return
 
-        elif color in color_names_simple:
-            self.rgb = from_html(color_html_simple[color_names_simple.index(color)])
+        elif color in color_names[:16]:
+            self.rgb = from_html(color_html[color_names.index(color)])
             self.simple = True
 
-        elif isinstance(color, int) and 0 <= color <= 7:
-            self.rgb = from_html(color_html_simple[color])
+        elif isinstance(color, int) and 0 <= color < 16:
+            self.rgb = from_html(color_html[color])
             self.simple = True
 
         else:
@@ -132,14 +131,14 @@ class Color(object):
         if color == 'reset':
             return
 
-        elif color in color_names_full:
-            self.rgb = from_html(color_html_full[color_names_full.index(color)])
+        elif color in color_names:
+            self.rgb = from_html(color_html[color_names.index(color)])
 
         elif color in _lower_camel_names:
-            self.rgb = from_html(color_html_full[_lower_camel_names.index(color)])
+            self.rgb = from_html(color_html[_lower_camel_names.index(color)])
 
         elif isinstance(color, int) and 0 <= color <= 255:
-            self.rgb = from_html(color_html_full[color])
+            self.rgb = from_html(color_html[color])
 
         else:
             raise ColorNotFound("Did not find color: " + repr(color))
@@ -179,10 +178,8 @@ class Color(object):
         """The (closest) name of the current color"""
         if self.reset:
             return 'reset'
-        elif self.simple:
-            return color_names_simple[self.number]
         else:
-            return color_names_full[self.number]
+            return color_names[self.number]
 
     @property
     def name_camelcase(self):
@@ -215,15 +212,11 @@ class Color(object):
         if self.reset:
             return (ansi_addition+9,)
         elif self.simple:
-            return (self.number+ansi_addition,)
-        else:
+            return (color_codes_simple[self.number]+ansi_addition,)
+        elif self.exact:
             return (ansi_addition+8, 5, self.number)
-
-    @property
-    def html_hex_code_nearest(self):
-        if self.reset:
-            return '#000000'
-        return color_html_simple[self.number] if self.simple else color_html_full[self.number]
+        else:
+            return (ansi_addition+8, 2, self.rgb[0], self.rgb[1], self.rgb[2])
 
     @property
     def html_hex_code(self):
@@ -244,7 +237,7 @@ class Style(object):
     """
 
     color_class = Color
-    attribute_names = valid_attributes # a set of valid names
+    attribute_names = None # should be a dict of valid names
     _stdout = None
     end = '\n'
 
@@ -501,13 +494,23 @@ class Style(object):
                 value = next(values)
                 if value == 38 or value == 48:
                     fg = value == 38
-                    if next(values) != 5:
-                        raise ColorNotFound("the value 5 should follow a 38 or 48")
                     value = next(values)
-                    if fg:
-                        self.fg = self.color_class.from_full(value)
+                    if value == 5:
+                        value = next(values)
+                        if fg:
+                            self.fg = self.color_class.from_full(value)
+                        else:
+                            self.bg = self.color_class.from_full(value, fg=False)
+                    elif value == 2:
+                        r = next(values)
+                        g = next(values)
+                        b = next(values)
+                        if fg:
+                            self.fg = self.color_class(r, g, b)
+                        else:
+                            self.bg = self.color_class(r, g, b, fg=False)
                     else:
-                        self.bg = self.color_class.from_full(value, fg=False)
+                        raise ColorNotFound("the value 5 or 2 should follow a 38 or 48")
                 elif value==0:
                     self.reset = True
                 elif value in attributes_ansi.values():
@@ -522,6 +525,10 @@ class Style(object):
                     self.fg = self.color_class.from_simple(value-30)
                 elif 40 <= value <= 47:
                     self.bg = self.color_class.from_simple(value-40, fg=False)
+                elif 90 <= value <= 97:
+                    self.fg = self.color_class.from_simple(value-90)
+                elif 100 <= value <= 107:
+                    self.bg = self.color_class.from_simple(value-100, fg=False)
                 elif value == 39:
                     self.fg = self.color_class()
                 elif value == 49:

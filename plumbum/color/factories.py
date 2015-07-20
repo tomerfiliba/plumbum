@@ -8,7 +8,7 @@ import sys
 import os
 from functools import partial
 from contextlib import contextmanager
-from plumbum.color.names import color_names_simple
+from plumbum.color.names import color_names
 
 __all__ = ['ColorFactory', 'StyleFactory']
 
@@ -24,14 +24,13 @@ class ColorFactory(object):
         self.RESET = style.from_color(style.color_class(fg=fg))
 
         # Adding the color name shortcuts for forground colors
-        for item in color_names_simple:
+        for item in color_names[:16]:
             setattr(self, item.upper(), style.from_color(style.color_class.from_simple(item, fg=fg)))
 
 
     def full(self, name):
         """Gets the style for a color, using standard name procedure: either full
         color name, html code, or number."""
-# TODO: add html to int conversion, so that all HTML colors work
         return self._style.from_color(self._style.color_class(name, fg=self._fg))
 
     def simple(self, name):
@@ -49,11 +48,17 @@ class ColorFactory(object):
 
     def __getitem__(self, val):
         """Shortcut to provide way to access extended colors."""
-        return self.full(val)
+        try:
+            return self.full(val)
+        except ColorNotFound:
+            return self.hex(val)
 
     def __call__(self, val):
         """Shortcut to provide way to access simple colors."""
-        return self.simple(val)
+        try:
+            return self.simple(val)
+        except ColorNotFound:
+            return self.hex(val)
 
     def __iter__(self):
         """Iterates through all colors in extended colorset."""

@@ -57,7 +57,7 @@ class TestANSIColor(unittest.TestCase):
             self.assertEqual(color, COLOR.from_ansi(str(color)))
         for color in COLOR.BG:
             self.assertEqual(color, COLOR.from_ansi(str(color)))
-        for color in (COLOR.BOLD, COLOR.UNDERLINE, COLOR.BLINK):
+        for color in (COLOR.BOLD, COLOR.UNDERLINE, COLOR.ITALICS):
             self.assertEqual(color, COLOR.from_ansi(str(color)))
 
         color = COLOR.BOLD + COLOR.FG.GREEN + COLOR.BG.BLUE + COLOR.UNDERLINE
@@ -105,7 +105,6 @@ class TestANSIColor(unittest.TestCase):
         self.assertEqual('', COLOR.FG['LightBlue'])
 
     def testFromHex(self):
-        self.assertEqual(str(COLOR.hex('#020201')),str(COLOR.hex('#020202')))
         self.assertRaises(ColorNotFound, lambda: COLOR.hex('asdf'))
         self.assertRaises(ColorNotFound, lambda: COLOR.hex('#1234Z2'))
         self.assertRaises(ColorNotFound, lambda: COLOR.hex(12))
@@ -132,12 +131,12 @@ class TestANSIColor(unittest.TestCase):
 
 class TestHTMLColor(unittest.TestCase):
     def test_html(self):
-        red_tagged = '<font color="#800000">This is tagged</font>'
+        red_tagged = '<font color="#C00000">This is tagged</font>'
         self.assertEqual(HTMLCOLOR.RED("This is tagged"), red_tagged)
         self.assertEqual("This is tagged" << HTMLCOLOR.RED, red_tagged)
         self.assertEqual("This is tagged" * HTMLCOLOR.RED, red_tagged)
 
-        twin_tagged = '<font color="#800000"><em>This is tagged</em></font>'
+        twin_tagged = '<font color="#C00000"><em>This is tagged</em></font>'
         self.assertEqual("This is tagged" << HTMLCOLOR.RED + HTMLCOLOR.EM, twin_tagged)
         self.assertEqual("This is tagged" << HTMLCOLOR.EM << HTMLCOLOR.RED, twin_tagged)
         self.assertEqual(HTMLCOLOR.EM * HTMLCOLOR.RED * "This is tagged", twin_tagged)

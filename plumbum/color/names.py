@@ -1,19 +1,19 @@
 '''
 Names for the standard and extended color set.
-Extended set is similar to http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim, https://pypi.python.org/pypi/colored, etc.
+Extended set is similar to `vim wiki <http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim>`_, `colored <https://pypi.python.org/pypi/colored>`_, etc. Colors based on `wikipedia <https://en.wikipedia.org/wiki/ANSI_escape_code#Colors>`_.
 
 You can access the index of the colors with names.index(name). You can access the
-rgb values with r=int(html[n][1:3],16), etc.
+rgb values with ``r=int(html[n][1:3],16)``, etc.
 '''
 
 _named_colors = '''\
 0,black,#000000
-1,red,#800000
-2,green,#008000
-3,yellow,#808000
-4,blue,#000080
-5,magenta,#800080
-6,cyan,#008080
+1,red,#c00000
+2,green,#00c000
+3,yellow,#c0c000
+4,blue,#0000c0
+5,magenta,#c000c0
+6,cyan,#00c0c0
 7,light_gray,#c0c0c0
 8,dark_gray,#808080
 9,light_red,#ff0000
@@ -265,46 +265,22 @@ _named_colors = '''\
 255,grey_93,#eeeeee
 '''
 
-color_names_full = [n.split(',')[1] for n in _named_colors.split()]
-color_html_full = [n.split(',')[2] for n in _named_colors.split()]
+color_names = [n.split(',')[1] for n in _named_colors.split()]
+color_html = [n.split(',')[2] for n in _named_colors.split()]
 
-color_names_simple = [
-    'black',
-    'red',
-    'green',
-    'yellow',
-    'blue',
-    'magenta',
-    'cyan',
-    'white',
-]
-"""Simple colors, remember that reset is #9"""
+color_codes_simple = list(range(8)) + list(range(60,68))
+"""Simple colors, remember that reset is #9, second half is non as common."""
 
-color_html_simple = color_html_full[:7] + [color_html_full[15]]
-
-# Common segments of colors in full table
-main_named_colors = slice(0,16)
-normal_colors = slice(16,232)
-grey_colors = slice(232,256)
 
 # Attributes
-
-valid_attributes = set((
-    'bold',
-    'dim',
-    'underline',
-    'blink',
-    'reverse',
-    'hidden'
-    ))
-
 attributes_ansi = dict(
     bold=1,
     dim=2,
+    italics=3,
     underline=4,
-    blink=5,
     reverse=7,
-    hidden=8
+    hidden=8,
+    strikeout=9,
     )
 
 #Functions to be used for color name operations
@@ -314,9 +290,9 @@ def _distance_to_color(r, g, b, color):
     return (r-rgb[0])**2 + (g-rgb[1])**2 + (b-rgb[2])**2
 
 
-def find_nearest_color(r, g, b):
+def find_nearest_color(r, g, b, color_slice=slice(None, None, None)):
     """This is a slow way to find the nearest color."""
-    distances = [_distance_to_color(r, g, b, color) for color in color_html_full]
+    distances = [_distance_to_color(r, g, b, color) for color in color_html[color_slice]]
     return  min(range(len(distances)), key=distances.__getitem__)
 
 def find_nearest_simple_color(r, g, b):
@@ -331,6 +307,9 @@ def find_nearest_simple_color(r, g, b):
     # r*1 + g*2 + b*4
     return (r>=midlevel)*1 + (g>=midlevel)*2 + (b>=midlevel)*4
 
+def find_nearest_colorblock(*rgb):
+    r, g, b = (round(v / 256. * 5) for v in rgb)
+    return (16 + 36 * r + 6 * g + b)
 
 def from_html(color):
     if len(color) != 7 or color[0] != '#':
@@ -338,14 +317,12 @@ def from_html(color):
     return (int(color[1:3],16), int(color[3:5],16), int(color[5:7],16))
 
 
-
-
 def print_html_table():
     """Prints html names for documentation"""
     print(r'<ol start=0>')
     for i in range(256):
-        name = color_names_full[i]
-        val = color_html_full[i]
+        name = color_names[i]
+        val = color_html[i]
         print(r'  <li><font color="' + val
                 + r'">&#x25a0</font> <code>' + val
                 + r'</code> ' + name
