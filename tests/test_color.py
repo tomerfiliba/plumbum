@@ -82,12 +82,12 @@ class TestANSIColor(unittest.TestCase):
         wrapped = '\033[31mThis is a string\033[39m'
         self.assertEqual(COLOR.RED.wrap(string), wrapped)
         self.assertEqual(string << COLOR.RED, wrapped)
-        self.assertEqual(COLOR.RED(string), wrapped)
+        self.assertEqual(COLOR.RED*string, wrapped)
         self.assertEqual(COLOR.RED[string], wrapped)
 
         newcolor = COLOR.BLUE + COLOR.UNDERLINE
-        self.assertEqual(newcolor(string), string << newcolor)
-        self.assertEqual(newcolor(string), string << COLOR.BLUE + COLOR.UNDERLINE)
+        self.assertEqual(newcolor[string], string << newcolor)
+        self.assertEqual(newcolor.wrap(string), string << COLOR.BLUE + COLOR.UNDERLINE)
 
     def testUndoColor(self):
         self.assertEqual('\033[39m', -COLOR.FG)
@@ -130,6 +130,14 @@ class TestANSIColor(unittest.TestCase):
         output = sys.stdout.getvalue().strip()
         self.assertEquals(output,str(COLOR.BLUE))
 
+    def testDirectCallArgs(self):
+        COLOR.BLUE("This is")
+
+        if not hasattr(sys.stdout, "getvalue"):
+            self.fail("Need to run in buffered mode!")
+
+        output = sys.stdout.getvalue().strip()
+        self.assertEquals(output,str("This is" << COLOR.BLUE))
 
     def testPrint(self):
         COLOR.YELLOW.print('This is printed to stdout')
@@ -138,13 +146,13 @@ class TestANSIColor(unittest.TestCase):
             self.fail("Need to run in buffered mode!")
 
         output = sys.stdout.getvalue().strip()
-        self.assertEquals(output,str(COLOR.YELLOW('This is printed to stdout')))
+        self.assertEquals(output,str(COLOR.YELLOW.wrap('This is printed to stdout')))
 
 
 class TestHTMLColor(unittest.TestCase):
     def test_html(self):
         red_tagged = '<font color="#C00000">This is tagged</font>'
-        self.assertEqual(HTMLCOLOR.RED("This is tagged"), red_tagged)
+        self.assertEqual(HTMLCOLOR.RED["This is tagged"], red_tagged)
         self.assertEqual("This is tagged" << HTMLCOLOR.RED, red_tagged)
         self.assertEqual("This is tagged" * HTMLCOLOR.RED, red_tagged)
 

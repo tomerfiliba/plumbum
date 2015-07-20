@@ -380,13 +380,13 @@ class Style(object):
     ``"color >> color2`` syntax too. """
 
 
-    def __call__(self, wrap_this = None):
+    def __call__(self, *printables, **kargs):
         """\
         This is a shortcut to print color immediatly to the stdout. (Not safe)
-        If called with an argument, will wrap that argument."""
+        If called with an argument, will wrap that argument and print (safe)"""
 
-        if wrap_this is not None:
-            return self.wrap(wrap_this)
+        if printables or kargs:
+            return self.print(*printables, **kargs)
         else:
             self.now()
 
@@ -411,9 +411,8 @@ class Style(object):
     print_ = print
     """Shortcut just in case user not using __future__"""
 
-    def __getitem__(self, wrap_this):
-        """The [] syntax is supported for wrapping"""
-        return self.wrap(wrap_this)
+    __getitem__ = wrap
+    """The [] syntax is supported for wrapping"""
 
     def __enter__(self):
         """Context manager support"""

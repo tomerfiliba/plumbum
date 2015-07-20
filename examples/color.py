@@ -13,10 +13,10 @@ with COLOR:
     print(COLOR.BG.CYAN + "This is on a cyan background." + COLOR.RESET)
     print(COLOR.FG[42] + "If your terminal supports 256 colors, this is colorful!" + COLOR.RESET)
     print()
-    for color in COLOR.BG:
-        print(color + ' ', end='')
+    for color in COLOR:
+        print(color + u'\u2588', end='')
     COLOR.RESET()
     print()
     print('Colors can be reset ' + COLOR.UNDERLINE['Too!'])
-    for color in COLOR.simple_colorful:
+    for color in COLOR[:16]:
         print(color["This is in color!"])
