@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import logging
 from plumbum import cli, local
 from plumbum.path.utils import delete, copy
