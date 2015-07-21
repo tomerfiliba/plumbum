@@ -91,6 +91,7 @@ class Color(object):
         self.rgb = (0,0,0)
         self.simple = False
         self.exact = True # Set to False if interpolation done
+        self.number = None
 
         if r_or_color is not None and None in (g,b):
             try:
@@ -105,12 +106,15 @@ class Color(object):
 
     def _init_number(self):
         """Should always be called after filling in r, g, b. Color will not be a reset color anymore."""
-        if self.simple:
-            self.number = find_nearest_color(self.rgb[0], self.rgb[1], self.rgb[2], slice(0,16))
-            self.exact = self.rgb == from_html(color_html[self.number])
+        if self.number is not None:
+            self.exact = True
         else:
-            self.number = find_nearest_color(*self.rgb)
-            self.exact = self.rgb == from_html(color_html[self.number])
+            if self.simple:
+                self.number = find_nearest_color(self.rgb[0], self.rgb[1], self.rgb[2], slice(0,16))
+                self.exact = self.rgb == from_html(color_html[self.number])
+            else:
+                self.number = find_nearest_color(*self.rgb)
+                self.exact = self.rgb == from_html(color_html[self.number])
 
         self.reset = False
 
@@ -131,10 +135,12 @@ class Color(object):
             return
 
         elif color in color_names[:16]:
-            self.rgb = from_html(color_html[color_names.index(color)])
+            self.number = color_names.index(color)
+            self.rgb = from_html(color_html[self.number])
             self.simple = True
 
         elif isinstance(color, int) and 0 <= color < 16:
+            self.number = color
             self.rgb = from_html(color_html[color])
             self.simple = True
 
@@ -153,20 +159,20 @@ class Color(object):
     def _from_full(self, color):
         try:
             color = color.lower()
-            color = color.replace(' ','_')
+            color = color.replace(' ','')
+            color = color.replace('_','')
         except AttributeError:
             pass
 
         if color == 'reset':
             return
 
-        elif color in color_names:
-            self.rgb = from_html(color_html[color_names.index(color)])
-
         elif color in _lower_camel_names:
-            self.rgb = from_html(color_html[_lower_camel_names.index(color)])
+            self.number = _lower_camel_names.index(color)
+            self.rgb = from_html(color_html[self.number])
 
         elif isinstance(color, int) and 0 <= color <= 255:
+            self.number = color
             self.rgb = from_html(color_html[color])
 
         else:

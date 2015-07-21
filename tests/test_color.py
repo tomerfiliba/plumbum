@@ -50,7 +50,7 @@ class TestANSIColor(unittest.TestCase):
         self.assertEqual(COLOR.deepskyblue1, COLOR[39])
         self.assertEqual(COLOR.Deep_Sky_Blue1, COLOR[39])
 
-        self.asserRaises(AttributeError, lambda: COLOR.Notacoloratall)
+        self.assertRaises(AttributeError, lambda: COLOR.Notacoloratall)
 
 
 
