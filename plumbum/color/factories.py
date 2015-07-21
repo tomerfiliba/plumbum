@@ -31,6 +31,13 @@ class ColorFactory(object):
         color name, html code, or number."""
         return self._style.from_color(self._style.color_class(name, fg=self._fg))
 
+    def __getattr__(self, item):
+        """Full color names work, but do not populate __dir__."""
+        try:
+            return self._style.from_color(self._style.color_class.from_full(name, fg=self._fg))
+        except ColorNotFound:
+            raise AttributeError(item)
+
     def simple(self, name):
         """Return the extended color scheme color for a value or name."""
         return self._style.from_color(self._style.color_class.from_simple(name, fg=self._fg))
