@@ -46,6 +46,14 @@ class TestANSIColor(unittest.TestCase):
         self.assertEqual(COLOR['DeepSkyBlue1'], COLOR.hex('#00afff'))
 
         self.assertEqual(COLOR['DeepSkyBlue1'], COLOR[39])
+        self.assertEqual(COLOR.DeepSkyBlue1, COLOR[39])
+        self.assertEqual(COLOR.deepskyblue1, COLOR[39])
+        self.assertEqual(COLOR.Deep_Sky_Blue1, COLOR[39])
+
+        self.asserRaises(AttributeError, lambda: COLOR.Notacoloratall)
+
+
+
 
     def testMultiColor(self):
         sumcolor = COLOR.BOLD + COLOR.BLUE
