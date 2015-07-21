@@ -62,7 +62,10 @@ class ColorFactory(object):
             else:
                 return [self.full(v) for v in range(start, stop, stride)]
         except AttributeError:
-            return self.full(val)
+            try:
+                return self.full(val)
+            except ColorNotFound:
+                return self.hex(val)
 
     def __call__(self, val):
         """Shortcut to provide way to access colors."""

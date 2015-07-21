@@ -19,6 +19,11 @@ class TestANSIColor(unittest.TestCase):
         self.assertEqual(len(vals),10)
         self.assertEqual(vals[1], COLOR.full(41))
 
+    def testLoadNumericalColor(self):
+        self.assertEqual(COLOR.full(2), COLOR[2])
+        self.assertEqual(COLOR.simple(2), COLOR(2))
+        self.assertEqual(COLOR(54), COLOR[54])
+
     def testColorStrings(self):
         self.assertEqual('\033[0m', COLOR.RESET)
         self.assertEqual('\033[1m', COLOR.BOLD)

@@ -20,34 +20,58 @@ API for creating other color schemes for other systems using escapes.
     system can display color. You can force the use of color globally by setting
     ``COLOR.use_color=True``.
 
-The Color Factory
-=================
+Generating colors
+================
 
 Styles are accessed through the ``COLOR`` object, which is an instance of a StyleFactory.
-The ``COLOR`` object has the following properties:
+
+Style Factory
+^^^^^^^^^^^^^
+
+The ``COLOR`` object has the following available objects:
 
     ``FG`` and ``BG``
       The foreground and background colors, reset to default with ``COLOR.FG.RESET``
-      or ``~COLOR.FG`` and likewise for ``BG``. (Named foreground colors are available
-      directly as well). The first 16 primary colors, ``BLACK``, ``RED``, ``GREEN``, ``YELLOW``,
-      ``BLUE``, ``MAGENTA``, ``CYAN``, etc, as well as ``RESET``, are available.
-      You can also access colors numerically with ``COLOR.FG(n)`` or  ``COLOR.FG(n)``
-      with the extended 256 color codes. These
-      are ``ColorFactory`` instances.
+      or ``~COLOR.FG`` and likewise for ``BG``. These are ``ColorFactory`` instances.
     ``BOLD``, ``DIM``, ``UNDERLINE``, ``ITALICS``, ``REVERSE``, ``STRIKEOUT``, and ``HIDDEN``
-      All the `ANSI` modifiers are available, as well as their negations, such as ``~COLOR.BOLD`` or ``COLOR.BOLD.RESET``, etc.
+      All the `ANSI` modifiers are available, as well as their negations, such
+      as ``~COLOR.BOLD`` or ``COLOR.BOLD.RESET``, etc. (These are generated automatically
+      based on the Style attached to the factory.)
     ``RESET``
       The global reset will restore all properties at once.
     ``DO_NOTHING``
       Does nothing at all, but otherwise acts like any ``Style`` object. It is its own inverse. Useful for ``cli`` properties.
 
-The ``COLOR`` object can be used in a with statement, which resets the color on leaving 
-the statement body. (The ``FG`` and ``BG`` also can be put in with statements, and they
-will restore the foreground and background color, respectively). Although it does support
-some of the same things as a Style, its primary purpose is to generate Styles.  
+The ``COLOR`` object can be used in a with statement, which resets all styles on leaving 
+the statement body. Although factories do support
+some of the same methods as a Style, their primary purpose is to generate Styles. The COLOR object has a
+``use_color`` property that can be set to force the use of color. A ``stdout`` property is provided
+to make changing the output of color statement easier. A ``COLOR.from_ansi(code)`` method allows
+you to create a Style from any ansi sequence, even complex or combined ones.
 
-If you call ``COLOR.from_ansi(seq)``, you can manually pass in any `ANSI` escape sequence,
-even complex or combined ones. ``COLOR.rgb(r,g,b)`` will create a color from an
+Color Factories
+^^^^^^^^^^^^^^^
+
+The ``COLOR.FG`` and ``COLOR.BG`` are ``ColorFactory``'s. In fact, the COLOR object itself acts exactly
+like the ``COLOR.FG`` object, with the exception of the properties listed above.
+
+Named foreground colors are available
+directly as methods. The first 16 primary colors, ``BLACK``, ``RED``, ``GREEN``, ``YELLOW``,
+``BLUE``, ``MAGENTA``, ``CYAN``, etc, as well as ``RESET``, are available. All 256 color
+names are available, but do not populate factory directly, so that auto-completion
+gives reasonable results. You can also access colors using strings and do ``COLOR[string]``.
+Capitalization, underscores, and spaces (for strings) will be ignored.
+
+You can also access colors numerically with ``COLOR(n)`` or  ``COLOR[n]``
+with the extended 256 color codes. The former will default to simple versions of
+colors for the first 16 values. The later notation can also be used to slice.
+Full hex codes can be used, too. If no match is found,
+these will be the true 24 bit color value.
+
+The ``FG`` and ``BG`` also can be put in with statements, and they
+will restore the foreground and background color only, respectively. 
+
+``COLOR.rgb(r,g,b)`` will create a color from an
 input red, green, and blue values (integers from 0-255). ``COLOR.hex(code)`` will allow
 you to input an html style hex sequence. These work on ``FG`` and ``BG`` too. The ``repr`` of
 styles is smart and will show you the closest color to the one you selected if you didn't exactly
@@ -123,7 +147,7 @@ These produce strings that can be further manipulated or printed.
   free to use this method.
 
 Finally, you can also print a color to stdout directly using ``color("string")`` or
-``color.print("string")``. Since the first can be an unsafe operation if you forget an arguement,
+``color.print("string")``. Since the first can be an unsafe operation if you forget an argument,
 you may prefer the latter. This
 has the same syntax as the Python 3 print function. In Python 2, if you do not have
 ``from __future__ import print_function`` enabled, ``color.print_("string")`` is provided as
@@ -165,9 +189,10 @@ While this library supports full 24 bit colors through escape sequences,
 the library has special support for the "full" 256 colorset through numbers,
 names or HEX html codes. Even if you use 24 bit color, the closest name is displayed
 in the ``repr``. You can access the colors as
-as ``COLOR.FG(12)``, ``COLOR.FG('Light_Blue')``, ``COLOR.FG('LightBlue')``, or ``COLOR.FG('#0000FF')``.
+as ``COLOR.FG.Light_Blue``, ``COLOR.FG.LIGHTBLUE``, ``COLOR.FG[12]``, ``COLOR.FG('Light_Blue')``,
+``COLOR.FG('LightBlue')``, or ``COLOR.FG('#0000FF')``.
 You can also iterate or slice the ``COLOR``, ``COLOR.FG``, or ``COLOR.BG`` objects. Slicing even
-intelegently downgrades to the simple version of the codes if it is within the first 16 elements.
+intelligently downgrades to the simple version of the codes if it is within the first 16 elements.
 The supported colors are:
 
 .. raw:: html
