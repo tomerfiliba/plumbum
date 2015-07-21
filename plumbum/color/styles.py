@@ -1,4 +1,9 @@
 """
+This file provides two classes, `Color` and `Style`.
+
+``Color`` is rarely used directly,
+but merely provides the workhorse for finding and manipulating colors.
+
 With the ``Style`` class, any color can be directly called or given to a with statement.
 """
 
@@ -18,20 +23,28 @@ _lower_camel_names = [n.replace('_', '') for n in color_names]
 
 
 class ColorNotFound(Exception):
+    """Thrown when a color is not valid for a particular method."""
     pass
 
 class AttributeNotFound(Exception):
+    """Similar to color not found, only for attributes."""
     pass
 
 class ResetNotSupported(Exception):
+    """An exception indicating that Reset is not available
+    for this Style."""
     pass
 
 
 class Color(object):
     """\
+    Loaded with ``(r, g, b, fg)`` or ``(color, fg=)``. The second signature is a short cut
+    and will try full and hex loading.
+
     This class stores the idea of a color, rather than a specific implementation.
     It provides as many different tools for representations as possible, and can be subclassed
-    to add more represenations. ``.from_any`` provides a quick-init shortcut.
+    to add more represenations, though that should not be needed for most situations. ``.from_`` class methods provide quick ways to create colors given different representations.
+    You will not usually interact with this class.
 
     Possible colors::
 
@@ -45,11 +58,27 @@ class Color(object):
 
 
     The attributes are:
-        self.fg: Foreground if True, background if not
-        self.reset: True it this is a reset color (following atts don't matter if True)
-        self.rgb: The red/green/blue tuple for this color
-        self.simple: If true will stay to 16 color mode.
-        self.number: The color number given the mode, closest to rgb if not exact, gives closest name in full mode.
+
+    .. data:: reset
+
+        True it this is a reset color (following attributes don't matter if True)
+
+    .. data:: rgb
+
+        The red/green/blue tuple for this color
+
+    .. data:: simple
+
+        If true will stay to 16 color mode.
+
+    .. data:: number
+
+        The color number given the mode, closest to rgb
+        if not rgb not exact, gives position of closest name.
+
+    .. data:: fg
+
+        This is a foreground color if True. Background color if False.
 
         """
 
@@ -162,18 +191,6 @@ class Color(object):
         self._init_number()
 
     @property
-    def r(self):
-        return self.rgb[0]
-
-    @property
-    def g(self):
-        return self.rgb[1]
-
-    @property
-    def b(self):
-        return self.rgb[2]
-
-    @property
     def name(self):
         """The (closest) name of the current color"""
         if self.reset:
@@ -187,6 +204,7 @@ class Color(object):
         return self.name.replace("_", " ").title().replace(" ","")
 
     def __repr__(self):
+        """This class has a smart representation that shows name and color (if not unique)."""
         name = ' Simple' if self.simple else ''
         name += '' if self.fg else ' Background'
         name += ' ' + self.name_camelcase
@@ -194,6 +212,7 @@ class Color(object):
         return name[1:]
 
     def __eq__(self, other):
+        """Reset colors are equal, otherwise number, rgb, and simple status have to match."""
         if self.reset:
             return other.reset
         else:
@@ -203,10 +222,12 @@ class Color(object):
 
     @property
     def ansi_sequence(self):
+        """This is the ansi seqeunce as a string, ready to use."""
         return '\033[' + ';'.join(map(str, self.ansi_codes)) + 'm'
 
     @property
     def ansi_codes(self):
+        """This is the full ANSI code, can be reset, simple, 256, or full color."""
         ansi_addition = 30 if self.fg else 40
 
         if self.reset:
@@ -220,12 +241,14 @@ class Color(object):
 
     @property
     def html_hex_code(self):
+        """This is the hex code of the current color, html style notation."""
         if self.reset:
             return '#000000'
         else:
             return '#' + '{0[0]:02X}{0[1]:02X}{0[2]:02X}'.format(self.rgb)
 
     def __str__(self):
+        """This just prints it's simple name"""
         return self.name
 
 
@@ -237,9 +260,13 @@ class Style(object):
     """
 
     color_class = Color
+    """The class of color to use. Never hardcode ``Color`` call when writing a Style
+    method."""
+
     attribute_names = None # should be a dict of valid names
     _stdout = None
     end = '\n'
+    """The endline character. Override if needed in subclasses."""
 
     @property
     def stdout(self):
@@ -254,6 +281,7 @@ class Style(object):
         self.__class__._stdout = newout
 
     def __init__(self, attributes=None, fgcolor=None, bgcolor=None, reset=False):
+        """This is usually initialized from a factory."""
         self.attributes = attributes if attributes is not None else dict()
         self.fg = fgcolor
         self.bg = bgcolor
@@ -425,6 +453,8 @@ class Style(object):
 
     @property
     def ansi_codes(self):
+        """Generates the full ANSI code sequence for a Style"""
+
         if self.reset:
             return [0]
 
@@ -446,6 +476,7 @@ class Style(object):
 
     @property
     def ansi_sequence(self):
+        """This is the string ANSI sequence."""
         return '\033[' + ';'.join(map(str, self.ansi_codes)) + 'm'
 
     def __repr__(self):
@@ -459,6 +490,7 @@ class Style(object):
         return "<{0}: {1}>".format(name, string if string else 'empty')
 
     def __eq__(self, other):
+        """Equality is true only if reset, or if attributes, fg, and bg match."""
         if type(self) == type(other):
             if self.reset:
                 return other.reset
@@ -470,6 +502,8 @@ class Style(object):
             return str(self) == other
 
     def __str__(self):
+        """Base Style does not implement a __str__ representation. This is the one
+        required method of a subclass."""
         raise NotImplemented("This is a base style, does not have an representation")
 
 
@@ -542,7 +576,7 @@ class ANSIStyle(Style):
     """This is a subclass for ANSI styles. Use it to get
     color on sys.stdout tty terminals on posix systems.
 
-    set ``use_color = True/False`` if you want to control color
+    Set ``use_color = True/False`` if you want to control color
     for anything using this Style."""
 
     use_color = sys.stdout.isatty() and os.name == "posix"

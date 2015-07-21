@@ -77,6 +77,7 @@ class ColorFactory(object):
     __invert__ = __neg__
 
     def __rsub__(self, other):
+        """Makes a - COLOR.FG easier"""
         return other + (-self)
 
     def __enter__(self):
@@ -92,6 +93,7 @@ class ColorFactory(object):
         return False
 
     def __repr__(self):
+        """Simple representation of the class by name."""
         return "<{0}>".format(self.__class__.__name__)
 
 class StyleFactory(ColorFactory):

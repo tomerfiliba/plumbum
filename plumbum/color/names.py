@@ -285,8 +285,8 @@ attributes_ansi = dict(
 
 #Functions to be used for color name operations
 def _distance_to_color(r, g, b, color):
-    rgb = (int(color[1:3],16), int(color[3:5],16), int(color[5:7],16))
     """This computes the distance to a color, should be minimized"""
+    rgb = (int(color[1:3],16), int(color[3:5],16), int(color[5:7],16))
     return (r-rgb[0])**2 + (g-rgb[1])**2 + (b-rgb[2])**2
 
 
@@ -308,10 +308,13 @@ def find_nearest_simple_color(r, g, b):
     return (r>=midlevel)*1 + (g>=midlevel)*2 + (b>=midlevel)*4
 
 def find_nearest_colorblock(*rgb):
+    """This finds the nearest color based on block system, only works
+    for 17-232 color values."""
     r, g, b = (round(v / 256. * 5) for v in rgb)
     return (16 + 36 * r + 6 * g + b)
 
 def from_html(color):
+    """Convert html hex code to rgb"""
     if len(color) != 7 or color[0] != '#':
         raise ValueError("Invalid length of html code")
     return (int(color[1:3],16), int(color[3:5],16), int(color[5:7],16))
