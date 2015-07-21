@@ -24,15 +24,12 @@ class TestNearestColor(unittest.TestCase):
         self.assertEqual(find_nearest_simple_color(140,140,140), 7)
 
 
-
 class TestColorLoad(unittest.TestCase):
 
     def test_rgb(self):
         blue = Color(0,0,255) # Red, Green, Blue
-        self.assertEqual(blue.r, 0)
-        self.assertEqual(blue.g, 0)
-        self.assertEqual(blue.b, 255)
-
+        self.assertEqual(blue.rgb, (0,0,255))
+        
     def test_simple_name(self):
         green = Color.from_simple('green')
         self.assertEqual(green.number, 2)
@@ -65,14 +62,13 @@ class TestANSIColor(unittest.TestCase):
         self.assertEqual(str(ANSIStyle(fgcolor=Color('green'))), '\033[38;5;2m')
         self.assertEqual(str(ANSIStyle(fgcolor=Color.from_simple('red'))), '\033[31m')
 
+
 class TestStyle(unittest.TestCase):
     def setUp(self):
         ANSIStyle.use_color = True
 
     def test_InvalidAttributes(self):
         pass
-
-
 
 
 if __name__ == '__main__':
