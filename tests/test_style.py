@@ -29,7 +29,7 @@ class TestColorLoad(unittest.TestCase):
     def test_rgb(self):
         blue = Color(0,0,255) # Red, Green, Blue
         self.assertEqual(blue.rgb, (0,0,255))
-        
+
     def test_simple_name(self):
         green = Color.from_simple('green')
         self.assertEqual(green.number, 2)

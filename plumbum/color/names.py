@@ -6,6 +6,8 @@ You can access the index of the colors with names.index(name). You can access th
 rgb values with ``r=int(html[n][1:3],16)``, etc.
 '''
 
+from __future__ import division, print_function
+
 color_names = '''\
 black
 red
