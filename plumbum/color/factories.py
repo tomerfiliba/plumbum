@@ -34,7 +34,7 @@ class ColorFactory(object):
     def __getattr__(self, item):
         """Full color names work, but do not populate __dir__."""
         try:
-            return self._style.from_color(self._style.color_class.from_full(name, fg=self._fg))
+            return self._style.from_color(self._style.color_class.from_full(item, fg=self._fg))
         except ColorNotFound:
             raise AttributeError(item)
 
