@@ -282,6 +282,7 @@ class Color(object):
         """Converts a color to any represntation"""
         other = copy(self)
         other.representation = val
+        other.number = None
         other._init_number()
         return other
 
