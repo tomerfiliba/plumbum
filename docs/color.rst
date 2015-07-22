@@ -229,16 +229,16 @@ Subclassing Style
 For example, if you wanted to create an HTMLStyle and HTMLCOLOR, you could do::
 
     class HTMLStyle(Style):
-        attribute_names = dict(bold='b', em='em', li='li', code='code')
+        attribute_names = dict(bold='b', li='li', code='code')
         end = '<br/>\n'
 
         def __str__(self):
             result = ''
 
             if self.bg and not self.bg.reset:
-                result += '<span style="background-color: {0}">'.format(self.bg.html_hex_code)
+                result += '<span style="background-color: {0}">'.format(self.bg.hex_code)
             if self.fg and not self.fg.reset:
-                result += '<font color="{0}">'.format(self.fg.html_hex_code)
+                result += '<font color="{0}">'.format(self.fg.hex_code)
             for attr in sorted(self.attributes):
                 if self.attributes[attr]:
                     result += '<' + self.attribute_names[attr] + '>'
@@ -265,13 +265,11 @@ An example of usage::
 
 The above color table can be generated with::
 
-    with open('_color_list.html', 'wt') as f:
-        with HTMLCOLOR.OL:
-            for color in HTMLCOLOR:
-                HTMLCOLOR.LI(
-                    "&#x25a0;" << color,
-                    color.fg.html_hex_code << HTMLCOLOR.CODE,
-                    color.fg.name_camelcase)
+    for color in HTMLCOLOR:
+        HTMLCOLOR.LI(
+            "&#x25a0;" << color,
+            color.fg.hex_code << HTMLCOLOR.CODE,
+            color.fg.name_camelcase)
 
 
 .. note::

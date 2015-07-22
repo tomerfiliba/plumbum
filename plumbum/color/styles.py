@@ -122,14 +122,20 @@ class Color(object):
         Color will not be a reset color anymore."""
 
         if self.representation == 0:
-            self.number = FindNearest(*self.rgb).only_basic()
+            number = FindNearest(*self.rgb).only_basic()
         elif self.representation == 1:
-            self.number = FindNearest(*self.rgb).only_simple()
+            number = FindNearest(*self.rgb).only_simple()
         else:
-            self.number = FindNearest(*self.rgb).all_fast()
+            number = FindNearest(*self.rgb).all_fast()
 
-        self.exact = self.rgb == from_html(color_html[self.number])
+        if self.number is None:
+            self.number = number
+
         self.reset = False
+        self.exact = self.rgb == from_html(color_html[self.number])
+        if not self.exact:
+            self.number = number
+
 
     @classmethod
     def from_simple(cls, color, fg=True):
@@ -231,7 +237,7 @@ class Color(object):
         name = [' Basic:', '', ' Full:', ' True:'][self.representation]
         name += '' if self.fg else ' Background'
         name += ' ' + self.name_camelcase
-        name += '' if self.exact else ' ' + self.html_hex_code
+        name += '' if self.exact else ' ' + self.hex_code
         return name[1:]
 
     def __eq__(self, other):
@@ -261,7 +267,7 @@ class Color(object):
             return (ansi_addition+8, 2, self.rgb[0], self.rgb[1], self.rgb[2])
 
     @property
-    def html_hex_code(self):
+    def hex_code(self):
         """This is the hex code of the current color, html style notation."""
         if self.reset:
             return '#000000'
@@ -661,9 +667,9 @@ class HTMLStyle(Style):
         result = ''
 
         if self.bg and not self.bg.reset:
-            result += '<span style="background-color: {0}">'.format(self.bg.html_hex_code)
+            result += '<span style="background-color: {0}">'.format(self.bg.hex_code)
         if self.fg and not self.fg.reset:
-            result += '<font color="{0}">'.format(self.fg.html_hex_code)
+            result += '<font color="{0}">'.format(self.fg.hex_code)
         for attr in sorted(self.attributes):
             if self.attributes[attr]:
                 result += '<' + self.attribute_names[attr] + '>'
