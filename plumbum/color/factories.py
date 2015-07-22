@@ -34,7 +34,7 @@ class ColorFactory(object):
     def __getattr__(self, item):
         """Full color names work, but do not populate __dir__."""
         try:
-            return self._style.from_color(self._style.color_class.from_full(item, fg=self._fg))
+            return self._style.from_color(self._style.color_class(item, fg=self._fg))
         except ColorNotFound:
             raise AttributeError(item)
 
@@ -50,32 +50,25 @@ class ColorFactory(object):
         """Return the extended color scheme color for a value."""
         return self._style.from_color(self._style.color_class.from_hex(hexcode, fg=self._fg))
 
-
     def __getitem__(self, val):
         """\
         Shortcut to provide way to access colors numerically or by slice.
         If end <= 16, will stay to simple ANSI version."""
-        try:
+        if isinstance(val, slice):
             (start, stop, stride) = val.indices(256)
             if stop <= 16:
                 return [self.simple(v) for v in range(start, stop, stride)]
             else:
                 return [self.full(v) for v in range(start, stop, stride)]
-        except AttributeError:
-            try:
-                return self.full(val)
-            except ColorNotFound:
-                return self.hex(val)
 
-    def __call__(self, val):
-        """Shortcut to provide way to access colors."""
         try:
-            return self.simple(val)
+            return self.full(val)
         except ColorNotFound:
-            try:
-                return self.full(val)
-            except ColorNotFound:
-                return self.hex(val)
+            return self.hex(val)
+
+    def __call__(self, val_or_r, g = None, b = None):
+        """Shortcut to provide way to access colors."""
+        return self._style.from_color(self._style.color_class(val_or_r, g, b, fg=self._fg))
 
     def __iter__(self):
         """Iterates through all colors in extended colorset."""

@@ -18,10 +18,10 @@ class TestNearestColor(unittest.TestCase):
         self.assertEqual(FindNearest(7,7,9).all_fast(),232)
 
     def test_simplecolor(self):
-        self.assertEqual(FindNearest(1,2,4).very_simple(), 0)
-        self.assertEqual(FindNearest(0,255,0).very_simple(), 2)
-        self.assertEqual(FindNearest(100,100,0).very_simple(), 3)
-        self.assertEqual(FindNearest(140,140,140).very_simple(), 7)
+        self.assertEqual(FindNearest(1,2,4).only_basic(), 0)
+        self.assertEqual(FindNearest(0,255,0).only_basic(), 2)
+        self.assertEqual(FindNearest(100,100,0).only_basic(), 3)
+        self.assertEqual(FindNearest(140,140,140).only_basic(), 7)
 
 
 class TestColorLoad(unittest.TestCase):
@@ -78,7 +78,7 @@ class TestNearestColor(unittest.TestCase):
                 for b in myrange:
                     near = FindNearest(r,g,b)
                     self.assertEqual(near.all_slow(),near.all_fast(), 'Tested: {0}, {1}, {2}'.format(r,g,b))
-        
+
 
 
 if __name__ == '__main__':

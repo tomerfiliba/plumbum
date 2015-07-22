@@ -305,8 +305,8 @@ class FindNearest(object):
         self.b = b
         self.g = g
 
-    def very_simple(self):
-        """This will only return simple colors!
+    def only_basic(self):
+        """This will only return the first 8 colors!
         Breaks the colorspace into cubes, returns color"""
         midlevel = 0x40 # Since bright is not included
 

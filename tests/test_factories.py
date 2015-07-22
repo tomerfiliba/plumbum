@@ -58,8 +58,6 @@ class TestANSIColor(unittest.TestCase):
         self.assertRaises(AttributeError, lambda: COLOR.Notacoloratall)
 
 
-
-
     def testMultiColor(self):
         sumcolor = COLOR.BOLD + COLOR.BLUE
         self.assertEqual(COLOR.BOLD.RESET + COLOR.FG.RESET, -sumcolor)
@@ -68,6 +66,16 @@ class TestANSIColor(unittest.TestCase):
         # Sums should not be communitave, last one is used
         self.assertEqual(COLOR.RED, COLOR.BLUE + COLOR.RED)
         self.assertEqual(COLOR.BG.GREEN, COLOR.BG.RED + COLOR.BG.GREEN)
+
+    def testRepresentations(self):
+        color1 = COLOR.full(87)
+        self.assertEqual(color1, COLOR.DarkSlateGray2)
+        self.assertEqual(color1.basic, COLOR.DarkSlateGray2)
+        self.assertEqual(str(color1.basic), str(COLOR.LightGray))
+
+        color2 = COLOR.rgb(1,45,214)
+        self.assertEqual(str(color2.full), str(COLOR.Blue3A))
+
 
     def testFromAnsi(self):
         for color in COLOR[1:7]:

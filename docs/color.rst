@@ -198,6 +198,8 @@ The supported colors are:
 .. raw:: html
     :file: _color_list.html
 
+If you want to enforce a specific represenation, you can use ``.basic`` (8 color), ``.simple`` (16 color), ``.full`` (256 color), or ``.true`` (24 bit color) on a Style, and the colors in that Style will conform to the output representation and name of the best match color. The internal RGB colors
+are remembered, so this is a non-destructive operation.
 
 The Classes
 ===========

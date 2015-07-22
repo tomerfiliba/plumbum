@@ -93,7 +93,7 @@ class Color(object):
         self.number = None
         'Number of the original color, or closest color'
 
-        self.representation = None
+        self.representation = 3
         '0 for 8 colors, 1 for 16 colors, 2 for 256 colors, 3 for true color'
 
         self.exact = True
@@ -101,21 +101,28 @@ class Color(object):
 
         if r_or_color is not None and None in (g,b):
             try:
-                self._from_full(r_or_color)
+                self._from_simple(r_or_color)
             except ColorNotFound:
-                self._from_hex(r_or_color)
+                try:
+                    self._from_full(r_or_color)
+                except ColorNotFound:
+                    self._from_hex(r_or_color)
 
 
         elif None not in (r_or_color, g, b):
             self.rgb = (r_or_color,g,b)
             self._init_number()
+        elif r_or_color is None and g is None and b is None:
+            return
+        else:
+            raise ColorNotFound("Invalid parameters for a color!")
 
     def _init_number(self):
         """Should always be called after filling in r, g, b, and representation.
         Color will not be a reset color anymore."""
 
         if self.representation == 0:
-            self.number = FindNearest(*self.rgb).very_simple()
+            self.number = FindNearest(*self.rgb).only_basic()
         elif self.representation == 1:
             self.number = FindNearest(*self.rgb).only_simple()
         else:
@@ -134,14 +141,16 @@ class Color(object):
     def _from_simple(self, color):
         try:
             color = color.lower()
+            color = color.replace(' ','')
+            color = color.replace('_','')
         except AttributeError:
             pass
 
         if color == 'reset':
             return
 
-        elif color in color_names[:16]:
-            self.number = color_names.index(color)
+        elif color in _lower_camel_names[:16]:
+            self.number = _lower_camel_names.index(color)
             self.rgb = from_html(color_html[self.number])
 
         elif isinstance(color, int) and 0 <= color < 16:
@@ -219,7 +228,7 @@ class Color(object):
 
     def __repr__(self):
         """This class has a smart representation that shows name and color (if not unique)."""
-        name = [' Basic: ', '', ' Full: ', ' True: '][self.representation]
+        name = [' Basic:', '', ' Full:', ' True:'][self.representation]
         name += '' if self.fg else ' Background'
         name += ' ' + self.name_camelcase
         name += '' if self.exact else ' ' + self.html_hex_code
@@ -262,6 +271,14 @@ class Color(object):
     def __str__(self):
         """This just prints it's simple name"""
         return self.name
+
+    def to_representation(self, val):
+        """Converts a color to any represntation"""
+        other = copy(self)
+        other.representation = val
+        other._init_number()
+        return other
+
 
 
 
@@ -583,6 +600,34 @@ class Style(object):
         except StopIteration:
             return
 
+    def _to_representation(self, rep):
+        """This converts both colors to a specific representation"""
+        other = copy(self)
+        if other.fg:
+            other.fg = other.fg.to_representation(rep)
+        if other.bg:
+            other.bg = other.bg.to_representation(rep)
+        return other
+
+    @property
+    def basic(self):
+        """The color in the 8 color representation."""
+        return self._to_representation(0)
+
+    @property
+    def simple(self):
+        """The color in the 16 color representation."""
+        return self._to_representation(1)
+
+    @property
+    def full(self):
+        """The color in the 256 color representation."""
+        return self._to_representation(2)
+
+    @property
+    def true(self):
+        """The color in the true color representation."""
+        return self._to_representation(3)
 
 class ANSIStyle(Style):
     """This is a subclass for ANSI styles. Use it to get
