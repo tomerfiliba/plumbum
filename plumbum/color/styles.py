@@ -650,7 +650,7 @@ class HTMLStyle(Style):
     """This was meant to be a demo of subclassing Style, but
     actually can be a handy way to quicky color html text."""
 
-    attribute_names = dict(bold='b', em='em', li='li', underline='span style="text-decoration: underline;"', code='code', ol='ol start=0')
+    attribute_names = dict(bold='b', em='em', italics='i', li='li', underline='span style="text-decoration: underline;"', code='code', ol='ol start=0', strikeout='s')
     end = '<br/>\n'
 
     def __str__(self):
