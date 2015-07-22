@@ -89,9 +89,15 @@ class Color(object):
         self.fg = fg
         self.reset = True # Starts as reset color
         self.rgb = (0,0,0)
-        self.simple = False
-        self.exact = True # Set to False if interpolation done
+
         self.number = None
+        'Number of the original color, or closest color'
+
+        self.representation = None
+        '0 for 8 colors, 1 for 16 colors, 2 for 256 colors, 3 for true color'
+
+        self.exact = True
+        'This is false if the named color does not match the real color'
 
         if r_or_color is not None and None in (g,b):
             try:
@@ -105,17 +111,17 @@ class Color(object):
             self._init_number()
 
     def _init_number(self):
-        """Should always be called after filling in r, g, b. Color will not be a reset color anymore."""
-        if self.number is not None:
-            self.exact = True
-        else:
-            if self.simple:
-                self.number = FindNearest(*self.rgb).only_simple()
-                self.exact = self.rgb == from_html(color_html[self.number])
-            else:
-                self.number = FindNearest(*self.rgb).all_fast()
-                self.exact = self.rgb == from_html(color_html[self.number])
+        """Should always be called after filling in r, g, b, and representation.
+        Color will not be a reset color anymore."""
 
+        if self.representation == 0:
+            self.number = FindNearest(*self.rgb).very_simple()
+        elif self.representation == 1:
+            self.number = FindNearest(*self.rgb).only_simple()
+        else:
+            self.number = FindNearest(*self.rgb).all_fast()
+
+        self.exact = self.rgb == from_html(color_html[self.number])
         self.reset = False
 
     @classmethod
@@ -137,7 +143,6 @@ class Color(object):
         elif color in color_names[:16]:
             self.number = color_names.index(color)
             self.rgb = from_html(color_html[self.number])
-            self.simple = True
 
         elif isinstance(color, int) and 0 <= color < 16:
             self.number = color
@@ -147,6 +152,7 @@ class Color(object):
         else:
             raise ColorNotFound("Did not find color: " + repr(color))
 
+        self.representation = 1
         self._init_number()
 
     @classmethod
@@ -178,6 +184,7 @@ class Color(object):
         else:
             raise ColorNotFound("Did not find color: " + repr(color))
 
+        self.representation = 2
         self._init_number()
 
     @classmethod
@@ -194,6 +201,7 @@ class Color(object):
         except (TypeError, ValueError):
             raise ColorNotFound("Did not find htmlcode: " + repr(color))
 
+        self.representation = 3
         self._init_number()
 
     @property
@@ -211,20 +219,18 @@ class Color(object):
 
     def __repr__(self):
         """This class has a smart representation that shows name and color (if not unique)."""
-        name = ' Simple' if self.simple else ''
+        name = [' Basic: ', '', ' Full: ', ' True: '][self.representation]
         name += '' if self.fg else ' Background'
         name += ' ' + self.name_camelcase
         name += '' if self.exact else ' ' + self.html_hex_code
         return name[1:]
 
     def __eq__(self, other):
-        """Reset colors are equal, otherwise number, rgb, and simple status have to match."""
+        """Reset colors are equal, otherwise rgb have to match."""
         if self.reset:
             return other.reset
         else:
-            return (self.number == other.number
-                    and self.rgb == other.rgb
-                    and self.simple == other.simple)
+            return self.rgb == other.rgb
 
     @property
     def ansi_sequence(self):
@@ -238,9 +244,9 @@ class Color(object):
 
         if self.reset:
             return (ansi_addition+9,)
-        elif self.simple:
+        elif self.representation < 2:
             return (color_codes_simple[self.number]+ansi_addition,)
-        elif self.exact:
+        elif self.representation == 2:
             return (ansi_addition+8, 5, self.number)
         else:
             return (ansi_addition+8, 2, self.rgb[0], self.rgb[1], self.rgb[2])
