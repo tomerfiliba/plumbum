@@ -59,7 +59,7 @@ class TestANSIColor(unittest.TestCase):
 
     def test_ansi(self):
         self.assertEqual(str(ANSIStyle(fgcolor=Color('reset'))), '\033[39m')
-        self.assertEqual(str(ANSIStyle(fgcolor=Color('green'))), '\033[38;5;2m')
+        self.assertEqual(str(ANSIStyle(fgcolor=Color.from_full('green'))), '\033[38;5;2m')
         self.assertEqual(str(ANSIStyle(fgcolor=Color.from_simple('red'))), '\033[31m')
 
 
