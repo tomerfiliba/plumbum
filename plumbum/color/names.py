@@ -298,6 +298,8 @@ attributes_ansi = dict(
 #Functions to be used for color name operations
 
 class FindNearest(object):
+    """This is a class for finding the nearest color given rgb values.
+    Different find methods are available."""
     def __init__(self, r, g, b):
         self.r = r
         self.b = b
@@ -353,30 +355,13 @@ class FindNearest(object):
         distances = [self._distance_to_color_number(n) for n in colors]
         return  colors[min(range(len(distances)), key=distances.__getitem__)]
 
-def find_nearest_color(r, g, b, color_slice=slice(None,None,None)):
-    return FindNearest(r, g, b).all_slow(color_slice)
-
-def find_nearest_simple_color(r, g, b):
-    return FindNearest(r, g, b).very_simple()
-
 def from_html(color):
-    """Convert html hex code to rgb"""
+    """Convert html hex code to rgb."""
     if len(color) != 7 or color[0] != '#':
         raise ValueError("Invalid length of html code")
     return (int(color[1:3],16), int(color[3:5],16), int(color[5:7],16))
 
 def to_html(r, g, b):
+    """Convert rgb to html hex code."""
     return "#{0:02x}{1:02x}{2:02x}".format(r, g, b)
 
-
-def print_html_table():
-    """Prints html names for documentation"""
-    print(r'<ol start=0>')
-    for i in range(256):
-        name = color_names[i]
-        val = color_html[i]
-        print(r'  <li><font color="' + val
-                + r'">&#x25a0</font> <code>' + val
-                + r'</code> ' + name
-                + r'</li>')
-    print(r'</ol>')
