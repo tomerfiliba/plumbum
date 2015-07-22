@@ -49,8 +49,8 @@ class TestColorLoad(unittest.TestCase):
     def test_loading_methods(self):
         self.assertEqual(Color("Yellow"),
                          Color.from_full("Yellow"))
-        self.assertNotEqual(Color.from_full("yellow"),
-                            Color.from_simple("yellow"))
+        self.assertNotEqual(Color.from_full("yellow").representation,
+                            Color.from_simple("yellow").representation)
 
 
 class TestANSIColor(unittest.TestCase):
