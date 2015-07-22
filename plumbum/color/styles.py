@@ -14,7 +14,7 @@ import re
 from copy import copy
 from plumbum.color.names import color_names, color_html
 from plumbum.color.names import color_codes_simple, from_html
-from plumbum.color.names import find_nearest_color, find_nearest_simple_color, attributes_ansi
+from plumbum.color.names import FindNearest, attributes_ansi
 
 __all__ = ['Color', 'Style', 'ANSIStyle', 'ColorNotFound', 'AttributeNotFound']
 
@@ -110,10 +110,10 @@ class Color(object):
             self.exact = True
         else:
             if self.simple:
-                self.number = find_nearest_color(self.rgb[0], self.rgb[1], self.rgb[2], slice(0,16))
+                self.number = FindNearest(*self.rgb).only_simple()
                 self.exact = self.rgb == from_html(color_html[self.number])
             else:
-                self.number = find_nearest_color(*self.rgb)
+                self.number = FindNearest(*self.rgb).all_fast()
                 self.exact = self.rgb == from_html(color_html[self.number])
 
         self.reset = False

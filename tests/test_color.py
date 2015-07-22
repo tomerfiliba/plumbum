@@ -1,27 +1,27 @@
 from __future__ import with_statement, print_function
 import unittest
 from plumbum.color.styles import ANSIStyle, Color, AttributeNotFound, ColorNotFound
-from plumbum.color.names import find_nearest_color, color_html, find_nearest_simple_color
+from plumbum.color.names import color_html, FindNearest
 
 
 class TestNearestColor(unittest.TestCase):
     def test_exact(self):
-        self.assertEqual(find_nearest_color(0,0,0),0)
+        self.assertEqual(FindNearest(0,0,0).all_fast(),0)
         for n,color in enumerate(color_html):
             # Ignoring duplicates
             if n not in (16, 21, 46, 51, 196, 201, 226, 231, 244):
                 rgb = (int(color[1:3],16), int(color[3:5],16), int(color[5:7],16))
-                self.assertEqual(find_nearest_color(*rgb),n)
+                self.assertEqual(FindNearest(*rgb).all_fast(),n)
 
     def test_nearby(self):
-        self.assertEqual(find_nearest_color(1,2,2),0)
-        self.assertEqual(find_nearest_color(7,7,9),232)
+        self.assertEqual(FindNearest(1,2,2).all_fast(),0)
+        self.assertEqual(FindNearest(7,7,9).all_fast(),232)
 
     def test_simplecolor(self):
-        self.assertEqual(find_nearest_simple_color(1,2,4), 0)
-        self.assertEqual(find_nearest_simple_color(0,255,0), 2)
-        self.assertEqual(find_nearest_simple_color(100,100,0), 3)
-        self.assertEqual(find_nearest_simple_color(140,140,140), 7)
+        self.assertEqual(FindNearest(1,2,4).very_simple(), 0)
+        self.assertEqual(FindNearest(0,255,0).very_simple(), 2)
+        self.assertEqual(FindNearest(100,100,0).very_simple(), 3)
+        self.assertEqual(FindNearest(140,140,140).very_simple(), 7)
 
 
 class TestColorLoad(unittest.TestCase):
@@ -69,6 +69,16 @@ class TestStyle(unittest.TestCase):
 
     def test_InvalidAttributes(self):
         pass
+
+class TestNearestColor(unittest.TestCase):
+    def test_allcolors(self):
+        myrange = (0,1,2,5,17,39,48,73,82,140,193,210,240,244,250,254,255)
+        for r in myrange:
+            for g in myrange:
+                for b in myrange:
+                    near = FindNearest(r,g,b)
+                    self.assertEqual(near.all_slow(),near.all_fast(), 'Tested: {0}, {1}, {2}'.format(r,g,b))
+        
 
 
 if __name__ == '__main__':
