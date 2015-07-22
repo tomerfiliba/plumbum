@@ -315,8 +315,8 @@ class FindNearest(object):
         # Compressed to linear_integers r,g,b
         # [[[0,1],[2,3]],[[4,5],[6,7]]]
         # r*1 + g*2 + b*4
-        return (r>=midlevel)*1 + (g>=midlevel)*2 + (b>=midlevel)*4
-       
+        return (self.r>=midlevel)*1 + (self.g>=midlevel)*2 + (self.b>=midlevel)*4
+
     def all_slow(self, color_slice=slice(None, None, None)):
         """This is a slow way to find the nearest color."""
         distances = [self._distance_to_color(color) for color in color_html[color_slice]]
