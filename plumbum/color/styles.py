@@ -432,6 +432,13 @@ class Style(object):
     __rlshift__ = wrap
     """This class supports ``"String:" << color`` syntax"""
 
+    __rand__ = wrap
+    """Support for "String" & color syntax"""
+
+    __and__ = __mul__
+    """This class supports ``color & color2`` syntax. It also supports
+    ``"color & "String"`` syntax too. """
+
     __lshift__ = __mul__
     """This class supports ``color << color2`` syntax. It also supports
     ``"color << "String"`` syntax too. """
