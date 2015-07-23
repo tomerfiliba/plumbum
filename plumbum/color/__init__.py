@@ -10,6 +10,17 @@ from plumbum.color.styles import Style, ANSIStyle, HTMLStyle
 COLOR = StyleFactory(ANSIStyle)
 HTMLCOLOR = StyleFactory(HTMLStyle)
 
+
+#===================================================================================================
+# Module hack: ``from plumbum.color import red``
+#===================================================================================================
+
+for _color in COLOR[:16]:
+    globals()[_color.fg.name] = _color
+for _style in COLOR._style.attribute_names:
+    globals()[_style] = getattr(COLOR, _style.upper())
+globals()['reset'] = COLOR.RESET
+
 def load_ipython_extension(ipython):
     try:
         from plumbum.color._ipython_ext import OutputMagics
