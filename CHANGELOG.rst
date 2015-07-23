@@ -1,3 +1,7 @@
+1.5.1
+-----
+* Machines: Added ``.get()`` method for checking several commands.
+
 1.5.0
 -----
 * Removed support for Python 2.5. (Travis CI does not support it anymore)
