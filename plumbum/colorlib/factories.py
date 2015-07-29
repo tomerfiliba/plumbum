@@ -75,12 +75,15 @@ class ColorFactory(object):
         return (self.full(i) for i in range(256))
 
     def __neg__(self):
-        """Allows clearing a color"""
+        """Allows clearing a color with -"""
         return self.reset
-    __invert__ = __neg__
+
+    def __invert__(self):
+        """Allows clearing a color with ~"""
+        return self.reset
 
     def __rsub__(self, other):
-        """Makes a - COLOR.FG easier"""
+        """Makes ``- COLOR.FG`` easier"""
         return other + (-self)
 
     def __enter__(self):

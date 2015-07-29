@@ -376,8 +376,10 @@ class Style(object):
     def __neg__(self):
         """This negates the effect of the current color"""
         return self.invert()
-    __invert__ = __neg__
-    """This allows ~color == -color."""
+
+    def __invert__(self)
+         """This allows ~color == -color."""
+        return self.invert()
 
     def __sub__(self, other):
        """Implemented to make muliple Style objects work"""
@@ -426,29 +428,36 @@ class Style(object):
         else:
             return self.wrap(other)
 
-    __rmul__ = wrap
-    """This class supports ``"String:" * color`` syntax, excpet in Python 2.6 due to bug with that Python."""
+    def __rmul__(self, other):
+        """This class supports ``"String:" * color`` syntax, excpet in Python 2.6 due to bug with that Python."""
+        return self.wrap(other)
 
-    __rlshift__ = wrap
-    """This class supports ``"String:" << color`` syntax"""
-
-    __rand__ = wrap
-    """Support for "String" & color syntax"""
-
-    __and__ = __mul__
-    """This class supports ``color & color2`` syntax. It also supports
-    ``"color & "String"`` syntax too. """
-
-    __lshift__ = __mul__
-    """This class supports ``color << color2`` syntax. It also supports
-    ``"color << "String"`` syntax too. """
-
-    __rrshift__ = wrap
-    """This class supports ``"String:" >> color`` syntax"""
-
-    __rshift__ = __mul__
-    """This class supports ``color >> "String"`` syntax. It also supports
-    ``"color >> color2`` syntax too. """
+    def __rlshift__(self, other):
+        """This class supports ``"String:" << color`` syntax"""
+        return self.wrap(other)
+    
+    def __rand__(self, other):
+        """Support for "String" & color syntax"""
+        return self.wrap(other)
+    
+    def __and__(self, other):
+        """This class supports ``color & color2`` syntax. It also supports
+        ``"color & "String"`` syntax too. """
+        return self.__mul__(other)
+    
+    def __lshift__(self, other):
+        """This class supports ``color << color2`` syntax. It also supports
+        ``"color << "String"`` syntax too. """
+        return self.__mul__(other)
+    
+    def __rrshift__(self, other):
+        """This class supports ``"String:" >> color`` syntax"""
+        return self.wrap(other)
+    
+    def __rshift__(self, other):
+        """This class supports ``color >> "String"`` syntax. It also supports
+        ``"color >> color2`` syntax too. """
+        return self.__mul__(other)
 
 
     def __call__(self, *printables, **kargs):
@@ -482,8 +491,9 @@ class Style(object):
     print_ = print
     """Shortcut just in case user not using __future__"""
 
-    __getitem__ = wrap
-    """The [] syntax is supported for wrapping"""
+    def __getitem__(self, wrapped):
+        """The [] syntax is supported for wrapping"""
+        return self.wrap(wrapped)
 
     def __enter__(self):
         """Context manager support"""
