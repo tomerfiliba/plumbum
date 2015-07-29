@@ -127,7 +127,7 @@ missing from the guide, so you might want to consult with the API reference in t
    api/machines
    api/path
    api/fs
-   api/color
+   api/colors
 
 About
 =====

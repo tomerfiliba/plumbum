@@ -90,7 +90,7 @@ following, typed into the command line, will restore it:
 
 .. code:: bash
 
-    $ python -m plumbum.color
+    $ python -m plumbum.colorlib
 
 Unsafe Manipulation
 ^^^^^^^^^^^^^^^^^^^
