@@ -8,7 +8,8 @@ from plumbum.cli.terminal import get_terminal_size
 from plumbum.cli.switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,
     MissingMandatorySwitch, SwitchCombinationError, PositionalArgumentsError, switch,
     SubcommandError, Flag, CountOf)
-from plumbum.color import COLOR
+from plumbum.colors import do_nothing
+from plumbum import colors
 
 
 class ShowHelp(SwitchError):
@@ -121,12 +122,12 @@ class Application(object):
     DESCRIPTION = None
     VERSION = None
     USAGE = None
-    COLOR_PROGNAME = COLOR.DO_NOTHING
-    COLOR_DISCRIPTION = COLOR.DO_NOTHING
-    COLOR_VERSION = COLOR.DO_NOTHING
-    COLOR_HEADING = COLOR.DO_NOTHING
-    COLOR_USAGE = COLOR.DO_NOTHING
-    COLOR_SUBCOMMANDS = COLOR.DO_NOTHING
+    COLOR_PROGNAME = do_nothing
+    COLOR_DISCRIPTION = do_nothing
+    COLOR_VERSION = do_nothing
+    COLOR_HEADING = do_nothing
+    COLOR_USAGE = do_nothing
+    COLOR_SUBCOMMANDS = do_nothing
     COLOR_GROUPS = dict()
     COLOR_GROUPS_BODY = COLOR_GROUPS
     CALL_MAIN_IF_NESTED_COMMAND = True
@@ -531,11 +532,11 @@ class Application(object):
         def switchs(by_groups, show_groups):
             for grp, swinfos in sorted(by_groups.items(), key = lambda item: item[0]):
                 if show_groups:
-                    with (self.COLOR_HEADING + self.COLOR_GROUPS.get(grp, COLOR.DO_NOTHING)):
+                    with (self.COLOR_HEADING + self.COLOR_GROUPS.get(grp, do_nothing)):
                         print("%s:" % grp)
 
                 # Print in body color unless empty, otherwise group color, otherwise nothing
-                with self.COLOR_GROUPS_BODY.get(grp, self.COLOR_GROUPS.get(grp, COLOR.DO_NOTHING)):
+                with self.COLOR_GROUPS_BODY.get(grp, self.COLOR_GROUPS.get(grp, do_nothing)):
                     for si in sorted(swinfos, key = lambda si: si.names):
                         swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names
                             if n in self._switches_by_name and self._switches_by_name[n] == si)
@@ -618,14 +619,14 @@ class Application(object):
 
 class ColorfulApplication(Application):
     """Application with more colorful defaults for easy color output."""
-    COLOR_PROGNAME = COLOR.CYAN + COLOR.BOLD
-    COLOR_VERSION = COLOR.CYAN
-    COLOR_DISCRIPTION = COLOR.GREEN
-    COLOR_HEADING = COLOR.BOLD
-    COLOR_USAGE = COLOR.RED
-    COLOR_SUBCOMMANDS = COLOR.YELLOW
-    COLOR_GROUPS = {'Switches':COLOR.BLUE,
-                    'Meta-switches':COLOR.MAGENTA,
-                    'Hidden-switches':COLOR.CYAN}
+    COLOR_PROGNAME = colors.cyan + colors.bold
+    COLOR_VERSION = colors.cyan
+    COLOR_DISCRIPTION = colors.green
+    COLOR_HEADING = colors.bold
+    COLOR_USAGE = colors.red
+    COLOR_SUBCOMMANDS = colors.yellow
+    COLOR_GROUPS = {'Switches':colors.blue,
+                    'Meta-switches':colors.magenta,
+                    'Hidden-switches':colors.cyan}
     COLOR_GROUPS_BODY = COLOR_GROUPS
 

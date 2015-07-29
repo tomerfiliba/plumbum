@@ -42,14 +42,14 @@ Examples::
 from plumbum import cli
 
 # To force no color support:
-# from plumbum.color import Style
-# Style.use_color = False
+# from plumbum import colors
+# colors.use_color = False
 
 try:
     import colorama
     colorama.init()
-    from plumbum import COLOR
-    COLOR.use_color = True
+    from plumbum import colors
+    colors.use_color = True
 except ImportError:
     pass
 

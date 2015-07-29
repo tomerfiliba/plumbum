@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import with_statement, print_function
 import unittest
-from plumbum import COLOR
+from plumbum import colors
 
 class TestVisualColor(unittest.TestCase):
 
@@ -10,7 +10,7 @@ class TestVisualColor(unittest.TestCase):
             import colorama
             colorama.init()
             self.colorama = colorama
-            COLOR.use_color = True
+            colors.use_color = True
             print()
             print("Colorama initialized")
         except ImportError:
@@ -22,23 +22,23 @@ class TestVisualColor(unittest.TestCase):
 
     def testVisualColors(self):
         print()
-        for c in COLOR.FG[:16]:
+        for c in colors.fg[:16]:
             with c:
                 print('Cycle color test', end=' ')
             print(' - > back to normal')
-        with COLOR:
-            print(COLOR.FG.GREEN + "Green "
-                  + COLOR.BOLD + "Bold "
-                  - COLOR.BOLD + "Normal")
+        with colors:
+            print(colors.fg.green + "Green "
+                  + colors.bold + "Bold "
+                  - colors.bold + "Normal")
         print("Reset all")
 
     def testToggleColors(self):
         print()
-        print(COLOR.FG.RED("This is in red"), "but this is not")
-        print(COLOR.FG.GREEN + "Hi, " + COLOR.BG[23]
-              + "This is on a BG" - COLOR.BG + " and this is not")
-        COLOR.YELLOW.print("This is printed from color.")
-        COLOR.RESET()
+        print(colors.fg.red("This is in red"), "but this is not")
+        print(colors.fg.green + "Hi, " + colors.bg[23]
+              + "This is on a BG" - colors.bg + " and this is not")
+        colors.yellow.print("This is printed from color.")
+        colors.reset()
 
 if __name__ == '__main__':
     unittest.main()

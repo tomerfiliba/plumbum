@@ -1,7 +1,7 @@
 from __future__ import with_statement, print_function
 import unittest
-from plumbum.color.styles import ANSIStyle, Color, AttributeNotFound, ColorNotFound
-from plumbum.color.names import color_html, FindNearest
+from plumbum.colorlib.styles import ANSIStyle, Color, AttributeNotFound, ColorNotFound
+from plumbum.colorlib.names import color_html, FindNearest
 
 
 class TestNearestColor(unittest.TestCase):

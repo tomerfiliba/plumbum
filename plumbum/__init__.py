@@ -39,7 +39,6 @@ from plumbum.commands import FG, BG, TF, RETCODE, ERROUT
 from plumbum.path import Path, LocalPath, RemotePath
 from plumbum.machines import local, BaseRemoteMachine, SshMachine, PuttyMachine
 from plumbum.version import version
-from plumbum.color import COLOR
 
 __author__ = "Tomer Filiba (tomerfiliba@gmail.com)"
 __version__ = version

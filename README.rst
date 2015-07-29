@@ -131,13 +131,13 @@ Sample output::
 
 **Color controls** ::
 
-    from plumbum import COLOR
-    with COLOR.RED:
+    from plumbum import colors
+    with colors.red:
         print("This library provides safe, flexible color access.")
-        print("Color", "(and styles in general)" << COLOR.BOLD, "are easy!")
-    print("The simple 16 colors or", '256 named colors,' << COLOR.ORCHID + COLOR.UNDERLINE,
-          "or full hex colors" << COLOR["#129240"], 'can be used.')
-    print("Unsafe " + COLOR.BG.DARK_KHAKI + "color access" - COLOR.BG + " is available too.")
+        print("Color", "(and styles in general)" << colors.bold, "are easy!")
+    print("The simple 16 colors or", '256 named colors,' << colors.orchid + colors.underline,
+          "or full hex colors" << colors["#129240"], 'can be used.')
+    print("Unsafe " + colors.bg.dark_khaki + "color access" - colors.bg + " is available too.")
 
 
 

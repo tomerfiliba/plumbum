@@ -12,11 +12,11 @@ import sys
 import os
 import re
 from copy import copy
-from plumbum.color.names import color_names, color_html
-from plumbum.color.names import color_codes_simple, from_html
-from plumbum.color.names import FindNearest, attributes_ansi
+from plumbum.colorlib.names import color_names, color_html
+from plumbum.colorlib.names import color_codes_simple, from_html
+from plumbum.colorlib.names import FindNearest, attributes_ansi
 
-__all__ = ['Color', 'Style', 'ANSIStyle', 'ColorNotFound', 'AttributeNotFound']
+__all__ = ['Color', 'Style', 'ANSIStyle', 'HTMLStyle', 'ColorNotFound', 'AttributeNotFound']
 
 
 _lower_camel_names = [n.replace('_', '') for n in color_names]
@@ -87,7 +87,7 @@ class Color(object):
         """This works from color values, or tries to load non-simple ones."""
 
         self.fg = fg
-        self.reset = True # Starts as reset color
+        self.isreset = True # Starts as reset color
         self.rgb = (0,0,0)
 
         self.number = None
@@ -131,7 +131,7 @@ class Color(object):
         if self.number is None:
             self.number = number
 
-        self.reset = False
+        self.isreset = False
         self.exact = self.rgb == from_html(color_html[self.number])
         if not self.exact:
             self.number = number
@@ -222,7 +222,7 @@ class Color(object):
     @property
     def name(self):
         """The (closest) name of the current color"""
-        if self.reset:
+        if self.isreset:
             return 'reset'
         else:
             return color_names[self.number]
@@ -242,8 +242,8 @@ class Color(object):
 
     def __eq__(self, other):
         """Reset colors are equal, otherwise rgb have to match."""
-        if self.reset:
-            return other.reset
+        if self.isreset:
+            return other.isreset
         else:
             return self.rgb == other.rgb
 
@@ -257,7 +257,7 @@ class Color(object):
         """This is the full ANSI code, can be reset, simple, 256, or full color."""
         ansi_addition = 30 if self.fg else 40
 
-        if self.reset:
+        if self.isreset:
             return (ansi_addition+9,)
         elif self.representation < 2:
             return (color_codes_simple[self.number]+ansi_addition,)
@@ -269,7 +269,7 @@ class Color(object):
     @property
     def hex_code(self):
         """This is the hex code of the current color, html style notation."""
-        if self.reset:
+        if self.isreset:
             return '#000000'
         else:
             return '#' + '{0[0]:02X}{0[1]:02X}{0[2]:02X}'.format(self.rgb)
@@ -321,7 +321,7 @@ class Style(object):
         self.attributes = attributes if attributes is not None else dict()
         self.fg = fgcolor
         self.bg = bgcolor
-        self.reset = reset
+        self.isreset = reset
         invalid_attributes = set(self.attributes) - set(self.attribute_names)
         if len(invalid_attributes) > 0:
             raise AttributeNotFound("Attribute(s) not valid: " + ", ".join(invalid_attributes))
@@ -342,8 +342,8 @@ class Style(object):
         other = self.__class__()
 
         # Opposite of reset is reset
-        if self.reset:
-            other.reset = True
+        if self.isreset:
+            other.isreset = True
             return other
 
         # Flip all attributes
@@ -360,14 +360,14 @@ class Style(object):
         return other
 
     @property
-    def RESET(self):
+    def reset(self):
         """Shortcut to access reset as a property."""
         return self.invert()
 
     def __copy__(self):
         """Copy is supported, will make dictionary and colors unique."""
         result = self.__class__()
-        result.reset = self.reset
+        result.isreset = self.isreset
         result.fg = copy(self.fg)
         result.bg = copy(self.bg)
         result.attributes = copy(self.attributes)
@@ -398,7 +398,7 @@ class Style(object):
         if type(self) == type(other):
             result = copy(other)
 
-            result.reset = self.reset or other.reset
+            result.isreset = self.isreset or other.isreset
             for attribute in self.attributes:
                 if attribute not in result.attributes:
                     result.attributes[attribute] = self.attributes[attribute]
@@ -498,7 +498,7 @@ class Style(object):
     def ansi_codes(self):
         """Generates the full ANSI code sequence for a Style"""
 
-        if self.reset:
+        if self.isreset:
             return [0]
 
         codes = []
@@ -528,15 +528,15 @@ class Style(object):
         neg_attributes = ', '.join('-'+a for a in self.attributes if not self.attributes[a])
         colors = ', '.join(repr(c) for c in [self.fg, self.bg] if c)
         string = '; '.join(s for s in [attributes, neg_attributes, colors] if s)
-        if self.reset:
+        if self.isreset:
             string = 'reset'
         return "<{0}: {1}>".format(name, string if string else 'empty')
 
     def __eq__(self, other):
         """Equality is true only if reset, or if attributes, fg, and bg match."""
         if type(self) == type(other):
-            if self.reset:
-                return other.reset
+            if self.isreset:
+                return other.isreset
             else:
                 return (self.attributes == other.attributes
                         and self.fg == other.fg
@@ -588,7 +588,7 @@ class Style(object):
                     else:
                         raise ColorNotFound("the value 5 or 2 should follow a 38 or 48")
                 elif value==0:
-                    self.reset = True
+                    self.isreset = True
                 elif value in attributes_ansi.values():
                     for name in attributes_ansi:
                         if value == attributes_ansi[name]:
@@ -669,14 +669,14 @@ class HTMLStyle(Style):
 
     def __str__(self):
 
-        if self.reset:
+        if self.isreset:
             raise ResetNotSupported("HTML does not support global resets!")
 
         result = ''
 
-        if self.bg and not self.bg.reset:
+        if self.bg and not self.bg.isreset:
             result += '<span style="background-color: {0}">'.format(self.bg.hex_code)
-        if self.fg and not self.fg.reset:
+        if self.fg and not self.fg.isreset:
             result += '<font color="{0}">'.format(self.fg.hex_code)
         for attr in sorted(self.attributes):
             if self.attributes[attr]:
@@ -685,9 +685,9 @@ class HTMLStyle(Style):
         for attr in reversed(sorted(self.attributes)):
             if not self.attributes[attr]:
                 result += '</' + self.attribute_names[attr].split(" ")[0] + '>'
-        if self.fg and self.fg.reset:
+        if self.fg and self.fg.isreset:
             result += '</font>'
-        if self.bg and self.bg.reset:
+        if self.bg and self.bg.isreset:
             result += '</span>'
 
         return result

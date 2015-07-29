@@ -6,7 +6,7 @@ Color tools
 .. versionadded:: 1.6.0
 
 
-The purpose of the `plumbum.color` library is to make adding
+The purpose of the `plumbum.colors` library is to make adding
 text styles (such as color) to Python easy and safe. Color is often a great
 addition to shell scripts, but not a necessity, and implementing it properly 
 is tricky. It is easy to end up with an unreadable color stuck on your terminal or
@@ -18,62 +18,65 @@ API for creating other color schemes for other systems using escapes.
 
     ``ANSIStyle`` assumes that only a terminal on a posix-identity
     system can display color. You can force the use of color globally by setting
-    ``COLOR.use_color=True``.
+    ``colors.use_color=True``.
 
 Generating colors
 ================
 
-Styles are accessed through the ``COLOR`` object, which is an instance of a StyleFactory.
+Styles are accessed through the ``colors`` object, which is an instance of a StyleFactory. The ``colors``
+object is actually an imitation module that wraps ``plumbum.colorlib.ansicolors`` with module-like access.
+Thus, things like from ``plumbum.colors.bg import red`` work also. The library actually lives in ``plubmumb.colorlib``.
+
 
 Style Factory
 ^^^^^^^^^^^^^
 
-The ``COLOR`` object has the following available objects:
+The ``colors`` object has the following available objects:
 
-    ``FG`` and ``BG``
-      The foreground and background colors, reset to default with ``COLOR.FG.RESET``
-      or ``~COLOR.FG`` and likewise for ``BG``. These are ``ColorFactory`` instances.
-    ``BOLD``, ``DIM``, ``UNDERLINE``, ``ITALICS``, ``REVERSE``, ``STRIKEOUT``, and ``HIDDEN``
+    ``fg`` and ``bg``
+      The foreground and background colors, reset to default with ``colors.fg.reset``
+      or ``~colors.fg`` and likewise for ``bg``. These are ``ColorFactory`` instances.
+    ``bold``, ``dim``, ``underline``, ``italics``, ``reverse``, ``strikeout``, and ``hidden``
       All the `ANSI` modifiers are available, as well as their negations, such
-      as ``~COLOR.BOLD`` or ``COLOR.BOLD.RESET``, etc. (These are generated automatically
+      as ``~colors.bold`` or ``colors.bold.reset``, etc. (These are generated automatically
       based on the Style attached to the factory.)
-    ``RESET``
+    ``reset``
       The global reset will restore all properties at once.
-    ``DO_NOTHING``
+    ``do_nothing``
       Does nothing at all, but otherwise acts like any ``Style`` object. It is its own inverse. Useful for ``cli`` properties.
 
-The ``COLOR`` object can be used in a with statement, which resets all styles on leaving 
+The ``colors`` object can be used in a with statement, which resets all styles on leaving 
 the statement body. Although factories do support
-some of the same methods as a Style, their primary purpose is to generate Styles. The COLOR object has a
+some of the same methods as a Style, their primary purpose is to generate Styles. The colors object has a
 ``use_color`` property that can be set to force the use of color. A ``stdout`` property is provided
-to make changing the output of color statement easier. A ``COLOR.from_ansi(code)`` method allows
+to make changing the output of color statement easier. A ``colors.from_ansi(code)`` method allows
 you to create a Style from any ansi sequence, even complex or combined ones.
 
 Color Factories
 ^^^^^^^^^^^^^^^
 
-The ``COLOR.FG`` and ``COLOR.BG`` are ``ColorFactory``'s. In fact, the COLOR object itself acts exactly
-like the ``COLOR.FG`` object, with the exception of the properties listed above.
+The ``colors.fg`` and ``colors.bg`` are ``ColorFactory``'s. In fact, the colors object itself acts exactly
+like the ``colors.fg`` object, with the exception of the properties listed above.
 
 Named foreground colors are available
-directly as methods. The first 16 primary colors, ``BLACK``, ``RED``, ``GREEN``, ``YELLOW``,
-``BLUE``, ``MAGENTA``, ``CYAN``, etc, as well as ``RESET``, are available. All 256 color
+directly as methods. The first 16 primary colors, ``black``, ``red``, ``green``, ``yellow``,
+``blue``, ``magenta``, ``cyan``, etc, as well as ``reset``, are available. All 256 color
 names are available, but do not populate factory directly, so that auto-completion
-gives reasonable results. You can also access colors using strings and do ``COLOR[string]``.
+gives reasonable results. You can also access colors using strings and do ``colors[string]``.
 Capitalization, underscores, and spaces (for strings) will be ignored.
 
-You can also access colors numerically with ``COLOR(n)`` or  ``COLOR[n]``
+You can also access colors numerically with ``colors(n)`` or  ``colors[n]``
 with the extended 256 color codes. The former will default to simple versions of
 colors for the first 16 values. The later notation can also be used to slice.
 Full hex codes can be used, too. If no match is found,
 these will be the true 24 bit color value.
 
-The ``FG`` and ``BG`` also can be put in with statements, and they
+The ``fg`` and ``bg`` also can be put in with statements, and they
 will restore the foreground and background color only, respectively. 
 
-``COLOR.rgb(r,g,b)`` will create a color from an
-input red, green, and blue values (integers from 0-255). ``COLOR.hex(code)`` will allow
-you to input an html style hex sequence. These work on ``FG`` and ``BG`` too. The ``repr`` of
+``colors.rgb(r,g,b)`` will create a color from an
+input red, green, and blue values (integers from 0-255). ``colors.hex(code)`` will allow
+you to input an html style hex sequence. These work on ``fg`` and ``bg`` too. The ``repr`` of
 styles is smart and will show you the closest color to the one you selected if you didn't exactly
 select a color through RGB. 
 
@@ -97,16 +100,16 @@ arguments (directly calling a style without arguments is also a shortcut for ``.
 operations do not restore normal color to the terminal by themselves. To protect their use,
 you should always use a context manager around any unsafe operation.
 
-An example of the usage of unsafe ``COLOR`` manipulations inside a context manager::
+An example of the usage of unsafe ``colors`` manipulations inside a context manager::
 
-    from plumbum import COLOR
+    from plumbum import colors
 
-    with COLOR:
-        COLOR.FG.RED()
+    with colors:
+        colors.fg.red()
         print('This is in red')
-        COLOR.GREEN()
-        print('This is green ' + COLOR.UNDERLINE + 'and now also underlined!')
-        print('Underlined' - COLOR.UNDERLINE + ' and not underlined but still red') 
+        colors.green()
+        print('This is green ' + colors.underline + 'and now also underlined!')
+        print('Underlined' - colors.underline + ' and not underlined but still red') 
     print('This is completly restored, even if an exception is thrown!')
 
 Output:
@@ -118,18 +121,18 @@ Output:
     <font color="#008000"><span style="text-decoration: underline;">Underlined</span> and not underlined but still green.</font><br/>
     This is completly restored, even if an exception is thrown! </p>
 
-We can use ``COLOR`` instead of ``COLOR.FG`` for foreground colors.  If we had used ``COLOR.FG``
-as the context manager, then non-foreground properties, such as ``COLOR.UNDERLINE`` or
-``COLOR.BG.YELLOW``, would not have reset those properties. Each attribute,
-as well as ``FG``, ``BG``, and ``COLOR`` all have inverses in the ANSI standard. They are
-accessed with ``~``, ``-``, or ``.RESET``, and can be used to manually make these operations
+We can use ``colors`` instead of ``colors.fg`` for foreground colors.  If we had used ``colors.fg``
+as the context manager, then non-foreground properties, such as ``colors.underline`` or
+``colors.bg.YELLOW``, would not have reset those properties. Each attribute,
+as well as ``fg``, ``bg``, and ``colors`` all have inverses in the ANSI standard. They are
+accessed with ``~``, ``-``, or ``.reset``, and can be used to manually make these operations
 safer, but there is a better way.
 
 Safe Manipulation
 ^^^^^^^^^^^^^^^^^
 
 All other operations are safe; they restore the color automatically. The first, and hopefully
-already obvious one, is using a Style rather than a ``COLOR`` or ``COLOR.FG`` object in a ``with`` statement.
+already obvious one, is using a Style rather than a ``colors`` or ``colors.fg`` object in a ``with`` statement.
 This will set the color (using sys.stdout by default) to that color, and restore color on leaving.
 
 The second method is to manually wrap a string. This can be done with ``color.wrap("string")``,
@@ -155,15 +158,15 @@ an alternative, following the PyQT convention for method names that match reserv
 
 An example of safe manipulations::
 
-    COLOR.FG.YELLOW('This is yellow', end='')
+    colors.fg.yellow('This is yellow', end='')
     print(' And this is normal again.')
-    with COLOR.RED:
+    with colors.red:
         print('Red color!')
-        with COLOR.BOLD:
+        with colors.bold:
             print("This is red and bold.")
         print("Not bold, but still red.")
     print("Not red color or bold.")
-    print("This is bold and colorful!" << (COLOR.MAGENTA + COLOR.BOLD), "And this is not.")
+    print("This is bold and colorful!" << (colors.magenta + colors.bold), "And this is not.")
 
 Output:
 
@@ -180,7 +183,7 @@ Style Combinations
 ^^^^^^^^^^^^^^^^^^
 
 You can combine styles with ``+``, ``*``, ``<<``, or ``>>``, and they will create a new combined Style object. Colors will not be "summed" or otherwise combined; the rightmost color will be used (this matches the expected effect of
-applying the Styles individually to the strings). However, combined Styles are intelligent and know how to reset just the properties that they contain. As you have seen in the example above, the combined style ``(COLOR.MAGENTA + COLOR.BOLD)`` can be used in any way a normal Style can.
+applying the Styles individually to the strings). However, combined Styles are intelligent and know how to reset just the properties that they contain. As you have seen in the example above, the combined style ``(colors.magenta + colors.bold)`` can be used in any way a normal Style can.
 
 256 Color Support
 =================
@@ -189,9 +192,9 @@ While this library supports full 24 bit colors through escape sequences,
 the library has special support for the "full" 256 colorset through numbers,
 names or HEX html codes. Even if you use 24 bit color, the closest name is displayed
 in the ``repr``. You can access the colors as
-as ``COLOR.FG.Light_Blue``, ``COLOR.FG.LIGHTBLUE``, ``COLOR.FG[12]``, ``COLOR.FG('Light_Blue')``,
-``COLOR.FG('LightBlue')``, or ``COLOR.FG('#0000FF')``.
-You can also iterate or slice the ``COLOR``, ``COLOR.FG``, or ``COLOR.BG`` objects. Slicing even
+as ``colors.fg.Light_Blue``, ``colors.fg.lightblue``, ``colors.fg[12]``, ``colors.fg('Light_Blue')``,
+``colors.fg('LightBlue')``, or ``colors.fg('#0000FF')``.
+You can also iterate or slice the ``colors``, ``colors.fg``, or ``colors.bg`` objects. Slicing even
 intelligently downgrades to the simple version of the codes if it is within the first 16 elements.
 The supported colors are:
 
@@ -214,19 +217,19 @@ not be interacting with the Color class directly, and you probably will not need
 representations it can produce are welcome.
 
 The ``Style`` class hold two colors and a dictionary of attributes. It is the workhorse of the system and is what is produced
-by the ``COLOR`` factory. It holds ``Color`` as ``.color_class``, which can be overridden by subclasses (again, this usually is not needed).
+by the ``colors`` factory. It holds ``Color`` as ``.color_class``, which can be overridden by subclasses (again, this usually is not needed).
 To create a color representation, you need to subclass ``Style`` and give it a working ``__str__`` definition. ``ANSIStyle`` is derived
 from ``Style`` in this way.
 
 The factories, ``ColorFactory`` and ``StyleFactory``, are factory classes that are meant to provide simple access to 1 style Style classes. To use,
-you need to initialize an object of ``StyleFactory`` with your intended Style. For example, ``COLOR`` is created by::
+you need to initialize an object of ``StyleFactory`` with your intended Style. For example, ``colors`` is created by::
 
-    COLOR = StyleFactory(ANSIStyle)
+    colors = StyleFactory(ANSIStyle)
 
 Subclassing Style
 ^^^^^^^^^^^^^^^^^
 
-For example, if you wanted to create an HTMLStyle and HTMLCOLOR, you could do::
+For example, if you wanted to create an HTMLStyle and HTMLcolors, you could do::
 
     class HTMLStyle(Style):
         attribute_names = dict(bold='b', li='li', code='code')
@@ -253,31 +256,31 @@ For example, if you wanted to create an HTMLStyle and HTMLCOLOR, you could do::
 
             return result
 
-    HTMLCOLOR = StyleFactory(HTMLStyle)
+    htmlcolors = StyleFactory(HTMLStyle)
     
-This doesn't support global RESETs, since that's not how HTML works, but otherwise is a working implementation. This is an example of how easy it is to add support for other output formats.
+This doesn't support global resets, since that's not how HTML works, but otherwise is a working implementation. This is an example of how easy it is to add support for other output formats.
 
 An example of usage::
 
-    >>> "This is colored text" << HTMLCOLOR.BOLD + HTMLCOLOR.RED
+    >>> "This is colored text" << htmlcolors.bold + htmlcolors.red
     '<font color="#800000"><b>This is colored text</b></font>'
 
 
 The above color table can be generated with::
 
-    for color in HTMLCOLOR:
-        HTMLCOLOR.LI(
+    for color in htmlcolors:
+        htmlcolors.li(
             "&#x25a0;" << color,
-            color.fg.hex_code << HTMLCOLOR.CODE,
+            color.fg.hex_code << htmlcolors.code,
             color.fg.name_camelcase)
 
 
 .. note::
     
     ``HTMLStyle`` is implemented in the library, as well, with the
-    ``HTMLCOLOR`` object available in ``plumbum.color``. It was used
+    ``htmlcolors`` object available in ``plumbum.colorlib``. It was used
     to create the colored output in this document, with small changes
-    because ``COLOR.RESET`` cannot be supported with HTML.
+    because ``colors.reset`` cannot be supported with HTML.
 
 See Also
 ========

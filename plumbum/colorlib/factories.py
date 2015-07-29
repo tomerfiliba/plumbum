@@ -5,8 +5,8 @@ Color-related factories. They produce Styles.
 
 from __future__ import print_function
 import sys
-from plumbum.color.names import color_names
-from plumbum.color.styles import ColorNotFound
+from plumbum.colorlib.names import color_names
+from plumbum.colorlib.styles import ColorNotFound
 
 __all__ = ['ColorFactory', 'StyleFactory']
 
@@ -19,11 +19,11 @@ class ColorFactory(object):
     def __init__(self, fg, style):
         self._fg = fg
         self._style = style
-        self.RESET = style.from_color(style.color_class(fg=fg))
+        self.reset = style.from_color(style.color_class(fg=fg))
 
         # Adding the color name shortcuts for foreground colors
         for item in color_names[:16]:
-            setattr(self, item.upper(), style.from_color(style.color_class.from_simple(item, fg=fg)))
+            setattr(self, item, style.from_color(style.color_class.from_simple(item, fg=fg)))
 
 
     def __getattr__(self, item):
@@ -76,7 +76,7 @@ class ColorFactory(object):
 
     def __neg__(self):
         """Allows clearing a color"""
-        return self.RESET
+        return self.reset
     __invert__ = __neg__
 
     def __rsub__(self, other):
@@ -92,7 +92,7 @@ class ColorFactory(object):
         due to different definition of RESET for the
         factories."""
 
-        self.RESET.now()
+        self.reset.now()
         return False
 
     def __repr__(self):
@@ -107,14 +107,14 @@ class StyleFactory(ColorFactory):
     def __init__(self, style):
         super(StyleFactory,self).__init__(True, style)
 
-        self.FG = ColorFactory(True, style)
-        self.BG = ColorFactory(False, style)
+        self.fg = ColorFactory(True, style)
+        self.bg = ColorFactory(False, style)
 
-        self.DO_NOTHING = style()
-        self.RESET = style(reset=True)
+        self.do_nothing = style()
+        self.reset = style(reset=True)
 
         for item in style.attribute_names:
-            setattr(self, item.upper(), style(attributes={item:True}))
+            setattr(self, item, style(attributes={item:True}))
 
     @property
     def use_color(self):
