@@ -377,8 +377,8 @@ class Style(object):
         """This negates the effect of the current color"""
         return self.invert()
 
-    def __invert__(self)
-         """This allows ~color == -color."""
+    def __invert__(self):
+        """This allows ~color == -color."""
         return self.invert()
 
     def __sub__(self, other):

@@ -6,6 +6,15 @@ from plumbum.colorlib.styles import ANSIStyle as Style, ColorNotFound
 from plumbum.colorlib import htmlcolors
 import sys
 
+
+class TestImportColors(unittest.TestCase):
+    def testDifferentImports(self):
+        import plumbum.colors
+        from plumbum.colors import bold
+        from plumbum.colors.fg import red
+        self.assertEqual(str(red), str(colors.red))
+        self.assertEqual(str(bold), str(colors.bold))
+
 class TestANSIColor(unittest.TestCase):
 
     def setUp(self):
