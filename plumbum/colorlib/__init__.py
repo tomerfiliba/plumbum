@@ -12,7 +12,7 @@ htmlcolors = StyleFactory(HTMLStyle)
 
 def load_ipython_extension(ipython):
     try:
-        from plumbum.color._ipython_ext import OutputMagics
+        from plumbum.colorlib._ipython_ext import OutputMagics
     except ImportError:
         print("IPython required for the IPython extension to be loaded.")
         raise
