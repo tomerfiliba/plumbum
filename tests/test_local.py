@@ -131,6 +131,13 @@ class LocalMachineTest(unittest.TestCase):
         self.assertTrue("__init__.py" not in ls().splitlines())
         self.assertRaises(OSError, local.cwd.chdir, "../non_exist1N9")
 
+    def test_mixing_chdir(self):
+        self.assertEqual(local.cwd, os.getcwd())
+        os.chdir('../plumbum')
+        self.assertEqual(local.cwd, os.getcwd())
+        os.chdir('../tests')
+        self.assertEqual(local.cwd, os.getcwd())
+
     def test_path(self):
         self.assertFalse((local.cwd / "../non_exist1N9").exists())
         self.assertTrue((local.cwd / ".." / "plumbum").isdir())

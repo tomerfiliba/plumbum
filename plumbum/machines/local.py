@@ -112,6 +112,18 @@ class LocalCommand(ConcreteCommand):
 #===================================================================================================
 # Local Machine
 #===================================================================================================
+
+class _FunctionDescriptor(object):
+    """This acts like a static property, allowing access via class or object.
+    This is a non-data descriptor."""
+    def __init__(self, function):
+        self._function = function
+        self.__doc__ = function.__doc__
+
+    def __get__(self, obj, klass=None):
+        return self._function()
+
+
 class LocalMachine(BaseMachine):
     """The *local machine* (a singleton object). It serves as an entry point to everything
     related to the local machine, such as working directory and environment manipulation,
@@ -123,8 +135,10 @@ class LocalMachine(BaseMachine):
     * ``env`` - the local environment
     * ``encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``)
     """
-    cwd = LocalWorkdir()
+
+    cwd = _FunctionDescriptor(LocalWorkdir)
     env = LocalEnv()
+
     encoding = sys.getfilesystemencoding()
     uname = platform.uname()[0]
 
