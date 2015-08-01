@@ -59,3 +59,13 @@ class six(object):
         def get_method_function(m):
             return m.im_func
 
+class StaticProperty(object):
+    """This acts like a static property, allowing access via class or object.
+    This is a non-data descriptor."""
+    def __init__(self, function):
+        self._function = function
+        self.__doc__ = function.__doc__
+
+    def __get__(self, obj, klass=None):
+        return self._function()
+
