@@ -13,7 +13,7 @@ from contextlib import contextmanager
 from plumbum.path.remote import RemotePath
 from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.machines.session import ShellSession
-from plumbum.lib import ProcInfo, IS_WIN32, six
+from plumbum.lib import ProcInfo, IS_WIN32, six, StaticProperty
 from plumbum.commands.daemons import win32_daemonize, posix_daemonize
 from plumbum.commands.processes import iter_lines
 from plumbum.machines.base import BaseMachine
@@ -112,6 +112,8 @@ class LocalCommand(ConcreteCommand):
 #===================================================================================================
 # Local Machine
 #===================================================================================================
+
+
 class LocalMachine(BaseMachine):
     """The *local machine* (a singleton object). It serves as an entry point to everything
     related to the local machine, such as working directory and environment manipulation,
@@ -123,8 +125,10 @@ class LocalMachine(BaseMachine):
     * ``env`` - the local environment
     * ``encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``)
     """
-    cwd = LocalWorkdir()
+
+    cwd = StaticProperty(LocalWorkdir)
     env = LocalEnv()
+
     encoding = sys.getfilesystemencoding()
     uname = platform.uname()[0]
 
