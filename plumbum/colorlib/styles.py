@@ -90,7 +90,7 @@ class Color(object):
         if isinstance(r_or_color, type(self)):
             for item in ('fg', 'isreset', 'rgb', 'number', 'representation', 'exact'):
                 setattr(self, item, getattr(r_or_color, item))
-            return 
+            return
 
         self.fg = fg
         self.isreset = True # Starts as reset color
@@ -446,25 +446,25 @@ class Style(object):
     def __rlshift__(self, other):
         """This class supports ``"String:" << color`` syntax"""
         return self.wrap(other)
-    
+
     def __rand__(self, other):
         """Support for "String" & color syntax"""
         return self.wrap(other)
-    
+
     def __and__(self, other):
         """This class supports ``color & color2`` syntax. It also supports
         ``"color & "String"`` syntax too. """
         return self.__mul__(other)
-    
+
     def __lshift__(self, other):
         """This class supports ``color << color2`` syntax. It also supports
         ``"color << "String"`` syntax too. """
         return self.__mul__(other)
-    
+
     def __rrshift__(self, other):
         """This class supports ``"String:" >> color`` syntax"""
         return self.wrap(other)
-    
+
     def __rshift__(self, other):
         """This class supports ``color >> "String"`` syntax. It also supports
         ``"color >> color2`` syntax too. """
@@ -541,7 +541,11 @@ class Style(object):
     @property
     def ansi_sequence(self):
         """This is the string ANSI sequence."""
-        return '\033[' + ';'.join(map(str, self.ansi_codes)) + 'm'
+        codes = self.ansi_codes
+        if codes:
+            return '\033[' + ';'.join(map(str, self.ansi_codes)) + 'm'
+        else:
+            return ''
 
     def __repr__(self):
         name = self.__class__.__name__

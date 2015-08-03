@@ -61,6 +61,11 @@ class TestANSIColor(unittest.TestCase):
     def testFromCode(self):
         self.assertEqual(colors('\033[31m'),colors.red)
 
+    def testEmptyStyle(self):
+        self.assertEqual(str(colors()), '')
+        self.assertEqual(str(colors('')), '')
+        self.assertEqual(str(colors(None)), '')
+
     def testLoadColorByName(self):
         self.assertEqual(colors['LightBlue'], colors.fg['LightBlue'])
         self.assertEqual(colors.bg['light_green'], colors.bg['LightGreen'])

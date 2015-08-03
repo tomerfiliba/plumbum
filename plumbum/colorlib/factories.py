@@ -70,8 +70,10 @@ class ColorFactory(object):
         except ColorNotFound:
             return self.hex(val)
 
-    def __call__(self, val_or_r, g = None, b = None):
+    def __call__(self, val_or_r=None, g = None, b = None):
         """Shortcut to provide way to access colors."""
+        if val_or_r is None or val_or_r is '':
+            return self._style()
         if isinstance(val_or_r, self._style):
             return self._style(val_or_r)
         if isinstance(val_or_r, str) and '\033' in val_or_r:
