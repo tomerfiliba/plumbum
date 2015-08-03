@@ -82,9 +82,15 @@ class Color(object):
 
         """
 
+    __slots__ = ('fg', 'isreset', 'rgb', 'number', 'representation', 'exact')
 
     def __init__(self, r_or_color=None, g=None, b=None, fg=True):
         """This works from color values, or tries to load non-simple ones."""
+
+        if isinstance(r_or_color, type(self)):
+            for item in ('fg', 'isreset', 'rgb', 'number', 'representation', 'exact'):
+                setattr(self, item, getattr(r_or_color, item))
+            return 
 
         self.fg = fg
         self.isreset = True # Starts as reset color
@@ -162,7 +168,6 @@ class Color(object):
         elif isinstance(color, int) and 0 <= color < 16:
             self.number = color
             self.rgb = from_html(color_html[color])
-            self.simple = True
 
         else:
             raise ColorNotFound("Did not find color: " + repr(color))
@@ -295,6 +300,8 @@ class Style(object):
     and can be called in a with statement.
     """
 
+    __slots__ = ('attributes','fg', 'bg', 'isreset')
+
     color_class = Color
     """The class of color to use. Never hardcode ``Color`` call when writing a Style
     method."""
@@ -318,6 +325,10 @@ class Style(object):
 
     def __init__(self, attributes=None, fgcolor=None, bgcolor=None, reset=False):
         """This is usually initialized from a factory."""
+        if isinstance(attributes, type(self)):
+            for item in ('attributes','fg', 'bg', 'isreset'):
+                setattr(self, item, copy(getattr(attributes, item)))
+            return
         self.attributes = attributes if attributes is not None else dict()
         self.fg = fgcolor
         self.bg = bgcolor
@@ -660,6 +671,7 @@ class ANSIStyle(Style):
     Set ``use_color = True/False`` if you want to control color
     for anything using this Style."""
 
+    __slots__ = ()
     use_color = sys.stdout.isatty() and os.name == "posix"
 
     attribute_names = attributes_ansi
@@ -674,6 +686,7 @@ class HTMLStyle(Style):
     """This was meant to be a demo of subclassing Style, but
     actually can be a handy way to quicky color html text."""
 
+    __slots__ = ()
     attribute_names = dict(bold='b', em='em', italics='i', li='li', underline='span style="text-decoration: underline;"', code='code', ol='ol start=0', strikeout='s')
     end = '<br/>\n'
 

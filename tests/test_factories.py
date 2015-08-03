@@ -53,6 +53,14 @@ class TestANSIColor(unittest.TestCase):
         self.assertEqual("This" << colors.red, colors.red * "This")
         self.assertEqual(colors.red.wrap("This"), "This" << colors.red)
 
+    def testFromPreviousColor(self):
+        self.assertEqual(colors(colors.red), colors.red)
+        self.assertEqual(colors(colors.bg.red), colors.bg.red)
+        self.assertEqual(colors(colors.bold), colors.bold)
+
+    def testFromCode(self):
+        self.assertEqual(colors('\033[31m'),colors.red)
+
     def testLoadColorByName(self):
         self.assertEqual(colors['LightBlue'], colors.fg['LightBlue'])
         self.assertEqual(colors.bg['light_green'], colors.bg['LightGreen'])

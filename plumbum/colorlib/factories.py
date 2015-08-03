@@ -50,6 +50,10 @@ class ColorFactory(object):
         """Return the extended color scheme color for a value."""
         return self._style.from_color(self._style.color_class.from_hex(hexcode, fg=self._fg))
 
+    def ansi(self, ansiseq):
+        """Make a style from an ansi text sequence"""
+        return self._style.from_ansi(ansiseq)
+
     def __getitem__(self, val):
         """\
         Shortcut to provide way to access colors numerically or by slice.
@@ -68,6 +72,10 @@ class ColorFactory(object):
 
     def __call__(self, val_or_r, g = None, b = None):
         """Shortcut to provide way to access colors."""
+        if isinstance(val_or_r, self._style):
+            return self._style(val_or_r)
+        if isinstance(val_or_r, str) and '\033' in val_or_r:
+            return self.ansi(val_or_r)
         return self._style.from_color(self._style.color_class(val_or_r, g, b, fg=self._fg))
 
     def __iter__(self):
