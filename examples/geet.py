@@ -57,6 +57,7 @@ class Geet(cli.ColorfulApplication):
     """The l33t version control"""
     PROGNAME = "geet"
     VERSION = "1.7.2"
+    COLOR_PROGNAME = None
 
     verbosity = cli.SwitchAttr("--verbosity", cli.Set("low", "high", "some-very-long-name", "to-test-wrap-around"),
         help = "sets the verbosity level of the geet tool. doesn't really do anything except for testing line-wrapping "

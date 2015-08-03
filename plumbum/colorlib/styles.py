@@ -38,7 +38,7 @@ class ResetNotSupported(Exception):
 
 class Color(object):
     """\
-    Loaded with ``(r, g, b, fg)`` or ``(color, fg=)``. The second signature is a short cut
+    Loaded with ``(r, g, b, fg)`` or ``(color, fg=fg)``. The second signature is a short cut
     and will try full and hex loading.
 
     This class stores the idea of a color, rather than a specific implementation.

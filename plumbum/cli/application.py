@@ -4,11 +4,11 @@ import inspect
 import functools
 from plumbum.lib import six
 from textwrap import TextWrapper
+from collections import defaultdict
 from plumbum.cli.terminal import get_terminal_size
 from plumbum.cli.switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,
     MissingMandatorySwitch, SwitchCombinationError, PositionalArgumentsError, switch,
     SubcommandError, Flag, CountOf)
-from plumbum.colors import do_nothing
 from plumbum import colors
 
 
@@ -91,21 +91,21 @@ class Application(object):
 
     * ``USAGE`` - the usage line (shown in help)
 
-    * ``COLOR_PROGNAME`` - the color to print the name in, defaults to ``DO_NOTHING``
+    * ``COLOR_PROGNAME`` - the color to print the name in, defaults to None
 
-    * ``COLOR_PROGNAME`` - the color to print the discription in, defaults to ``DO_NOTHING``
+    * ``COLOR_PROGNAME`` - the color to print the discription in, defaults to None
 
-    * ``COLOR_VERSION`` - the color to print the version in, defaults to ``DO_NOTHING``
+    * ``COLOR_VERSION`` - the color to print the version in, defaults to None
 
-    * ``COLOR_HEADING`` - the color for headings, can be an attribute, defaults to ``DO_NOTHING``
+    * ``COLOR_HEADING`` - the color for headings, can be an attribute, defaults to None
 
-    * ``COLOR_USAGE`` - the color for usage, defaults to ``DO_NOTHING``
+    * ``COLOR_USAGE`` - the color for usage, defaults to None
 
-    * ``COLOR_SUBCOMMANDS`` - the color for subcommands, defaults to ``DO_NOTHING``
+    * ``COLOR_SUBCOMMANDS`` - the color for subcommands, defaults to None
 
-    * ``COLOR_SWITCHES`` - the color for switches, defaults to ``DO_NOTHING``
+    * ``COLOR_SWITCHES`` - the color for switches, defaults to None
 
-    * ``COLOR_METASWITCHES`` - the color for meta switches, defaults to ``DO_NOTHING``
+    * ``COLOR_METASWITCHES`` - the color for meta switches, defaults to None
 
     * ``COLOR_GROUPS[]`` - Dictionary for colors for the groups, defaults to empty (no colors)
 
@@ -122,12 +122,12 @@ class Application(object):
     DESCRIPTION = None
     VERSION = None
     USAGE = None
-    COLOR_PROGNAME = do_nothing
-    COLOR_DISCRIPTION = do_nothing
-    COLOR_VERSION = do_nothing
-    COLOR_HEADING = do_nothing
-    COLOR_USAGE = do_nothing
-    COLOR_SUBCOMMANDS = do_nothing
+    COLOR_PROGNAME = None
+    COLOR_DISCRIPTION = None
+    COLOR_VERSION = None
+    COLOR_HEADING = None
+    COLOR_USAGE = None
+    COLOR_SUBCOMMANDS = None
     COLOR_GROUPS = dict()
     COLOR_GROUPS_BODY = COLOR_GROUPS
     CALL_MAIN_IF_NESTED_COMMAND = True
@@ -137,6 +137,18 @@ class Application(object):
     _unbound_switches = ()
 
     def __init__(self, executable):
+        # Convert the colors to plumbum.colors on the instance (class remains the same)
+        for item in ('COLOR_PROGNAME', 'COLOR_DISCRIPTION', 'COLOR_VERSION',
+                     'COLOR_HEADING', 'COLOR_USAGE', 'COLOR_SUBCOMMANDS'):
+            setattr(self, item, colors(getattr(type(self), item)))
+
+        self.COLOR_GROUPS = defaultdict(lambda: colors())
+        self.COLOR_GROUPS_BODY = defaultdict(lambda: colors())
+        for item in type(self).COLOR_GROUPS:
+            self.COLOR_GROUPS[item] = colors(type(self).COLOR_GROUPS[item])
+        for item in type(self).COLOR_GROUPS_BODY:
+            self.COLOR_GROUPS_BODY[item] = colors(type(self).COLOR_GROUPS_BODY[item])
+
         if self.PROGNAME is None:
             self.PROGNAME = os.path.basename(executable)
         if self.DESCRIPTION is None:
@@ -532,11 +544,11 @@ class Application(object):
         def switchs(by_groups, show_groups):
             for grp, swinfos in sorted(by_groups.items(), key = lambda item: item[0]):
                 if show_groups:
-                    with (self.COLOR_HEADING + self.COLOR_GROUPS.get(grp, do_nothing)):
+                    with (self.COLOR_HEADING + self.COLOR_GROUPS[grp]):
                         print("%s:" % grp)
 
                 # Print in body color unless empty, otherwise group color, otherwise nothing
-                with self.COLOR_GROUPS_BODY.get(grp, self.COLOR_GROUPS.get(grp, do_nothing)):
+                with self.COLOR_GROUPS_BODY.get(grp, self.COLOR_GROUPS[grp]):
                     for si in sorted(swinfos, key = lambda si: si.names):
                         swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names
                             if n in self._switches_by_name and self._switches_by_name[n] == si)
