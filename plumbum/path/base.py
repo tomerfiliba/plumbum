@@ -1,6 +1,10 @@
+from __future__ import absolute_import
+
 import itertools
 import operator
 import os
+from plumbum.lib import six
+from abc import abstractmethod, abstractproperty
 
 try:
     reduce
@@ -18,7 +22,7 @@ class FSUser(int):
         self.name = name
         return self
 
-class Path(object):
+class Path(six.ABC):
     """An abstraction over file system paths. This class is abstract, and the two implementations
     are :class:`LocalPath <plumbum.machines.local.LocalPath>` and
     :class:`RemotePath <plumbum.path.remote.RemotePath>`.
@@ -68,8 +72,9 @@ class Path(object):
         return bool(str(self))
     __bool__ = __nonzero__
 
+    @abstractmethod
     def _form(self, *parts):
-        raise NotImplementedError()
+        pass
 
     def up(self, count = 1):
         """Go up in ``count`` directories (the default is 1)"""
@@ -78,8 +83,8 @@ class Path(object):
         """traverse all (recursive) sub-elements under this directory, that match the given filter.
         By default, the filter accepts everything; you can provide a custom filter function that
         takes a path as an argument and returns a boolean
-        
-        :param filter: the filter (predicate function) for matching results. Only paths matching 
+
+        :param filter: the filter (predicate function) for matching results. Only paths matching
                        this predicate are returned. Defaults to everything.
         :param dir_filter: the filter (predicate function) for matching directories. Only directories
                            matching this predicate are recursed into. Defaults to everything.
@@ -91,97 +96,95 @@ class Path(object):
                 for p2 in p.walk(filter, dir_filter):
                     yield p2
 
-    @property
+    @abstractproperty
     def basename(self):
         """The basename component of this path"""
-        raise NotImplementedError()
-    @property
+    @abstractproperty
     def dirname(self):
         """The dirname component of this path"""
-        raise NotImplementedError()
-        
-    @property
+
+    @abstractproperty
     def suffix(self):
         """The suffix of this file"""
-        raise NotImplementedError()
-    @property
+    @abstractproperty
     def suffixes(self):
         """This is a list of all suffixes"""
-        raise NotImplementedError()
-        
-    @property
+
+    @abstractproperty
     def uid(self):
         """The user that owns this path. The returned value is a :class:`FSUser <plumbum.path.FSUser>`
         object which behaves like an ``int`` (as expected from ``uid``), but it also has a ``.name``
         attribute that holds the string-name of the user"""
-        raise NotImplementedError()
-    @property
+
+    @abstractproperty
     def gid(self):
         """The group that owns this path. The returned value is a :class:`FSUser <plumbum.path.FSUser>`
         object which behaves like an ``int`` (as expected from ``gid``), but it also has a ``.name``
         attribute that holds the string-name of the group"""
-        raise NotImplementedError()
 
+    @abstractmethod
     def _get_info(self):
-        raise NotImplementedError()
+        pass
+    @abstractmethod
     def join(self, *parts):
         """Joins this path with any number of paths"""
-        raise NotImplementedError()
+    @abstractmethod
     def list(self):
         """Returns the files in this directory"""
-        raise NotImplementedError()
+    @abstractmethod
     def isdir(self):
         """Returns ``True`` if this path is a directory, ``False`` otherwise"""
-        raise NotImplementedError()
+    @abstractmethod
     def isfile(self):
         """Returns ``True`` if this path is a regular file, ``False`` otherwise"""
-        raise NotImplementedError()
+    @abstractmethod
     def islink(self):
         """Returns ``True`` if this path is a symbolic link, ``False`` otherwise"""
-        raise NotImplementedError()
+    @abstractmethod
     def exists(self):
         """Returns ``True`` if this path exists, ``False`` otherwise"""
-        raise NotImplementedError()
+    @abstractmethod
     def stat(self):
-        raise NotImplementedError()
+        pass
+    @abstractmethod
     def with_name(self, name):
         """Returns a path with the name replaced"""
-        raise NotImplementedError()
+    @abstractmethod
     def with_suffix(self, suffix, depth=1):
         """Returns a path with the suffix replaced. Up to last ``depth`` suffixes will be
         replaces. None will replace all suffixes. If there are less than ``depth`` suffixes,
         this will replace all suffixes. ``.tar.gz`` is an example where ``depth=2`` or
         ``depth=None`` is useful"""
-        raise NotImplementedError()
+    @abstractmethod
     def glob(self, pattern):
         """Returns a (possibly empty) list of paths that matched the glob-pattern under this path"""
-        raise NotImplementedError()
+    @abstractmethod
     def delete(self):
         """Deletes this path (recursively, if a directory)"""
-        raise NotImplementedError()
+    @abstractmethod
     def move(self, dst):
         """Moves this path to a different location"""
-        raise NotImplementedError()
     def rename(self, newname):
         """Renames this path to the ``new name`` (only the basename is changed)"""
         return self.move(self.up() / newname)
+    @abstractmethod
     def copy(self, dst, override = False):
         """Copies this path (recursively, if a directory) to the destination path"""
-        raise NotImplementedError()
+    @abstractmethod
     def mkdir(self):
         """Creates a directory at this path; if the directory already exists, silently ignore"""
-        raise NotImplementedError()
+    @abstractmethod
     def open(self, mode = "r"):
         """opens this path as a file"""
-        raise NotImplementedError()
+    @abstractmethod
     def read(self, encoding=None):
         """returns the contents of this file. By default the data is binary (``bytes``), but you can
         specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
-        raise NotImplementedError()
+    @abstractmethod
     def write(self, data, encoding=None):
-        """writes the given data to this file. By default the data is expected to be binary (``bytes``), 
+        """writes the given data to this file. By default the data is expected to be binary (``bytes``),
         but you can specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
-        raise NotImplementedError()
+    @abstractmethod
     def chown(self, owner = None, group = None, recursive = None):
         """Change ownership of this path.
 
@@ -191,46 +194,45 @@ class Path(object):
                           Only meaningful when ``self`` is a directory. If ``None``, the value
                           will default to ``True`` if ``self`` is a directory, ``False`` otherwise.
         """
-        raise NotImplementedError()
+    @abstractmethod
     def chmod(self, mode):
         """Change the mode of path to the numeric mode.
 
         :param mode: file mode as for os.chmod
         """
-        raise NotImplementedError()
 
     @staticmethod
     def _access_mode_to_flags(mode, flags = {"f" : os.F_OK, "w" : os.W_OK, "r" : os.R_OK, "x" : os.X_OK}):
         if isinstance(mode, str):
             mode = reduce(operator.or_, [flags[m] for m in mode.lower()], 0)
         return mode
-    
+
+    @abstractmethod
     def access(self, mode = 0):
         """Test file existence or permission bits
-        
-        :param mode: a bitwise-or of access bits, or a string-representation thereof: 
-                     ``'f'``, ``'x'``, ``'r'``, ``'w'`` for ``os.F_OK``, ``os.X_OK``, 
+
+        :param mode: a bitwise-or of access bits, or a string-representation thereof:
+                     ``'f'``, ``'x'``, ``'r'``, ``'w'`` for ``os.F_OK``, ``os.X_OK``,
                      ``os.R_OK``, ``os.W_OK``
         """
-        raise NotImplementedError()
 
+    @abstractmethod
     def link(self, dst):
         """Creates a hard link from ``self`` to ``dst``
 
         :param dst: the destination path
         """
-        raise NotImplementedError()
 
+    @abstractmethod
     def symlink(self, dst):
         """Creates a symbolic link from ``self`` to ``dst``
 
         :param dst: the destination path
         """
-        raise NotImplementedError()
 
+    @abstractmethod
     def unlink(self):
         """Deletes a symbolic link"""
-        raise NotImplementedError()
 
     def split(self):
         """Splits the path on directory separators, yielding a list of directories, e.g,
@@ -270,9 +272,9 @@ class RelativePath(object):
     """
     Relative paths are the "delta" required to get from one path to another.
     Note that relative path do not point at anything, and thus are not paths.
-    Therefore they are system agnostic (but closed under addition) 
+    Therefore they are system agnostic (but closed under addition)
     Paths are always absolute and point at "something", whether existent or not.
-    
+
     Relative paths are created by subtracting paths (``Path.relative_to``)
     """
     def __init__(self, parts):
@@ -305,10 +307,10 @@ class RelativePath(object):
     def __nonzero__(self):
         return bool(str(self))
     __bool__ = __nonzero__
-    
+
     def up(self, count = 1):
         return RelativePath(self.parts[:-count])
-    
+
     def __radd__(self, path):
         return path.join(*self.parts)
 

@@ -1,4 +1,3 @@
-from __future__ import with_statement
 from plumbum.lib import _setdoc, IS_WIN32
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
@@ -61,7 +60,7 @@ class SshMachine(BaseRemoteMachine):
                      NOTE: THIS IS A SECURITY RISK!
 
     :param encoding: the remote machine's encoding (defaults to UTF8)
-    
+
     :param connect_timeout: specify a connection timeout (the time until shell prompt is seen).
                             The default is 10 seconds. Set to ``None`` to disable
 

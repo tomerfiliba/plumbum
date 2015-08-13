@@ -1,4 +1,3 @@
-from __future__ import with_statement
 from plumbum.path.base import Path
 from plumbum.lib import six
 from plumbum.machines.local import local, LocalPath
@@ -29,8 +28,8 @@ def move(src, dst):
     """Moves the source path onto the destination path; ``src`` and ``dst`` can be either
     strings, :class:`LocalPaths <plumbum.path.local.LocalPath>` or
     :class:`RemotePath <plumbum.path.remote.RemotePath>`; any combination of the three will
-    work. 
-    
+    work.
+
     .. versionadded:: 1.3
         ``src`` can also be a list of strings/paths, in which case ``dst`` must not exist or be a directory.
     """
