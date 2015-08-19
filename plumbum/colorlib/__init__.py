@@ -5,7 +5,7 @@ underlined text. It also provides ``reset`` to recover the normal font.
 """
 
 from plumbum.colorlib.factories import StyleFactory
-from plumbum.colorlib.styles import Style, ANSIStyle, HTMLStyle
+from plumbum.colorlib.styles import Style, ANSIStyle, HTMLStyle, ColorNotFound
 
 ansicolors = StyleFactory(ANSIStyle)
 htmlcolors = StyleFactory(HTMLStyle)
