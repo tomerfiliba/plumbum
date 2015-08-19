@@ -90,7 +90,19 @@ following, typed into the command line, will restore it:
 
 .. code:: bash
 
-    $ python -m plumbum.colorlib
+    $ python -m plumbum.colors
+
+This also supports command line access to unsafe color manipulations, such as
+
+.. code:: bash
+
+    $ python -m plumbum.colors blue
+    $ python -m plumbum.colors bg red
+    $ python -m plumbum.colors fg 123
+    $ python -m plumbum.colors bg reset
+    $ python -m plumbum.colors underline
+
+You can use any path or number available as a style.
 
 Unsafe Manipulation
 ^^^^^^^^^^^^^^^^^^^

@@ -7,7 +7,9 @@ all the standard syntax for colors.
 import sys
 import os
 
-from plumbum.colorlib import ansicolors
+from plumbum.colorlib import ansicolors, main
+if __name__ == '__main__':
+    main()
 
 # Oddly, the order here matters for Python2, but not Python3
 sys.modules[__name__ + '.fg'] = ansicolors.fg
