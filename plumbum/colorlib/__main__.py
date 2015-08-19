@@ -4,12 +4,11 @@ This is provided as a quick way to recover your terminal. Simply run
 to recover terminal color.
 """
 
-
-from plumbum.colorlib import ansicolor
+from plumbum.colorlib import ansicolors
 
 def main():
-    ansicolor.use_color=True
-    ansicolor.reset()
+    ansicolors.use_color=True
+    ansicolors.reset()
 
 if __name__ == '__main__':
     main()
