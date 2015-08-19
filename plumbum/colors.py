@@ -8,12 +8,9 @@ import sys
 import os
 
 from plumbum.colorlib import ansicolors
-from plumbum.colorlib.__main__ import main
-
 
 # Oddly, the order here matters for Python2, but not Python3
 sys.modules[__name__ + '.fg'] = ansicolors.fg
 sys.modules[__name__ + '.bg'] = ansicolors.bg
 sys.modules[__name__] = ansicolors
-sys.modules[__name__ + '.__main__'] = main
 
