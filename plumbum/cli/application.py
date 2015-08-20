@@ -9,6 +9,7 @@ from plumbum.cli.terminal import get_terminal_size
 from plumbum.cli.switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,
     MissingMandatorySwitch, SwitchCombinationError, PositionalArgumentsError, switch,
     SubcommandError, Flag, CountOf)
+from plumbum.cli.argcompleter import ArgCompleter
 
 
 class ShowHelp(SwitchError):
@@ -183,6 +184,35 @@ class Application(object):
             return subapp
         return wrapper(subapp) if subapp else wrapper
 
+    @classmethod
+    def _autocomplete_args(cls, comp_line, comp_point, ifs=' '):
+        """This is a comp_line seperated by ifs, with the cursor at comp_point"""
+
+        words = comp_line.strip().split()[1:] # remove progname
+
+        if not words:
+            return ['']
+
+        self = cls('argcompleter')
+        names = ['-'+a for a in self._switches_by_name if len(a)==1]
+        names += ['--'+a for a in self._switches_by_name if len(a)!=1]
+
+        if words[-1][0] == '-':
+            return [n for n in names if words[-1] in n]
+
+        if comp_point < 0:
+            return
+
+
+    @classmethod
+    def autocomplete(cls, argv=None):
+        argcom = ArgCompleter()
+        if not argcom.active:
+            return
+        comps = cls._autocomplete_args(*argcom.get_line())
+        argcom.send_completions(comps)
+        argcom.done()
+
     def _parse_args(self, argv):
         tailargs = []
         swfuncs = {}
@@ -340,6 +370,7 @@ class Application(object):
         """
         if argv is None:
             argv = sys.argv
+        cls.autocomplete(argv)
         argv = list(argv)
         inst = cls(argv.pop(0))
         retcode = 0
