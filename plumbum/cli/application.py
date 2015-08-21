@@ -4,10 +4,12 @@ import inspect
 import functools
 from plumbum.lib import six
 from textwrap import TextWrapper
+from collections import defaultdict
 from plumbum.cli.terminal import get_terminal_size
 from plumbum.cli.switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,
     MissingMandatorySwitch, SwitchCombinationError, PositionalArgumentsError, switch,
     SubcommandError, Flag, CountOf)
+from plumbum import colors
 
 
 class ShowHelp(SwitchError):
@@ -89,6 +91,26 @@ class Application(object):
 
     * ``USAGE`` - the usage line (shown in help)
 
+    * ``COLOR_PROGNAME`` - the color to print the name in, defaults to None
+
+    * ``COLOR_PROGNAME`` - the color to print the discription in, defaults to None
+
+    * ``COLOR_VERSION`` - the color to print the version in, defaults to None
+
+    * ``COLOR_HEADING`` - the color for headings, can be an attribute, defaults to None
+
+    * ``COLOR_USAGE`` - the color for usage, defaults to None
+
+    * ``COLOR_SUBCOMMANDS`` - the color for subcommands, defaults to None
+
+    * ``COLOR_SWITCHES`` - the color for switches, defaults to None
+
+    * ``COLOR_METASWITCHES`` - the color for meta switches, defaults to None
+
+    * ``COLOR_GROUPS[]`` - Dictionary for colors for the groups, defaults to empty (no colors)
+
+    * ``COLOR_GROUPS_BODY[]`` - Dictionary for colors for the group bodies, defaults nothing (will default to using COLOR_GROUPS instead)``
+
     A note on sub-commands: when an application is the root, its ``parent`` attribute is set to
     ``None``. When it is used as a nested-command, ``parent`` will point to be its direct ancestor.
     Likewise, when an application is invoked with a sub-command, its ``nested_command`` attribute
@@ -100,6 +122,14 @@ class Application(object):
     DESCRIPTION = None
     VERSION = None
     USAGE = None
+    COLOR_PROGNAME = None
+    COLOR_DISCRIPTION = None
+    COLOR_VERSION = None
+    COLOR_HEADING = None
+    COLOR_USAGE = None
+    COLOR_SUBCOMMANDS = None
+    COLOR_GROUPS = dict()
+    COLOR_GROUPS_BODY = COLOR_GROUPS
     CALL_MAIN_IF_NESTED_COMMAND = True
 
     parent = None
@@ -107,6 +137,18 @@ class Application(object):
     _unbound_switches = ()
 
     def __init__(self, executable):
+        # Convert the colors to plumbum.colors on the instance (class remains the same)
+        for item in ('COLOR_PROGNAME', 'COLOR_DISCRIPTION', 'COLOR_VERSION',
+                     'COLOR_HEADING', 'COLOR_USAGE', 'COLOR_SUBCOMMANDS'):
+            setattr(self, item, colors(getattr(type(self), item)))
+
+        self.COLOR_GROUPS = defaultdict(lambda: colors())
+        self.COLOR_GROUPS_BODY = defaultdict(lambda: colors())
+        for item in type(self).COLOR_GROUPS:
+            self.COLOR_GROUPS[item] = colors(type(self).COLOR_GROUPS[item])
+        for item in type(self).COLOR_GROUPS_BODY:
+            self.COLOR_GROUPS_BODY[item] = colors(type(self).COLOR_GROUPS_BODY[item])
+
         if self.PROGNAME is None:
             self.PROGNAME = os.path.basename(executable)
         if self.DESCRIPTION is None:
@@ -473,7 +515,7 @@ class Application(object):
             self.version()
             print("")
         if self.DESCRIPTION:
-            print(self.DESCRIPTION.strip())
+            print(self.COLOR_DISCRIPTION[self.DESCRIPTION.strip() + '\n'])
 
         m_args, m_varargs, _, m_defaults = inspect.getargspec(self.main)
         tailargs = m_args[1:]  # skip self
@@ -484,13 +526,14 @@ class Application(object):
             tailargs.append("%s..." % (m_varargs,))
         tailargs = " ".join(tailargs)
 
-        print("Usage:")
-        if not self.USAGE:
-            if self._subcommands:
-                self.USAGE = "    %(progname)s [SWITCHES] [SUBCOMMAND [SWITCHES]] %(tailargs)s\n"
-            else:
-                self.USAGE = "    %(progname)s [SWITCHES] %(tailargs)s\n"
-        print(self.USAGE % {"progname": self.PROGNAME, "tailargs": tailargs})
+        with self.COLOR_USAGE:
+            print(self.COLOR_HEADING["Usage:"])
+            if not self.USAGE:
+                if self._subcommands:
+                    self.USAGE = "    %(progname)s [SWITCHES] [SUBCOMMAND [SWITCHES]] %(tailargs)s\n"
+                else:
+                    self.USAGE = "    %(progname)s [SWITCHES] %(tailargs)s\n"
+            print(self.USAGE % {"progname": self.PROGNAME, "tailargs": tailargs})
 
         by_groups = {}
         for si in self._switches_by_func.values():
@@ -501,21 +544,24 @@ class Application(object):
         def switchs(by_groups, show_groups):
             for grp, swinfos in sorted(by_groups.items(), key = lambda item: item[0]):
                 if show_groups:
-                    print("%s:" % (grp,))
+                    with (self.COLOR_HEADING + self.COLOR_GROUPS[grp]):
+                        print("%s:" % grp)
 
-                for si in sorted(swinfos, key = lambda si: si.names):
-                    swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names
-                        if n in self._switches_by_name and self._switches_by_name[n] == si)
-                    if si.argtype:
-                        if isinstance(si.argtype, type):
-                            typename = si.argtype.__name__
+                # Print in body color unless empty, otherwise group color, otherwise nothing
+                with self.COLOR_GROUPS_BODY.get(grp, self.COLOR_GROUPS[grp]):
+                    for si in sorted(swinfos, key = lambda si: si.names):
+                        swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names
+                            if n in self._switches_by_name and self._switches_by_name[n] == si)
+                        if si.argtype:
+                            if isinstance(si.argtype, type):
+                                typename = si.argtype.__name__
+                            else:
+                                typename = str(si.argtype)
+                            argtype = " %s:%s" % (si.argname.upper(), typename)
                         else:
-                            typename = str(si.argtype)
-                        argtype = " %s:%s" % (si.argname.upper(), typename)
-                    else:
-                        argtype = ""
-                    prefix = swnames + argtype
-                    yield si, prefix
+                            argtype = ""
+                        prefix = swnames + argtype
+                        yield si, prefix
 
                 if show_groups:
                     print("")
@@ -546,20 +592,22 @@ class Application(object):
             print(description_indent % (prefix, padding, msg))
 
         if self._subcommands:
-            print("Subcommands:")
+            with (self.COLOR_HEADING + self.COLOR_SUBCOMMANDS):
+                print("Subcommands:")
             for name, subcls in sorted(self._subcommands.items()):
-                subapp = subcls.get()
-                doc = subapp.DESCRIPTION if subapp.DESCRIPTION else inspect.getdoc(subapp)
-                help = doc + "; " if doc else ""  # @ReservedAssignment
-                help += "see '%s %s --help' for more info" % (self.PROGNAME, name)
+                with self.COLOR_SUBCOMMANDS:
+                    subapp = subcls.get()
+                    doc = subapp.DESCRIPTION if subapp.DESCRIPTION else inspect.getdoc(subapp)
+                    help = doc + "; " if doc else ""  # @ReservedAssignment
+                    help += "see '%s %s --help' for more info" % (self.PROGNAME, name)
 
-                msg = indentation.join(wrapper.wrap(" ".join(l.strip() for l in help.splitlines())))
+                    msg = indentation.join(wrapper.wrap(" ".join(l.strip() for l in help.splitlines())))
 
-                if len(name) + wrapper.width >= cols:
-                    padding = indentation
-                else:
-                    padding = " " * max(cols - wrapper.width - len(name) - 4, 1)
-                print(description_indent % (name, padding, msg))
+                    if len(name) + wrapper.width >= cols:
+                        padding = indentation
+                    else:
+                        padding = " " * max(cols - wrapper.width - len(name) - 4, 1)
+                    print(description_indent % (name, padding, msg))
 
     def _get_prog_version(self):
         ver = None
@@ -575,8 +623,22 @@ class Application(object):
     def version(self):
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
-        if sys.stdout.isatty() and os.name == "posix":
-            fmt = "\033[0;36m%s\033[0m %s"
-        else:
-            fmt = "%s %s"
-        print (fmt % (self.PROGNAME, ver if ver is not None else "(version not set)"))
+        ver_name = self.COLOR_VERSION[ver if ver is not None else "(version not set)"]
+        program_name = self.COLOR_PROGNAME[self.PROGNAME]
+        print('%s %s' % (program_name, ver_name))
+
+
+
+class ColorfulApplication(Application):
+    """Application with more colorful defaults for easy color output."""
+    COLOR_PROGNAME = colors.cyan + colors.bold
+    COLOR_VERSION = colors.cyan
+    COLOR_DISCRIPTION = colors.green
+    COLOR_HEADING = colors.bold
+    COLOR_USAGE = colors.red
+    COLOR_SUBCOMMANDS = colors.yellow
+    COLOR_GROUPS = {'Switches':colors.blue,
+                    'Meta-switches':colors.magenta,
+                    'Hidden-switches':colors.cyan}
+    COLOR_GROUPS_BODY = COLOR_GROUPS
+

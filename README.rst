@@ -149,6 +149,18 @@ Sample output:
     Include dirs: ['foo/bar', 'spam/eggs']
     Compiling: ('x.cpp', 'y.cpp', 'z.cpp')
 
+**Color controls**
+
+.. code-block:: python
+
+    from plumbum import colors
+    with colors.red:
+        print("This library provides safe, flexible color access.")
+        print("Color", "(and styles in general)" << colors.bold, "are easy!")
+    print("The simple 16 colors or", '256 named colors,' << colors.orchid + colors.underline,
+          "or full hex colors" << colors["#129240"], 'can be used.')
+    print("Unsafe " + colors.bg.dark_khaki + "color access" - colors.bg + " is available too.")
+
 
 
 .. image:: https://d2weczhvl823v0.cloudfront.net/tomerfiliba/plumbum/trend.png
