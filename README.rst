@@ -149,7 +149,9 @@ Sample output:
     Include dirs: ['foo/bar', 'spam/eggs']
     Compiling: ('x.cpp', 'y.cpp', 'z.cpp')
 
-**Color controls** ::
+**Color controls**
+
+.. code-block:: python
 
     from plumbum import colors
     with colors.red:
