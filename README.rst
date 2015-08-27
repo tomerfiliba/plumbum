@@ -21,7 +21,11 @@ Now let's see some code!
 
 Cheat Sheet
 -----------
-**Basics** ::
+
+Basics
+******
+
+.. code-block:: python
 
     >>> from plumbum import local
     >>> ls = local["ls"]
@@ -34,13 +38,18 @@ Cheat Sheet
     u''                                             # Notepad window is closed by user, command returns
 
 Instead of writing ``xxx = local["xxx"]`` for every program you wish to use, you can 
-also ``import`` commands::
+also ``import`` commands
+
+.. code-block:: python
     
     >>> from plumbum.cmd import grep, wc, cat, head
     >>> grep
     LocalCommand(<LocalPath /bin/grep>)
 
-**Piping** ::
+Piping
+******
+
+.. code-block:: python
     
     >>> chain = ls["-a"] | grep["-v", "\\.py"] | wc["-l"]
     >>> print chain
@@ -48,7 +57,10 @@ also ``import`` commands::
     >>> chain()
     u'13\n'
 
-**Redirection** ::
+Redirection
+***********
+
+.. code-block:: python
 
     >>> ((cat < "setup.py") | head["-n", 4])()
     u'#!/usr/bin/env python\nimport os\n\ntry:\n'
@@ -57,16 +69,22 @@ also ``import`` commands::
     >>> (cat["file.list"] | wc["-l"])()
     u'17\n'
 
-**Working-directory manipulation** ::
+Working-directory manipulation
+******************************
+
+.. code-block:: python
     
     >>> local.cwd
     <Workdir /home/tomer/workspace/plumbum>
     >>> with local.cwd(local.cwd / "docs"):
     ...     chain()
-    ... 
+    ...
     u'15\n'
-    
-**Foreground and background execution** ::
+
+Foreground and background execution
+***********************************
+
+.. code-block:: python
 
     >>> from plumbum import FG, BG
     >>> (ls["-a"] | grep["\\.py"]) & FG         # The output is printed to stdout directly
@@ -75,8 +93,11 @@ also ``import`` commands::
     setup.py
     >>> (ls["-a"] | grep["\\.py"]) & BG         # The process runs "in the background"
     <Future ['/bin/grep', '\\.py'] (running)>
-    
-**Command nesting** ::
+
+Command nesting
+***************
+
+.. code-block:: python
     
     >>> from plumbum.cmd import sudo
     >>> print sudo[ifconfig["-a"]]
@@ -85,11 +106,14 @@ also ``import`` commands::
     lo        Link encap:Local Loopback  
               UP LOOPBACK RUNNING  MTU:16436  Metric:1
 
-**Remote commands (over SSH)**
+Remote commands (over SSH)
+**************************
 
 Supports `openSSH <http://www.openssh.org/>`_-compatible clients, 
 `PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/>`_ (on Windows)
-and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implementation of SSH2) ::
+and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implementation of SSH2)
+
+.. code-block:: python
 
     >>> from plumbum import SshMachine
     >>> remote = SshMachine("somehost", user = "john", keyfile = "/path/to/idrsa")
@@ -99,7 +123,10 @@ and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implement
     ... 
     u'libusb-1.0.so.0\nlibusb-1.0.so.0.0.0\n'
 
-**CLI applications** ::
+CLI applications
+****************
+
+.. code-block:: python
 
     import logging
     from plumbum import cli
@@ -122,7 +149,10 @@ and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implement
     if __name__ == "__main__":
         MyCompiler.run()
 
-Sample output::
+Sample output
++++++++++++++
+
+::
 
     $ python simple_cli.py -v -I foo/bar -Ispam/eggs x.cpp y.cpp z.cpp
     Verbose: True
