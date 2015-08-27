@@ -73,6 +73,21 @@ class-level attributes, such as ``PROGNAME``, ``VERSION`` and ``DESCRIPTION``. F
     class MyApp(cli.Application):
         PROGNAME = "Foobar"
         VERSION = "7.3"
+        
+Colors are supported through the class level attributes
+``COLOR_PROGNAME``,
+``COLOR_DISCRIPTION``,
+``COLOR_VERSION``,
+``COLOR_HEADING``,
+``COLOR_USAGE``,
+``COLOR_SUBCOMMANDS``,
+``COLOR_GROUPS[]``, and
+``COLOR_GROUPS_BODY[]``,
+which should contain Style objects. The dictionaries support custom colors
+for named groups. The default is ``colors.do_nothing``, but if you just want more
+colorful defaults, subclass ``cli.ColorfulApplication``.
+
+.. versionadded:: 1.5
 
 Switch Functions
 ----------------
@@ -462,6 +477,7 @@ remaining displayed. If you need to create a progress bar for a fast iterator bu
 If you have something that produces output, but still needs a progress bar, pass ``has_output=True`` to force the bar not to try to erase the old one each time.
 
 For the full list of helpers, see the :ref:`api docs <api-cli>`.
+
 
 
 See Also
