@@ -101,7 +101,7 @@ class ProcessTimedOut(Exception):
         Exception.__init__(self, msg, argv)
         self.argv = argv
 
-class CommandNotFound(Exception):
+class CommandNotFound(AttributeError):
     """Raised by :func:`local.which <plumbum.machines.local.LocalMachine.which>` and
     :func:`RemoteMachine.which <plumbum.machines.remote.RemoteMachine.which>` when a
     command was not found in the system's ``PATH``"""
