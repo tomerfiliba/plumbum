@@ -11,6 +11,14 @@ class ShellSessionError(Exception):
     :func:`ShellSession.popen <plumbum.session.ShellSession.popen>`"""
     pass
 
+class SSHCommsError(Exception):
+    """Raises when the communication channel can't be created on the
+    remote host or it times out."""
+
+class SSHUnsupportedError(SSHCommsError):
+    """Raises when the error channel can't be opened or times out. Usually
+    because the remote doesn't have Bash as the default shell."""
+
 shell_logger = logging.getLogger("plumbum.shell")
 
 
@@ -89,8 +97,13 @@ class SessionPopen(object):
                 input = input[1000:]
             i = (i + 1) % len(sources)
             name, coll, pipe = sources[i]
-            line = pipe.readline()
-            shell_logger.debug("%s> %r", name, line)
+            try:
+                line = pipe.readline()
+                shell_logger.debug("%s> %r", name, line)
+            except EOFError:
+                shell_logger.debug("%s> Nothing returned.", name)
+                msg = "Nothing returned, not even flags. Does the remote exist and have Bash as the default shell?"
+                raise SSHCommsError(msg)
             if not line:
                 del sources[i]
             else:
