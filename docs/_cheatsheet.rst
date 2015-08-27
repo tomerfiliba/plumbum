@@ -21,6 +21,8 @@ also :ref:`import commands <import-hack>`:
     >>> grep
     LocalCommand(<LocalPath /bin/grep>)
 
+See :ref:`guide-local-commands`.
+
 Piping
 ------
 
@@ -31,6 +33,8 @@ Piping
     /bin/ls -a | /bin/grep -v '\.py' | /usr/bin/wc -l
     >>> chain()
     u'13\n'
+
+See :ref:`guide-local-commands-pipelining`.
 
 Redirection
 -----------
@@ -44,6 +48,8 @@ Redirection
     >>> (cat["file.list"] | wc["-l"])()
     u'17\n'
 
+See :ref:`guide-local-commands-redir`.
+
 Working-directory manipulation
 ------------------------------
 
@@ -55,6 +61,8 @@ Working-directory manipulation
     ...     chain()
     ...
     u'15\n'
+
+See :ref:`guide-local-machine`.
 
 Foreground and background execution
 -----------------------------------
@@ -69,6 +77,8 @@ Foreground and background execution
     >>> (ls["-a"] | grep["\\.py"]) & BG         # The process runs "in the background"
     <Future ['/bin/grep', '\\.py'] (running)>
 
+See :ref:`guide-local-commands-bgfg`.
+
 
 Command nesting
 ---------------   
@@ -81,6 +91,9 @@ Command nesting
     >>> (sudo[ifconfig["-a"]] | grep["-i", "loop"]) & FG
     lo        Link encap:Local Loopback  
               UP LOOPBACK RUNNING  MTU:16436  Metric:1
+
+
+See :ref:`guide-local-commands-nesting`.
 
 Remote commands (over SSH)
 --------------------------
@@ -98,6 +111,8 @@ and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implement
     ...     (r_ls | grep["0.so.0"])()
     ...
     u'libusb-1.0.so.0\nlibusb-1.0.so.0.0.0\n'
+
+See :ref:`guide-remote`.
 
 
 CLI applications
@@ -135,3 +150,4 @@ Sample output
     Include dirs: ['foo/bar', 'spam/eggs']
     Compiling: ('x.cpp', 'y.cpp', 'z.cpp')
 
+See :ref:`guide-cli`.
