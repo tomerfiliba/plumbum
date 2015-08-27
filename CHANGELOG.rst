@@ -1,5 +1,10 @@
-1.5.1
------
+In development
+--------------
+* Color: Added colors module, support for colors added to cli
+
+
+1.5.1 (In development)
+----------------------
 * Machines: Added ``.get()`` method for checking several commands. (`#205 <https://github.com/tomerfiliba/plumbum/pull/205>`_)
 * Machines: ``local.cwd`` now is the current directory even if you change the directory with non-Plumbum methods. (`#207 <https://github.com/tomerfiliba/plumbum/pull/207>`_) 
 

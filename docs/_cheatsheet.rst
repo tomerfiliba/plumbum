@@ -151,3 +151,31 @@ Sample output
     Compiling: ('x.cpp', 'y.cpp', 'z.cpp')
 
 See :ref:`guide-cli`.
+
+Color controls
+--------------
+
+.. code-block:: python
+
+    from plumbum import colors
+    with colors.red:
+        print("This library provides safe, flexible color access.")
+        print("Color", "(and styles in general)" << colors.bold, "are easy!")
+    print("The simple 16 colors or", '256 named colors,' << colors.orchid + color.underline,
+          "or full hex colors" << colors["#129240"], 'can be used.')
+    print("Unsafe " + colors.bg.dark_khaki + "color access" - colors.bg + " is available too.")
+
+Sample output
++++++++++++++
+
+.. raw:: html
+
+    <div class="highlight">
+    <code>
+    <pre><font color="#800000">This library provides safe color access.
+    Color <b>(and styles in general)</b> are easy!
+    </font>The simple 16 colors, <font color="#D75FD7"><span style="text-decoration: underline;">256 named colors,</span></font> <font color="#129240">or full hex colors</font> can be used.
+    Unsafe <span style="background-color: #AFAF5F">color access</span> is available too.</pre>
+    </code>
+    </div>
+
