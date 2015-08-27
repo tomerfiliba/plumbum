@@ -1,4 +1,3 @@
-from __future__ import with_statement
 import re
 from contextlib import contextmanager
 from plumbum.commands import CommandNotFound, shquote, ConcreteCommand

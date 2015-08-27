@@ -2,7 +2,6 @@
 Atomic file operations
 """
 
-from __future__ import with_statement
 import os
 import threading
 import sys
@@ -31,12 +30,12 @@ except ImportError:
         from win32con import LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY
     except ImportError:
         raise ImportError("On Windows, we require Python for Windows Extensions (pywin32)")
-    
+
     @contextmanager
     def locked_file(fileno, blocking = True):
         hndl = msvcrt.get_osfhandle(fileno)
         try:
-            LockFileEx(hndl, LOCKFILE_EXCLUSIVE_LOCK | (0 if blocking else LOCKFILE_FAIL_IMMEDIATELY), 
+            LockFileEx(hndl, LOCKFILE_EXCLUSIVE_LOCK | (0 if blocking else LOCKFILE_FAIL_IMMEDIATELY),
                 0xffffffff, 0xffffffff, OVERLAPPED())
         except WinError:
             _, ex, _ = sys.exc_info()
@@ -77,7 +76,7 @@ class AtomicFile(object):
     """
 
     CHUNK_SIZE = 32 * 1024
-    
+
     def __init__(self, filename, ignore_deletion = False):
         self.path = local.path(filename)
         self._ignore_deletion = ignore_deletion
@@ -95,12 +94,12 @@ class AtomicFile(object):
         return self
     def __exit__(self, t, v, tb):
         self.close()
-    
+
     def close(self):
         if self._fileobj is not None:
             self._fileobj.close()
             self._fileobj = None
-    
+
     def reopen(self):
         """
         Close and reopen the file; useful when the file was deleted from the file system
@@ -148,7 +147,7 @@ class AtomicFile(object):
             if len(buf) < self.CHUNK_SIZE:
                 break
         return six.b("").join(data)
-        
+
     def read_atomic(self):
         """Atomically read the entire file"""
         with self.locked():

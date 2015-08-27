@@ -1,4 +1,3 @@
-from __future__ import with_statement
 import os
 import sys
 import glob
@@ -70,7 +69,7 @@ class LocalPath(Path):
     @_setdoc(Path)
     def suffix(self):
         return os.path.splitext(str(self))[1]
-        
+
     @property
     def suffixes(self):
         exts = []
@@ -123,11 +122,11 @@ class LocalPath(Path):
     @_setdoc(Path)
     def stat(self):
         return os.stat(str(self))
-        
+
     @_setdoc(Path)
     def with_name(self, name):
         return LocalPath(self.dirname) / name
-        
+
     @_setdoc(Path)
     def with_suffix(self, suffix, depth=1):
         if (suffix and not suffix.startswith(os.path.extsep) or suffix == os.path.extsep):

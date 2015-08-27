@@ -1,6 +1,7 @@
 """
 Terminal-related utilities
 """
+from __future__ import division, print_function, absolute_import
 import sys
 import os
 import platform
@@ -23,7 +24,7 @@ def get_terminal_size():
             size = _get_terminal_size_tput()
     elif current_os in ('Linux', 'Darwin', 'FreeBSD') or current_os.startswith('CYGWIN'):
         size = _get_terminal_size_linux()
-    
+
     if size is None: # we'll assume the standard 80x25 if for any reason we don't know the terminal size
         size = (80, 25)
     return size
@@ -79,19 +80,19 @@ def _get_terminal_size_linux():
             return None
     return cr[1], cr[0]
 
-def readline(message = ""):                          
+def readline(message = ""):
     """Gets a line of input from the user (stdin)"""
     sys.stdout.write(message)
     return sys.stdin.readline()
 
 def ask(question, default = None):
     """
-    Presents the user with a yes/no question. 
-    
+    Presents the user with a yes/no question.
+
     :param question: The question to ask
-    :param default: If ``None``, the user must answer. If ``True`` or ``False``, lack of response is 
+    :param default: If ``None``, the user must answer. If ``True`` or ``False``, lack of response is
                     interpreted as the default option
-    
+
     :returns: the user's choice
     """
     question = question.rstrip().rstrip("?").rstrip() + "?"
@@ -101,7 +102,7 @@ def ask(question, default = None):
         question += " [Y/n] "
     else:
         question += " [y/N] "
-    
+
     while True:
         try:
             answer = readline(question).strip().lower()
@@ -118,21 +119,21 @@ def ask(question, default = None):
 
 def choose(question, options, default = None):
     """Prompts the user with a question and a set of options, from which the user need choose.
-    
+
     :param question: The question to ask
-    :param options: A set of options. It can be a list (of strings or two-tuples, mapping text 
+    :param options: A set of options. It can be a list (of strings or two-tuples, mapping text
                     to returned-object) or a dict (mapping text to returned-object).``
     :param default: If ``None``, the user must answer. Otherwise, lack of response is interpreted
                     as this answer
-    
+
     :returns: The user's choice
-    
+
     Example::
-    
+
         ans = choose("What is your favorite color?", ["blue", "yellow", "green"], default = "yellow")
         # `ans` will be one of "blue", "yellow" or "green"
 
-        ans = choose("What is your favorite color?", 
+        ans = choose("What is your favorite color?",
                 {"blue" : 0x0000ff, "yellow" : 0xffff00 , "green" : 0x00ff00}, default = 0x00ff00)
         # this will display "blue", "yellow" and "green" but return a numerical value
     """
@@ -204,7 +205,7 @@ def prompt(question, type = int, default = NotImplemented, validator = lambda va
         return ans
 
 def hexdump(data_or_stream, bytes_per_line = 16, aggregate = True):
-    """Convert the given bytes (or a stream with a buffering ``read()`` method) to hexdump-formatted lines, 
+    """Convert the given bytes (or a stream with a buffering ``read()`` method) to hexdump-formatted lines,
     with possible aggregation of identical lines. Returns a generator of formatted lines.
     """
     if hasattr(data_or_stream, "read"):
@@ -235,7 +236,7 @@ def hexdump(data_or_stream, bytes_per_line = 16, aggregate = True):
 
 def pager(rows, pagercmd = None):
     """Opens a pager (e.g., ``less``) to display the given text. Requires a terminal.
-    
+
     :param rows: a ``bytes`` or a list/iterator of "rows" (``bytes``)
     :param pagercmd: the pager program to run. Defaults to ``less -RSin``
     """

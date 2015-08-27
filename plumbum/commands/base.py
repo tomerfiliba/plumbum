@@ -1,4 +1,3 @@
-from __future__ import with_statement
 import subprocess
 import functools
 from contextlib import contextmanager

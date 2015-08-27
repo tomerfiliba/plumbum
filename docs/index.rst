@@ -26,6 +26,7 @@
 
 Plumbum: Shell Combinators and More
 ===================================
+
 .. comment raw:: html
 
    <div style="width:795px; margin: 1em 0 2em 0; display: block; padding: 1em; border: 1px dotted #DDD; 
@@ -59,16 +60,19 @@ environment :ref:`manipulation <guide-local-machine>`, quick access to ANSI :ref
 
 News
 ====
+
 .. include:: _news.rst
 
 * :doc:`changelog`
 
 Cheat Sheet
 ===========
+
 .. include:: _cheatsheet.rst
 
 Development and Installation
 ============================
+
 The library is developed on `github <https://github.com/tomerfiliba/plumbum>`_, and will happily 
 accept `patches <http://help.github.com/send-pull-requests/>`_ from users. Please use the github's 
 built-in `issue tracker <https://github.com/tomerfiliba/plumbum/issues>`_ to report any problem 
