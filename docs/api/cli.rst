@@ -8,3 +8,4 @@ Package plumbum.cli
 
 .. automodule:: plumbum.cli.terminal
    :members:
+

@@ -103,7 +103,7 @@ Command nesting
     >>> print sudo[ifconfig["-a"]]
     /usr/bin/sudo /sbin/ifconfig -a
     >>> (sudo[ifconfig["-a"]] | grep["-i", "loop"]) & FG
-    lo        Link encap:Local Loopback  
+    lo        Link encap:Local Loopback
               UP LOOPBACK RUNNING  MTU:16436  Metric:1
 
 Remote commands (over SSH)
@@ -120,7 +120,7 @@ and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implement
     >>> r_ls = remote["ls"]
     >>> with remote.cwd("/lib"):
     ...     (r_ls | grep["0.so.0"])()
-    ... 
+    ...
     u'libusb-1.0.so.0\nlibusb-1.0.so.0.0.0\n'
 
 CLI applications
@@ -130,22 +130,21 @@ CLI applications
 
     import logging
     from plumbum import cli
-    
+
     class MyCompiler(cli.Application):
         verbose = cli.Flag(["-v", "--verbose"], help = "Enable verbose mode")
         include_dirs = cli.SwitchAttr("-I", list = True, help = "Specify include directories")
-        
+
         @cli.switch("--loglevel", int)
         def set_log_level(self, level):
             """Sets the log-level of the logger"""
             logging.root.setLevel(level)
-        
+
         def main(self, *srcfiles):
             print "Verbose:", self.verbose
-            print "Include dirs:", self.include_dirs 
+            print "Include dirs:", self.include_dirs
             print "Compiling:", srcfiles
-    
-    
+
     if __name__ == "__main__":
         MyCompiler.run()
 
@@ -158,6 +157,19 @@ Sample output
     Verbose: True
     Include dirs: ['foo/bar', 'spam/eggs']
     Compiling: ('x.cpp', 'y.cpp', 'z.cpp')
+
+Color controls
+--------------
+
+.. code-block:: python
+
+    from plumbum import colors
+    with colors.red:
+        print("This library provides safe, flexible color access.")
+        print("Color", "(and styles in general)" << colors.bold, "are easy!")
+    print("The simple 16 colors or", '256 named colors,' << colors.orchid + colors.underline,
+          "or full hex colors" << colors["#129240"], 'can be used.')
+    print("Unsafe " + colors.bg.dark_khaki + "color access" - colors.bg + " is available too.")
 
 
 
