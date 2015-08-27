@@ -1,4 +1,3 @@
-from __future__ import with_statement
 import unittest
 from plumbum import local, SshMachine
 from plumbum.path.utils import copy, delete, move
@@ -7,7 +6,7 @@ from plumbum.path.utils import copy, delete, move
 class UtilsTest(unittest.TestCase):
     def test_copy_move_delete(self):
         from plumbum.cmd import touch
-        
+
         with local.tempdir() as dir:
             (dir / "orog").mkdir()
             (dir / "orog" / "rec").mkdir()
@@ -19,11 +18,11 @@ class UtilsTest(unittest.TestCase):
             move(dir / "orog", dir / "orig")
 
             s1 = sorted(f.basename for f in (dir / "orig").walk())
-            
+
             copy(dir / "orig", dir / "dup")
             s2 = sorted(f.basename for f in (dir / "dup").walk())
             self.assertEqual(s1, s2)
-            
+
             with SshMachine("localhost") as rem:
                 with rem.tempdir() as dir2:
                     copy(dir / "orig", dir2)
@@ -37,19 +36,19 @@ class UtilsTest(unittest.TestCase):
                     copy(dir2 / "dup", dir / "dup2")
                     s5 = sorted(f.basename for f in (dir / "dup2").walk())
                     self.assertEqual(s1, s5)
-                
+
                     with SshMachine("localhost") as rem2:
                         with rem2.tempdir() as dir3:
                             copy(dir2 / "dup", dir3)
                             s6 = sorted(f.basename for f in (dir3 / "dup").walk())
                             self.assertEqual(s1, s6)
-                            
+
                             move(dir3 / "dup", dir / "superdup")
                             self.assertFalse((dir3 / "dup").exists())
-                            
+
                             s7 = sorted(f.basename for f in (dir / "superdup").walk())
                             self.assertEqual(s1, s7)
-                            
+
                             # test rm
                             delete(dir)
 

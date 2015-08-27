@@ -1,4 +1,3 @@
-from __future__ import with_statement
 import errno
 from contextlib import contextmanager
 from plumbum.path.base import Path, FSUser
@@ -76,12 +75,12 @@ class RemotePath(Path):
         if not "/" in str(self):
             return str(self)
         return self.__class__(self.remote, str(self).rsplit("/", 1)[0])
-        
+
     @property
     @_setdoc(Path)
     def suffix(self):
         return '.' + self.basename.rsplit('.',1)[1]
-        
+
     @property
     @_setdoc(Path)
     def suffixes(self):
@@ -152,7 +151,7 @@ class RemotePath(Path):
     @_setdoc(Path)
     def with_name(self, name):
         return self.__class__(self.remote, self.dirname) / name
-        
+
     @_setdoc(Path)
     def with_suffix(self, suffix, depth=1):
         if (suffix and not suffix.startswith('.') or suffix == '.'):
@@ -250,6 +249,8 @@ class RemotePath(Path):
             raise TypeError("dst must be a string or a RemotePath (to the same remote machine), "
                 "got %r" % (dst,))
         self.remote._path_link(self, dst, True)
+    def open(self):
+        pass
 
 
 class RemoteWorkdir(RemotePath):
