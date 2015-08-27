@@ -39,19 +39,9 @@ class TestANSIColor(unittest.TestCase):
         self.assertEqual('\033[39m', colors.fg.reset)
 
     def testNegateIsReset(self):
-        self.assertEqual(colors.reset, -colors)
-        self.assertEqual(colors.fg.reset, -colors.fg)
-        self.assertEqual(colors.bg.reset, -colors.bg)
-
-    def testShifts(self):
-        self.assertEqual("This" << colors.red, "This" >> colors.red)
-        self.assertEqual("This" << colors.red, "This" << colors.red)
-        if sys.version_info >= (2, 7):
-            self.assertEqual("This" << colors.red, "This" * colors.red)
-        self.assertEqual("This" << colors.red, colors.red << "This")
-        self.assertEqual("This" << colors.red, colors.red << "This")
-        self.assertEqual("This" << colors.red, colors.red * "This")
-        self.assertEqual(colors.red.wrap("This"), "This" << colors.red)
+        self.assertEqual(colors.reset, ~colors)
+        self.assertEqual(colors.fg.reset, ~colors.fg)
+        self.assertEqual(colors.bg.reset, ~colors.bg)
 
     def testFromPreviousColor(self):
         self.assertEqual(colors(colors.red), colors.red)
@@ -83,7 +73,7 @@ class TestANSIColor(unittest.TestCase):
 
     def testMultiColor(self):
         sumcolors = colors.bold + colors.blue
-        self.assertEqual(colors.bold.reset + colors.fg.reset, -sumcolors)
+        self.assertEqual(colors.bold.reset + colors.fg.reset, ~sumcolors)
 
     def testSums(self):
         # Sums should not be communitave, last one is used
@@ -125,39 +115,35 @@ class TestANSIColor(unittest.TestCase):
         string = 'This is a string'
         wrapped = '\033[31mThis is a string\033[39m'
         self.assertEqual(colors.red.wrap(string), wrapped)
-        self.assertEqual(string << colors.red, wrapped)
         self.assertEqual(colors.red*string, wrapped)
         self.assertEqual(colors.red[string], wrapped)
 
         newcolors = colors.blue + colors.underline
-        self.assertEqual(newcolors[string], string << newcolors)
-        self.assertEqual(newcolors.wrap(string), string << colors.blue + colors.underline)
+        self.assertEqual(newcolors[string], string*newcolors)
+        self.assertEqual(newcolors.wrap(string), string*(colors.blue + colors.underline))
 
     def testUndoColor(self):
-        self.assertEqual('\033[39m', -colors.fg)
         self.assertEqual('\033[39m', ~colors.fg)
-        self.assertEqual('\033[39m', ''-colors.fg)
-        self.assertEqual('\033[49m', -colors.bg)
-        self.assertEqual('\033[49m', ''-colors.bg)
-        self.assertEqual('\033[21m', -colors.bold)
-        self.assertEqual('\033[22m', -colors.dim)
+        self.assertEqual('\033[49m', ~colors.bg)
+        self.assertEqual('\033[21m', ~colors.bold)
+        self.assertEqual('\033[22m', ~colors.dim)
         for i in range(7):
-            self.assertEqual('\033[39m', -colors(i))
-            self.assertEqual('\033[49m', -colors.bg(i))
-            self.assertEqual('\033[39m', -colors.fg(i))
-            self.assertEqual('\033[49m', -colors.bg(i))
+            self.assertEqual('\033[39m', ~colors(i))
+            self.assertEqual('\033[49m', ~colors.bg(i))
+            self.assertEqual('\033[39m', ~colors.fg(i))
+            self.assertEqual('\033[49m', ~colors.bg(i))
         for i in range(256):
-            self.assertEqual('\033[39m', -colors.fg[i])
-            self.assertEqual('\033[49m', -colors.bg[i])
-        self.assertEqual('\033[0m', -colors.reset)
-        self.assertEqual(colors.do_nothing, -colors.do_nothing)
+            self.assertEqual('\033[39m', ~colors.fg[i])
+            self.assertEqual('\033[49m', ~colors.bg[i])
+        self.assertEqual('\033[0m', ~colors.reset)
+        self.assertEqual(colors.do_nothing, ~colors.do_nothing)
 
-        self.assertEqual(colors.bold.reset, -colors.bold)
+        self.assertEqual(colors.bold.reset, ~colors.bold)
 
     def testLackOfColor(self):
         Style.use_color = False
         self.assertEqual('', colors.fg.red)
-        self.assertEqual('', -colors.fg)
+        self.assertEqual('', ~colors.fg)
         self.assertEqual('', colors.fg['LightBlue'])
 
     def testFromHex(self):
@@ -181,7 +167,7 @@ class TestANSIColor(unittest.TestCase):
             self.fail("Need to run in buffered mode!")
 
         output = sys.stdout.getvalue().strip()
-        self.assertEquals(output,str("This is" << colors.blue))
+        self.assertEquals(output,str(colors.blue * "This is"))
 
     def testPrint(self):
         colors.yellow.print('This is printed to stdout')
@@ -197,14 +183,12 @@ class TestHTMLColor(unittest.TestCase):
     def test_html(self):
         red_tagged = '<font color="#C00000">This is tagged</font>'
         self.assertEqual(htmlcolors.red["This is tagged"], red_tagged)
-        self.assertEqual("This is tagged" << htmlcolors.red, red_tagged)
         self.assertEqual("This is tagged" * htmlcolors.red, red_tagged)
 
         twin_tagged = '<font color="#C00000"><em>This is tagged</em></font>'
-        self.assertEqual("This is tagged" << htmlcolors.red + htmlcolors.em, twin_tagged)
-        self.assertEqual("This is tagged" << htmlcolors.em << htmlcolors.red, twin_tagged)
+        self.assertEqual("This is tagged" *( htmlcolors.red + htmlcolors.em), twin_tagged)
+        self.assertEqual("This is tagged" * htmlcolors.em*htmlcolors.red, twin_tagged)
         self.assertEqual(htmlcolors.em * htmlcolors.red * "This is tagged", twin_tagged)
-        self.assertEqual(htmlcolors.red << "This should be wrapped", "This should be wrapped" << htmlcolors.red)
 
 if __name__ == '__main__':
     unittest.main(buffer=True)

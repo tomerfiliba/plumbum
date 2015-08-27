@@ -384,21 +384,9 @@ class Style(object):
         result.attributes = copy(self.attributes)
         return result
 
-    def __neg__(self):
-        """This negates the effect of the current color"""
-        return self.invert()
-
     def __invert__(self):
-        """This allows ~color == -color."""
+        """This allows ~color."""
         return self.invert()
-
-    def __sub__(self, other):
-       """Implemented to make muliple Style objects work"""
-       return self + (-other)
-
-    def __rsub__(self, other):
-        """Implemented to make using negatives easier"""
-        return other + (-self)
 
     def __add__(self, other):
         """Adding two matching Styles results in a new style with
@@ -429,7 +417,7 @@ class Style(object):
 
     def wrap(self, wrap_this):
         """Wrap a sting in this style and its inverse."""
-        return self + wrap_this - self
+        return self + wrap_this + ~self
 
     def __mul__(self, other):
         """This class supports ``color * color2`` syntax,
@@ -443,10 +431,6 @@ class Style(object):
         """This class supports ``"String:" * color`` syntax, excpet in Python 2.6 due to bug with that Python."""
         return self.wrap(other)
 
-    def __rlshift__(self, other):
-        """This class supports ``"String:" << color`` syntax"""
-        return self.wrap(other)
-
     def __rand__(self, other):
         """Support for "String" & color syntax"""
         return self.wrap(other)
@@ -455,21 +439,6 @@ class Style(object):
         """This class supports ``color & color2`` syntax. It also supports
         ``"color & "String"`` syntax too. """
         return self.__mul__(other)
-
-    def __lshift__(self, other):
-        """This class supports ``color << color2`` syntax. It also supports
-        ``"color << "String"`` syntax too. """
-        return self.__mul__(other)
-
-    def __rrshift__(self, other):
-        """This class supports ``"String:" >> color`` syntax"""
-        return self.wrap(other)
-
-    def __rshift__(self, other):
-        """This class supports ``color >> "String"`` syntax. It also supports
-        ``"color >> color2`` syntax too. """
-        return self.__mul__(other)
-
 
     def __call__(self, *printables, **kargs):
         """\
@@ -512,7 +481,7 @@ class Style(object):
 
     def __exit__(self, type, value, traceback):
         """Runs even if exception occured, does not catch it."""
-        self.stdout.write(str(-self))
+        self.stdout.write(str(~self))
         return False
 
     @property

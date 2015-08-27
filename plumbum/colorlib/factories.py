@@ -84,17 +84,9 @@ class ColorFactory(object):
         """Iterates through all colors in extended colorset."""
         return (self.full(i) for i in range(256))
 
-    def __neg__(self):
-        """Allows clearing a color with -"""
-        return self.reset
-
     def __invert__(self):
         """Allows clearing a color with ~"""
         return self.reset
-
-    def __rsub__(self, other):
-        """Makes ``- COLOR.FG`` easier"""
-        return other + (-self)
 
     def __enter__(self):
         """This will reset the color on leaving the with statement."""

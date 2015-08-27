@@ -29,14 +29,14 @@ class TestVisualColor(unittest.TestCase):
         with colors:
             print(colors.fg.green + "Green "
                   + colors.bold + "Bold "
-                  - colors.bold + "Normal")
+                  + ~colors.bold + "Normal")
         print("Reset all")
 
     def testToggleColors(self):
         print()
-        print(colors.fg.red("This is in red"), "but this is not")
+        print(colors.fg.red["This is in red"], "but this is not")
         print(colors.fg.green + "Hi, " + colors.bg[23]
-              + "This is on a BG" - colors.bg + " and this is not")
+              + "This is on a BG" + ~colors.bg + " and this is not")
         colors.yellow.print("This is printed from color.")
         colors.reset()
 
