@@ -60,6 +60,8 @@ If underscores (``_``) appear in the name, and the name cannot be found in the p
 the underscores will be replaced by hyphens (``-``) and the name will be looked up again.
 This allows you to import ``apt_get`` for ``apt-get``.
 
+.. _guide-local-commands-pipelining:
+
 Pipelining
 ----------
 In order to form pipelines and other chains, we must first learn to *bind arguments* to commands.
@@ -84,6 +86,8 @@ using ``|`` (bitwise-or)::
     >>>
     >>> chain()
     '-rw-r--r--    1 sebulba  Administ        0 Apr 27 11:54 setup.py\n'
+
+.. _guide-local-commands-redir:
 
 Input/Output Redirection
 ------------------------
@@ -194,6 +198,8 @@ finish), you can use the ``popen`` method, which returns a normal ``subprocess.P
 
 You can read from its ``stdout``, ``wait()`` for it, ``terminate()`` it, etc.
 
+.. _guide-local-commands-bgfg:
+
 Background and Foreground
 -------------------------
 In order to make programming easier, there are two special objects called ``FG`` and ``BG``,
@@ -226,6 +232,8 @@ or input from the user. ::
     >>> f.stdout
     '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\nplumbum\n[...]'
 
+.. _guide-local-commands-nesting:
+    
 Command Nesting
 ---------------
 The arguments of commands can be strings (or any object that can meaningfully-convert to a string), 
@@ -265,5 +273,4 @@ In this example, we first ssh to ``somehost``, from it we ssh to ``anotherhost``
 we run the command chain. As you can see, ``|`` and the backslashes have been quoted, to prevent 
 them from executing on the first-level shell; this way, they would safey get to the 
 second-level shell.
-
 

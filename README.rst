@@ -21,7 +21,9 @@ Now let's see some code!
 
 Cheat Sheet
 -----------
-**Basics**
+
+Basics
+******
 
 .. code-block:: python
 
@@ -44,7 +46,8 @@ also ``import`` commands
     >>> grep
     LocalCommand(<LocalPath /bin/grep>)
 
-**Piping**
+Piping
+******
 
 .. code-block:: python
     
@@ -54,7 +57,8 @@ also ``import`` commands
     >>> chain()
     u'13\n'
 
-**Redirection**
+Redirection
+***********
 
 .. code-block:: python
 
@@ -65,7 +69,8 @@ also ``import`` commands
     >>> (cat["file.list"] | wc["-l"])()
     u'17\n'
 
-**Working-directory manipulation**
+Working-directory manipulation
+******************************
 
 .. code-block:: python
     
@@ -73,10 +78,11 @@ also ``import`` commands
     <Workdir /home/tomer/workspace/plumbum>
     >>> with local.cwd(local.cwd / "docs"):
     ...     chain()
-    ... 
+    ...
     u'15\n'
-    
-**Foreground and background execution**
+
+Foreground and background execution
+***********************************
 
 .. code-block:: python
 
@@ -87,8 +93,9 @@ also ``import`` commands
     setup.py
     >>> (ls["-a"] | grep["\\.py"]) & BG         # The process runs "in the background"
     <Future ['/bin/grep', '\\.py'] (running)>
-    
-**Command nesting**
+
+Command nesting
+***************
 
 .. code-block:: python
     
@@ -99,7 +106,8 @@ also ``import`` commands
     lo        Link encap:Local Loopback  
               UP LOOPBACK RUNNING  MTU:16436  Metric:1
 
-**Remote commands (over SSH)**
+Remote commands (over SSH)
+**************************
 
 Supports `openSSH <http://www.openssh.org/>`_-compatible clients, 
 `PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/>`_ (on Windows)
@@ -115,7 +123,8 @@ and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implement
     ... 
     u'libusb-1.0.so.0\nlibusb-1.0.so.0.0.0\n'
 
-**CLI applications**
+CLI applications
+****************
 
 .. code-block:: python
 
@@ -140,9 +149,10 @@ and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implement
     if __name__ == "__main__":
         MyCompiler.run()
 
-Sample output:
+Sample output
++++++++++++++
 
-.. code-block:: bash
+::
 
     $ python simple_cli.py -v -I foo/bar -Ispam/eggs x.cpp y.cpp z.cpp
     Verbose: True
