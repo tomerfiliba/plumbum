@@ -1,11 +1,14 @@
 """
 Terminal-related utilities
+--------------------------
 """
+
 from __future__ import division, print_function, absolute_import
 import sys
 import os
 from plumbum import local
 from plumbum.cli.termsize import get_terminal_size
+from plumbum.cli.progress import Progress
 
 def readline(message = ""):
     """Gets a line of input from the user (stdin)"""

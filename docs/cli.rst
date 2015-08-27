@@ -443,6 +443,26 @@ Here's an example of running this application::
     $ python geet.py commit -m "foo"
     committing...
 
+Terminal Utilities
+------------------
+
+Several terminal utilities are available in ``plumbum.cli.terminal`` to assist in making terminal
+applications.
+
+``get_terminal_size(default=(80,25))`` allows cross platform access to the terminal size as a tuple ``(width, height)``.
+Several methods to ask the user for input, such as ``readline``, ``ask``, ``choose``, and ``prompt`` are available.
+
+``Progress(iterator)`` allows you to quickly create a progress bar from an iterator. Simply wrap a slow iterator with this
+and iterate over it, and it will produce a nice text progress bar based on the user's screen width, with estimated time
+remaining displayed. If you need to create a progress bar for a fast iterator but with a loop containing code, use ``Progress.wrap`` or ``Progress.range``. For example::
+
+    for i in Progress.range(10):
+        time.sleep(1)
+
+If you have something that produces output, but still needs a progress bar, pass ``has_output=True`` to force the bar not to try to erase the old one each time.
+
+For the full list of helpers, see the :ref:`api docs <api-cli>`.
+
 
 See Also
 --------
