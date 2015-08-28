@@ -158,17 +158,19 @@ Sample output
     Include dirs: ['foo/bar', 'spam/eggs']
     Compiling: ('x.cpp', 'y.cpp', 'z.cpp')
 
-Color controls
---------------
+Colors and Styles
+-----------------
 
 .. code-block:: python
 
     from plumbum import colors
     with colors.red:
         print("This library provides safe, flexible color access.")
-        print(colors.bold["(and styles in general)"], "are easy!")
-    print("The simple 16 colors or", (colors.orchid | colors.underline)['256 named colors,'],
-          "or full rgb colors" << colors.rgb(18, 146, 64), 'can be used.')
+        print(colors.bold | "(and styles in general)", "are easy!")
+    print("The simple 16 colors or",
+          colors.orchid & colors.underline | '256 named colors,',
+          colors.rgb(18, 146, 64) | "or full rgb colors",
+          'can be used.')
     print("Unsafe " + colors.bg.dark_khaki + "color access" + colors.bg.reset + " is available too.")
 
 

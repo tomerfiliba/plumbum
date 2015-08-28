@@ -1,18 +1,15 @@
-.. _guide-color:
+.. _guide-colorlib:
 
-Color tools
------------
+Colorlib design
+---------------
 
 .. versionadded:: 1.6.0
 
 
-The purpose of the `plumbum.colors` library is to make adding
-text styles (such as color) to Python easy and safe. Color is often a great
-addition to shell scripts, but not a necessity, and implementing it properly 
-is tricky. It is easy to end up with an unreadable color stuck on your terminal or
-with random unreadable symbols around your text. With the color module, you get quick,
-safe access to ANSI colors and attributes for your scripts. The module also provides an
-API for creating other color schemes for other systems using escapes.
+The purpose of this document is to describe the system
+that plumbum.colors implements. This system was designed to be flexible and
+to allow implementing new color backends. Hopefully this document will allow
+future work on colorlib to be as simple as possible.
 
 .. note:: Enabling color
 
@@ -198,6 +195,8 @@ or otherwise combined; the rightmost color will be used (this matches the expect
 applying the Styles individually to the strings). However, combined Styles are intelligent and
 know how to reset just the properties that they contain. As you have seen in the example above,
 the combined style ``(colors.magenta & colors.bold)`` can be used in any way a normal Style can.
+Since wrapping is done with ``|``, the Python order of operations causes styles to be combined first, then
+wrapping is done last.
 
 
 256 Color Support
@@ -279,7 +278,7 @@ This doesn't support global resets, since that's not how HTML works, but otherwi
 
 An example of usage::
 
-    >>>  (htmlcolors.bold & htmlcolors.red)["This is colored text"]
+    >>>  htmlcolors.bold & htmlcolors.red | "This is colored text"
     '<font color="#800000"><b>This is colored text</b></font>'
 
 
@@ -287,8 +286,8 @@ The above color table can be generated with::
 
     for color in htmlcolors:
         htmlcolors.li(
-            "&#x25a0;" << color,
-            color.fg.hex_code << htmlcolors.code,
+            "&#x25a0;" | color,
+            color.fg.hex_code | htmlcolors.code,
             color.fg.name_camelcase)
 
 

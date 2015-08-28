@@ -152,17 +152,23 @@ Sample output
 
 See :ref:`guide-cli`.
 
-Color controls
---------------
+Colors and Styles
+-----------------
+.. warning::
+
+   This module is not yet in a released version of Plumbum, so the interface
+   may change. See the `discussion <https://github.com/tomerfiliba/plumbum/issues/215>`_ about the default stylesheet!
 
 .. code-block:: python
 
     from plumbum import colors
     with colors.red:
         print("This library provides safe, flexible color access.")
-        print(colors.bold["(and styles in general)"], "are easy!")
-    print("The simple 16 colors or", (colors.orchid | colors.underline)['256 named colors,'],
-          "or full rgb colors" << colors.rgb(18, 146, 64), 'can be used.')
+        print(colors.bold | "(and styles in general)", "are easy!")
+    print("The simple 16 colors or",
+          colors.orchid & colors.underline | '256 named colors,',
+          colors.rgb(18, 146, 64) | "or full rgb colors" ,
+          'can be used.')
     print("Unsafe " + colors.bg.dark_khaki + "color access" + colors.bg.reset + " is available too.")
 
 Sample output
@@ -179,4 +185,4 @@ Sample output
     </code>
     </div>
 
-See :ref:`guide-color`.
+See :ref:`guide-colors`.
