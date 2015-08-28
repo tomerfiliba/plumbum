@@ -5,10 +5,7 @@ Color-related factories. They produce Styles.
 
 from __future__ import print_function
 import sys
-try:
-    from functools import reduce
-except ImportError:
-    pass
+from functools import reduce
 from plumbum.colorlib.names import color_names, default_styles
 from plumbum.colorlib.styles import ColorNotFound
 
