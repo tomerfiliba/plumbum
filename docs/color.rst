@@ -21,11 +21,11 @@ API for creating other color schemes for other systems using escapes.
     ``colors.use_color=True``.
 
 Generating colors
-================
+=================
 
 Styles are accessed through the ``colors`` object, which is an instance of a StyleFactory. The ``colors``
 object is actually an imitation module that wraps ``plumbum.colorlib.ansicolors`` with module-like access.
-Thus, things like from ``plumbum.colors.bg import red`` work also. The library actually lives in ``plubmumb.colorlib``.
+Thus, things like from ``plumbum.colors.bg import red`` work also. The library actually lives in ``plumbum.colorlib``.
 
 
 Style Factory
@@ -135,9 +135,9 @@ Output:
 
 We can use ``colors`` instead of ``colors.fg`` for foreground colors.  If we had used ``colors.fg``
 as the context manager, then non-foreground properties, such as ``colors.underline`` or
-``colors.bg.YELLOW``, would not have reset those properties. Each attribute,
+``colors.bg.yellow``, would not have reset those properties. Each attribute,
 as well as ``fg``, ``bg``, and ``colors`` all have inverses in the ANSI standard. They are
-accessed with ``~``, ``-``, or ``.reset``, and can be used to manually make these operations
+accessed with ``~``  or ``.reset``, and can be used to manually make these operations
 safer, but there is a better way.
 
 Safe Manipulation
@@ -147,8 +147,7 @@ All other operations are safe; they restore the color automatically. The first, 
 already obvious one, is using a Style rather than a ``colors`` or ``colors.fg`` object in a ``with`` statement.
 This will set the color (using sys.stdout by default) to that color, and restore color on leaving.
 
-The second method is to manually wrap a string. This can be done with ``color.wrap("string")``,
-``"string" << color``, ``color >> "string"``, or ``color["string"]``.
+The second method is to manually wrap a string. This can be done with ``color.wrap("string")`` or ``color["string"]``.
 These produce strings that can be further manipulated or printed.
 
 .. note::
@@ -194,8 +193,17 @@ Output:
 Style Combinations
 ^^^^^^^^^^^^^^^^^^
 
-You can combine styles with ``+``, ``*``, ``<<``, or ``>>``, and they will create a new combined Style object. Colors will not be "summed" or otherwise combined; the rightmost color will be used (this matches the expected effect of
-applying the Styles individually to the strings). However, combined Styles are intelligent and know how to reset just the properties that they contain. As you have seen in the example above, the combined style ``(colors.magenta + colors.bold)`` can be used in any way a normal Style can.
+You can combine styles with ``+`` or ``|``, and they will create a new combined Style object. Colors will not be "summed"
+or otherwise combined; the rightmost color will be used (this matches the expected effect of
+applying the Styles individually to the strings). However, combined Styles are intelligent and
+know how to reset just the properties that they contain. As you have seen in the example above,
+the combined style ``(colors.magenta | colors.bold)`` can be used in any way a normal Style can.
+
+.. note:: 
+    
+    While both ``+`` and ``|`` combine styles, they treat strings differently.
+    ``+`` treats everything like strings, and will not wrap strings with color negations. ``|``,
+    on the other hand, will wrap the string, so is generally safer to use.
 
 256 Color Support
 =================
@@ -213,7 +221,9 @@ The supported colors are:
 .. raw:: html
     :file: _color_list.html
 
-If you want to enforce a specific represenation, you can use ``.basic`` (8 color), ``.simple`` (16 color), ``.full`` (256 color), or ``.true`` (24 bit color) on a Style, and the colors in that Style will conform to the output representation and name of the best match color. The internal RGB colors
+If you want to enforce a specific represenation, you can use ``.basic`` (8 color), ``.simple`` (16 color),
+``.full`` (256 color), or ``.true`` (24 bit color) on a Style, and the colors in that Style will conform to
+the output representation and name of the best match color. The internal RGB colors
 are remembered, so this is a non-destructive operation.
 
 The Classes

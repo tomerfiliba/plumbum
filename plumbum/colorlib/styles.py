@@ -440,6 +440,9 @@ class Style(object):
         ``"color & "String"`` syntax too. """
         return self.__mul__(other)
 
+    __ror__ = __rand__
+    __or__ = __and__
+
     def __call__(self, *printables, **kargs):
         """\
         This is a shortcut to print color immediatly to the stdout. (Not safe)
