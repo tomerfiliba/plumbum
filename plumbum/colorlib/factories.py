@@ -42,9 +42,12 @@ class ColorFactory(object):
         """Return the extended color scheme color for a value or name."""
         return self._style.from_color(self._style.color_class.from_simple(name, fg=self._fg))
 
-    def rgb(self, r, g, b):
+    def rgb(self, r, g=None, b=None):
         """Return the extended color scheme color for a value."""
-        return self._style.from_color(self._style.color_class(r, g, b, fg=self._fg))
+        if g is None and b is None:
+            return self.hex(r)
+        else:
+            return self._style.from_color(self._style.color_class(r, g, b, fg=self._fg))
 
     def hex(self, hexcode):
         """Return the extended color scheme color for a value."""
@@ -64,6 +67,8 @@ class ColorFactory(object):
                 return [self.simple(v) for v in range(start, stop, stride)]
             else:
                 return [self.full(v) for v in range(start, stop, stride)]
+        elif isinstance(val, tuple):
+            return self.rgb(*val)
 
         try:
             return self.full(val)

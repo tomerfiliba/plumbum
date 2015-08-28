@@ -32,6 +32,8 @@ class TestANSIColor(unittest.TestCase):
         self.assertEqual(colors.full(2), colors[2])
         self.assertEqual(colors.simple(2), colors(2))
         self.assertEqual(colors(54), colors[54])
+        self.assertEqual(colors(1,30,77),colors.rgb(1,30,77))
+        self.assertEqual(colors[1,30,77],colors.rgb(1,30,77))
 
     def testColorStrings(self):
         self.assertEqual('\033[0m', colors.reset)
@@ -72,13 +74,13 @@ class TestANSIColor(unittest.TestCase):
 
 
     def testMultiColor(self):
-        sumcolors = colors.bold + colors.blue
-        self.assertEqual(colors.bold.reset + colors.fg.reset, ~sumcolors)
+        sumcolors = colors.bold & colors.blue
+        self.assertEqual(colors.bold.reset & colors.fg.reset, ~sumcolors)
 
     def testSums(self):
         # Sums should not be communitave, last one is used
-        self.assertEqual(colors.red, colors.blue + colors.red)
-        self.assertEqual(colors.bg.green, colors.bg.red + colors.bg.green)
+        self.assertEqual(colors.red, colors.blue & colors.red)
+        self.assertEqual(colors.bg.green, colors.bg.red & colors.bg.green)
 
     def testRepresentations(self):
         colors1 = colors.full(87)
@@ -106,7 +108,7 @@ class TestANSIColor(unittest.TestCase):
         for c in (colors.bold, colors.underline, colors.italics):
             self.assertEqual(c, colors.from_ansi(str(c)))
 
-        col = colors.bold + colors.fg.green + colors.bg.blue + colors.underline
+        col = colors.bold & colors.fg.green & colors.bg.blue & colors.underline
         self.assertEqual(col, colors.from_ansi(str(col)))
         col = colors.reset
         self.assertEqual(col, colors.from_ansi(str(col)))
@@ -115,12 +117,12 @@ class TestANSIColor(unittest.TestCase):
         string = 'This is a string'
         wrapped = '\033[31mThis is a string\033[39m'
         self.assertEqual(colors.red.wrap(string), wrapped)
-        self.assertEqual(colors.red*string, wrapped)
+        self.assertEqual(colors.red | string, wrapped)
         self.assertEqual(colors.red[string], wrapped)
 
-        newcolors = colors.blue + colors.underline
-        self.assertEqual(newcolors[string], string*newcolors)
-        self.assertEqual(newcolors.wrap(string), string*(colors.blue + colors.underline))
+        newcolors = colors.blue & colors.underline
+        self.assertEqual(newcolors[string], string | newcolors)
+        self.assertEqual(newcolors.wrap(string), string | colors.blue & colors.underline)
 
     def testUndoColor(self):
         self.assertEqual('\033[39m', ~colors.fg)
@@ -167,7 +169,7 @@ class TestANSIColor(unittest.TestCase):
             self.fail("Need to run in buffered mode!")
 
         output = sys.stdout.getvalue().strip()
-        self.assertEquals(output,str(colors.blue * "This is"))
+        self.assertEquals(output,str(colors.blue | "This is"))
 
     def testPrint(self):
         colors.yellow.print('This is printed to stdout')
@@ -183,12 +185,12 @@ class TestHTMLColor(unittest.TestCase):
     def test_html(self):
         red_tagged = '<font color="#C00000">This is tagged</font>'
         self.assertEqual(htmlcolors.red["This is tagged"], red_tagged)
-        self.assertEqual("This is tagged" * htmlcolors.red, red_tagged)
+        self.assertEqual("This is tagged" | htmlcolors.red, red_tagged)
 
         twin_tagged = '<font color="#C00000"><em>This is tagged</em></font>'
-        self.assertEqual("This is tagged" *( htmlcolors.red + htmlcolors.em), twin_tagged)
-        self.assertEqual("This is tagged" * htmlcolors.em*htmlcolors.red, twin_tagged)
-        self.assertEqual(htmlcolors.em * htmlcolors.red * "This is tagged", twin_tagged)
+        self.assertEqual("This is tagged" |  htmlcolors.red & htmlcolors.em, twin_tagged)
+        self.assertEqual("This is tagged" | htmlcolors.em & htmlcolors.red, twin_tagged)
+        self.assertEqual(htmlcolors.em & htmlcolors.red | "This is tagged", twin_tagged)
 
 if __name__ == '__main__':
     unittest.main(buffer=True)

@@ -75,7 +75,7 @@ The ``fg`` and ``bg`` also can be put in with statements, and they
 will restore the foreground and background color only, respectively. 
 
 ``colors.rgb(r,g,b)`` will create a color from an
-input red, green, and blue values (integers from 0-255). ``colors.hex(code)`` will allow
+input red, green, and blue values (integers from 0-255). ``colors.rgb(code)`` will allow
 you to input an html style hex sequence. These work on ``fg`` and ``bg`` too. The ``repr`` of
 styles is smart and will show you the closest color to the one you selected if you didn't exactly
 select a color through RGB. 
@@ -117,11 +117,11 @@ An example of the usage of unsafe ``colors`` manipulations inside a context mana
     from plumbum import colors
 
     with colors:
-        colors.fg.red()
+        colors.fg.red.now()
         print('This is in red')
-        colors.green()
+        colors.green.now()
         print('This is green ' + colors.underline + 'and now also underlined!')
-        print('Underlined' - colors.underline + ' and not underlined but still red') 
+        print('Underlined' + colors.underline.reset + ' and not underlined but still red') 
     print('This is completly restored, even if an exception is thrown!')
 
 Output:
@@ -177,7 +177,7 @@ An example of safe manipulations::
             print("This is red and bold.")
         print("Not bold, but still red.")
     print("Not red color or bold.")
-    print("This is bold and colorful!" << (colors.magenta + colors.bold), "And this is not.")
+    print((colors.magenta & colors.bold)["This is bold and colorful!"], "And this is not.")
 
 Output:
 
@@ -193,17 +193,12 @@ Output:
 Style Combinations
 ^^^^^^^^^^^^^^^^^^
 
-You can combine styles with ``+`` or ``|``, and they will create a new combined Style object. Colors will not be "summed"
+You can combine styles with ``&`` and they will create a new combined Style object. Colors will not be "summed"
 or otherwise combined; the rightmost color will be used (this matches the expected effect of
 applying the Styles individually to the strings). However, combined Styles are intelligent and
 know how to reset just the properties that they contain. As you have seen in the example above,
-the combined style ``(colors.magenta | colors.bold)`` can be used in any way a normal Style can.
+the combined style ``(colors.magenta & colors.bold)`` can be used in any way a normal Style can.
 
-.. note:: 
-    
-    While both ``+`` and ``|`` combine styles, they treat strings differently.
-    ``+`` treats everything like strings, and will not wrap strings with color negations. ``|``,
-    on the other hand, will wrap the string, so is generally safer to use.
 
 256 Color Support
 =================
@@ -221,7 +216,7 @@ The supported colors are:
 .. raw:: html
     :file: _color_list.html
 
-If you want to enforce a specific represenation, you can use ``.basic`` (8 color), ``.simple`` (16 color),
+If you want to enforce a specific representation, you can use ``.basic`` (8 color), ``.simple`` (16 color),
 ``.full`` (256 color), or ``.true`` (24 bit color) on a Style, and the colors in that Style will conform to
 the output representation and name of the best match color. The internal RGB colors
 are remembered, so this is a non-destructive operation.
@@ -284,7 +279,7 @@ This doesn't support global resets, since that's not how HTML works, but otherwi
 
 An example of usage::
 
-    >>> "This is colored text" << htmlcolors.bold + htmlcolors.red
+    >>>  (htmlcolors.bold & htmlcolors.red)["This is colored text"]
     '<font color="#800000"><b>This is colored text</b></font>'
 
 
@@ -309,4 +304,4 @@ See Also
 
 * `colored <https://pypi.python.org/pypi/colored>`_ Another library with 256 color support
 * `colorama <https://pypi.python.org/pypi/colorama>`_ A library that supports colored text on Windows,
-    can be combined with Plumbum.color (if you force ``use_color``, doesn't support all extended colors)
+    can be combined with Plumbum.colors (if you force ``use_color``, doesn't support all extended colors)

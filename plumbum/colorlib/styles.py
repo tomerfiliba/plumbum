@@ -419,29 +419,26 @@ class Style(object):
         """Wrap a sting in this style and its inverse."""
         return self + wrap_this + ~self
 
-    def __mul__(self, other):
-        """This class supports ``color * color2`` syntax,
-        and ``color * "String" syntax too.``"""
+    def __and__(self, other):
+        """This class supports ``color & color2`` syntax,
+        and ``color & "String" syntax too.``"""
         if type(self) == type(other):
             return self + other
         else:
             return self.wrap(other)
 
-    def __rmul__(self, other):
-        """This class supports ``"String:" * color`` syntax, excpet in Python 2.6 due to bug with that Python."""
-        return self.wrap(other)
-
     def __rand__(self, other):
-        """Support for "String" & color syntax"""
+        """This class supports ``"String:" & color`` syntax, excpet in Python 2.6 due to bug with that Python."""
         return self.wrap(other)
 
-    def __and__(self, other):
-        """This class supports ``color & color2`` syntax. It also supports
-        ``"color & "String"`` syntax too. """
-        return self.__mul__(other)
+    def __ror__(self, other):
+        """Support for "String" | color syntax"""
+        return self.wrap(other)
 
-    __ror__ = __rand__
-    __or__ = __and__
+    def __or__(self, other):
+        """This class supports ``color | color2`` syntax. It also supports
+        ``"color | "String"`` syntax too. """
+        return self.__and__(other)
 
     def __call__(self, *printables, **kargs):
         """\
