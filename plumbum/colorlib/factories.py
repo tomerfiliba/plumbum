@@ -5,7 +5,11 @@ Color-related factories. They produce Styles.
 
 from __future__ import print_function
 import sys
-from plumbum.colorlib.names import color_names
+try:
+    from functools import reduce
+except ImportError:
+    pass
+from plumbum.colorlib.names import color_names, default_styles
 from plumbum.colorlib.styles import ColorNotFound
 
 __all__ = ['ColorFactory', 'StyleFactory']
@@ -126,6 +130,8 @@ class StyleFactory(ColorFactory):
         for item in style.attribute_names:
             setattr(self, item, style(attributes={item:True}))
 
+        self.load_stylesheet(default_styles)
+
     @property
     def use_color(self):
         """Shortcut for setting color usage on Style"""
@@ -146,3 +152,33 @@ class StyleFactory(ColorFactory):
     @stdout.setter
     def stdout(self, newout):
         self._style._stdout = newout
+
+    def get_colors_from_string(self, color=''):
+        """
+        Sets color based on string, use `.` or space for seperator,
+        and numbers, fg/bg, htmlcodes, etc all accepted (as strings).
+        """
+
+        names = color.replace('.', ' ').split()
+        prev = self
+        styleslist = []
+        for name in names:
+            try:
+                prev = getattr(prev, name)
+            except AttributeError:
+                try:
+                    prev = prev(int(name))
+                except (ColorNotFound, ValueError):
+                    prev = prev(name)
+            if isinstance(prev, self._style):
+                styleslist.append(prev)
+                prev = self
+
+        if styleslist:
+            prev = reduce(lambda a,b: a & b, styleslist)
+
+        return prev if isinstance(prev, self._style) else prev.reset
+
+    def load_stylesheet(self, stylesheet=default_styles):
+        for item in stylesheet:
+            setattr(self, item, self.get_colors_from_string(stylesheet[item]))

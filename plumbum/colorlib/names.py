@@ -295,6 +295,15 @@ attributes_ansi = dict(
     strikeout=9,
     )
 
+# Stylesheet
+default_styles = dict(
+    warn="fg red",
+    title="fg cyan underline bold",
+    fatal="fg red bold",
+    highlight="bg yellow"
+    )
+
+
 #Functions to be used for color name operations
 
 class FindNearest(object):
