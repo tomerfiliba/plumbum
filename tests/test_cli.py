@@ -1,9 +1,11 @@
 import sys
 import unittest
-from plumbum import cli
 from contextlib import contextmanager
+
+from plumbum import cli, local
 from plumbum.cli.terminal import ask, choose, hexdump
 from plumbum.lib import six
+
 # string/unicode issues
 if six.PY3:
     from io import StringIO
@@ -29,12 +31,12 @@ class TestApp(cli.Application):
     def spam(self):
         print("!!a")
 
-    @cli.switch(["b", "bacon"], argtype=int, mandatory = True)
+    @cli.switch(["b", "bacon"], argtype=int, mandatory = True, envname="PLUMBUM_TEST_BACON")
     def bacon(self, param):
         """give me some bacon"""
         print ("!!b", param)
 
-    eggs = cli.SwitchAttr(["e"], str, help = "sets the eggs attribute")
+    eggs = cli.SwitchAttr(["e"], str, help = "sets the eggs attribute", envname="PLUMBUM_TEST_EGGS")
     verbose = cli.CountOf(["v"], help = "increases the verbosity level")
     benedict = cli.CountOf(["--benedict"], help = """a very long help message with lots of
         useless information that nobody would ever want to read, but heck, we need to test
@@ -193,6 +195,30 @@ class CLITest(unittest.TestCase):
     def test_invoke(self):
         inst, rc = TestApp.invoke("arg1", "arg2", eggs="sunny", bacon=10, verbose=2)
         self.assertEqual((inst.eggs, inst.verbose, inst.tailargs), ("sunny", 2, ("arg1", "arg2")))
+
+    def test_env_var(self):
+        with captured_stdout() as stream:
+            _, rc = TestApp.run(["arg", "--bacon=10"], exit=False)
+            self.assertEqual(rc, 0)
+            self.assertIn("10", stream.getvalue())
+
+        with captured_stdout() as stream:
+            with local.env(
+                PLUMBUM_TEST_BACON='20',
+                PLUMBUM_TEST_EGGS='raw',
+            ):
+                inst, rc = TestApp.run(["arg"], exit=False)
+
+            self.assertEqual(rc, 0)
+            self.assertIn("20", stream.getvalue())
+            self.assertEqual(inst.eggs, 'raw')
+
+    def test_mandatory_env_var(self):
+        with captured_stdout() as stream:
+            _, rc = TestApp.run(["arg"], exit = False)
+            self.assertEqual(rc, 2)
+            self.assertIn("bacon is mandatory", stream.getvalue())
+
 
 class TestTerminal(unittest.TestCase):
     def test_ask(self):

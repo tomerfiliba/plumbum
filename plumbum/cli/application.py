@@ -3,14 +3,15 @@ import os
 import sys
 import inspect
 import functools
-from plumbum.lib import six
 from textwrap import TextWrapper
 from collections import defaultdict
+
+from plumbum.lib import six
 from plumbum.cli.terminal import get_terminal_size
 from plumbum.cli.switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,
     MissingMandatorySwitch, SwitchCombinationError, PositionalArgumentsError, switch,
     SubcommandError, Flag, CountOf)
-from plumbum import colors
+from plumbum import colors, local
 
 
 class ShowHelp(SwitchError):
@@ -158,6 +159,7 @@ class Application(object):
         self.executable = executable
         self._switches_by_name = {}
         self._switches_by_func = {}
+        self._switches_by_envar = {}
         self._subcommands = {}
 
         for cls in reversed(type(self).mro()):
@@ -179,6 +181,8 @@ class Application(object):
                         raise SwitchError("Switch %r already defined and is not overridable" % (name,))
                     self._switches_by_name[name] = swinfo
                     self._switches_by_func[swinfo.func] = swinfo
+                    if swinfo.envname:
+                        self._switches_by_envar[swinfo.envname] = swinfo
 
     @property
     def root_app(self):
@@ -229,9 +233,11 @@ class Application(object):
         tailargs = []
         swfuncs = {}
         index = 0
+
         while argv:
             index += 1
             a = argv.pop(0)
+            val = None
             if a == "--":
                 # end of options, treat the rest as tailargs
                 tailargs.extend(argv)
@@ -293,15 +299,7 @@ class Application(object):
                 continue
 
             # handle argument
-            if swinfo.argtype:
-                try:
-                    val = swinfo.argtype(val)
-                except (TypeError, ValueError):
-                    ex = sys.exc_info()[1]  # compat
-                    raise WrongArgumentType("Argument of %s expected to be %r, not %r:\n    %r" % (
-                        swname, swinfo.argtype, val, ex))
-            else:
-                val = NotImplemented
+            val = self._handle_argument(val, swinfo, name)
 
             if swinfo.func in swfuncs:
                 if swinfo.list:
@@ -320,7 +318,40 @@ class Application(object):
                 else:
                     swfuncs[swinfo.func] = SwitchParseInfo(swname, (val,), index)
 
+        # Extracting arguments from environment variables
+        envindex = 0
+        for env, swinfo in self._switches_by_envar.items():
+            envindex -= 1
+            envval = local.env.get(env)
+            if envval is None:
+                continue
+
+            if swinfo.func in swfuncs:
+                continue  # skip if overridden by command line arguments
+
+            val = self._handle_argument(envval, swinfo, env)
+            envname = "$%s" % (env,)
+            if swinfo.list:
+                # multiple values over environment variables are not supported,
+                # this will require some sort of escaping and separator convention
+                swfuncs[swinfo.func] = SwitchParseInfo(envname, ([val],), envindex)
+            elif val is NotImplemented:
+                swfuncs[swinfo.func] = SwitchParseInfo(envname, (), envindex)
+            else:
+                swfuncs[swinfo.func] = SwitchParseInfo(envname, (val,), envindex)
+
         return swfuncs, tailargs
+
+    def _handle_argument(self, val, swinfo, name):
+        if swinfo.argtype:
+            try:
+                return swinfo.argtype(val)
+            except (TypeError, ValueError):
+                ex = sys.exc_info()[1]  # compat
+                raise WrongArgumentType("Argument of %s expected to be %r, not %r:\n    %r" % (
+                    name, swinfo.argtype, val, ex))
+        else:
+            return NotImplemented
 
     def _validate_args(self, swfuncs, tailargs):
         if six.get_method_function(self.help) in swfuncs:
