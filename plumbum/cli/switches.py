@@ -39,7 +39,7 @@ class SwitchInfo(object):
             setattr(self, k, v)
 
 def switch(names, argtype = None, argname = None, list = False, mandatory = False, requires = (),
-        excludes = (), help = None, overridable = False, group = "Switches"):
+        excludes = (), help = None, overridable = False, group = "Switches", envname=None):
     """
     A decorator that exposes functions as command-line switches. Usage::
 
@@ -62,6 +62,8 @@ def switch(names, argtype = None, argname = None, list = False, mandatory = Fals
                   to prefix the name with ``-`` or ``--`` (this is added automatically),
                   but it can be used for clarity. Single-letter names are prefixed by ``-``,
                   while longer names are prefixed by ``--``
+
+    :param envname:   Name of environment variable to extract value from, as alternative to argv
 
     :param argtype: If this function takes an argument, you need to specify its type. The
                     default is ``None``, which means the function takes no argument. The type
@@ -141,7 +143,7 @@ def switch(names, argtype = None, argname = None, list = False, mandatory = Fals
         help2 = inspect.getdoc(func) if help is None else help
         if not help2:
             help2 = str(func)
-        func._switch_info = SwitchInfo(names = names, argtype = argtype, list = list, func = func,
+        func._switch_info = SwitchInfo(names = names, envname=envname, argtype = argtype, list = list, func = func,
             mandatory = mandatory, overridable = overridable, group = group,
             requires = requires, excludes = excludes, argname = argname2, help = help2)
         return func
