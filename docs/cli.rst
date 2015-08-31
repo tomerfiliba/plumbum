@@ -306,10 +306,32 @@ if the switch is given) and ``CountingAttr`` (which counts the number of occurre
         def main(self):
             print self.log_file, self.enable_logging, self.verbosity_level
 
-::
+.. code-block:: bash
 
     $ ./example.py -v --log-file=log.txt -v --no-log -vvv
     log.txt False 5
+
+
+Environment Variables
+^^^^^^^^^^^^^^^^^^^^^
+
+You can also set a ``SwitchAttr`` to take an environment variable as an input using the envname parameter.
+For example::
+
+    class MyApp(cli.Application):
+        log_file = cli.SwitchAttr("--log-file", str, envname="MY_LOG_FILE")
+
+        def main(self):
+            print(self.log_file)
+
+.. code-block:: bash
+
+    $ MY_LOG_FILE=this.log ./example.py
+    this.log
+
+Giving the switch on the command line will override the environment variable value.
+
+.. versionadded:: 1.6.0
 
 Main
 ----
