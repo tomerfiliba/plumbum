@@ -4,27 +4,13 @@ import sys
 import signal
 import time
 from plumbum import local, LocalPath, FG, BG, TF, RETCODE, ERROUT
-from plumbum.lib import six
+from plumbum.lib import six, ensure_skipIf
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
 from plumbum.path import RelativePath
 import plumbum
 
-
-if not hasattr(unittest, "skipIf"):
-    import logging
-    import functools
-    def skipIf(cond, msg = None):
-        def deco(func):
-            if cond:
-                return func
-            else:
-                @functools.wraps(func)
-                def wrapper(*args, **kwargs):
-                    logging.warn("skipping test")
-                return wrapper
-        return deco
-    unittest.skipIf = skipIf
+ensure_skipIf(unittest)
 
 class LocalPathTest(unittest.TestCase):
     def test_basename(self):

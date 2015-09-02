@@ -6,28 +6,15 @@ import time
 import logging
 from plumbum import RemotePath, SshMachine, ProcessExecutionError, local, ProcessTimedOut
 from plumbum import CommandNotFound
-from plumbum.lib import six
+from plumbum.lib import six, ensure_skipIf
 
+ensure_skipIf(unittest)
 
 #TEST_HOST = "192.168.1.143"
 TEST_HOST = "127.0.0.1"
 if TEST_HOST not in ("::1", "127.0.0.1", "localhost"):
     import plumbum
     plumbum.local.env.path.append("c:\\Program Files\\Git\\bin")
-
-if not hasattr(unittest, "skipIf"):
-    import functools
-    def skipIf(cond, msg = None):
-        def deco(func):
-            if cond:
-                return func
-            else:
-                @functools.wraps(func)
-                def wrapper(*args, **kwargs):
-                    logging.warn("skipping test")
-                return wrapper
-        return deco
-    unittest.skipIf = skipIf
 
 class RemotePathTest(unittest.TestCase):
     def _connect(self):

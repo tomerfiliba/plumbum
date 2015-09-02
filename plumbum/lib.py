@@ -1,4 +1,5 @@
 import sys
+import from contextlib import contextmanager
 from abc import ABCMeta
 
 IS_WIN32 = (sys.platform == "win32")
@@ -24,7 +25,6 @@ class six(object):
     """
     PY3 = sys.version_info[0] >= 3
     ABC = ABCMeta('ABC', (object,), {'__module__':__name__})
-
     if PY3:
         integer_types = (int,)
         string_types = (str,)
@@ -42,6 +42,7 @@ class six(object):
         @staticmethod
         def get_method_function(m):
             return m.__func__
+        from io import StringIO
     else:
         integer_types = (int, long)
         string_types = (str, unicode)
@@ -59,6 +60,51 @@ class six(object):
         @staticmethod
         def get_method_function(m):
             return m.im_func
+
+        This is a useful import, but is different from real six (six.moves)
+        try:
+            from cStringIO import StringIO
+        except ImportError:
+            from StringIO import StringIO
+
+
+def ensure_skipIf(unittest):
+    """
+    This will ensure that unittest has skipIf. Call like::
+
+        import unittest
+        ensure_skipIf(unittest)
+    """
+
+    if not hasattr(unittest, "skipIf"):
+        import logging
+        import functools
+        def skipIf(condition, reason):
+            def deco(func):
+                if cond:
+                    return func
+                else:
+                    @functools.wraps(func)
+                    def wrapper(*args, **kwargs):
+                        logging.warn("skipping test")
+                    return wrapper
+            return deco
+        unittest.skipIf = skipIf
+
+@contextmanager
+def captured_stdout(stdin = ""):
+    """
+    Captures stdout (similar to the redirect_stdout in Python 3.4+, but with slightly different arguments)
+    """
+    prevstdin = sys.stdin
+    prevstdout = sys.stdout
+    sys.stdin = StringIO(six.u(stdin))
+    sys.stdout = StringIO()
+    try:
+        yield sys.stdout
+    finally:
+        sys.stdin = prevstdin
+        sys.stdout = prevstdout
 
 class StaticProperty(object):
     """This acts like a static property, allowing access via class or object.
