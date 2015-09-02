@@ -2,6 +2,14 @@ import sys
 from contextlib import contextmanager
 from abc import ABCMeta
 
+try:
+    from io import StringIO
+except ImportError:
+    try:
+        from cStringIO import StringIO
+    except ImportError:
+        from StringIO import StringIO
+
 IS_WIN32 = (sys.platform == "win32")
 
 def _setdoc(super):  # @ReservedAssignment
@@ -42,7 +50,6 @@ class six(object):
         @staticmethod
         def get_method_function(m):
             return m.__func__
-        from io import StringIO
     else:
         integer_types = (int, long)
         string_types = (str, unicode)
@@ -60,12 +67,6 @@ class six(object):
         @staticmethod
         def get_method_function(m):
             return m.im_func
-
-        # This is a useful import, but is different from real six (six.moves)
-        try:
-            from cStringIO import StringIO
-        except ImportError:
-            from StringIO import StringIO
 
 
 def ensure_skipIf(unittest):

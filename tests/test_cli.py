@@ -3,10 +3,7 @@ import unittest
 
 from plumbum import cli, local
 from plumbum.cli.terminal import ask, choose, hexdump
-from plumbum.lib import six, captured_stdout
-
-# string/unicode issues
-StringIO = six.StringIO
+from plumbum.lib import six, captured_stdout, StringIO
 
 class TestApp(cli.Application):
     @cli.switch(["a"])
