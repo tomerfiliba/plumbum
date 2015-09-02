@@ -101,7 +101,8 @@ s.close()
             r_ls = rem["ls"]
             r_grep = rem["grep"]
 
-            self.assertTrue(".bashrc" in r_ls("-a").splitlines())
+            lines = r_ls("-a").splitlines()
+            self.assertTrue(".bashrc" in lines or ".bash_profile" in lines)
             with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
                 cmd = r_ssh["localhost", "cd", rem.cwd, "&&", r_ls, "|", r_grep["\\.py"]]
                 self.assertTrue("'|'" in str(cmd))
@@ -123,7 +124,7 @@ s.close()
             sh = rem.session()
             for _ in range(4):
                 _, out, _ = sh.run("ls -a")
-                self.assertTrue(".bashrc" in out)
+                self.assertTrue(".bashrc" in out or ".bash_profile" in out)
 
     def test_env(self):
         with self._connect() as rem:
@@ -160,7 +161,7 @@ s.close()
     def test_iter_lines_timeout(self):
         with self._connect() as rem:
             try:
-                for i, (out, err) in enumerate(rem["ping"]["127.0.0.1", "-i", 0.5].popen().iter_lines(timeout=2)):
+                for i, (out, err) in enumerate(rem["ping"]["-i", 0.5, "127.0.0.1"].popen().iter_lines(timeout=2)):
                     print("out:", out)
                     print("err:", err)
             except NotImplementedError:
@@ -182,7 +183,7 @@ s.close()
                 self.assertEqual(i, 1)
             except ProcessExecutionError:
                 ex = sys.exc_info()[1]
-                self.assertTrue(ex.stderr.startswith("/bin/ls: unrecognized option '--bla'"))
+                self.assertTrue(ex.stderr.startswith("/bin/ls: "))
             else:
                 self.fail("Expected an execution error")
 
@@ -237,9 +238,12 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
         with self._connect() as rem:
             printenv = rem["printenv"]
             with rem.env(FOO = "hello"):
-                self.assertEqual(printenv.with_env(BAR = "world")("FOO", "BAR"), "hello\nworld\n")
-                self.assertEqual(printenv.with_env(FOO = "sea", BAR = "world")("FOO", "BAR"), "sea\nworld\n")
+                self.assertEqual(printenv.with_env(BAR = "world")("FOO"), "hello\n")
+                self.assertEqual(printenv.with_env(BAR = "world")("BAR"), "world\n")
+                self.assertEqual(printenv.with_env(FOO = "sea", BAR = "world")("FOO"), "sea\n")
+                self.assertEqual(printenv.with_env(FOO = "sea", BAR = "world")("BAR"), "world\n")
 
+    @unittest.skipIf('useradd' not in local, "System does not have useradd (Mac?)")
     def test_sshpass(self):
         with local.as_root():
             local["useradd"]("-m", "-b", "/tmp", "testuser")
