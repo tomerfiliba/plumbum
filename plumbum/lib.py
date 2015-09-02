@@ -2,11 +2,6 @@ import sys
 from contextlib import contextmanager
 from abc import ABCMeta
 
-try:
-    from io import StringIO
-except ImportError:
-    from StringIO import StringIO
-
 IS_WIN32 = (sys.platform == "win32")
 
 def _setdoc(super):  # @ReservedAssignment
@@ -65,6 +60,12 @@ class six(object):
         def get_method_function(m):
             return m.im_func
 
+# Try/except fails because io has the wrong StringIO in Python2
+# You'll get str/unicode errors
+if six.PY3:
+    from io import StringIO
+else:
+    from StringIO import StringIO
 
 def ensure_skipIf(unittest):
     """
