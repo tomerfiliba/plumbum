@@ -1,5 +1,5 @@
 import sys
-import from contextlib import contextmanager
+from contextlib import contextmanager
 from abc import ABCMeta
 
 IS_WIN32 = (sys.platform == "win32")
@@ -61,7 +61,7 @@ class six(object):
         def get_method_function(m):
             return m.im_func
 
-        This is a useful import, but is different from real six (six.moves)
+        # This is a useful import, but is different from real six (six.moves)
         try:
             from cStringIO import StringIO
         except ImportError:
