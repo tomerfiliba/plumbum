@@ -5,10 +5,7 @@ from abc import ABCMeta
 try:
     from io import StringIO
 except ImportError:
-    try:
-        from cStringIO import StringIO
-    except ImportError:
-        from StringIO import StringIO
+    from StringIO import StringIO
 
 IS_WIN32 = (sys.platform == "win32")
 
