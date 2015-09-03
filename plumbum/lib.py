@@ -80,12 +80,12 @@ def ensure_skipIf(unittest):
         import functools
         def skipIf(condition, reason):
             def deco(func):
-                if cond:
+                if condition:
                     return func
                 else:
                     @functools.wraps(func)
                     def wrapper(*args, **kwargs):
-                        logging.warn("skipping test")
+                        logging.warn("skipping test: "+reason)
                     return wrapper
             return deco
         unittest.skipIf = skipIf
