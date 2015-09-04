@@ -1,19 +1,23 @@
 #!/usr/bin/env python
 from __future__ import with_statement, print_function
 import unittest
+import os
 from plumbum import colors
 
 class TestVisualColor(unittest.TestCase):
 
     def setUp(self):
-        try:
-            import colorama
-            colorama.init()
-            self.colorama = colorama
-            colors.use_color = True
-            print()
-            print("Colorama initialized")
-        except ImportError:
+        if os.name == 'nt':
+            try:
+                import colorama
+                colorama.init()
+                self.colorama = colorama
+                colors.use_color = 1
+                print()
+                print("Colorama initialized")
+            except ImportError:
+                self.colorama = None
+        else:
             self.colorama = None
 
     def tearDown(self):
@@ -39,6 +43,10 @@ class TestVisualColor(unittest.TestCase):
               + "This is on a BG" + ~colors.bg + " and this is not")
         colors.yellow.print("This is printed from color.")
         colors.reset()
+
+        for attr in colors._style.attribute_names:
+            print("This is", attr | getattr(colors, attr), "and this is not.")
+            colors.reset()
 
 if __name__ == '__main__':
     unittest.main()

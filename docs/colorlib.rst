@@ -13,9 +13,9 @@ future work on colorlib to be as simple as possible.
 
 .. note:: Enabling color
 
-    ``ANSIStyle`` assumes that only a terminal on a posix-identity
-    system can display color. You can force the use of color globally by setting
-    ``colors.use_color=True``.
+    ``plumbum.colors`` tries to guess the color output settings of your system.
+    You can force the use of color globally by setting
+    ``colors.use_color=True`` See :ref:`guide-colorlist` for more options.
 
 Generating colors
 =================
@@ -198,6 +198,7 @@ the combined style ``(colors.magenta & colors.bold)`` can be used in any way a n
 Since wrapping is done with ``|``, the Python order of operations causes styles to be combined first, then
 wrapping is done last.
 
+.. _guide-colorlist:
 
 256 Color Support
 =================
@@ -219,6 +220,9 @@ If you want to enforce a specific representation, you can use ``.basic`` (8 colo
 ``.full`` (256 color), or ``.true`` (24 bit color) on a Style, and the colors in that Style will conform to
 the output representation and name of the best match color. The internal RGB colors
 are remembered, so this is a non-destructive operation.
+
+To limit the use of color to one of these styles, set ``colors.use_color`` to 1 for 8 colors, 2 for 16 colors, 
+3 for 256 colors, or 4 for true color. It will be guessed based on your system on initialisation.
 
 The Classes
 ===========
