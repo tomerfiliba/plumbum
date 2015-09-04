@@ -35,7 +35,7 @@ def get_color_repr():
     elif os.name == 'nt':
         return 1
     elif os.name == 'posix':
-        return 4
+        return True
     else:
         return False
 
@@ -312,6 +312,14 @@ class Color(ABC):
         other.number = None
         other._init_number()
         return other
+
+    def limit_representation(self, val):
+        """Only converts if val is lower than representation"""
+
+        if self.representation <= val:
+            return self
+        else:
+            return self.to_representation(val)
 
 
 
@@ -632,7 +640,7 @@ class Style(object):
         except StopIteration:
             return
 
-    def _to_representation(self, rep):
+    def to_representation(self, rep):
         """This converts both colors to a specific representation"""
         other = copy(self)
         if other.fg:
@@ -641,25 +649,39 @@ class Style(object):
             other.bg = other.bg.to_representation(rep)
         return other
 
+    def limit_representation(self, rep):
+        """This only converts if true representation is higher"""
+
+        if rep is True or rep is False:
+            return self
+
+        other = copy(self)
+        if other.fg:
+            other.fg = other.fg.limit_representation(rep)
+        if other.bg:
+            other.bg = other.bg.limit_representation(rep)
+        return other
+
+
     @property
     def basic(self):
         """The color in the 8 color representation."""
-        return self._to_representation(1)
+        return self.to_representation(1)
 
     @property
     def simple(self):
         """The color in the 16 color representation."""
-        return self._to_representation(2)
+        return self.to_representation(2)
 
     @property
     def full(self):
         """The color in the 256 color representation."""
-        return self._to_representation(3)
+        return self.to_representation(3)
 
     @property
     def true(self):
         """The color in the true color representation."""
-        return self._to_representation(4)
+        return self.to_representation(4)
 
 class ANSIStyle(Style):
     """This is a subclass for ANSI styles. Use it to get
@@ -676,10 +698,8 @@ class ANSIStyle(Style):
     def __str__(self):
         if not self.use_color:
             return ''
-        elif self.use_color is True or self.use_color == 4:
-            return self.ansi_sequence
         else:
-            return self._to_representation(self.use_color).ansi_sequence
+            return self.limit_representation(self.use_color).ansi_sequence
 
 class HTMLStyle(Style):
     """This was meant to be a demo of subclassing Style, but

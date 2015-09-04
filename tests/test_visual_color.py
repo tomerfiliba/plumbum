@@ -48,5 +48,21 @@ class TestVisualColor(unittest.TestCase):
             print("This is", attr | getattr(colors, attr), "and this is not.")
             colors.reset()
 
+    def testLimits(self):
+        print()
+        cval = colors.use_color
+        colors.use_color = 4
+        c = colors.rgb(123,40,200)
+        print('True', repr(str(c)), repr(c))
+        colors.use_color = 3
+        print('Full', repr(str(c)), repr(c))
+        colors.use_color = 2
+        print('Simple', repr(str(c)), repr(c))
+        colors.use_color = 1
+        print('Basic', repr(str(c)), repr(c))
+        colors.use_color = 0
+        print('None', repr(str(c)), repr(c))
+        colors.use_color = cval
+
 if __name__ == '__main__':
     unittest.main()
