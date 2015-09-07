@@ -121,11 +121,13 @@ class Color(ABC):
 
         self.exact = True
         'This is false if the named color does not match the real color'
-        
+
         self.use_color = True
         'This is a toggle for color (or max representation)'
 
-        if r_or_color is not None and None in (g,b):
+        if None in (g,b):
+            if not r_or_color:
+                return
             try:
                 self._from_simple(r_or_color)
             except ColorNotFound:
@@ -134,12 +136,9 @@ class Color(ABC):
                 except ColorNotFound:
                     self._from_hex(r_or_color)
 
-
         elif None not in (r_or_color, g, b):
             self.rgb = (r_or_color,g,b)
             self._init_number()
-        elif r_or_color is None and g is None and b is None:
-            return
         else:
             raise ColorNotFound("Invalid parameters for a color!")
 
