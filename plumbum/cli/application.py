@@ -6,7 +6,7 @@ import functools
 from textwrap import TextWrapper
 from collections import defaultdict
 
-from plumbum.lib import six
+from plumbum.lib import six, getdoc
 from plumbum.cli.terminal import get_terminal_size
 from plumbum.cli.switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,
     MissingMandatorySwitch, SwitchCombinationError, PositionalArgumentsError, switch,
@@ -154,7 +154,7 @@ class Application(object):
         if self.PROGNAME is None:
             self.PROGNAME = os.path.basename(executable)
         if self.DESCRIPTION is None:
-            self.DESCRIPTION = inspect.getdoc(self)
+            self.DESCRIPTION = getdoc(self)
 
         self.executable = executable
         self._switches_by_name = {}
@@ -629,7 +629,7 @@ class Application(object):
             for name, subcls in sorted(self._subcommands.items()):
                 with self.COLOR_SUBCOMMANDS:
                     subapp = subcls.get()
-                    doc = subapp.DESCRIPTION if subapp.DESCRIPTION else inspect.getdoc(subapp)
+                    doc = subapp.DESCRIPTION if subapp.DESCRIPTION else getdoc(subapp)
                     help = doc + "; " if doc else ""  # @ReservedAssignment
                     help += "see '%s %s --help' for more info" % (self.PROGNAME, name)
 
