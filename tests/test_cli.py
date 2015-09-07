@@ -2,6 +2,7 @@ import sys
 import unittest
 from plumbum import cli
 from contextlib import contextmanager
+import time
 
 from plumbum import cli, local
 from plumbum.cli.terminal import ask, choose, hexdump, Progress
