@@ -6,10 +6,7 @@ import os
 from plumbum.lib import six
 from abc import abstractmethod, abstractproperty
 
-try:
-    reduce
-except NameError:
-    from functools import reduce
+from functools import reduce
 
 
 class FSUser(int):

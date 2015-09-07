@@ -10,17 +10,34 @@ With the ``Style`` class, any color can be directly called or given to a with st
 from __future__ import print_function
 import sys
 import os
+import platform
 import re
 from copy import copy
 from plumbum.colorlib.names import color_names, color_html
 from plumbum.colorlib.names import color_codes_simple, from_html
 from plumbum.colorlib.names import FindNearest, attributes_ansi
+from plumbum.lib import six
+from abc import abstractmethod
+ABC = six.ABC
 
 __all__ = ['Color', 'Style', 'ANSIStyle', 'HTMLStyle', 'ColorNotFound', 'AttributeNotFound']
 
 
 _lower_camel_names = [n.replace('_', '') for n in color_names]
 
+
+def get_color_repr():
+    """Gets best colors for current system."""
+    if not sys.stdout.isatty():
+        return False
+    elif platform.system() == "Darwin":
+        return 3
+    elif os.name == 'nt':
+        return 1
+    elif os.name == 'posix':
+        return True
+    else:
+        return False
 
 class ColorNotFound(Exception):
     """Thrown when a color is not valid for a particular method."""
@@ -36,7 +53,7 @@ class ResetNotSupported(Exception):
     pass
 
 
-class Color(object):
+class Color(ABC):
     """\
     Loaded with ``(r, g, b, fg)`` or ``(color, fg=fg)``. The second signature is a short cut
     and will try full and hex loading.
@@ -99,11 +116,14 @@ class Color(object):
         self.number = None
         'Number of the original color, or closest color'
 
-        self.representation = 3
-        '0 for 8 colors, 1 for 16 colors, 2 for 256 colors, 3 for true color'
+        self.representation = 4
+        '0 for off, 1 for 8 colors, 2 for 16 colors, 3 for 256 colors, 4 for true color'
 
         self.exact = True
         'This is false if the named color does not match the real color'
+        
+        self.use_color = True
+        'This is a toggle for color (or max representation)'
 
         if r_or_color is not None and None in (g,b):
             try:
@@ -127,11 +147,11 @@ class Color(object):
         """Should always be called after filling in r, g, b, and representation.
         Color will not be a reset color anymore."""
 
-        if self.representation == 0:
+        if self.representation in (0, 1):
             number = FindNearest(*self.rgb).only_basic()
-        elif self.representation == 1:
+        elif self.representation == 2:
             number = FindNearest(*self.rgb).only_simple()
-        else:
+        elif self.representation in (3, 4):
             number = FindNearest(*self.rgb).all_fast()
 
         if self.number is None:
@@ -172,7 +192,7 @@ class Color(object):
         else:
             raise ColorNotFound("Did not find color: " + repr(color))
 
-        self.representation = 1
+        self.representation = 2
         self._init_number()
 
     @classmethod
@@ -204,7 +224,7 @@ class Color(object):
         else:
             raise ColorNotFound("Did not find color: " + repr(color))
 
-        self.representation = 2
+        self.representation = 3
         self._init_number()
 
     @classmethod
@@ -221,7 +241,7 @@ class Color(object):
         except (TypeError, ValueError):
             raise ColorNotFound("Did not find htmlcode: " + repr(color))
 
-        self.representation = 3
+        self.representation = 4
         self._init_number()
 
     @property
@@ -239,7 +259,7 @@ class Color(object):
 
     def __repr__(self):
         """This class has a smart representation that shows name and color (if not unique)."""
-        name = [' Basic:', '', ' Full:', ' True:'][self.representation]
+        name = ['Deacivated:', ' Basic:', '', ' Full:', ' True:'][self.representation]
         name += '' if self.fg else ' Background'
         name += ' ' + self.name_camelcase
         name += '' if self.exact else ' ' + self.hex_code
@@ -264,9 +284,9 @@ class Color(object):
 
         if self.isreset:
             return (ansi_addition+9,)
-        elif self.representation < 2:
+        elif self.representation < 3:
             return (color_codes_simple[self.number]+ansi_addition,)
-        elif self.representation == 2:
+        elif self.representation == 3:
             return (ansi_addition+8, 5, self.number)
         else:
             return (ansi_addition+8, 2, self.rgb[0], self.rgb[1], self.rgb[2])
@@ -287,9 +307,19 @@ class Color(object):
         """Converts a color to any represntation"""
         other = copy(self)
         other.representation = val
+        if self.isreset:
+            return other
         other.number = None
         other._init_number()
         return other
+
+    def limit_representation(self, val):
+        """Only converts if val is lower than representation"""
+
+        if self.representation <= val:
+            return self
+        else:
+            return self.to_representation(val)
 
 
 
@@ -384,21 +414,9 @@ class Style(object):
         result.attributes = copy(self.attributes)
         return result
 
-    def __neg__(self):
-        """This negates the effect of the current color"""
-        return self.invert()
-
     def __invert__(self):
-        """This allows ~color == -color."""
+        """This allows ~color."""
         return self.invert()
-
-    def __sub__(self, other):
-       """Implemented to make muliple Style objects work"""
-       return self + (-other)
-
-    def __rsub__(self, other):
-        """Implemented to make using negatives easier"""
-        return other + (-self)
 
     def __add__(self, other):
         """Adding two matching Styles results in a new style with
@@ -429,47 +447,28 @@ class Style(object):
 
     def wrap(self, wrap_this):
         """Wrap a sting in this style and its inverse."""
-        return self + wrap_this - self
+        return self + wrap_this + ~self
 
-    def __mul__(self, other):
-        """This class supports ``color * color2`` syntax,
-        and ``color * "String" syntax too.``"""
+    def __and__(self, other):
+        """This class supports ``color & color2`` syntax,
+        and ``color & "String" syntax too.``"""
         if type(self) == type(other):
             return self + other
         else:
             return self.wrap(other)
 
-    def __rmul__(self, other):
-        """This class supports ``"String:" * color`` syntax, excpet in Python 2.6 due to bug with that Python."""
-        return self.wrap(other)
-
-    def __rlshift__(self, other):
-        """This class supports ``"String:" << color`` syntax"""
-        return self.wrap(other)
-
     def __rand__(self, other):
-        """Support for "String" & color syntax"""
+        """This class supports ``"String:" & color`` syntax, excpet in Python 2.6 due to bug with that Python."""
         return self.wrap(other)
 
-    def __and__(self, other):
-        """This class supports ``color & color2`` syntax. It also supports
-        ``"color & "String"`` syntax too. """
-        return self.__mul__(other)
-
-    def __lshift__(self, other):
-        """This class supports ``color << color2`` syntax. It also supports
-        ``"color << "String"`` syntax too. """
-        return self.__mul__(other)
-
-    def __rrshift__(self, other):
-        """This class supports ``"String:" >> color`` syntax"""
+    def __ror__(self, other):
+        """Support for "String" | color syntax"""
         return self.wrap(other)
 
-    def __rshift__(self, other):
-        """This class supports ``color >> "String"`` syntax. It also supports
-        ``"color >> color2`` syntax too. """
-        return self.__mul__(other)
-
+    def __or__(self, other):
+        """This class supports ``color | color2`` syntax. It also supports
+        ``"color | "String"`` syntax too. """
+        return self.__and__(other)
 
     def __call__(self, *printables, **kargs):
         """\
@@ -512,7 +511,7 @@ class Style(object):
 
     def __exit__(self, type, value, traceback):
         """Runs even if exception occured, does not catch it."""
-        self.stdout.write(str(-self))
+        self.stdout.write(str(~self))
         return False
 
     @property
@@ -527,7 +526,9 @@ class Style(object):
             if self.attributes[attribute]:
                 codes.append(attributes_ansi[attribute])
             else:
-                codes.append(20+attributes_ansi[attribute])
+                # Fixing bold inverse being 22 instead of 21 on some terminals:
+                codes.append(attributes_ansi[attribute]
+                        + 20 if attributes_ansi[attribute]!=1 else 21 )
 
         if self.fg:
             codes.extend(self.fg.ansi_codes)
@@ -569,10 +570,10 @@ class Style(object):
         else:
             return str(self) == other
 
+    @abstractmethod
     def __str__(self):
         """Base Style does not implement a __str__ representation. This is the one
         required method of a subclass."""
-        raise NotImplemented("This is a base style, does not have an representation")
 
 
     @classmethod
@@ -639,7 +640,7 @@ class Style(object):
         except StopIteration:
             return
 
-    def _to_representation(self, rep):
+    def to_representation(self, rep):
         """This converts both colors to a specific representation"""
         other = copy(self)
         if other.fg:
@@ -648,25 +649,39 @@ class Style(object):
             other.bg = other.bg.to_representation(rep)
         return other
 
+    def limit_representation(self, rep):
+        """This only converts if true representation is higher"""
+
+        if rep is True or rep is False:
+            return self
+
+        other = copy(self)
+        if other.fg:
+            other.fg = other.fg.limit_representation(rep)
+        if other.bg:
+            other.bg = other.bg.limit_representation(rep)
+        return other
+
+
     @property
     def basic(self):
         """The color in the 8 color representation."""
-        return self._to_representation(0)
+        return self.to_representation(1)
 
     @property
     def simple(self):
         """The color in the 16 color representation."""
-        return self._to_representation(1)
+        return self.to_representation(2)
 
     @property
     def full(self):
         """The color in the 256 color representation."""
-        return self._to_representation(2)
+        return self.to_representation(3)
 
     @property
     def true(self):
         """The color in the true color representation."""
-        return self._to_representation(3)
+        return self.to_representation(4)
 
 class ANSIStyle(Style):
     """This is a subclass for ANSI styles. Use it to get
@@ -676,15 +691,15 @@ class ANSIStyle(Style):
     for anything using this Style."""
 
     __slots__ = ()
-    use_color = sys.stdout.isatty() and os.name == "posix"
+    use_color = get_color_repr()
 
     attribute_names = attributes_ansi
 
     def __str__(self):
-        if self.use_color:
-            return self.ansi_sequence
-        else:
+        if not self.use_color:
             return ''
+        else:
+            return self.limit_representation(self.use_color).ansi_sequence
 
 class HTMLStyle(Style):
     """This was meant to be a demo of subclassing Style, but

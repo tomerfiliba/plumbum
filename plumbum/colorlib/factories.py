@@ -5,7 +5,8 @@ Color-related factories. They produce Styles.
 
 from __future__ import print_function
 import sys
-from plumbum.colorlib.names import color_names
+from functools import reduce
+from plumbum.colorlib.names import color_names, default_styles
 from plumbum.colorlib.styles import ColorNotFound
 
 __all__ = ['ColorFactory', 'StyleFactory']
@@ -42,9 +43,12 @@ class ColorFactory(object):
         """Return the extended color scheme color for a value or name."""
         return self._style.from_color(self._style.color_class.from_simple(name, fg=self._fg))
 
-    def rgb(self, r, g, b):
+    def rgb(self, r, g=None, b=None):
         """Return the extended color scheme color for a value."""
-        return self._style.from_color(self._style.color_class(r, g, b, fg=self._fg))
+        if g is None and b is None:
+            return self.hex(r)
+        else:
+            return self._style.from_color(self._style.color_class(r, g, b, fg=self._fg))
 
     def hex(self, hexcode):
         """Return the extended color scheme color for a value."""
@@ -64,6 +68,8 @@ class ColorFactory(object):
                 return [self.simple(v) for v in range(start, stop, stride)]
             else:
                 return [self.full(v) for v in range(start, stop, stride)]
+        elif isinstance(val, tuple):
+            return self.rgb(*val)
 
         try:
             return self.full(val)
@@ -84,17 +90,9 @@ class ColorFactory(object):
         """Iterates through all colors in extended colorset."""
         return (self.full(i) for i in range(256))
 
-    def __neg__(self):
-        """Allows clearing a color with -"""
-        return self.reset
-
     def __invert__(self):
         """Allows clearing a color with ~"""
         return self.reset
-
-    def __rsub__(self, other):
-        """Makes ``- COLOR.FG`` easier"""
-        return other + (-self)
 
     def __enter__(self):
         """This will reset the color on leaving the with statement."""
@@ -129,6 +127,8 @@ class StyleFactory(ColorFactory):
         for item in style.attribute_names:
             setattr(self, item, style(attributes={item:True}))
 
+        self.load_stylesheet(default_styles)
+
     @property
     def use_color(self):
         """Shortcut for setting color usage on Style"""
@@ -149,3 +149,33 @@ class StyleFactory(ColorFactory):
     @stdout.setter
     def stdout(self, newout):
         self._style._stdout = newout
+
+    def get_colors_from_string(self, color=''):
+        """
+        Sets color based on string, use `.` or space for seperator,
+        and numbers, fg/bg, htmlcodes, etc all accepted (as strings).
+        """
+
+        names = color.replace('.', ' ').split()
+        prev = self
+        styleslist = []
+        for name in names:
+            try:
+                prev = getattr(prev, name)
+            except AttributeError:
+                try:
+                    prev = prev(int(name))
+                except (ColorNotFound, ValueError):
+                    prev = prev(name)
+            if isinstance(prev, self._style):
+                styleslist.append(prev)
+                prev = self
+
+        if styleslist:
+            prev = reduce(lambda a,b: a & b, styleslist)
+
+        return prev if isinstance(prev, self._style) else prev.reset
+
+    def load_stylesheet(self, stylesheet=default_styles):
+        for item in stylesheet:
+            setattr(self, item, self.get_colors_from_string(stylesheet[item]))

@@ -135,6 +135,9 @@ class TEE(ExecutionModifier):
 
     Returns a tuple of (return code, stdout, stderr), just like ``run()``.
     """
+
+    __slots__ = ['buffered']
+
     def __init__(self, retcode=0, buffered=True):
         """`retcode` is the return code to expect to mean "success".  Set
         `buffered` to False to disable line-buffering the output, which may
@@ -195,6 +198,8 @@ class TF(ExecutionModifier):
         local['touch']['/root/test'] & TF(FG=True) * Returns False, will show error message
     """
 
+    __slots__ = ['foreground']
+
     def __init__(self, retcode=0, FG=False):
         """`retcode` is the return code to expect to mean "success".  Set
         `FG` to True to run in the foreground.
@@ -232,6 +237,8 @@ class RETCODE(ExecutionModifier):
         local['touch']['/root/test'] & RETCODE # Returns 1, since this cannot be touched
         local['touch']['/root/test'] & RETCODE(FG=True) * Returns 1, will show error message
     """
+
+    __slots__ = ['foreground']
 
     def __init__(self,  FG=False):
         """`FG` to True to run in the foreground.

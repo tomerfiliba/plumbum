@@ -1,12 +1,11 @@
-In development
---------------
-* Color: Added colors module, support for colors added to cli
-
-
-1.5.1 (In development)
+1.6.0 (In development)
 ----------------------
+* Colors: Added colors module, support for colors added to cli (`#213 <https://github.com/tomerfiliba/plumbum/pull/213>`_)
 * Machines: Added ``.get()`` method for checking several commands. (`#205 <https://github.com/tomerfiliba/plumbum/pull/205>`_)
 * Machines: ``local.cwd`` now is the current directory even if you change the directory with non-Plumbum methods. (`#207 <https://github.com/tomerfiliba/plumbum/pull/207>`_) 
+* Remote machines: Better error message for SSH (`#211 <https://github.com/tomerfiliba/plumbum/pull/211>`_)
+* CLI: added ``envname``, which allows you specify an environment variable for a ``SwitchAttr`` (`#216 <https://github.com/tomerfiliba/plumbum/pull/216>`_)
+* Continued to clean out Python 2.5 hacks
 
 1.5.0
 -----
