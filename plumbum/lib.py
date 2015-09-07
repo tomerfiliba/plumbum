@@ -28,10 +28,9 @@ class six(object):
 
     # Be sure to use named-tuple access, so that different order doesn't affect usage
     try:
-        @staticmethod
-        staticmethod(inspect.getfullargspec)
+        getargspec = staticmethod(inspect.getargspec)
     except AttributeError:
-        getargspec = staticmethod(lambda func: inspect.getargspec(func)[:4])
+        getargspec = staticmethod(lambda func: inspect.getfullargspec(func)[:4])
 
 
     if PY3:
