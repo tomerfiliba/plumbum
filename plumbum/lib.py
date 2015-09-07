@@ -1,5 +1,6 @@
 import sys
 from abc import ABCMeta
+import inspect
 
 IS_WIN32 = (sys.platform == "win32")
 
@@ -24,6 +25,13 @@ class six(object):
     """
     PY3 = sys.version_info[0] >= 3
     ABC = ABCMeta('ABC', (object,), {'__module__':__name__})
+
+    # Be sure to use named-tuple access, so that different order doesn't affect usage
+    try:
+        getargspec = inspect.getfullargspec
+    except AttributeError:
+        getargspec = lambda func: inspect.getargspec(func)[:4]
+
 
     if PY3:
         integer_types = (int,)

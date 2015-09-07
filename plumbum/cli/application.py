@@ -383,7 +383,7 @@ class Application(object):
                 raise SwitchCombinationError("Given %s, the following are invalid %r" %
                     (swfuncs[func].swname, [swfuncs[f].swname for f in invalid]))
 
-        m_args, m_varargs, _, m_defaults = inspect.getargspec(self.main)
+        m_args, m_varargs, _, m_defaults = six.getargspec(self.main)
         max_args = six.MAXSIZE if m_varargs else len(m_args) - 1
         min_args = len(m_args) - 1 - (len(m_defaults) if m_defaults else 0)
         if len(tailargs) < min_args:
@@ -549,7 +549,7 @@ class Application(object):
         if self.DESCRIPTION:
             print(self.COLOR_DISCRIPTION[self.DESCRIPTION.strip() + '\n'])
 
-        m_args, m_varargs, _, m_defaults = inspect.getargspec(self.main)
+        m_args, m_varargs, _, m_defaults = six.getargspec(self.main)
         tailargs = m_args[1:]  # skip self
         if m_defaults:
             for i, d in enumerate(reversed(m_defaults)):

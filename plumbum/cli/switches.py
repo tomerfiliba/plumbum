@@ -133,7 +133,7 @@ def switch(names, argtype = None, argname = None, list = False, mandatory = Fals
 
     def deco(func):
         if argname is None:
-            argspec = inspect.getargspec(func)[0]
+            argspec = six.getargspec(func)[0]
             if len(argspec) == 2:
                 argname2 = argspec[1]
             else:
