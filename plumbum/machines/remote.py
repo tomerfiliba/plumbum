@@ -316,10 +316,10 @@ class BaseRemoteMachine(BaseMachine):
         return matches
 
     def _path_getuid(self, fn):
-        stat_cmd = "stat -c '%u,%U' " if self.uname != 'Darwin' else "stat -f '%u,%Su' "
+        stat_cmd = "stat -c '%u,%U' " if self.uname not in ('Darwin', 'FreeBSD') else "stat -f '%u,%Su' "
         return self._session.run(stat_cmd + shquote(fn))[1].strip().split(",")
     def _path_getgid(self, fn):
-        stat_cmd = "stat -c '%g,%G' " if self.uname != 'Darwin' else "stat -f '%g,%Sg' "
+        stat_cmd = "stat -c '%g,%G' " if self.uname not in ('Darwin', 'FreeBSD') else "stat -f '%g,%Sg' "
         return self._session.run(stat_cmd + shquote(fn))[1].strip().split(",")
     def _path_stat(self, fn):
         if self.uname not in ('Darwin', 'FreeBSD'):
