@@ -322,7 +322,7 @@ class BaseRemoteMachine(BaseMachine):
         stat_cmd = "stat -c '%g,%G' " if self.uname != 'Darwin' else "stat -f '%g,%Sg' "
         return self._session.run(stat_cmd + shquote(fn))[1].strip().split(",")
     def _path_stat(self, fn):
-        if self.uname != 'Darwin':
+        if self.uname not in ('Darwin', 'FreeBSD'):
             stat_cmd = "stat -c '%F,%f,%i,%d,%h,%u,%g,%s,%X,%Y,%Z' "
         else:
             stat_cmd = "stat -f '%HT,%Xp,%i,%d,%l,%u,%g,%z,%a,%m,%c' "
