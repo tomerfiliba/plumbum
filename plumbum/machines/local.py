@@ -101,6 +101,11 @@ class LocalCommand(ConcreteCommand):
     def machine(self):
         return local
 
+    def nohup(self, command, cwd='.', stdout=None, stderr=None):
+        """Runs a command detached. Does not redirect to nohup.out by default
+        (for compatibility with SSHMachine's old default)"""
+        return local.daemonic_popen(self, cwd, stdout, stderr)
+
     def popen(self, args = (), cwd = None, env = None, **kwargs):
         if isinstance(args, six.string_types):
             args = (args,)
@@ -262,7 +267,8 @@ class LocalMachine(BaseMachine):
         proc.argv = argv
         return proc
 
-    def daemonic_popen(self, command, cwd = "/"):
+
+    def daemonic_popen(self, command, cwd = "/", stdout=None, stderr=None):
         """
         On POSIX systems:
 
@@ -281,9 +287,9 @@ class LocalMachine(BaseMachine):
         .. versionadded:: 1.3
         """
         if IS_WIN32:
-            return win32_daemonize(command, cwd)
+            return win32_daemonize(command, cwd, stdout, stderr)
         else:
-            return posix_daemonize(command, cwd)
+            return posix_daemonize(command, cwd, stdout, stderr)
 
     if IS_WIN32:
         def list_processes(self):

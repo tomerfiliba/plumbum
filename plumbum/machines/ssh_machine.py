@@ -124,15 +124,21 @@ class SshMachine(BaseRemoteMachine):
                 cmdline.append(args)
         return self._ssh_command[tuple(cmdline)].popen(**kwargs)
 
-    def nohup(self, command):
+    def nohup(self, command, cwd='.', stdout=None, stderr=None):
         """
-        Runs the given command using ``nohup`` and redirects std handles to ``/dev/null``,
+        Runs the given command using ``nohup`` and redirects std handles,
         allowing the command to run "detached" from its controlling TTY or parent.
-        Does not return anything.
+        Does not return anything. Does not redirect to nohup.out by default (for
+        compatibility with old version).
         """
-        args = ["nohup"]
+        if stdout is None:
+            stdout = "/dev/null"
+        if stderr is None:
+            stderr = stdout
+
+        args = ["cd", str(cwd), "&&", "nohup"]
         args.extend(command.formulate())
-        args.extend([">/dev/null", "2>/dev/null", "</dev/null"])
+        args.extend([">"+str(stdout), "2>"+str(stderr), "</dev/null"])
         proc = self.popen(args, ssh_opts = ["-f"])
         rc = proc.wait()
         try:
