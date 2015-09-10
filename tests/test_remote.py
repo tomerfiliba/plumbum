@@ -229,6 +229,7 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
         with self._connect() as rem:
             sleep = rem["sleep"]
             sleep["5.793817"] & NOHUP(stdout = None)
+            time.sleep(.5)
             self.assertTrue(list(rem.pgrep("5.793817")))
             time.sleep(6)
             self.assertFalse(list(rem.pgrep("5.793817")))
