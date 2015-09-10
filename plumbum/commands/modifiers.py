@@ -5,11 +5,8 @@ import sys
 from itertools import chain
 
 from plumbum.commands.processes import run_proc, ProcessExecutionError
+from plumbum.commands.base import AppendingStdoutRedirection, StdoutRedirection
 
-
-#===================================================================================================
-# execution modifiers (background, foreground)
-#===================================================================================================
 
 class Future(object):
     """Represents a "future result" of a running process. It basically wraps a ``Popen``
@@ -55,16 +52,22 @@ class Future(object):
         self.wait()
         return self._returncode
 
+#===================================================================================================
+# execution modifiers 
+#===================================================================================================
+
 
 class ExecutionModifier(object):
     __slots__ = ()
 
     def __repr__(self):
-        """Automatically creates a representation for given subclass with slots"""
+        """Automatically creates a representation for given subclass with slots.
+        Ignore hidden properties."""
         slots = {}
         for cls in self.__mro__:
             for prop in getattr(cls, "__slots__", ()):
-                slots[prop] = getattr(self, prop)
+                if prop[0] != '_':
+                    slots[prop] = getattr(self, prop)
         mystrs = ("{0} = {1}".format(name, slots[name]) for name in slots)
         return "{0}({1})".format(self.__class__.__name__, ", ".join(mystrs))
 
@@ -282,7 +285,8 @@ class NOHUP(ExecutionModifier):
     when you right-and it with a command. If you wish to use a diffent working directory
     or different stdout, stderr, you can use named arguments. The default is ``NOHUP(
     cwd=local.cwd, stdout='nohup.out', stderr=None)``. If stderr is None, stderr will be
-    sent to stdout. Use ``os.devnull`` for null output. Example::
+    sent to stdout. Use ``os.devnull`` for null output. Will respect redirected output.
+    Example::
 
         sleep[5] & NOHUP                       # Outputs to nohup.out 
         sleep[5] & NOHUP(stdout=os.devnull)    # No output
@@ -294,16 +298,30 @@ class NOHUP(ExecutionModifier):
         nohup sleep 5 &
 
     """
-    __slots__ = ('cwd', 'stdout', 'stderr')
+    __slots__ = ('cwd', 'stdout', 'stderr', 'append')
 
-    def __init__(self, cwd='.', stdout='nohup.out', stderr=None):
-        """ Set cwd, stdout, or stderr. Runs as a forked process.
+    def __init__(self, cwd='.', stdout='nohup.out', stderr=None, append=True):
+        """ Set ``cwd``, ``stdout``, or ``stderr``.
+        Runs as a forked process. You can set ``append=False``, too.
         """
         self.cwd = cwd
         self.stdout = stdout
         self.stderr = stderr
+        self.append = append
+
 
     def __rand__(self, cmd):
-        return cmd.machine.daemonic_popen(cmd, self.cwd, self.stdout, self.stderr) 
+        if isinstance(cmd, StdoutRedirection):
+            stdout = cmd.file
+            append = False
+            cmd = cmd.cmd
+        elif isinstance(cmd, AppendingStdoutRedirection):
+            stdout = cmd.file
+            append = True
+            cmd = cmd.cmd
+        else:
+            stdout = self.stdout
+            append = self.append
+        return cmd.nohup(cmd, self.cwd, stdout, self.stderr, append) 
 
 NOHUP = NOHUP()

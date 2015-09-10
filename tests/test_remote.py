@@ -4,7 +4,7 @@ import socket
 import unittest
 import time
 import logging
-from plumbum import RemotePath, SshMachine, ProcessExecutionError, local, ProcessTimedOut
+from plumbum import RemotePath, SshMachine, ProcessExecutionError, local, ProcessTimedOut, NOHUP
 from plumbum import CommandNotFound
 from plumbum.lib import six
 
@@ -228,7 +228,7 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
     def test_nohup(self):
         with self._connect() as rem:
             sleep = rem["sleep"]
-            rem.nohup(sleep["5.793817"])
+            sleep["5.793817"] & NOHUP(stdout = None)
             self.assertTrue(list(rem.pgrep("5.793817")))
             time.sleep(6)
             self.assertFalse(list(rem.pgrep("5.793817")))

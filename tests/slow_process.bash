@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-echo "Starting test" > outputfile.out
-for i in $(seq 1 10)
+echo "Starting test" > slow_process.out
+for i in $(seq 1 3)
 do
     echo $i
-    echo $i >> outputfile.out
-    sleep 2
+    echo $i >> slow_process.out
+    sleep .5
 done
 

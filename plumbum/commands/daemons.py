@@ -14,7 +14,7 @@ class _fake_lock(object):
     def release(self):
         pass
 
-def posix_daemonize(command, cwd, stdout=None, stderr=None):
+def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
     if stdout is None:
         stdout = os.devnull
     if stderr is None:
@@ -32,8 +32,8 @@ def posix_daemonize(command, cwd, stdout=None, stderr=None):
             os.setsid()
             os.umask(0)
             stdin = open(os.devnull, "r")
-            stdout = open(stdout, "w")
-            stderr = open(stderr, "w")
+            stdout = open(stdout, "a" if append else "w")
+            stderr = open(stderr, "a" if append else "w")
             signal.signal(signal.SIGHUP, signal.SIG_IGN)
             proc = command.popen(cwd = cwd, close_fds = True, stdin = stdin.fileno(), 
                 stdout = stdout.fileno(), stderr = stderr.fileno())
@@ -96,15 +96,15 @@ def posix_daemonize(command, cwd, stdout=None, stderr=None):
         return proc
 
 
-def win32_daemonize(command, cwd, stdout=None, stderr=None):
+def win32_daemonize(command, cwd, stdout=None, stderr=None, append=True):
     if stdout is None:
         stdout = os.devnull
     if stderr is None:
         stderr = stdout
     DETACHED_PROCESS = 0x00000008
     stdin = open(os.devnull, "r")
-    stdout = open(stdout, "w")
-    stderr = open(stderr, "w")
+    stdout = open(stdout, "a" if append else "w")
+    stderr = open(stderr, "a" if append else "w")
     return command.popen(cwd = cwd, stdin = stdin.fileno(), stdout = stdout.fileno(), stderr = stderr.fileno(), 
         creationflags = subprocess.CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS)
 
