@@ -146,12 +146,12 @@ class SshMachine(BaseRemoteMachine):
         if stdout is None:
             stdout = "/dev/null"
         if stderr is None:
-            stderr = stdout
+            stderr = "&1"
 
         args = ["cd", str(cwd), "&&", "nohup"]
         args.extend(command.formulate())
         args.extend([(">>" if append else ">")+str(stdout),
-            "2"+(">>" if append else ">")+str(stderr), "</dev/null"])
+            "2"+(">>" if (append and stderr!="&1") else ">")+str(stderr), "</dev/null"])
         proc = self.popen(args, ssh_opts = ["-f"])
         rc = proc.wait()
         try:

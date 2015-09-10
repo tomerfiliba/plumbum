@@ -9,7 +9,7 @@ from plumbum.path.utils import delete
 
 class NOHUP_LOCAL(unittest.TestCase):
     def read_file(self, filename):
-        self.assertIn(filename, os.listdir())
+        self.assertIn(filename, os.listdir('.'))
         with open(filename) as f:
             return f.read()
 
