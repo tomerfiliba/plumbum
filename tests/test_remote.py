@@ -107,6 +107,12 @@ s.close()
                 self.assertTrue("'|'" in str(cmd))
                 self.assertTrue("test_remote.py" in cmd())
                 self.assertTrue("test_remote.py" in [f.basename for f in rem.cwd // "*.py"])
+                
+    def test_glob(self):
+        with self._connect() as rem:
+            filenames = [f.basename for f in rem.cwd // ("*.py", "*.bash")]
+            self.assertTrue("test_remote.py" in filenames)
+            self.assertTrue("slow_process.bash" in filenames)
 
     def test_download_upload(self):
         with self._connect() as rem:
