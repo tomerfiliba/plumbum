@@ -107,12 +107,13 @@ s.close()
                 self.assertTrue("'|'" in str(cmd))
                 self.assertTrue("test_remote.py" in cmd())
                 self.assertTrue("test_remote.py" in [f.basename for f in rem.cwd // "*.py"])
-                
+
     def test_glob(self):
         with self._connect() as rem:
-            filenames = [f.basename for f in rem.cwd // ("*.py", "*.bash")]
-            self.assertTrue("test_remote.py" in filenames)
-            self.assertTrue("slow_process.bash" in filenames)
+            with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
+                filenames = [f.basename for f in rem.cwd // ("*.py", "*.bash")]
+                self.assertTrue("test_remote.py" in filenames)
+                self.assertTrue("slow_process.bash" in filenames)
 
     def test_download_upload(self):
         with self._connect() as rem:
@@ -234,7 +235,7 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
     def test_nohup(self):
         with self._connect() as rem:
             sleep = rem["sleep"]
-            sleep["5.793817"] & NOHUP(stdout = None)
+            sleep["5.793817"] & NOHUP(stdout = None, append=False)
             time.sleep(.5)
             print(rem["ps"]("aux"))
             self.assertTrue(list(rem.pgrep("5.793817")))
