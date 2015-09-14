@@ -133,22 +133,26 @@ class SshMachine(BaseRemoteMachine):
         """
         warnings.warn("Use .nohup on the command or use daemonic_popen)", DeprecationWarning)
         self.daemonic_popen(command, cwd='.', stdout=None, stderr=None, append=False)
-        
+
     def daemonic_popen(self, command, cwd='.', stdout=None, stderr=None, append=True):
         """
         Runs the given command using ``nohup`` and redirects std handles,
         allowing the command to run "detached" from its controlling TTY or parent.
         Does not return anything.
-        
+
         .. versionadded:: 1.6.0
-        
+
         """
         if stdout is None:
             stdout = "/dev/null"
         if stderr is None:
             stderr = "&1"
 
-        args = ["cd", str(cwd), "&&", "nohup"]
+        if str(cwd) == '.':
+            args = []
+        else:
+            args = ["cd", str(cwd), "&&"]
+        args.append("nohup")
         args.extend(command.formulate())
         args.extend([(">>" if append else ">")+str(stdout),
             "2"+(">>" if (append and stderr!="&1") else ">")+str(stderr), "</dev/null"])
