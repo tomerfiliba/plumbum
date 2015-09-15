@@ -241,7 +241,7 @@ If you want to redirect the input or output to something other than ``nohup.out`
 
     >>> ls["-a"] & NOHUP(stdout='/dev/null') # Or None
 
-.. version-added:: 1.6.0
+.. versionadded:: 1.6.0
 
 .. _guide-local-commands-nesting:
     
