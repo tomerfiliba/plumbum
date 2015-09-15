@@ -1,9 +1,11 @@
 import sys
 import unittest
+from plumbum import cli
 from contextlib import contextmanager
+import time
 
 from plumbum import cli, local
-from plumbum.cli.terminal import ask, choose, hexdump
+from plumbum.cli.terminal import ask, choose, hexdump, Progress
 from plumbum.lib import six
 
 # string/unicode issues
@@ -59,10 +61,12 @@ class Geet(cli.Application):
         self.cleanups.append(1)
         print("geet cleaning up with rc = %s" % (retcode,))
 
+@Geet.subcommand("add")
 class GeetAdd(cli.Application):
     def main(self, *files):
         return "adding", files
 
+@Geet.subcommand("commit")
 class GeetCommit(cli.Application):
     message = cli.Flag("-m", str)
 
@@ -75,10 +79,6 @@ class GeetCommit(cli.Application):
     def cleanup(self, retcode):
         self.parent.cleanups.append(2)
         print("geet commit cleaning up with rc = %s" % (retcode,))
-
-# python 2.5 compatibility (otherwise, could be used as a decorator)
-Geet.subcommand("add", GeetAdd)
-Geet.subcommand("commit", GeetCommit)
 
 class Sample(cli.Application):
     foo = cli.SwitchAttr("--foo")
@@ -250,6 +250,28 @@ class TestTerminal(unittest.TestCase):
 *
 000060 | 41 41 41 41 66 6f 6f 20 62 61 72                | AAAAfoo bar"""
         self.assertEqual("\n".join(hexdump(data)), output)
+
+    def test_progress(self):
+        with captured_stdout() as stream:
+            for i in Progress.range(4, has_output=True, timer=False):
+                print('hi')
+                time.sleep(.5)
+            stream.seek(0)
+            output = """\
+0% complete
+0% complete
+hi
+25% complete
+hi
+50% complete
+hi
+75% complete
+hi
+100% complete
+
+"""
+            self.assertEqual(stream.read(), output)
+
 
 
 if __name__ == "__main__":
