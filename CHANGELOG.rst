@@ -1,11 +1,15 @@
 1.6.0 (In development)
 ----------------------
+* Added support for Python 3.5, PyPy, and better Mac support (`#218 <https://github.com/tomerfiliba/plumbum/pull/218>`_), `#217 <https://github.com/tomerfiliba/plumbum/pull/217>`_)
 * Colors: Added colors module, support for colors added to cli (`#213 <https://github.com/tomerfiliba/plumbum/pull/213>`_)
 * Machines: Added ``.get()`` method for checking several commands. (`#205 <https://github.com/tomerfiliba/plumbum/pull/205>`_)
 * Machines: ``local.cwd`` now is the current directory even if you change the directory with non-Plumbum methods. (`#207 <https://github.com/tomerfiliba/plumbum/pull/207>`_) 
 * SSHMachine: Better error message for SSH (`#211 <https://github.com/tomerfiliba/plumbum/pull/211>`_)
 * SSHMachine: Support for FreeBSD remote (`#220 <https://github.com/tomerfiliba/plumbum/pull/220>`_)
+* Paths: Added globbing multiple patterns at once  (`#221 <https://github.com/tomerfiliba/plumbum/pull/221>`_)
+* Commands: added ``NOHUP`` modifier (`#221 <https://github.com/tomerfiliba/plumbum/pull/221>`_)
 * CLI: added ``envname``, which allows you specify an environment variable for a ``SwitchAttr`` (`#216 <https://github.com/tomerfiliba/plumbum/pull/216>`_)
+* CLI terminal: addded ``Progress``, a command line progress bar for iterators and ranges (`#214 <https://github.com/tomerfiliba/plumbum/pull/214>`_)
 * Continued to clean out Python 2.5 hacks
 
 1.5.0
