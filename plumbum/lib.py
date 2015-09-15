@@ -1,4 +1,5 @@
 import sys
+from contextlib import contextmanager
 from abc import ABCMeta
 import inspect
 
@@ -69,6 +70,51 @@ class six(object):
         @staticmethod
         def get_method_function(m):
             return m.im_func
+
+# Try/except fails because io has the wrong StringIO in Python2
+# You'll get str/unicode errors
+if six.PY3:
+    from io import StringIO
+else:
+    from StringIO import StringIO
+
+def ensure_skipIf(unittest):
+    """
+    This will ensure that unittest has skipIf. Call like::
+
+        import unittest
+        ensure_skipIf(unittest)
+    """
+
+    if not hasattr(unittest, "skipIf"):
+        import logging
+        import functools
+        def skipIf(condition, reason):
+            def deco(func):
+                if condition:
+                    return func
+                else:
+                    @functools.wraps(func)
+                    def wrapper(*args, **kwargs):
+                        logging.warn("skipping test: "+reason)
+                    return wrapper
+            return deco
+        unittest.skipIf = skipIf
+
+@contextmanager
+def captured_stdout(stdin = ""):
+    """
+    Captures stdout (similar to the redirect_stdout in Python 3.4+, but with slightly different arguments)
+    """
+    prevstdin = sys.stdin
+    prevstdout = sys.stdout
+    sys.stdin = StringIO(six.u(stdin))
+    sys.stdout = StringIO()
+    try:
+        yield sys.stdout
+    finally:
+        sys.stdin = prevstdin
+        sys.stdout = prevstdout
 
 class StaticProperty(object):
     """This acts like a static property, allowing access via class or object.

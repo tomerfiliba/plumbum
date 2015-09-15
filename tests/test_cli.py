@@ -1,32 +1,11 @@
 import sys
 import unittest
 from plumbum import cli
-from contextlib import contextmanager
 import time
 
 from plumbum import cli, local
 from plumbum.cli.terminal import ask, choose, hexdump, Progress
-from plumbum.lib import six
-
-# string/unicode issues
-if six.PY3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
-
-
-@contextmanager
-def captured_stdout(stdin = ""):
-    prevstdin = sys.stdin
-    prevstdout = sys.stdout
-    sys.stdin = StringIO(six.u(stdin))
-    sys.stdout = StringIO()
-    try:
-        yield sys.stdout
-    finally:
-        sys.stdin = prevstdin
-        sys.stdout = prevstdout
-
+from plumbum.lib import six, captured_stdout, StringIO
 
 class TestApp(cli.Application):
     @cli.switch(["a"])
