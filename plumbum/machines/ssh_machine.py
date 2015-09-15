@@ -5,6 +5,7 @@ from plumbum.machines.local import local
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath
 from plumbum.commands import ProcessExecutionError, shquote
+import warnings
 
 
 class SshTunnel(object):
@@ -126,13 +127,35 @@ class SshMachine(BaseRemoteMachine):
 
     def nohup(self, command):
         """
-        Runs the given command using ``nohup`` and redirects std handles to ``/dev/null``,
+        Runs the given command using ``nohup`` and redirects std handles,
+        allowing the command to run "detached" from its controlling TTY or parent.
+        Does not return anything. Depreciated (use command.nohup or daemonic_popen).
+        """
+        warnings.warn("Use .nohup on the command or use daemonic_popen)", DeprecationWarning)
+        self.daemonic_popen(command, cwd='.', stdout=None, stderr=None, append=False)
+
+    def daemonic_popen(self, command, cwd='.', stdout=None, stderr=None, append=True):
+        """
+        Runs the given command using ``nohup`` and redirects std handles,
         allowing the command to run "detached" from its controlling TTY or parent.
         Does not return anything.
+
+        .. versionadded:: 1.6.0
+
         """
-        args = ["nohup"]
+        if stdout is None:
+            stdout = "/dev/null"
+        if stderr is None:
+            stderr = "&1"
+
+        if str(cwd) == '.':
+            args = []
+        else:
+            args = ["cd", str(cwd), "&&"]
+        args.append("nohup")
         args.extend(command.formulate())
-        args.extend([">/dev/null", "2>/dev/null", "</dev/null"])
+        args.extend([(">>" if append else ">")+str(stdout),
+            "2"+(">>" if (append and stderr!="&1") else ">")+str(stderr), "</dev/null"])
         proc = self.popen(args, ssh_opts = ["-f"])
         rc = proc.wait()
         try:

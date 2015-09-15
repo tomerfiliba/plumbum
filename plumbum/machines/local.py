@@ -94,8 +94,6 @@ class LocalCommand(ConcreteCommand):
     def __init__(self, executable, encoding = "auto"):
         ConcreteCommand.__init__(self, executable,
             local.encoding if encoding == "auto" else encoding)
-    def __repr__(self):
-        return "LocalCommand(%r)" % (self.executable,)
 
     @property
     def machine(self):
@@ -104,7 +102,7 @@ class LocalCommand(ConcreteCommand):
     def popen(self, args = (), cwd = None, env = None, **kwargs):
         if isinstance(args, six.string_types):
             args = (args,)
-        return local._popen(self.executable, self.formulate(0, args),
+        return self.machine._popen(self.executable, self.formulate(0, args),
             cwd = self.cwd if cwd is None else cwd, env = self.env if env is None else env,
             **kwargs)
 
@@ -262,7 +260,8 @@ class LocalMachine(BaseMachine):
         proc.argv = argv
         return proc
 
-    def daemonic_popen(self, command, cwd = "/"):
+
+    def daemonic_popen(self, command, cwd = "/", stdout=None, stderr=None, append=True):
         """
         On POSIX systems:
 
@@ -281,9 +280,9 @@ class LocalMachine(BaseMachine):
         .. versionadded:: 1.3
         """
         if IS_WIN32:
-            return win32_daemonize(command, cwd)
+            return win32_daemonize(command, cwd, stdout, stderr, append)
         else:
-            return posix_daemonize(command, cwd)
+            return posix_daemonize(command, cwd, stdout, stderr, append)
 
     if IS_WIN32:
         def list_processes(self):

@@ -134,6 +134,10 @@ class BaseCommand(object):
         :returns: A ``Popen``-like object
         """
         raise NotImplementedError()
+        
+    def nohup(self, command, cwd='.', stdout='nohup.out', stderr=None, append=True):
+        """Runs a command detached."""
+        return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)
 
     @contextmanager
     def bgrun(self, args = (), **kwargs):
@@ -402,8 +406,13 @@ class ConcreteCommand(BaseCommand):
         self.encoding = encoding
         self.cwd = None
         self.env = None
+        
     def __str__(self):
         return str(self.executable)
+        
+    def __repr__(self):
+        return "{0}({1})".format(type(self).__name__, self.executable)        
+    
     def _get_encoding(self):
         return self.encoding
 
@@ -425,7 +434,8 @@ class ConcreteCommand(BaseCommand):
         #    argv = [a.encode(self.encoding) for a in argv if isinstance(a, six.string_types)]
         return argv
 
-
+        
+        
 
 
 

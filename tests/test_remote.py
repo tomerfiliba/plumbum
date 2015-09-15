@@ -4,7 +4,7 @@ import socket
 import unittest
 import time
 import logging
-from plumbum import RemotePath, SshMachine, ProcessExecutionError, local, ProcessTimedOut
+from plumbum import RemotePath, SshMachine, ProcessExecutionError, local, ProcessTimedOut, NOHUP
 from plumbum import CommandNotFound
 from plumbum.lib import six
 
@@ -107,6 +107,13 @@ s.close()
                 self.assertTrue("'|'" in str(cmd))
                 self.assertTrue("test_remote.py" in cmd())
                 self.assertTrue("test_remote.py" in [f.basename for f in rem.cwd // "*.py"])
+
+    def test_glob(self):
+        with self._connect() as rem:
+            with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
+                filenames = [f.basename for f in rem.cwd // ("*.py", "*.bash")]
+                self.assertTrue("test_remote.py" in filenames)
+                self.assertTrue("slow_process.bash" in filenames)
 
     def test_download_upload(self):
         with self._connect() as rem:
@@ -228,7 +235,9 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
     def test_nohup(self):
         with self._connect() as rem:
             sleep = rem["sleep"]
-            rem.nohup(sleep["5.793817"])
+            sleep["5.793817"] & NOHUP(stdout = None, append=False)
+            time.sleep(.5)
+            print(rem["ps"]("aux"))
             self.assertTrue(list(rem.pgrep("5.793817")))
             time.sleep(6)
             self.assertFalse(list(rem.pgrep("5.793817")))

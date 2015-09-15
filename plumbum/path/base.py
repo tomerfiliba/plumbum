@@ -264,6 +264,17 @@ class Path(six.ABC):
         """Same as ``self.relative_to(other)``"""
         return self.relative_to(other)
 
+    def _glob(self, pattern, fn):
+        """Applies a glob string or list/tuple/iterable to the current path, using ``fn``"""
+        if isinstance(pattern, str):
+            return fn(pattern)
+        else:
+            results = []
+            for single_pattern in pattern:
+                results.extend(fn(single_pattern))
+            return sorted(list(set(results)))
+
+
 
 class RelativePath(object):
     """
