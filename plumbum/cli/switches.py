@@ -1,5 +1,5 @@
 import inspect
-from plumbum.lib import six
+from plumbum.lib import six, getdoc
 from plumbum import local
 
 
@@ -133,14 +133,14 @@ def switch(names, argtype = None, argname = None, list = False, mandatory = Fals
 
     def deco(func):
         if argname is None:
-            argspec = inspect.getargspec(func)[0]
+            argspec = six.getargspec(func)[0]
             if len(argspec) == 2:
                 argname2 = argspec[1]
             else:
                 argname2 = "VALUE"
         else:
             argname2 = argname
-        help2 = inspect.getdoc(func) if help is None else help
+        help2 = getdoc(func) if help is None else help
         if not help2:
             help2 = str(func)
         func._switch_info = SwitchInfo(names = names, envname=envname, argtype = argtype, list = list, func = func,

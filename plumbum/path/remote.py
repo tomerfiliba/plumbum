@@ -164,7 +164,8 @@ class RemotePath(Path):
 
     @_setdoc(Path)
     def glob(self, pattern):
-        return [RemotePath(self.remote, m) for m in self.remote._path_glob(self, pattern)]
+        fn = lambda pat: [RemotePath(self.remote, m) for m in self.remote._path_glob(self, pat)]
+        return self._glob(pattern, fn)
 
     @_setdoc(Path)
     def delete(self):

@@ -1,10 +1,13 @@
 import sys
 from contextlib import contextmanager
 from abc import ABCMeta
+import inspect
 
 IS_WIN32 = (sys.platform == "win32")
 
 def _setdoc(super):  # @ReservedAssignment
+    """This inherits the docs on the current class. Not really needed for Python 3.5,
+    due to new behavoir of inspect.getdoc, but still doesn't hurt."""
     def deco(func):
         func.__doc__ = getattr(getattr(super, func.__name__, None), "__doc__", None)
         return func
@@ -25,6 +28,14 @@ class six(object):
     """
     PY3 = sys.version_info[0] >= 3
     ABC = ABCMeta('ABC', (object,), {'__module__':__name__})
+
+    # Be sure to use named-tuple access, so that different order doesn't affect usage
+    try:
+        getargspec = staticmethod(inspect.getargspec)
+    except AttributeError:
+        getargspec = staticmethod(lambda func: inspect.getfullargspec(func)[:4])
+
+
     if PY3:
         integer_types = (int,)
         string_types = (str,)
@@ -114,4 +125,18 @@ class StaticProperty(object):
 
     def __get__(self, obj, klass=None):
         return self._function()
+
+
+def getdoc(object):
+    """
+    This gets a docstring if avaiable, and cleans it, but does not look up docs in
+    inheritance tree (Pre 3.5 behavior of ``inspect.getdoc``).
+    """
+    try:
+        doc = object.__doc__
+    except AttributeError:
+        return None
+    if not isinstance(doc, str):
+        return None
+    return inspect.cleandoc(doc)
 

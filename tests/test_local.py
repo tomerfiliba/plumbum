@@ -139,6 +139,10 @@ class LocalMachineTest(unittest.TestCase):
             if fn.basename == "index.rst":
                 found = True
         self.assertTrue(found)
+        for fn in local.cwd / ".." // ("*/*.rst", "*./*.html"):
+            if fn.basename == "index.rst":
+                found = True
+        self.assertTrue(found)
 
     def test_env(self):
         self.assertTrue("PATH" in local.env)

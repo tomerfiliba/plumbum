@@ -82,8 +82,8 @@ you encounter or to request features. The library is released under the permissi
 Requirements
 ------------
 
-Plumbum supports **Python 2.6-3.4** and has been 
-tested on **Linux** and **Windows** machines. Any Unix-like machine should work fine out of the box,
+Plumbum supports **Python 2.6-3.5** and **PyPy** and has been 
+tested on **Linux**, **Mac**, and **Windows** machines. Any Unix-like machine should work fine out of the box,
 but on Windows, you'll probably want to install a decent `coreutils <http://en.wikipedia.org/wiki/Coreutils>`_ 
 environment and add it to your ``PATH``. I can recommend `mingw <http://mingw.org/>`_ (which comes 
 bundled with `Git for Windows <http://msysgit.github.com/>`_), but `cygwin <http://www.cygwin.com/>`_ 

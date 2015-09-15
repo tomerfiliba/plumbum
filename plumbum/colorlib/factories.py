@@ -78,7 +78,7 @@ class ColorFactory(object):
 
     def __call__(self, val_or_r=None, g = None, b = None):
         """Shortcut to provide way to access colors."""
-        if val_or_r is None or val_or_r is '':
+        if val_or_r is None or (isinstance(val_or_r, str) and val_or_r == ''):
             return self._style()
         if isinstance(val_or_r, self._style):
             return self._style(val_or_r)

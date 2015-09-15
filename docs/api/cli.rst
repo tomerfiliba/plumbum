@@ -1,3 +1,5 @@
+.. _api-cli:
+
 Package plumbum.cli
 ===================
 .. automodule:: plumbum.cli.application
@@ -9,3 +11,8 @@ Package plumbum.cli
 .. automodule:: plumbum.cli.terminal
    :members:
 
+.. automodule:: plumbum.cli.termsize
+   :members:
+
+.. automodule:: plumbum.cli.progress
+   :members:
