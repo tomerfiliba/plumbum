@@ -259,7 +259,7 @@ class RemotePath(Path):
 
     @_setdoc(Path)
     def as_uri(self):
-        return 'ftp://{}{}'.format(self.remote._fqhost, urllib.pathname2url(str(self)))
+        return 'ftp://{0}{1}'.format(self.remote._fqhost, urllib.pathname2url(str(self)))
 
 class RemoteWorkdir(RemotePath):
     """Remote working directory manipulator"""
