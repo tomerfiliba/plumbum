@@ -6,7 +6,7 @@ import functools
 from textwrap import TextWrapper
 from collections import defaultdict
 
-from plumbum.lib import six
+from plumbum.lib import six, getdoc
 from plumbum.cli.terminal import get_terminal_size
 from plumbum.cli.switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,
     MissingMandatorySwitch, SwitchCombinationError, PositionalArgumentsError, switch,
@@ -154,7 +154,7 @@ class Application(object):
         if self.PROGNAME is None:
             self.PROGNAME = os.path.basename(executable)
         if self.DESCRIPTION is None:
-            self.DESCRIPTION = inspect.getdoc(self)
+            self.DESCRIPTION = getdoc(self)
 
         self.executable = executable
         self._switches_by_name = {}
@@ -383,7 +383,7 @@ class Application(object):
                 raise SwitchCombinationError("Given %s, the following are invalid %r" %
                     (swfuncs[func].swname, [swfuncs[f].swname for f in invalid]))
 
-        m_args, m_varargs, _, m_defaults = inspect.getargspec(self.main)
+        m_args, m_varargs, _, m_defaults = six.getargspec(self.main)
         max_args = six.MAXSIZE if m_varargs else len(m_args) - 1
         min_args = len(m_args) - 1 - (len(m_defaults) if m_defaults else 0)
         if len(tailargs) < min_args:
@@ -549,7 +549,7 @@ class Application(object):
         if self.DESCRIPTION:
             print(self.COLOR_DISCRIPTION[self.DESCRIPTION.strip() + '\n'])
 
-        m_args, m_varargs, _, m_defaults = inspect.getargspec(self.main)
+        m_args, m_varargs, _, m_defaults = six.getargspec(self.main)
         tailargs = m_args[1:]  # skip self
         if m_defaults:
             for i, d in enumerate(reversed(m_defaults)):
@@ -629,7 +629,7 @@ class Application(object):
             for name, subcls in sorted(self._subcommands.items()):
                 with self.COLOR_SUBCOMMANDS:
                     subapp = subcls.get()
-                    doc = subapp.DESCRIPTION if subapp.DESCRIPTION else inspect.getdoc(subapp)
+                    doc = subapp.DESCRIPTION if subapp.DESCRIPTION else getdoc(subapp)
                     help = doc + "; " if doc else ""  # @ReservedAssignment
                     help += "see '%s %s --help' for more info" % (self.PROGNAME, name)
 
