@@ -4,7 +4,7 @@ from plumbum import cli
 import time
 
 from plumbum import cli, local
-from plumbum.cli.terminal import ask, choose, hexdump
+from plumbum.cli.terminal import ask, choose, hexdump, Progress
 from plumbum.lib import six, captured_stdout, StringIO
 
 class TestApp(cli.Application):
