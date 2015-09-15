@@ -21,6 +21,14 @@ except ImportError:
     def getgrnam(x):
         raise OSError("`getgrnam` not supported")
 
+try: # Py3
+    import urllib.parse as urlparse
+    import urllib.request as urllib 
+except ImportError:
+    import urlparse
+    import urllib
+
+
 logger = logging.getLogger("plumbum.local")
 
 
@@ -272,6 +280,10 @@ class LocalPath(Path):
             _, ex, _ = sys.exc_info()
             if ex.errno != errno.ENOENT:
                 raise
+
+    @_setdoc(Path)
+    def as_uri(self):
+        return urlparse.urljoin('file:', urllib.pathname2url(str(self)))
 
 
 class LocalWorkdir(LocalPath):

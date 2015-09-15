@@ -4,6 +4,10 @@ from plumbum.path.base import Path, FSUser
 from plumbum.lib import _setdoc, six
 from plumbum.commands import shquote
 
+try: # Py3
+    import urllib.request as urllib 
+except ImportError:
+    import urllib
 
 class StatRes(object):
     """POSIX-like stat result"""
@@ -253,6 +257,9 @@ class RemotePath(Path):
     def open(self):
         pass
 
+    @_setdoc(Path)
+    def as_uri(self):
+        return 'ftp://{}{}'.format(self.remote._fqhost, urllib.pathname2url(str(self)))
 
 class RemoteWorkdir(RemotePath):
     """Remote working directory manipulator"""

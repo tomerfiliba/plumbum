@@ -30,6 +30,11 @@ class RemotePathTest(unittest.TestCase):
         self.assertTrue(isinstance(name, RemotePath))
         self.assertEqual("/some/long/path/to", str(name))
 
+    def test_uri(self):
+        p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
+        self.assertEqual("ftp://", p1.as_uri()[:6])
+        self.assertEqual("/some/long/path/to/file.txt", p1.as_uri()[-27:])
+
     def test_suffix(self):
         p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
         p2 = RemotePath(self._connect(), "file.tar.gz")

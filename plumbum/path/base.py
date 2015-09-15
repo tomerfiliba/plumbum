@@ -120,6 +120,10 @@ class Path(six.ABC):
         attribute that holds the string-name of the group"""
 
     @abstractmethod
+    def as_uri(self):
+        """Returns a universal resource identifier"""
+
+    @abstractmethod
     def _get_info(self):
         pass
     @abstractmethod

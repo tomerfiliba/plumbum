@@ -23,6 +23,11 @@ class LocalPathTest(unittest.TestCase):
         self.assertTrue(isinstance(name, LocalPath))
         self.assertEqual("/some/long/path/to", str(name).replace("\\", "/"))
 
+    def test_uri(self):
+        name = LocalPath("/some/long/path/to/file.txt")
+        self.assertEqual("file:///some/long/path/to/file.txt", name.as_uri())
+
+
     @unittest.skipIf(not hasattr(os, "chown"), "os.chown not supported")
     def test_chown(self):
         with local.tempdir() as dir:
