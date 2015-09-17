@@ -17,6 +17,7 @@ from plumbum.colorlib.names import color_names, color_html
 from plumbum.colorlib.names import color_codes_simple, from_html
 from plumbum.colorlib.names import FindNearest, attributes_ansi
 from plumbum.lib import six
+from plumbum import local
 from abc import abstractmethod
 ABC = six.ABC
 
@@ -30,12 +31,15 @@ def get_color_repr():
     """Gets best colors for current system."""
     if not sys.stdout.isatty():
         return False
-    elif platform.system() == "Darwin":
-        return 3
+    
+    term =local.env.get("TERM", "")
+
+    if term == "xterm-256color":
+        return 4 if os.name == 'posix' else 3
+    elif term == "xterm-16color":
+        return 2
     elif os.name == 'nt':
         return 1
-    elif os.name == 'posix':
-        return True
     else:
         return False
 
