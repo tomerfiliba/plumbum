@@ -245,7 +245,7 @@ renaming paths, etc. ::
     >>> p = rem.path("/bin")
     >>> p / "ls"
     <RemotePath /bin/ls>
-    >>> (p / "ls").isfile()
+    >>> (p / "ls").is_file()
     True
     >>> rem.path("/dev") // "sd*"
     [<RemotePath /dev/sda>, < RemotePath /dev/sdb>, <RemotePath /dev/sdb1>, <RemotePath /dev/sdb2>]

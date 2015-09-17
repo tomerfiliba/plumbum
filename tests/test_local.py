@@ -10,11 +10,16 @@ from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
 from plumbum.path import RelativePath
 import plumbum
 
+try:
+    import pathlib
+except ImportError:
+    pathlib = None
+
 ensure_skipIf(unittest)
 
 class LocalPathTest(unittest.TestCase):
-    def test_basename(self):
-        name = LocalPath("/some/long/path/to/file.txt").basename
+    def test_name(self):
+        name = LocalPath("/some/long/path/to/file.txt").name
         self.assertTrue(isinstance(name, six.string_types))
         self.assertEqual("file.txt", str(name))
 
@@ -80,7 +85,47 @@ class LocalPathTest(unittest.TestCase):
             f.write(text, "utf8")
             text2 = f.read("utf8")
             self.assertEqual(text, text2)
+            
+    def test_parts(self):
+        p = local.path("/some/long/path/to/file.txt")
+        parts = p.parts
+        self.assertEqual(parts, ('/', 'some', 'long', 'path', 'to', 'file.txt'))
+        
+    def test_stem(self):
+        p = local.path("/some/long/path/to/file.txt")
+        self.assertEqual(p.stem, "file")
+        p = local.path("/some/directory")
+        self.assertEqual(p.stem, "directory")
+        
+    @unittest.skipIf(not pathlib, "This test requires pathlib")
+    def test_root_drive(self):
+        p_path = local.path("/some/long/path/to/file.txt")
+        pl_path = pathlib.Path("/some/long/path/to/file.txt").absolute()
+        self.assertEqual(p_path.root, pl_path.root)
+        self.assertEqual(p_path.drive, pl_path.drive)
+        
+        p_path = local.cwd / "somefile.txt"
+        pl_path = pathlib.Path("somefile.txt").absolute()
+        self.assertEqual(p_path.root, pl_path.root)
+        self.assertEqual(p_path.drive, pl_path.drive)
+        
+    @unittest.skipIf(not pathlib, "This test requires pathlib")
+    def test_compare_pathlib(self):
+        def filename_compare(name):
+            p = local.path(str(name))
+            pl = pathlib.Path(str(name)).absolute()
+            self.assertEqual(str(p), str(pl))
+            self.assertEqual(p.parts, pl.parts)
+            self.assertEqual(p.exists(), pl.exists())
+            self.assertEqual(p.as_uri(), pl.as_uri())
+            self.assertEqual(str(p.with_suffix('.this')), str(pl.with_suffix('.this')))
+            self.assertEqual(p.name, pl.name)
 
+        filename_compare("/some/long/path/to/file.txt")
+        filename_compare(local.cwd / "somefile.txt")
+        filename_compare("/some/long/path/")
+        filename_compare("/some/long/path")
+        filename_compare(__file__)
 
 class LocalMachineTest(unittest.TestCase):
     def test_getattr(self):
@@ -130,22 +175,22 @@ class LocalMachineTest(unittest.TestCase):
 
     def test_path(self):
         self.assertFalse((local.cwd / "../non_exist1N9").exists())
-        self.assertTrue((local.cwd / ".." / "plumbum").isdir())
+        self.assertTrue((local.cwd / ".." / "plumbum").is_dir())
         # traversal
         found = False
         for fn in local.cwd / ".." / "plumbum":
-            if fn.basename == "__init__.py":
-                self.assertTrue(fn.isfile())
+            if fn.name == "__init__.py":
+                self.assertTrue(fn.is_file())
                 found = True
         self.assertTrue(found)
         # glob'ing
         found = False
         for fn in local.cwd / ".." // "*/*.rst":
-            if fn.basename == "index.rst":
+            if fn.name == "index.rst":
                 found = True
         self.assertTrue(found)
         for fn in local.cwd / ".." // ("*/*.rst", "*./*.html"):
-            if fn.basename == "index.rst":
+            if fn.name == "index.rst":
                 found = True
         self.assertTrue(found)
 
@@ -307,7 +352,7 @@ class LocalMachineTest(unittest.TestCase):
     def test_tempdir(self):
         from plumbum.cmd import cat
         with local.tempdir() as dir:
-            self.assertTrue(dir.isdir())
+            self.assertTrue(dir.is_dir())
             data = six.b("hello world")
             with open(str(dir / "test.txt"), "wb") as f:
                 f.write(data)

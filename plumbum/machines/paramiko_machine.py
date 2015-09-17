@@ -249,13 +249,13 @@ class ParamikoMachine(BaseRemoteMachine):
             dst if isinstance(dst, LocalPath) else LocalPath(dst))
 
     def _download(self, src, dst):
-        if src.isdir():
+        if src.is_dir():
             if not dst.exists():
                 self.sftp.mkdir(str(dst))
             for fn in src:
-                self._download(fn, dst / fn.basename)
-        elif dst.isdir():
-            self.sftp.get(str(src), str(dst / src.basename))
+                self._download(fn, dst / fn.name)
+        elif dst.is_dir():
+            self.sftp.get(str(src), str(dst / src.name))
         else:
             self.sftp.get(str(src), str(dst))
 
@@ -271,13 +271,13 @@ class ParamikoMachine(BaseRemoteMachine):
             dst if isinstance(dst, RemotePath) else self.path(dst))
 
     def _upload(self, src, dst):
-        if src.isdir():
+        if src.is_dir():
             if not dst.exists():
                 self.sftp.mkdir(str(dst))
             for fn in src:
-                self._upload(fn, dst / fn.basename)
-        elif dst.isdir():
-            self.sftp.put(str(src), str(dst / src.basename))
+                self._upload(fn, dst / fn.name)
+        elif dst.is_dir():
+            self.sftp.put(str(src), str(dst / src.name))
         else:
             self.sftp.put(str(src), str(dst))
 

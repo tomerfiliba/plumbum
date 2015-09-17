@@ -5,6 +5,7 @@ import operator
 import os
 from plumbum.lib import six
 from abc import abstractmethod, abstractproperty
+import warnings
 
 from functools import reduce
 
@@ -89,16 +90,35 @@ class Path(six.ABC):
         for p in self.list():
             if filter(p):
                 yield p
-            if p.isdir() and dir_filter(p):
+            if p.is_dir() and dir_filter(p):
                 for p2 in p.walk(filter, dir_filter):
                     yield p2
 
     @abstractproperty
-    def basename(self):
+    def name(self):
         """The basename component of this path"""
+
+    @property
+    def basename(self):
+        """Included for compatibility with older Plumbum code"""
+        warnings.warn("Use .name instead", DeprecationWarning)
+        return self.name
+
+    @abstractproperty
+    def stem(self):
+        """The name without an extension, or the last component of the path"""
+
     @abstractproperty
     def dirname(self):
         """The dirname component of this path"""
+
+    @abstractproperty
+    def root(self):
+        """The root of the file tree (`/` on Unix)"""
+
+    @abstractproperty
+    def drive(self):
+        """The drive letter (on Windows)"""
 
     @abstractproperty
     def suffix(self):
@@ -133,13 +153,28 @@ class Path(six.ABC):
     def list(self):
         """Returns the files in this directory"""
     @abstractmethod
-    def isdir(self):
+    def iterdir(self):
+        """Returns an iterator over the directory. Might be slightly faster on Python 3.5 than .list()"""
+    @abstractmethod
+    def is_dir(self):
         """Returns ``True`` if this path is a directory, ``False`` otherwise"""
+    def isdir(self):
+        """Included for compatibility with older Plumbum code"""
+        warnings.warn("Use .is_dir() instead", DeprecationWarning)
+        return self.is_dir()
     @abstractmethod
-    def isfile(self):
+    def is_file(self):
         """Returns ``True`` if this path is a regular file, ``False`` otherwise"""
-    @abstractmethod
+    def isfile(self):
+        """Included for compatibility with older Plumbum code"""
+        warnings.warn("Use .is_file() instead", DeprecationWarning)
+        return self.is_file()
     def islink(self):
+        """Included for compatibility with older Plumbum code"""
+        warnings.warn("Use is_symlink instead", DeprecationWarning)
+        return self.is_symlink()
+    @abstractmethod
+    def is_symlink(self):
         """Returns ``True`` if this path is a symbolic link, ``False`` otherwise"""
     @abstractmethod
     def exists(self):
@@ -242,9 +277,14 @@ class Path(six.ABC):
         parts = []
         path = self
         while path != path.dirname:
-            parts.append(path.basename)
+            parts.append(path.name)
             path = path.dirname
         return parts[::-1]
+
+    @property
+    def parts(self):
+        """Splits the directory into parts, including the base directroy, returns a tuple"""
+        return tuple([self.root] + self.split())
 
     def relative_to(self, source):
         """Computes the "relative path" require to get from ``source`` to ``self``. They satisfy the invariant

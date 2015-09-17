@@ -20,8 +20,8 @@ class RemotePathTest(unittest.TestCase):
     def _connect(self):
         return SshMachine(TEST_HOST)
 
-    def test_basename(self):
-        name = RemotePath(self._connect(), "/some/long/path/to/file.txt").basename
+    def test_name(self):
+        name = RemotePath(self._connect(), "/some/long/path/to/file.txt").name
         self.assertTrue(isinstance(name, six.string_types))
         self.assertEqual("file.txt", str(name))
 
@@ -34,6 +34,12 @@ class RemotePathTest(unittest.TestCase):
         p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
         self.assertEqual("ftp://", p1.as_uri()[:6])
         self.assertEqual("/some/long/path/to/file.txt", p1.as_uri()[-27:])
+        
+    def test_stem(self):
+        p = RemotePath(self._connect(), "/some/long/path/to/file.txt")
+        self.assertEqual(p.stem, "file")
+        p = RemotePath(self._connect(), "/some/long/path/")
+        self.assertEqual(p.stem, "path")
 
     def test_suffix(self):
         p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
@@ -99,12 +105,12 @@ s.close()
                 cmd = r_ssh["localhost", "cd", rem.cwd, "&&", r_ls, "|", r_grep["\\.py"]]
                 self.assertTrue("'|'" in str(cmd))
                 self.assertTrue("test_remote.py" in cmd())
-                self.assertTrue("test_remote.py" in [f.basename for f in rem.cwd // "*.py"])
+                self.assertTrue("test_remote.py" in [f.name for f in rem.cwd // "*.py"])
 
     def test_glob(self):
         with self._connect() as rem:
             with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
-                filenames = [f.basename for f in rem.cwd // ("*.py", "*.bash")]
+                filenames = [f.name for f in rem.cwd // ("*.py", "*.bash")]
                 self.assertTrue("test_remote.py" in filenames)
                 self.assertTrue("slow_process.bash" in filenames)
 
@@ -146,7 +152,7 @@ s.close()
     def test_read_write(self):
         with self._connect() as rem:
             with rem.tempdir() as dir:
-                self.assertTrue(dir.isdir())
+                self.assertTrue(dir.is_dir())
                 data = six.b("hello world")
                 (dir / "foo.txt").write(data)
                 self.assertEqual((dir / "foo.txt").read(), data)
