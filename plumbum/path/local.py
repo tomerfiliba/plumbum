@@ -294,8 +294,8 @@ class LocalPath(Path):
                 raise
 
     @_setdoc(Path)
-    def as_uri(self):
-        return urlparse.urljoin('file:', urllib.pathname2url(str(self)))
+    def as_uri(self, scheme='file'):
+        return urlparse.urljoin(str(scheme)+':', urllib.pathname2url(str(self)))
 
     @property
     @_setdoc(Path)

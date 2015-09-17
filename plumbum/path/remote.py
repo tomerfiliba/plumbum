@@ -264,8 +264,8 @@ class RemotePath(Path):
         pass
 
     @_setdoc(Path)
-    def as_uri(self):
-        return 'ftp://{0}{1}'.format(self.remote._fqhost, urllib.pathname2url(str(self)))
+    def as_uri(self, scheme = 'ssh'):
+        return '{0}://{1}{2}'.format(scheme, self.remote._fqhost, urllib.pathname2url(str(self)))
 
     @property
     @_setdoc(Path)
