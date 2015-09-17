@@ -97,7 +97,7 @@ class LocalPathTest(unittest.TestCase):
         p = local.path("/some/directory")
         self.assertEqual(p.stem, "directory")
         
-    @unittest.skipIf(not pathlib, "This test requires pathlib")
+    @unittest.skipIf(pathlib is None, "This test requires pathlib")
     def test_root_drive(self):
         p_path = local.path("/some/long/path/to/file.txt")
         pl_path = pathlib.Path("/some/long/path/to/file.txt").absolute()
@@ -109,7 +109,7 @@ class LocalPathTest(unittest.TestCase):
         self.assertEqual(p_path.root, pl_path.root)
         self.assertEqual(p_path.drive, pl_path.drive)
         
-    @unittest.skipIf(not pathlib, "This test requires pathlib")
+    @unittest.skipIf(pathlib is None, "This test requires pathlib")
     def test_compare_pathlib(self):
         def filename_compare(name):
             p = local.path(str(name))
