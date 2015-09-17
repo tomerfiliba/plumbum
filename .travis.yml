@@ -9,7 +9,6 @@ python:
     - "3.5"
     - "nightly"
     - "pypy"
-    - "pypy3"
 
 before_script:
     - "pip install paramiko || true"
