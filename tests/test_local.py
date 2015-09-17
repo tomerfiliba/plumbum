@@ -406,19 +406,19 @@ class LocalMachineTest(unittest.TestCase):
     def test_same_sesion(self):
         from plumbum.cmd import sleep
         p = sleep.popen([1000])
-        self.assertIs(p.poll(), None)
+        self.assertTrue(p.poll() is None)
         self._generate_sigint()
         time.sleep(1)
-        self.assertIsNot(p.poll(), None)
+        self.assertTrue(p.poll() is not None)
 
     @unittest.skipIf(not sys.stdin.isatty(), "Not a TTY")
     def test_new_session(self):
         from plumbum.cmd import sleep
         p = sleep.popen([1000], new_session = True)
-        self.assertIs(p.poll(), None)
+        self.assertTrue(p.poll() is None)
         self._generate_sigint()
         time.sleep(1)
-        self.assertIs(p.poll(), None)
+        self.assertTrue(p.poll() is None)
         p.terminate()
 
     def test_local_daemon(self):
