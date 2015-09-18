@@ -191,6 +191,14 @@ class Path(six.ABC):
         replaces. None will replace all suffixes. If there are less than ``depth`` suffixes,
         this will replace all suffixes. ``.tar.gz`` is an example where ``depth=2`` or
         ``depth=None`` is useful"""
+
+    def preferred_suffix(self, suffix):
+        """Adds a suffix if one does not currently exist (otherwise, no change). Useful
+        for loading files with a default suffix"""
+        if len(self.suffixes) > 0:
+            return self
+        else:
+            return self.with_suffix(suffix)
     @abstractmethod
     def glob(self, pattern):
         """Returns a (possibly empty) list of paths that matched the glob-pattern under this path"""

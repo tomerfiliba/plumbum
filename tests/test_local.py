@@ -18,20 +18,21 @@ except ImportError:
 ensure_skipIf(unittest)
 
 class LocalPathTest(unittest.TestCase):
+    def setUp(self):
+        self.longpath = LocalPath("/some/long/path/to/file.txt")
+    
     def test_name(self):
-        name = LocalPath("/some/long/path/to/file.txt").name
+        name = self.longpath.name
         self.assertTrue(isinstance(name, six.string_types))
         self.assertEqual("file.txt", str(name))
 
     def test_dirname(self):
-        name = LocalPath("/some/long/path/to/file.txt").dirname
+        name = self.longpath.dirname
         self.assertTrue(isinstance(name, LocalPath))
         self.assertEqual("/some/long/path/to", str(name).replace("\\", "/"))
 
     def test_uri(self):
-        name = LocalPath("/some/long/path/to/file.txt")
-        self.assertEqual("file:///some/long/path/to/file.txt", name.as_uri())
-
+        self.assertEqual("file:///some/long/path/to/file.txt", self.longpath.as_uri())
 
     @unittest.skipIf(not hasattr(os, "chown"), "os.chown not supported")
     def test_chown(self):
@@ -48,7 +49,7 @@ class LocalPathTest(unittest.TestCase):
         self.assertEqual(p.split(), ["var", "log", "messages"])
 
     def test_suffix(self):
-        p1 = local.path("/some/long/path/to/file.txt")
+        p1 = self.longpath
         p2 = local.path("file.tar.gz")
         self.assertEqual(p1.suffix, ".txt")
         self.assertEqual(p1.suffixes, [".txt"])
@@ -61,7 +62,7 @@ class LocalPathTest(unittest.TestCase):
         self.assertEqual(p2.with_suffix(".other", None), local.path("file.other"))
 
     def test_newname(self):
-        p1 = local.path("/some/long/path/to/file.txt")
+        p1 = self.longpath
         p2 = local.path("file.tar.gz")
         self.assertEqual(p1.with_name("something.tar"), local.path("/some/long/path/to/something.tar"))
         self.assertEqual(p2.with_name("something.tar"), local.path("something.tar"))
@@ -87,22 +88,19 @@ class LocalPathTest(unittest.TestCase):
             self.assertEqual(text, text2)
             
     def test_parts(self):
-        p = local.path("/some/long/path/to/file.txt")
-        parts = p.parts
+        parts = self.longpath.parts
         self.assertEqual(parts, ('/', 'some', 'long', 'path', 'to', 'file.txt'))
         
     def test_stem(self):
-        p = local.path("/some/long/path/to/file.txt")
-        self.assertEqual(p.stem, "file")
+        self.assertEqual(self.longpath.stem, "file")
         p = local.path("/some/directory")
         self.assertEqual(p.stem, "directory")
         
     @unittest.skipIf(pathlib is None, "This test requires pathlib")
     def test_root_drive(self):
-        p_path = local.path("/some/long/path/to/file.txt")
         pl_path = pathlib.Path("/some/long/path/to/file.txt").absolute()
-        self.assertEqual(p_path.root, pl_path.root)
-        self.assertEqual(p_path.drive, pl_path.drive)
+        self.assertEqual(self.longpath.root, pl_path.root)
+        self.assertEqual(self.longpath.drive, pl_path.drive)
         
         p_path = local.cwd / "somefile.txt"
         pl_path = pathlib.Path("somefile.txt").absolute()
@@ -126,6 +124,10 @@ class LocalPathTest(unittest.TestCase):
         filename_compare("/some/long/path/")
         filename_compare("/some/long/path")
         filename_compare(__file__)
+
+    def test_suffix_expected(self):
+        self.assertEqual(self.longpath.preferred_suffix('.tar'), self.longpath)
+        self.assertEqual((local.cwd / 'this').preferred_suffix('.txt'), local.cwd / 'this.txt')
 
 class LocalMachineTest(unittest.TestCase):
     def test_getattr(self):
