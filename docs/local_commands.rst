@@ -232,6 +232,17 @@ or input from the user. ::
     >>> f.stdout
     '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\nplumbum\n[...]'
 
+
+You can also start a long running process and detach it in ``nohup`` mode using the ``NOHUP`` modifier::
+
+    >>> ls["-a"] & NOHUP
+
+If you want to redirect the input or output to something other than ``nohup.out``, you can add parameters to the modifier::
+
+    >>> ls["-a"] & NOHUP(stdout='/dev/null') # Or None
+
+.. versionadded:: 1.6.0
+
 .. _guide-local-commands-nesting:
     
 Command Nesting

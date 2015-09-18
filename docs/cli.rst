@@ -73,6 +73,9 @@ class-level attributes, such as ``PROGNAME``, ``VERSION`` and ``DESCRIPTION``. F
     class MyApp(cli.Application):
         PROGNAME = "Foobar"
         VERSION = "7.3"
+
+Colors
+^^^^^^
         
 Colors are supported through the class level attributes
 ``COLOR_PROGNAME``,
@@ -83,11 +86,12 @@ Colors are supported through the class level attributes
 ``COLOR_SUBCOMMANDS``,
 ``COLOR_GROUPS[]``, and
 ``COLOR_GROUPS_BODY[]``,
-which should contain Style objects. The dictionaries support custom colors
+which should contain anything that is valid to pass to ``plumbum.colors`` (Styles, ansi color sequences,
+color strings). The dictionaries support custom colors
 for named groups. The default is ``colors.do_nothing``, but if you just want more
 colorful defaults, subclass ``cli.ColorfulApplication``.
 
-.. versionadded:: 1.5
+.. versionadded:: 1.6
 
 Switch Functions
 ----------------
@@ -302,10 +306,32 @@ if the switch is given) and ``CountingAttr`` (which counts the number of occurre
         def main(self):
             print self.log_file, self.enable_logging, self.verbosity_level
 
-::
+.. code-block:: bash
 
     $ ./example.py -v --log-file=log.txt -v --no-log -vvv
     log.txt False 5
+
+
+Environment Variables
+^^^^^^^^^^^^^^^^^^^^^
+
+You can also set a ``SwitchAttr`` to take an environment variable as an input using the envname parameter.
+For example::
+
+    class MyApp(cli.Application):
+        log_file = cli.SwitchAttr("--log-file", str, envname="MY_LOG_FILE")
+
+        def main(self):
+            print(self.log_file)
+
+.. code-block:: bash
+
+    $ MY_LOG_FILE=this.log ./example.py
+    this.log
+
+Giving the switch on the command line will override the environment variable value.
+
+.. versionadded:: 1.6.0
 
 Main
 ----
@@ -457,6 +483,26 @@ Here's an example of running this application::
     
     $ python geet.py commit -m "foo"
     committing...
+
+Terminal Utilities
+------------------
+
+Several terminal utilities are available in ``plumbum.cli.terminal`` to assist in making terminal
+applications.
+
+``get_terminal_size(default=(80,25))`` allows cross platform access to the terminal size as a tuple ``(width, height)``.
+Several methods to ask the user for input, such as ``readline``, ``ask``, ``choose``, and ``prompt`` are available.
+
+``Progress(iterator)`` allows you to quickly create a progress bar from an iterator. Simply wrap a slow iterator with this
+and iterate over it, and it will produce a nice text progress bar based on the user's screen width, with estimated time
+remaining displayed. If you need to create a progress bar for a fast iterator but with a loop containing code, use ``Progress.wrap`` or ``Progress.range``. For example::
+
+    for i in Progress.range(10):
+        time.sleep(1)
+
+If you have something that produces output, but still needs a progress bar, pass ``has_output=True`` to force the bar not to try to erase the old one each time.
+
+For the full list of helpers, see the :ref:`api docs <api-cli>`.
 
 
 

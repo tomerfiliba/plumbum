@@ -1,40 +1,23 @@
 import sys
 import unittest
 from plumbum import cli
-from contextlib import contextmanager
-from plumbum.cli.terminal import ask, choose, hexdump
-from plumbum.lib import six
-# string/unicode issues
-if six.PY3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
+import time
 
-
-@contextmanager
-def captured_stdout(stdin = ""):
-    prevstdin = sys.stdin
-    prevstdout = sys.stdout
-    sys.stdin = StringIO(six.u(stdin))
-    sys.stdout = StringIO()
-    try:
-        yield sys.stdout
-    finally:
-        sys.stdin = prevstdin
-        sys.stdout = prevstdout
-
+from plumbum import cli, local
+from plumbum.cli.terminal import ask, choose, hexdump, Progress
+from plumbum.lib import six, captured_stdout, StringIO
 
 class TestApp(cli.Application):
     @cli.switch(["a"])
     def spam(self):
         print("!!a")
 
-    @cli.switch(["b", "bacon"], argtype=int, mandatory = True)
+    @cli.switch(["b", "bacon"], argtype=int, mandatory = True, envname="PLUMBUM_TEST_BACON")
     def bacon(self, param):
         """give me some bacon"""
         print ("!!b", param)
 
-    eggs = cli.SwitchAttr(["e"], str, help = "sets the eggs attribute")
+    eggs = cli.SwitchAttr(["e"], str, help = "sets the eggs attribute", envname="PLUMBUM_TEST_EGGS")
     verbose = cli.CountOf(["v"], help = "increases the verbosity level")
     benedict = cli.CountOf(["--benedict"], help = """a very long help message with lots of
         useless information that nobody would ever want to read, but heck, we need to test
@@ -57,10 +40,12 @@ class Geet(cli.Application):
         self.cleanups.append(1)
         print("geet cleaning up with rc = %s" % (retcode,))
 
+@Geet.subcommand("add")
 class GeetAdd(cli.Application):
     def main(self, *files):
         return "adding", files
 
+@Geet.subcommand("commit")
 class GeetCommit(cli.Application):
     message = cli.Flag("-m", str)
 
@@ -73,10 +58,6 @@ class GeetCommit(cli.Application):
     def cleanup(self, retcode):
         self.parent.cleanups.append(2)
         print("geet commit cleaning up with rc = %s" % (retcode,))
-
-# python 2.5 compatibility (otherwise, could be used as a decorator)
-Geet.subcommand("add", GeetAdd)
-Geet.subcommand("commit", GeetCommit)
 
 class Sample(cli.Application):
     foo = cli.SwitchAttr("--foo")
@@ -194,6 +175,30 @@ class CLITest(unittest.TestCase):
         inst, rc = TestApp.invoke("arg1", "arg2", eggs="sunny", bacon=10, verbose=2)
         self.assertEqual((inst.eggs, inst.verbose, inst.tailargs), ("sunny", 2, ("arg1", "arg2")))
 
+    def test_env_var(self):
+        with captured_stdout() as stream:
+            _, rc = TestApp.run(["arg", "--bacon=10"], exit=False)
+            self.assertEqual(rc, 0)
+            self.assertIn("10", stream.getvalue())
+
+        with captured_stdout() as stream:
+            with local.env(
+                PLUMBUM_TEST_BACON='20',
+                PLUMBUM_TEST_EGGS='raw',
+            ):
+                inst, rc = TestApp.run(["arg"], exit=False)
+
+            self.assertEqual(rc, 0)
+            self.assertIn("20", stream.getvalue())
+            self.assertEqual(inst.eggs, 'raw')
+
+    def test_mandatory_env_var(self):
+        with captured_stdout() as stream:
+            _, rc = TestApp.run(["arg"], exit = False)
+            self.assertEqual(rc, 2)
+            self.assertIn("bacon is mandatory", stream.getvalue())
+
+
 class TestTerminal(unittest.TestCase):
     def test_ask(self):
         with captured_stdout("\n") as stream:
@@ -224,6 +229,28 @@ class TestTerminal(unittest.TestCase):
 *
 000060 | 41 41 41 41 66 6f 6f 20 62 61 72                | AAAAfoo bar"""
         self.assertEqual("\n".join(hexdump(data)), output)
+
+    def test_progress(self):
+        with captured_stdout() as stream:
+            for i in Progress.range(4, has_output=True, timer=False):
+                print('hi')
+                time.sleep(.5)
+            stream.seek(0)
+            output = """\
+0% complete
+0% complete
+hi
+25% complete
+hi
+50% complete
+hi
+75% complete
+hi
+100% complete
+
+"""
+            self.assertEqual(stream.read(), output)
+
 
 
 if __name__ == "__main__":

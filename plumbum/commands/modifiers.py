@@ -2,22 +2,11 @@ import os
 from select import select
 from subprocess import PIPE
 import sys
+from itertools import chain
 
 from plumbum.commands.processes import run_proc, ProcessExecutionError
+from plumbum.commands.base import AppendingStdoutRedirection, StdoutRedirection
 
-
-#===================================================================================================
-# execution modifiers (background, foreground)
-#===================================================================================================
-class ExecutionModifier(object):
-    __slots__ = ["retcode"]
-    def __init__(self, retcode = 0):
-        self.retcode = retcode
-    def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.retcode)
-    @classmethod
-    def __call__(cls, retcode):
-        return cls(retcode)
 
 class Future(object):
     """Represents a "future result" of a running process. It basically wraps a ``Popen``
@@ -63,6 +52,29 @@ class Future(object):
         self.wait()
         return self._returncode
 
+#===================================================================================================
+# execution modifiers 
+#===================================================================================================
+
+
+class ExecutionModifier(object):
+    __slots__ = ()
+
+    def __repr__(self):
+        """Automatically creates a representation for given subclass with slots.
+        Ignore hidden properties."""
+        slots = {}
+        for cls in self.__mro__:
+            for prop in getattr(cls, "__slots__", ()):
+                if prop[0] != '_':
+                    slots[prop] = getattr(self, prop)
+        mystrs = ("{0} = {1}".format(name, slots[name]) for name in slots)
+        return "{0}({1})".format(self.__class__.__name__, ", ".join(mystrs))
+
+    @classmethod
+    def __call__(cls, *args, **kwargs):
+        return cls(*args, **kwargs)
+
 class BG(ExecutionModifier):
     """
     An execution modifier that runs the given command in the background, returning a
@@ -81,11 +93,16 @@ class BG(ExecutionModifier):
        every once in a while, using a monitoring thread/reactor in the background.
        For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
     """
-    __slots__ = []
+    __slots__ = ("retcode",)
+
+    def __init__(self, retcode=0):
+        self.retcode = retcode
+
     def __rand__(self, cmd):
         return Future(cmd.popen(), self.retcode)
 
 BG = BG()
+
 """
 An execution modifier that runs the given command in the background, returning a
 :class:`Future <plumbum.commands.Future>` object. In order to mimic shell syntax, it applies
@@ -117,7 +134,11 @@ class FG(ExecutionModifier):
         vim & FG       # run vim in the foreground, expecting an exit code of 0
         vim & FG(7)    # run vim in the foreground, expecting an exit code of 7
     """
-    __slots__ = []
+    __slots__ = ("retcode",)
+
+    def __init__(self, retcode=0):
+        self.retcode = retcode
+
     def __rand__(self, cmd):
         cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None)
 
@@ -135,6 +156,9 @@ class TEE(ExecutionModifier):
 
     Returns a tuple of (return code, stdout, stderr), just like ``run()``.
     """
+
+    __slots__ = ("retcode", "buffered")
+
     def __init__(self, retcode=0, buffered=True):
         """`retcode` is the return code to expect to mean "success".  Set
         `buffered` to False to disable line-buffering the output, which may
@@ -143,9 +167,6 @@ class TEE(ExecutionModifier):
         self.retcode = retcode
         self.buffered = buffered
 
-    @classmethod
-    def __call__(cls, *args, **kwargs):
-        return cls(*args, **kwargs)
 
     def __rand__(self, cmd):
         with cmd.bgrun(retcode=self.retcode, stdin=None, stdout=PIPE, stderr=PIPE) as p:
@@ -195,12 +216,14 @@ class TF(ExecutionModifier):
         local['touch']['/root/test'] & TF(FG=True) * Returns False, will show error message
     """
 
+    __slots__ = ("retcode", "FG")
+
     def __init__(self, retcode=0, FG=False):
         """`retcode` is the return code to expect to mean "success".  Set
         `FG` to True to run in the foreground.
         """
         self.retcode = retcode
-        self.foreground = FG
+        self.FG = FG
 
     @classmethod
     def __call__(cls, *args, **kwargs):
@@ -208,7 +231,7 @@ class TF(ExecutionModifier):
 
     def __rand__(self, cmd):
         try:
-            if self.foreground:
+            if self.FG:
                 cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None)
             else:
                 cmd(retcode = self.retcode)
@@ -233,6 +256,8 @@ class RETCODE(ExecutionModifier):
         local['touch']['/root/test'] & RETCODE(FG=True) * Returns 1, will show error message
     """
 
+    __slots__ = ("foreground",)
+
     def __init__(self,  FG=False):
         """`FG` to True to run in the foreground.
         """
@@ -250,3 +275,53 @@ class RETCODE(ExecutionModifier):
 
 RETCODE = RETCODE()
 
+
+class NOHUP(ExecutionModifier):
+    """
+    An execution modifier that runs the given command in the background, disconnected
+    from the current process, returning a
+    standard popen object. It will keep running even if you close the current process.
+    In order to slightly mimic shell syntax, it applies
+    when you right-and it with a command. If you wish to use a diffent working directory
+    or different stdout, stderr, you can use named arguments. The default is ``NOHUP(
+    cwd=local.cwd, stdout='nohup.out', stderr=None)``. If stderr is None, stderr will be
+    sent to stdout. Use ``os.devnull`` for null output. Will respect redirected output.
+    Example::
+
+        sleep[5] & NOHUP                       # Outputs to nohup.out 
+        sleep[5] & NOHUP(stdout=os.devnull)    # No output
+
+    The equivelent bash command would be
+  
+    .. code-block:: bash
+
+        nohup sleep 5 &
+
+    """
+    __slots__ = ('cwd', 'stdout', 'stderr', 'append')
+
+    def __init__(self, cwd='.', stdout='nohup.out', stderr=None, append=True):
+        """ Set ``cwd``, ``stdout``, or ``stderr``.
+        Runs as a forked process. You can set ``append=False``, too.
+        """
+        self.cwd = cwd
+        self.stdout = stdout
+        self.stderr = stderr
+        self.append = append
+
+
+    def __rand__(self, cmd):
+        if isinstance(cmd, StdoutRedirection):
+            stdout = cmd.file
+            append = False
+            cmd = cmd.cmd
+        elif isinstance(cmd, AppendingStdoutRedirection):
+            stdout = cmd.file
+            append = True
+            cmd = cmd.cmd
+        else:
+            stdout = self.stdout
+            append = self.append
+        return cmd.nohup(cmd, self.cwd, stdout, self.stderr, append) 
+
+NOHUP = NOHUP()

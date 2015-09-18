@@ -6,10 +6,7 @@ import os
 from plumbum.lib import six
 from abc import abstractmethod, abstractproperty
 
-try:
-    reduce
-except NameError:
-    from functools import reduce
+from functools import reduce
 
 
 class FSUser(int):
@@ -266,6 +263,17 @@ class Path(six.ABC):
     def __sub__(self, other):
         """Same as ``self.relative_to(other)``"""
         return self.relative_to(other)
+
+    def _glob(self, pattern, fn):
+        """Applies a glob string or list/tuple/iterable to the current path, using ``fn``"""
+        if isinstance(pattern, str):
+            return fn(pattern)
+        else:
+            results = []
+            for single_pattern in pattern:
+                results.extend(fn(single_pattern))
+            return sorted(list(set(results)))
+
 
 
 class RelativePath(object):

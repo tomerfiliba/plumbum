@@ -40,5 +40,8 @@ class BaseMachine(object):
             return False
         else:
             return True
+            
+    def daemonic_popen(self, command, cwd = "/", stdout=None, stderr=None, append=True):
+        raise NotImplementedError("This is not implemented on this machine!")
 
 

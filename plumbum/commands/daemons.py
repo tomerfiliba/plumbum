@@ -7,8 +7,19 @@ import signal
 import traceback
 from plumbum.commands.processes import ProcessExecutionError
 
+class _fake_lock(object):
+    """Needed to allow normal os.exit() to work without error"""
+    def acquire(self, val):
+        return True
+    def release(self):
+        pass
 
-def posix_daemonize(command, cwd):
+def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
+    if stdout is None:
+        stdout = os.devnull
+    if stderr is None:
+        stderr = stdout
+
     MAX_SIZE = 16384
     rfd, wfd = os.pipe()
     argv = command.formulate()
@@ -21,8 +32,8 @@ def posix_daemonize(command, cwd):
             os.setsid()
             os.umask(0)
             stdin = open(os.devnull, "r")
-            stdout = open(os.devnull, "w")
-            stderr = open(os.devnull, "w")
+            stdout = open(stdout, "a" if append else "w")
+            stderr = open(stderr, "a" if append else "w")
             signal.signal(signal.SIGHUP, signal.SIG_IGN)
             proc = command.popen(cwd = cwd, close_fds = True, stdin = stdin.fileno(), 
                 stdout = stdout.fileno(), stderr = stderr.fileno())
@@ -56,6 +67,7 @@ def posix_daemonize(command, cwd):
         proc.pid = secondpid
         proc.universal_newlines = False
         proc._input = None
+        proc._waitpid_lock = _fake_lock()
         proc._communication_started = False
         proc.args = argv
         proc.argv = argv
@@ -84,11 +96,15 @@ def posix_daemonize(command, cwd):
         return proc
 
 
-def win32_daemonize(command, cwd):
+def win32_daemonize(command, cwd, stdout=None, stderr=None, append=True):
+    if stdout is None:
+        stdout = os.devnull
+    if stderr is None:
+        stderr = stdout
     DETACHED_PROCESS = 0x00000008
     stdin = open(os.devnull, "r")
-    stdout = open(os.devnull, "w")
-    stderr = open(os.devnull, "w")
+    stdout = open(stdout, "a" if append else "w")
+    stderr = open(stderr, "a" if append else "w")
     return command.popen(cwd = cwd, stdin = stdin.fileno(), stdout = stdout.fileno(), stderr = stderr.fileno(), 
         creationflags = subprocess.CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS)
 

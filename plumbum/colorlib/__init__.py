@@ -22,27 +22,10 @@ def load_ipython_extension(ipython):
 
 def main():
     """Color changing script entry. Call using
-    python -m plumbum.colors, will reset if no arguements given."""
+    python -m plumbum.colors, will reset if no arguments given."""
     import sys
     color = ' '.join(sys.argv[1:]) if len(sys.argv) > 1 else ''
     ansicolors.use_color=True
-    get_colors_from_string(color)()
+    ansicolors.get_colors_from_string(color).now()
 
-def get_colors_from_string(color=''):
-    """
-    Sets color based on string, use `.` or space for seperator,
-    and numbers, fg/bg, htmlcodes, etc all accepted (as strings).
-    """
-
-    names = color.replace('.', ' ').split()
-    prev = ansicolors
-    for name in names:
-        try:
-            prev = getattr(prev, name)
-        except AttributeError:
-            try:
-                prev = prev(int(name))
-            except (ColorNotFound, ValueError):
-                prev = prev(name)
-    return prev if isinstance(prev, Style) else prev.reset
 

@@ -1,5 +1,6 @@
 .project
 .pydevproject
+.idea
 *.pyc
 __pycache__
 .settings/
@@ -10,3 +11,4 @@ __pycache__
 *.ropeproject
 *.swp
 *~
+*.spyder*

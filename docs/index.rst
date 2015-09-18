@@ -55,7 +55,7 @@ and cross-platform**.
 Apart from :ref:`shell-like syntax <guide-local-commands>` and :ref:`handy shortcuts <guide-utils>`, 
 the library provides local and :ref:`remote <guide-remote-commands>` command execution (over SSH), 
 local and remote file-system :ref:`paths <guide-paths>`, easy working-directory and 
-environment :ref:`manipulation <guide-local-machine>`, quick access to ANSI :ref:`colors <guide-color>`, and a programmatic 
+environment :ref:`manipulation <guide-local-machine>`, quick access to ANSI :ref:`colors <guide-colors>`, and a programmatic 
 :ref:`guide-cli` application toolkit. Now let's see some code!
 
 News
@@ -82,8 +82,8 @@ you encounter or to request features. The library is released under the permissi
 Requirements
 ------------
 
-Plumbum supports **Python 2.6-3.4** and has been 
-tested on **Linux** and **Windows** machines. Any Unix-like machine should work fine out of the box,
+Plumbum supports **Python 2.6-3.5** and **PyPy** and has been 
+tested on **Linux**, **Mac**, and **Windows** machines. Any Unix-like machine should work fine out of the box,
 but on Windows, you'll probably want to install a decent `coreutils <http://en.wikipedia.org/wiki/Coreutils>`_ 
 environment and add it to your ``PATH``. I can recommend `mingw <http://mingw.org/>`_ (which comes 
 bundled with `Git for Windows <http://msysgit.github.com/>`_), but `cygwin <http://www.cygwin.com/>`_ 
@@ -114,13 +114,13 @@ you read it in order.
    remote
    utils
    cli
-   color
+   colors
    changelog
 
 API Reference
 =============
 The API reference (generated from the *docstrings* within the library) covers all of the 
-exposed APIs of the library. Note that some "advance" features and some function parameters are 
+exposed APIs of the library. Note that some "advanced" features and some function parameters are 
 missing from the guide, so you might want to consult with the API reference in these cases. 
 
 .. toctree::
@@ -132,6 +132,7 @@ missing from the guide, so you might want to consult with the API reference in t
    api/path
    api/fs
    api/colors
+   colorlib
 
 About
 =====

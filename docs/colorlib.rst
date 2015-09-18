@@ -1,31 +1,28 @@
-.. _guide-color:
+.. _guide-colorlib:
 
-Color tools
------------
+Colorlib design
+---------------
 
 .. versionadded:: 1.6.0
 
 
-The purpose of the `plumbum.colors` library is to make adding
-text styles (such as color) to Python easy and safe. Color is often a great
-addition to shell scripts, but not a necessity, and implementing it properly 
-is tricky. It is easy to end up with an unreadable color stuck on your terminal or
-with random unreadable symbols around your text. With the color module, you get quick,
-safe access to ANSI colors and attributes for your scripts. The module also provides an
-API for creating other color schemes for other systems using escapes.
+The purpose of this document is to describe the system
+that plumbum.colors implements. This system was designed to be flexible and
+to allow implementing new color backends. Hopefully this document will allow
+future work on colorlib to be as simple as possible.
 
 .. note:: Enabling color
 
-    ``ANSIStyle`` assumes that only a terminal on a posix-identity
-    system can display color. You can force the use of color globally by setting
-    ``colors.use_color=True``.
+    ``plumbum.colors`` tries to guess the color output settings of your system.
+    You can force the use of color globally by setting
+    ``colors.use_color=True`` See :ref:`guide-colorlist` for more options.
 
 Generating colors
-================
+=================
 
 Styles are accessed through the ``colors`` object, which is an instance of a StyleFactory. The ``colors``
 object is actually an imitation module that wraps ``plumbum.colorlib.ansicolors`` with module-like access.
-Thus, things like from ``plumbum.colors.bg import red`` work also. The library actually lives in ``plubmumb.colorlib``.
+Thus, things like from ``plumbum.colors.bg import red`` work also. The library actually lives in ``plumbum.colorlib``.
 
 
 Style Factory
@@ -75,7 +72,7 @@ The ``fg`` and ``bg`` also can be put in with statements, and they
 will restore the foreground and background color only, respectively. 
 
 ``colors.rgb(r,g,b)`` will create a color from an
-input red, green, and blue values (integers from 0-255). ``colors.hex(code)`` will allow
+input red, green, and blue values (integers from 0-255). ``colors.rgb(code)`` will allow
 you to input an html style hex sequence. These work on ``fg`` and ``bg`` too. The ``repr`` of
 styles is smart and will show you the closest color to the one you selected if you didn't exactly
 select a color through RGB. 
@@ -117,11 +114,11 @@ An example of the usage of unsafe ``colors`` manipulations inside a context mana
     from plumbum import colors
 
     with colors:
-        colors.fg.red()
+        colors.fg.red.now()
         print('This is in red')
-        colors.green()
+        colors.green.now()
         print('This is green ' + colors.underline + 'and now also underlined!')
-        print('Underlined' - colors.underline + ' and not underlined but still red') 
+        print('Underlined' + colors.underline.reset + ' and not underlined but still red') 
     print('This is completly restored, even if an exception is thrown!')
 
 Output:
@@ -135,9 +132,9 @@ Output:
 
 We can use ``colors`` instead of ``colors.fg`` for foreground colors.  If we had used ``colors.fg``
 as the context manager, then non-foreground properties, such as ``colors.underline`` or
-``colors.bg.YELLOW``, would not have reset those properties. Each attribute,
+``colors.bg.yellow``, would not have reset those properties. Each attribute,
 as well as ``fg``, ``bg``, and ``colors`` all have inverses in the ANSI standard. They are
-accessed with ``~``, ``-``, or ``.reset``, and can be used to manually make these operations
+accessed with ``~``  or ``.reset``, and can be used to manually make these operations
 safer, but there is a better way.
 
 Safe Manipulation
@@ -147,8 +144,7 @@ All other operations are safe; they restore the color automatically. The first, 
 already obvious one, is using a Style rather than a ``colors`` or ``colors.fg`` object in a ``with`` statement.
 This will set the color (using sys.stdout by default) to that color, and restore color on leaving.
 
-The second method is to manually wrap a string. This can be done with ``color.wrap("string")``,
-``"string" << color``, ``color >> "string"``, or ``color["string"]``.
+The second method is to manually wrap a string. This can be done with ``color.wrap("string")`` or ``color["string"]``.
 These produce strings that can be further manipulated or printed.
 
 .. note::
@@ -178,7 +174,7 @@ An example of safe manipulations::
             print("This is red and bold.")
         print("Not bold, but still red.")
     print("Not red color or bold.")
-    print("This is bold and colorful!" << (colors.magenta + colors.bold), "And this is not.")
+    print((colors.magenta & colors.bold)["This is bold and colorful!"], "And this is not.")
 
 Output:
 
@@ -194,8 +190,15 @@ Output:
 Style Combinations
 ^^^^^^^^^^^^^^^^^^
 
-You can combine styles with ``+``, ``*``, ``<<``, or ``>>``, and they will create a new combined Style object. Colors will not be "summed" or otherwise combined; the rightmost color will be used (this matches the expected effect of
-applying the Styles individually to the strings). However, combined Styles are intelligent and know how to reset just the properties that they contain. As you have seen in the example above, the combined style ``(colors.magenta + colors.bold)`` can be used in any way a normal Style can.
+You can combine styles with ``&`` and they will create a new combined Style object. Colors will not be "summed"
+or otherwise combined; the rightmost color will be used (this matches the expected effect of
+applying the Styles individually to the strings). However, combined Styles are intelligent and
+know how to reset just the properties that they contain. As you have seen in the example above,
+the combined style ``(colors.magenta & colors.bold)`` can be used in any way a normal Style can.
+Since wrapping is done with ``|``, the Python order of operations causes styles to be combined first, then
+wrapping is done last.
+
+.. _guide-colorlist:
 
 256 Color Support
 =================
@@ -213,8 +216,13 @@ The supported colors are:
 .. raw:: html
     :file: _color_list.html
 
-If you want to enforce a specific represenation, you can use ``.basic`` (8 color), ``.simple`` (16 color), ``.full`` (256 color), or ``.true`` (24 bit color) on a Style, and the colors in that Style will conform to the output representation and name of the best match color. The internal RGB colors
+If you want to enforce a specific representation, you can use ``.basic`` (8 color), ``.simple`` (16 color),
+``.full`` (256 color), or ``.true`` (24 bit color) on a Style, and the colors in that Style will conform to
+the output representation and name of the best match color. The internal RGB colors
 are remembered, so this is a non-destructive operation.
+
+To limit the use of color to one of these styles, set ``colors.use_color`` to 1 for 8 colors, 2 for 16 colors, 
+3 for 256 colors, or 4 for true color. It will be guessed based on your system on initialisation.
 
 The Classes
 ===========
@@ -274,7 +282,7 @@ This doesn't support global resets, since that's not how HTML works, but otherwi
 
 An example of usage::
 
-    >>> "This is colored text" << htmlcolors.bold + htmlcolors.red
+    >>>  htmlcolors.bold & htmlcolors.red | "This is colored text"
     '<font color="#800000"><b>This is colored text</b></font>'
 
 
@@ -282,8 +290,8 @@ The above color table can be generated with::
 
     for color in htmlcolors:
         htmlcolors.li(
-            "&#x25a0;" << color,
-            color.fg.hex_code << htmlcolors.code,
+            "&#x25a0;" | color,
+            color.fg.hex_code | htmlcolors.code,
             color.fg.name_camelcase)
 
 
@@ -299,4 +307,4 @@ See Also
 
 * `colored <https://pypi.python.org/pypi/colored>`_ Another library with 256 color support
 * `colorama <https://pypi.python.org/pypi/colorama>`_ A library that supports colored text on Windows,
-    can be combined with Plumbum.color (if you force ``use_color``, doesn't support all extended colors)
+    can be combined with Plumbum.colors (if you force ``use_color``, doesn't support all extended colors)
