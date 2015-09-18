@@ -277,7 +277,7 @@ _normal_html = ['#' + format(_normals[n//36],'02x') + format(_normals[n//6%6],'0
 _base_pattern = [(n//4,n//2%2,n%2) for n in range(8)]
 _base_html = (['#{2:02x}{1:02x}{0:02x}'.format(x[0]*192,x[1]*192,x[2]*192) for x in  _base_pattern]
         + ['#808080']
-        + ['#{2:02x}{1:02x}{0:02x}'.format(x[0]*255,x[1]*255,x[2]*255) for x in               _base_pattern][1:])
+        + ['#{2:02x}{1:02x}{0:02x}'.format(x[0]*255,x[1]*255,x[2]*255) for x in _base_pattern][1:])
 color_html = _base_html + _normal_html + _grey_html
 
 color_codes_simple = list(range(8)) + list(range(60,68))
@@ -300,7 +300,9 @@ default_styles = dict(
     warn="fg red",
     title="fg cyan underline bold",
     fatal="fg red bold",
-    highlight="bg yellow"
+    highlight="bg yellow",
+    info="fg blue",
+    success="fg green",
     )
 
 
@@ -319,7 +321,7 @@ class FindNearest(object):
         Breaks the colorspace into cubes, returns color"""
         midlevel = 0x40 # Since bright is not included
 
-        # The colors are originised so that it is a
+        # The colors are organised so that it is a
         # 3D cube, black at 0,0,0, white at 1,1,1
         # Compressed to linear_integers r,g,b
         # [[[0,1],[2,3]],[[4,5],[6,7]]]

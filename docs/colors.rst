@@ -79,8 +79,26 @@ Styles are accessed through the ``plumbum.colors`` object. This has the followin
     Styles loaded from a stylesheet dictionary, such as ``warn`` and ``info``.
       These allow you to set standard styles based on behavior rather than colors, and you can load a new stylesheet with ``colors.load_stylesheet(...)``.
 
-Also, ``colors.from_ansi(code)`` method allows
+
+Recreating and loading the default stylesheet would look like this:
+
+.. code-block:: python
+
+    >>> default_styles = dict(
+    ...  warn="fg red",
+    ...  title="fg cyan underline bold",
+    ...  fatal="fg red bold",
+    ...  highlight="bg yellow",
+    ...  info="fg blue",
+    ...  success="fg green")
+
+    >>> colors.load_stylesheet(default_styles)
+          
+          
+
+The ``colors.from_ansi(code)`` method allows
 you to create a Style from any ansi sequence, even complex or combined ones.
+
 
 Colors
 ^^^^^^
