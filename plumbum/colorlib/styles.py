@@ -34,7 +34,8 @@ def get_color_repr():
     
     term =local.env.get("TERM", "")
 
-    if term == "xterm-256color":
+    # Some terminals set TERM=xterm for compatibility
+    if term == "xterm-256color" or term == "xterm":
         return 4 if os.name == 'posix' else 3
     elif term == "xterm-16color":
         return 2
@@ -64,7 +65,7 @@ class Color(ABC):
 
     This class stores the idea of a color, rather than a specific implementation.
     It provides as many different tools for representations as possible, and can be subclassed
-    to add more represenations, though that should not be needed for most situations. ``.from_`` class methods provide quick ways to create colors given different representations.
+    to add more representations, though that should not be needed for most situations. ``.from_`` class methods provide quick ways to create colors given different representations.
     You will not usually interact with this class.
 
     Possible colors::
@@ -262,7 +263,7 @@ class Color(ABC):
 
     def __repr__(self):
         """This class has a smart representation that shows name and color (if not unique)."""
-        name = ['Deacivated:', ' Basic:', '', ' Full:', ' True:'][self.representation]
+        name = ['Deactivated:', ' Basic:', '', ' Full:', ' True:'][self.representation]
         name += '' if self.fg else ' Background'
         name += ' ' + self.name_camelcase
         name += '' if self.exact else ' ' + self.hex_code
@@ -277,7 +278,7 @@ class Color(ABC):
 
     @property
     def ansi_sequence(self):
-        """This is the ansi seqeunce as a string, ready to use."""
+        """This is the ansi sequence as a string, ready to use."""
         return '\033[' + ';'.join(map(str, self.ansi_codes)) + 'm'
 
     @property
@@ -307,7 +308,7 @@ class Color(ABC):
         return self.name
 
     def to_representation(self, val):
-        """Converts a color to any represntation"""
+        """Converts a color to any representation"""
         other = copy(self)
         other.representation = val
         if self.isreset:
@@ -349,7 +350,7 @@ class Style(object):
         """\
         This property will allow custom, class level control of stdout.
         It will use current sys.stdout if set to None (default).
-        Unfortunatly, it only works on an instance..
+        Unfortunately, it only works on an instance..
         """
         return self.__class__._stdout if self.__class__._stdout is not None else sys.stdout
     @stdout.setter
@@ -424,9 +425,9 @@ class Style(object):
     def __add__(self, other):
         """Adding two matching Styles results in a new style with
         the combination of both. Adding with a string results in
-        the string concatiation of a style.
+        the string concatenation of a style.
 
-        Addition is non-communitive, with the rightmost Style property
+        Addition is non-commutative, with the rightmost Style property
         being taken if both have the same property.
         (Not safe)"""
         if type(self) == type(other):
@@ -475,7 +476,7 @@ class Style(object):
 
     def __call__(self, *printables, **kargs):
         """\
-        This is a shortcut to print color immediatly to the stdout. (Not safe)
+        This is a shortcut to print color immediately to the stdout. (Not safe)
         If called with an argument, will wrap that argument and print (safe)"""
 
         if printables or kargs:
@@ -484,7 +485,7 @@ class Style(object):
             self.now()
 
     def now(self):
-        '''Immediatly writes color to stdout. (Not safe)'''
+        '''Immediately writes color to stdout. (Not safe)'''
         self.stdout.write(str(self))
 
     def print(self, *printables, **kargs):
@@ -513,7 +514,7 @@ class Style(object):
         self.stdout.write(str(self))
 
     def __exit__(self, type, value, traceback):
-        """Runs even if exception occured, does not catch it."""
+        """Runs even if exception occurred, does not catch it."""
         self.stdout.write(str(~self))
         return False
 
@@ -706,7 +707,7 @@ class ANSIStyle(Style):
 
 class HTMLStyle(Style):
     """This was meant to be a demo of subclassing Style, but
-    actually can be a handy way to quicky color html text."""
+    actually can be a handy way to quickly color html text."""
 
     __slots__ = ()
     attribute_names = dict(bold='b', em='em', italics='i', li='li', underline='span style="text-decoration: underline;"', code='code', ol='ol start=0', strikeout='s')
