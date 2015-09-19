@@ -343,7 +343,7 @@ class Application(object):
         return swfuncs, tailargs
 
     @classmethod
-    def argcomplete(self, argv):
+    def autocomplete(self, argv):
         """This is supplied to make subclassing and testing argument completion methods easier"""
         pass
 
