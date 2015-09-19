@@ -1,4 +1,5 @@
 import unittest
+from plumbum.cli.compapplication import CompApplication
 from plumbum import cli
 from plumbum.lib import six
 
@@ -21,7 +22,7 @@ Switches:
     -v                         increases the verbosity level; may be given multiple times
 """
 
-class TestApp(cli.Application):
+class TestApp(CompApplication):
     @cli.switch(["a"])
     def spam(self):
         print("!!a")

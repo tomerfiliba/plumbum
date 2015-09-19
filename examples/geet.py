@@ -42,6 +42,7 @@ Examples::
     committing...
 """
 from plumbum import cli
+from plumbum.cli.compapplication import CompApplication
 
 # To force no color support:
 # from plumbum import colors
@@ -55,7 +56,7 @@ try:
 except ImportError:
     pass
 
-class Geet(cli.ColorfulApplication):
+class Geet(CompApplication):
     """The l33t version control"""
     PROGNAME = "geet"
     VERSION = "1.7.2"
@@ -66,7 +67,7 @@ class Geet(cli.ColorfulApplication):
         "in help " * 3)
 
 @Geet.subcommand("commit")
-class GeetCommit(cli.ColorfulApplication):
+class GeetCommit(CompApplication):
     """creates a new commit in the current branch"""
 
     auto_add = cli.Flag("-a", help = "automatically add changed files")
@@ -78,7 +79,7 @@ class GeetCommit(cli.ColorfulApplication):
 GeetCommit.unbind_switches("-v", "--version")
 
 @Geet.subcommand("push")
-class GeetPush(cli.ColorfulApplication):
+class GeetPush(CompApplication):
     """pushes the current local branch to the remote one"""
 
     tags = cli.Flag("--tags", help = "whether to push tags (default is False)")

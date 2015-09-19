@@ -11,9 +11,8 @@ from plumbum.cli.terminal import get_terminal_size
 from plumbum.cli.switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,
     MissingMandatorySwitch, SwitchCombinationError, PositionalArgumentsError, switch,
     SubcommandError, Flag, CountOf)
-
-from plumbum.cli.argcompleter import ArgCompleter
 from plumbum import colors, local
+
 
 class ShowHelp(SwitchError):
     pass
@@ -230,35 +229,6 @@ class Application(object):
             return subapp
         return wrapper(subapp) if subapp else wrapper
 
-    @classmethod
-    def _autocomplete_args(cls, comp_line, comp_point, ifs=' '):
-        """This is a comp_line seperated by ifs, with the cursor at comp_point"""
-
-        words = comp_line.strip().split()[1:] # remove progname
-
-        if not words:
-            return ['']
-
-        self = cls('argcompleter')
-        names = ['-'+a for a in self._switches_by_name if len(a)==1]
-        names += ['--'+a for a in self._switches_by_name if len(a)!=1]
-
-        if words[-1][0] == '-':
-            return [n for n in names if words[-1] in n]
-
-        if comp_point < 0:
-            return
-
-
-    @classmethod
-    def autocomplete(cls, argv=None):
-        argcom = ArgCompleter()
-        if not argcom.active:
-            return
-        comps = cls._autocomplete_args(*argcom.get_line())
-        argcom.send_completions(comps)
-        argcom.done()
-
     def _parse_args(self, argv):
         tailargs = []
         swfuncs = {}
@@ -371,6 +341,11 @@ class Application(object):
                 swfuncs[swinfo.func] = SwitchParseInfo(envname, (val,), envindex)
 
         return swfuncs, tailargs
+
+    @classmethod
+    def autocomplete(self, argv):
+        """This is supplied to make subclassing and testing argument completion methods easier"""
+        pass
 
     def _handle_argument(self, val, swinfo, name):
         if swinfo.argtype:
