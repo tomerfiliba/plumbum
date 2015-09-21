@@ -1,7 +1,5 @@
-import inspect
 from plumbum.lib import six, getdoc
 from plumbum import local
-import functools
 
 from abc import abstractmethod
 
@@ -261,13 +259,13 @@ class CountOf(SwitchAttr):
 
 
 
-class validate(object):
+class positional(object):
     """
     Runs a validator on the main function for a class.    
     This should be used like this:
     
     class MyApp(cli.Application):
-        @cli.validate(cli.Range(1,10), cli.ExistingFile)
+        @cli.positional(cli.Range(1,10), cli.ExistingFile)
         def main(self, x, *f):
             # x is a range, f's are all ExistingFile's)
     

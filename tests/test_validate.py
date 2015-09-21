@@ -2,18 +2,18 @@
 from __future__ import print_function, division
 import unittest
 from plumbum import cli
-from plumbum.lib import captured_stdout, ensure_skipIf
+from plumbum.lib import captured_stdout
 from plumbum.lib import six
 
 class MainValidator(cli.Application):
-    @cli.validate(int, int, int)
+    @cli.positional(int, int, int)
     def main(self, myint, myint2, *mylist):
         print(myint, myint2, mylist)
 
 class TestValidator(unittest.TestCase):
     def test_named(self):
         class Try(object):
-            @cli.validate(x=abs, y=str)
+            @cli.positional(x=abs, y=str)
             def main(selfy, x, y):
                 pass
 
@@ -22,7 +22,7 @@ class TestValidator(unittest.TestCase):
 
     def test_position(self):
         class Try(object):
-            @cli.validate(abs, str)
+            @cli.positional(abs, str)
             def main(selfy, x, y):
                 pass
 
@@ -31,7 +31,7 @@ class TestValidator(unittest.TestCase):
 
     def test_mix(self):
         class Try(object):
-            @cli.validate(abs, str, d=bool)
+            @cli.positional(abs, str, d=bool)
             def main(selfy, x, y, z, d):
                 pass
 
@@ -40,7 +40,7 @@ class TestValidator(unittest.TestCase):
 
     def test_var(self):
         class Try(object):
-            @cli.validate(abs, str, int)
+            @cli.positional(abs, str, int)
             def main(selfy, x, y, *g):
                 pass
 
