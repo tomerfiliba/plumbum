@@ -27,7 +27,7 @@ class six(object):
     A light-weight version of six (which works on IronPython)
     """
     PY3 = sys.version_info[0] >= 3
-    ABC = ABCMeta('ABC', (object,), {'__module__':__name__})
+    ABC = ABCMeta('ABC', (object,), {'__module__':__name__, '__slots__':()})
 
     # Be sure to use named-tuple access, so that different order doesn't affect usage
     try:

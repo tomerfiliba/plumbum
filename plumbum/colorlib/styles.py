@@ -10,7 +10,6 @@ With the ``Style`` class, any color can be directly called or given to a with st
 from __future__ import print_function
 import sys
 import os
-import platform
 import re
 from copy import copy
 from plumbum.colorlib.names import color_names, color_html
@@ -126,9 +125,6 @@ class Color(ABC):
 
         self.exact = True
         'This is false if the named color does not match the real color'
-
-        self.use_color = True
-        'This is a toggle for color (or max representation)'
 
         if None in (g,b):
             if not r_or_color:
