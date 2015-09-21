@@ -24,7 +24,9 @@ Or as a context-manager::
 .. note::
 
    ``SshMachine`` requires ``ssh`` (``openSSH`` or compatible) installed on your system in order 
-   to connect to remote machines. Alternatively, you can use the pure-Python implementation of
+   to connect to remote machines. The remote machine must have bash as the default shell (or any shell
+   that supports the ``2>&1`` syntax for stderr redirection).
+   Alternatively, you can use the pure-Python implementation of
    :ref:`ParamikoMachine <guide-paramiko-machine>`.
 
 Only the ``hostname`` parameter is required, all other parameters are optional. If the host has

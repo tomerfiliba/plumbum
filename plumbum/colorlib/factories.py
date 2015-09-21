@@ -152,7 +152,7 @@ class StyleFactory(ColorFactory):
 
     def get_colors_from_string(self, color=''):
         """
-        Sets color based on string, use `.` or space for seperator,
+        Sets color based on string, use `.` or space for separator,
         and numbers, fg/bg, htmlcodes, etc all accepted (as strings).
         """
 

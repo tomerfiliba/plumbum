@@ -342,6 +342,11 @@ class Application(object):
 
         return swfuncs, tailargs
 
+    @classmethod
+    def autocomplete(self, argv):
+        """This is supplied to make subclassing and testing argument completion methods easier"""
+        pass
+
     def _handle_argument(self, val, swinfo, name):
         if swinfo.argtype:
             try:
@@ -413,6 +418,7 @@ class Application(object):
         """
         if argv is None:
             argv = sys.argv
+        cls.autocomplete(argv)
         argv = list(argv)
         inst = cls(argv.pop(0))
         retcode = 0

@@ -22,7 +22,7 @@ def load_ipython_extension(ipython):
 
 def main():
     """Color changing script entry. Call using
-    python -m plumbum.colors, will reset if no arguements given."""
+    python -m plumbum.colors, will reset if no arguments given."""
     import sys
     color = ' '.join(sys.argv[1:]) if len(sys.argv) > 1 else ''
     ansicolors.use_color=True

@@ -17,23 +17,23 @@ class NOHUP_LOCAL(unittest.TestCase):
         delete('nohup.out')
         sp = bash['slow_process.bash']
         sp & NOHUP
-        time.sleep(.1)
+        time.sleep(.5)
         self.assertEqual(self.read_file('slow_process.out'), 'Starting test\n1\n')
         self.assertEqual(self.read_file('nohup.out'), '1\n')
-        time.sleep(.5)
+        time.sleep(1)
         self.assertEqual(self.read_file('slow_process.out'), 'Starting test\n1\n2\n')
         self.assertEqual(self.read_file('nohup.out'), '1\n2\n')
-        time.sleep(1.1)
+        time.sleep(2)
         delete('nohup.out', 'slow_process.out')
 
     def test_append(self):
         delete('nohup.out')
         output = echo['This is output']
         output & NOHUP
-        time.sleep(.1)
+        time.sleep(.2)
         self.assertEqual(self.read_file('nohup.out'), 'This is output\n')
         output & NOHUP
-        time.sleep(.1)
+        time.sleep(.2)
         self.assertEqual(self.read_file('nohup.out'), 'This is output\n'*2)
         delete('nohup.out')
 
@@ -42,17 +42,17 @@ class NOHUP_LOCAL(unittest.TestCase):
         output = echo['This is output']
 
         output & NOHUP(stdout = 'nohup_new.out')
-        time.sleep(.1)
+        time.sleep(.2)
         self.assertEqual(self.read_file('nohup_new.out'), 'This is output\n')
         delete('nohup_new.out')
 
         (output > 'nohup_new.out') & NOHUP
-        time.sleep(.1)
+        time.sleep(.2)
         self.assertEqual(self.read_file('nohup_new.out'), 'This is output\n')
         delete('nohup_new.out')
 
         output & NOHUP
-        time.sleep(.1)
+        time.sleep(.2)
         self.assertEqual(self.read_file('nohup.out'), 'This is output\n')
         delete('nohup.out')
 
