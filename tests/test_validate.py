@@ -73,7 +73,8 @@ class TestProg(unittest.TestCase):
             _, rc = MainValidator.run(["prog", "1.2", "2", '3', '4', '5'], exit = False)
         self.assertEqual(rc, 2)
         value = stream.getvalue().strip()
-        self.assertTrue("Error: Argument of myint expected to be <class 'int'>, not '1.2':" in value)
+        self.assertTrue("'int'>, not '1.2':" in value)
+        self.assertTrue(" 'int'>, not '1.2':" in value)
         self.assertTrue('''ValueError("invalid literal for int() with base 10: '1.2'"''' in value)
 
     def test_defaults(self):
