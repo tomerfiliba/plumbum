@@ -282,6 +282,8 @@ class positional(object):
     Validators should be callable, and should have a .choices() function with
     possible choices. (For future argument completion, for example)
     
+    Default arguments do not go through the validator.
+    
     #TODO: Check with MyPy
     
     """
