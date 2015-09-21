@@ -1,6 +1,7 @@
 import inspect
 from plumbum.lib import six, getdoc
 from plumbum import local
+import functools
 
 
 class SwitchError(Exception):
@@ -252,6 +253,71 @@ class CountOf(SwitchAttr):
     def __call__(self, inst, v):
         self.__set__(inst, len(v))
 
+#===================================================================================================
+# Decorator for function that adds argument checking
+#===================================================================================================
+
+
+
+def validate(_function=None, **kkargs):
+    """
+    Runs a validator on the main function for a class.    
+    This should be used like this:
+    
+    class MyApp(cli.Application):
+        @cli.validate(x=cli.Range(1,10), f=cli.ExistingFile)
+        def main(self, x, *f):
+            # x is a range, f's are all ExistingFile's)
+    
+    Or, Python 3 only:
+    
+    class MyApp(cli.Application):
+        @cli.validate
+        def main(self, x : cli.Range(1,10), *f : cli.ExistingFile):
+            # x is a range, f's are all ExistingFile's)
+    
+    """
+    
+    if _function is None:
+        return functools.partial(validate, **kkargs)
+    try:
+        info = inspect.getfullargspec(_function)
+    except AttributeError:
+        info = inspect.getargspec(_function)
+    argnames = info.args[1:]
+    variable = info.varargs
+    
+    try: # Add annotations in Python 3
+        annotations = info.annotations
+        kkargs.update(annotations)
+    except AttributeError:
+        pass
+
+    # functools.wraps is awful, and doesn't preserve signature
+    # This would be far better with somethign like wrapt.decorator or decorator.decorator
+    @functools.wraps(_function) 
+    def wrapped_f(self, *args):
+        # Set the values for the defaults
+        wrapped_f.argnames = argnames
+        wrapped_f.keywords = kkargs
+        wrapped_f.variable = variable
+        
+        args = list(args)
+        for n, item in enumerate(args):
+            if n < len(argnames):
+                if argnames[n] in kkargs:
+                    args[n] = kkargs[argnames[n]](item)
+                else:
+                    raise IndexError("Wrong arguement")
+            else:
+                if variable:
+                    args[n] = kkargs[variable](item)
+                
+                
+
+        return _function(self, *args)
+    return wrapped_f
+    
 #===================================================================================================
 # Switch type validators
 #===================================================================================================

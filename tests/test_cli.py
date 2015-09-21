@@ -5,7 +5,9 @@ import time
 
 from plumbum import cli, local
 from plumbum.cli.terminal import ask, choose, hexdump, Progress
-from plumbum.lib import six, captured_stdout, StringIO
+from plumbum.lib import six, captured_stdout, StringIO, ensure_skipIf
+
+ensure_skipIf(unittest)
 
 class TestApp(cli.Application):
     @cli.switch(["a"])
@@ -28,6 +30,11 @@ class TestApp(cli.Application):
         self.eggs = "lalala"
         self.eggs = old
         self.tailargs = args
+        
+class MainValidator(cli.Application):
+    @cli.validate
+    def main(self, myint:int, *mylist:int):
+        print(myint, mylist)
 
 class Geet(cli.Application):
     debug = cli.Flag("--debug")
@@ -197,6 +204,34 @@ class CLITest(unittest.TestCase):
             _, rc = TestApp.run(["arg"], exit = False)
             self.assertEqual(rc, 2)
             self.assertIn("bacon is mandatory", stream.getvalue())
+
+class TestValidator(unittest.TestCase):
+    def test_valid(self):
+        
+        class DummyApplication(object):
+            pass
+        
+        class Try(DummyApplication):
+            @cli.validate(x=abs, y=str)
+            def main(selfy, x, y):
+                self.assertEqual(x,1)
+                self.assertEqual(y,'2')
+
+        Try().main(-1, 2)
+
+        class Try2(DummyApplication):
+            @cli.validate
+            def main(selfy, x:float, *args:abs):
+                self.assertEqual(x, 1.0)
+                self.assertEqual(args, (2,3,4))
+                
+        Try2().main(1, -2, -3, 4)
+        
+        self.assertTrue(hasattr(Try.main, 'keywords'))
+        
+    def test_prog(self):
+        _, rc = MainValidator.run(["1.1", '1', '2'], exit = False)
+        self.assertEqual(rc, 0)
 
 
 class TestTerminal(unittest.TestCase):
