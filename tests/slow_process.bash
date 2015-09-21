@@ -5,6 +5,6 @@ for i in $(seq 1 3)
 do
     echo $i
     echo $i >> slow_process.out
-    sleep .5
+    sleep 1
 done
 
