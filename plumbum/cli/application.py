@@ -298,7 +298,7 @@ class Application(object):
                 continue
 
             # handle argument
-            val = self._handle_argument(val, swinfo, name)
+            val = self._handle_argument(val, swinfo.argtype, name)
 
             if swinfo.func in swfuncs:
                 if swinfo.list:
@@ -328,7 +328,7 @@ class Application(object):
             if swinfo.func in swfuncs:
                 continue  # skip if overridden by command line arguments
 
-            val = self._handle_argument(envval, swinfo, env)
+            val = self._handle_argument(envval, swinfo.argtype, env)
             envname = "$%s" % (env,)
             if swinfo.list:
                 # multiple values over environment variables are not supported,
@@ -342,18 +342,19 @@ class Application(object):
         return swfuncs, tailargs
 
     @classmethod
-    def autocomplete(self, argv):
+    def autocomplete(cls, argv):
         """This is supplied to make subclassing and testing argument completion methods easier"""
         pass
 
-    def _handle_argument(self, val, swinfo, name):
-        if swinfo.argtype:
+    @staticmethod
+    def _handle_argument(val, argtype, name):
+        if argtype:
             try:
-                return swinfo.argtype(val)
+                return argtype(val)
             except (TypeError, ValueError):
                 ex = sys.exc_info()[1]  # compat
                 raise WrongArgumentType("Argument of %s expected to be %r, not %r:\n    %r" % (
-                    name, swinfo.argtype, val, ex))
+                    name, argtype, val, ex))
         else:
             return NotImplemented
 
@@ -399,7 +400,7 @@ class Application(object):
                 
         # Positional arguement validataion
         if hasattr(self.main, 'positional'):
-            tailargs = self._positional_validate(tailargs, self.main.positional, self.main.positional_varargs)
+            tailargs = self._positional_validate(tailargs, self.main.positional, self.main.positional_varargs, m.args[1:], m.varargs)
             
         elif hasattr(m, 'annotations'):
             args_names = list(m.args[1:])
@@ -414,21 +415,28 @@ class Application(object):
                 else:
                     positional[args_names.index(item)] = m.annotations[item]
 
-            tailargs = self._positional_validate(tailargs, positional, varargs)
+            tailargs = self._positional_validate(tailargs, positional, varargs,
+                                                 m.args[1:], m.varargs)
 
         ordered = [(f, a) for _, f, a in
             sorted([(sf.index, f, sf.val) for f, sf in swfuncs.items()])]
         return ordered, tailargs
 
-    def _positional_validate(self, args, validator_list, varargs):
+    def _positional_validate(self, args, validator_list, varargs, argnames, varargname):
         """Makes sure args follows the validation given input"""
         out_args = list(args)
         
         for i in range(min(len(args),len(validator_list))):
-            out_args[i] = args[i] if validator_list[i] is None else validator_list[i](args[i])
+            
+            if validator_list[i] is not None:
+                out_args[i] = self._handle_argument(args[i], validator_list[i], argnames[i])
         
         if len(args) > len(validator_list):
-            out_args[len(validator_list):] = args[len(validator_list):] if varargs is None else list(map(varargs,args[len(validator_list):]))
+            if varargs is not None:
+                out_args[len(validator_list):] = [
+                    self._handle_argument(a, varargs, varargname) for a in args[len(validator_list):]]
+            else:
+                out_args[len(validator_list):] = args[len(validator_list):]
         
         return out_args
 

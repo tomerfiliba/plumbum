@@ -52,7 +52,17 @@ class TestProg(unittest.TestCase):
         with captured_stdout() as stream:
             _, rc = MainValidator.run(["prog", "1", "2", '3', '4', '5'], exit = False)
         self.assertEqual(rc, 0)
-        self.assertIn("1 2 (3, 4, 5)", stream.getvalue())
+        self.assertEqual("1 2 (3, 4, 5)", stream.getvalue().strip())
+
+    def test_failure(self):
+        with captured_stdout() as stream:
+            _, rc = MainValidator.run(["prog", "1.2", "2", '3', '4', '5'], exit = False)
+        self.assertEqual(rc, 2)
+        value = stream.getvalue().strip()
+        self.assertTrue("Error: Argument of myint expected to be <class 'int'>, not '1.2':" in value)
+        self.assertTrue('''ValueError("invalid literal for int() with base 10: '1.2'"''' in value)
+
+        
 
 # Unfortionatly, Py3 anotations are a syntax error in Py2, so using exec to add test for Py3
 if six.PY3:
