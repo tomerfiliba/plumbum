@@ -90,7 +90,7 @@ def ensure_skipIf(unittest):
         import functools
         def skipIf(condition, reason):
             def deco(func):
-                if condition:
+                if not condition:
                     return func
                 else:
                     @functools.wraps(func)
