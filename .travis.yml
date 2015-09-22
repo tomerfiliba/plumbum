@@ -12,13 +12,12 @@ matrix:
     - python: pypy
     - language: generic
       os: osx
-      env: PYTHON_VERSION=2
     - language: generic
       os: osx
-      env: PYTHON_VERSION=3
+      env: PY3=3
 
 install: .ci/travis.sh
-script: nosetests -vv -d
+script: cd tests && nosetests -vv -d
 
 notifications:
     email:
