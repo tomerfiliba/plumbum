@@ -3,7 +3,7 @@
 if [[ "$(uname -s)" == 'Darwin' ]]; then
     brew update
     brew install python$PY3
-    pip install pytest nose
+    pip$PY3 install pytest nose
     pip$PY3 install paramiko
     pip$PY3 install .
 else
