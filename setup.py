@@ -2,12 +2,38 @@
 import os
 
 try:
-    from setuptools import setup
+    from setuptools import setup, Command
 except ImportError:
-    from distutils.core import setup
+    from distutils.core import setup, Command
 
 HERE = os.path.dirname(__file__)
 exec(open(os.path.join(HERE, "plumbum", "version.py")).read())
+
+class PyTest(Command):
+    user_options = []
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+    def run(self):
+        import subprocess
+        import sys
+        os.chdir('tests')
+        errno = os.system('nosetests -vv -d')
+        sys.exit(errno)
+
+class PyDocs(Command):
+    user_options = []
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+    def run(self):
+        import subprocess
+        import sys
+        os.chdir('docs')
+        errno = subprocess.call(['make', 'html'])
+        sys.exit(errno)
 
 setup(name = "plumbum",
     version = version_string,  # @UndefinedVariable
@@ -20,6 +46,8 @@ setup(name = "plumbum",
     platforms = ["POSIX", "Windows"],
     provides = ["plumbum"],
     keywords = "path, local, remote, ssh, shell, pipe, popen, process, execution",
+    cmdclass = {'test':PyTest,
+                'docs':PyDocs},
     # use_2to3 = False,
     # zip_safe = True,
     long_description = open(os.path.join(HERE, "README.rst"), "r").read(),
