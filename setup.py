@@ -9,19 +9,6 @@ except ImportError:
 HERE = os.path.dirname(__file__)
 exec(open(os.path.join(HERE, "plumbum", "version.py")).read())
 
-class PyTest(Command):
-    user_options = []
-    def initialize_options(self):
-        pass
-    def finalize_options(self):
-        pass
-    def run(self):
-        import subprocess
-        import sys
-        os.chdir('tests')
-        errno = os.system('nosetests -vv -d')
-        sys.exit(errno)
-
 class PyDocs(Command):
     user_options = []
     def initialize_options(self):
@@ -46,7 +33,7 @@ setup(name = "plumbum",
     platforms = ["POSIX", "Windows"],
     provides = ["plumbum"],
     keywords = "path, local, remote, ssh, shell, pipe, popen, process, execution",
-    cmdclass = {'test':PyTest,
+    cmdclass = {
                 'docs':PyDocs},
     # use_2to3 = False,
     # zip_safe = True,
