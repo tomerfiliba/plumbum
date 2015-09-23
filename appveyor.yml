@@ -87,7 +87,7 @@ install:
   # pip will build them from source using the MSVC compiler matching the
   # target Python version and architecture
   - "%CMD_IN_ENV% pip install -r dev-requirements.txt"
-  - "%CMD_IN_ENV% pip install -r pywin32"
+  - "%CMD_IN_ENV% pip install pywin32"
 
 build: false  # Not a C# project, build stuff at the test step instead.
 
