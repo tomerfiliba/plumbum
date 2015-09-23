@@ -51,7 +51,7 @@ build: off
  
 test_script:
   - "cd tests"
-    "nosetests -vv -d"
+  - "nosetests -vv -d"
  
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python setup.py %DISTRIBUTIONS%"
