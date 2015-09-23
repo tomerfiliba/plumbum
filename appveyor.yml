@@ -7,16 +7,6 @@ environment:
 
   matrix:
 
-    # Python 2.7.10 is the latest version and is not pre-installed.
-
-    - PYTHON: "C:\\Python27.10"
-      PYTHON_VERSION: "2.7.10"
-      PYTHON_ARCH: "32"
-
-    - PYTHON: "C:\\Python27.10-x64"
-      PYTHON_VERSION: "2.7.10"
-      PYTHON_ARCH: "64"
-
     # Pre-installed Python versions, which Appveyor may upgrade to
     # a later point release.
 
@@ -26,14 +16,6 @@ environment:
 
     - PYTHON: "C:\\Python27-x64"
       PYTHON_VERSION: "2.7.x" # currently 2.7.9
-      PYTHON_ARCH: "64"
-
-    - PYTHON: "C:\\Python33"
-      PYTHON_VERSION: "3.3.x" # currently 3.3.5
-      PYTHON_ARCH: "32"
-
-    - PYTHON: "C:\\Python33-x64"
-      PYTHON_VERSION: "3.3.x" # currently 3.3.5
       PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python34"
@@ -49,32 +31,32 @@ environment:
     # Python 2.6.6 is the latest Python 2.6 with a Windows installer
     # See: https://github.com/ogrisel/python-appveyor-demo/issues/10
 
-    - PYTHON: "C:\\Python266"
-      PYTHON_VERSION: "2.6.6"
+#    - PYTHON: "C:\\Python266"
+#      PYTHON_VERSION: "2.6.6"
+#      PYTHON_ARCH: "32"
+#
+#    - PYTHON: "C:\\Python266-x64"
+#      PYTHON_VERSION: "2.6.6"
+#      PYTHON_ARCH: "64"
+#
+#    - PYTHON: "C:\\Python35"
+#      PYTHON_VERSION: "3.5.0"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python266-x64"
-      PYTHON_VERSION: "2.6.6"
-      PYTHON_ARCH: "64"
-
-    - PYTHON: "C:\\Python35"
-      PYTHON_VERSION: "3.5.0"
-      PYTHON_ARCH: "32"
-
-    - PYTHON: "C:\\Python35-x64"
-      PYTHON_VERSION: "3.5.0"
-      PYTHON_ARCH: "64"
+#    - PYTHON: "C:\\Python35-x64"
+#      PYTHON_VERSION: "3.5.0"
+#      PYTHON_ARCH: "64"
 
     # Major and minor releases (i.e x.0.0 and x.y.0) prior to 3.3.0 use
     # a different naming scheme.
 
-    - PYTHON: "C:\\Python270"
-      PYTHON_VERSION: "2.7.0"
-      PYTHON_ARCH: "32"
+#    - PYTHON: "C:\\Python270"
+#      PYTHON_VERSION: "2.7.0"
+#      PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python270-x64"
-      PYTHON_VERSION: "2.7.0"
-      PYTHON_ARCH: "64"
+#    - PYTHON: "C:\\Python270-x64"
+#      PYTHON_VERSION: "2.7.0"
+#      PYTHON_ARCH: "64"
 
 install:
   - ECHO "Filesystem root:"
@@ -105,6 +87,7 @@ install:
   # pip will build them from source using the MSVC compiler matching the
   # target Python version and architecture
   - "%CMD_IN_ENV% pip install -r dev-requirements.txt"
+  - "%CMD_IN_ENV% pip install -r pywin32"
 
 build: false  # Not a C# project, build stuff at the test step instead.
 
