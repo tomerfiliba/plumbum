@@ -46,12 +46,15 @@ init:
 install:
   - "powershell .ci\\install.ps1"
   - "set HOME=%APPVEYOR_BUILD_FOLDER%"
+  - "%WITH_COMPILER% %PYTHON%/pip install nose"
+  - "%WITH_COMPILER% %PYTHON%/pip install paramiko"
  
 build: off
  
 test_script:
   - "cd tests"
-  - "nosetests -vv -d"
+  - "dir"
+  - "%WITH_COMPILER% %PYTHON%/nosetests -vv -d"
  
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python setup.py %DISTRIBUTIONS%"
