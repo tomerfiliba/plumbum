@@ -1,2 +1,3 @@
 paramiko
 nose
+wheel
