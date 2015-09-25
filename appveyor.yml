@@ -18,6 +18,7 @@ install:
 
   - pip install -r dev-requirements.txt
   - pip install pypiwin32
+  - pip install .
 
 build: false
 
