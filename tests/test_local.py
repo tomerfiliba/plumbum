@@ -4,13 +4,12 @@ import sys
 import signal
 import time
 from plumbum import local, LocalPath, FG, BG, TF, RETCODE, ERROUT
-from plumbum.lib import six, ensure_skipIf
+from plumbum.lib import six, IS_WIN32
 from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
 from plumbum.path import RelativePath
 import plumbum
-
-ensure_skipIf(unittest)
+from .unittesttools import skip_without_bash, skip_on_windows, skip_without_tty
 
 class LocalPathTest(unittest.TestCase):
     def test_basename(self):
@@ -23,7 +22,7 @@ class LocalPathTest(unittest.TestCase):
         self.assertTrue(isinstance(name, LocalPath))
         self.assertEqual("/some/long/path/to", str(name).replace("\\", "/"))
 
-    @unittest.skipIf(not hasattr(os, "chown"), "os.chown not supported")
+    @skip_without_chown
     def test_chown(self):
         with local.tempdir() as dir:
             p = dir / "foo.txt"
@@ -77,6 +76,7 @@ class LocalPathTest(unittest.TestCase):
             self.assertEqual(text, text2)
 
 
+@skip_without_bash
 class LocalMachineTest(unittest.TestCase):
     def test_getattr(self):
         pb = plumbum
@@ -352,7 +352,7 @@ class LocalMachineTest(unittest.TestCase):
         else:
             self.fail("Expected KeyboardInterrupt")
 
-    @unittest.skipIf(not sys.stdin.isatty(), "Not a TTY")
+    @skip_without_tty
     def test_same_sesion(self):
         from plumbum.cmd import sleep
         p = sleep.popen([1000])
@@ -361,7 +361,7 @@ class LocalMachineTest(unittest.TestCase):
         time.sleep(1)
         self.assertTrue(p.poll() is not None)
 
-    @unittest.skipIf(not sys.stdin.isatty(), "Not a TTY")
+    @skip_without_tty
     def test_new_session(self):
         from plumbum.cmd import sleep
         p = sleep.popen([1000], new_session = True)

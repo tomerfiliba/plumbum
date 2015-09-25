@@ -78,28 +78,6 @@ if six.PY3:
 else:
     from StringIO import StringIO
 
-def ensure_skipIf(unittest):
-    """
-    This will ensure that unittest has skipIf. Call like::
-
-        import unittest
-        ensure_skipIf(unittest)
-    """
-
-    if not hasattr(unittest, "skipIf"):
-        import logging
-        import functools
-        def skipIf(condition, reason):
-            def deco(func):
-                if not condition:
-                    return func
-                else:
-                    @functools.wraps(func)
-                    def wrapper(*args, **kwargs):
-                        logging.warn("skipping test: "+reason)
-                    return wrapper
-            return deco
-        unittest.skipIf = skipIf
 
 @contextmanager
 def captured_stdout(stdin = ""):

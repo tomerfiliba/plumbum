@@ -3,10 +3,17 @@ import unittest
 import sys
 import time
 from plumbum import local, NOHUP
-from plumbum.cmd import bash, echo
+try:
+    from plumbum.cmd import bash, echo
+except ImportError:
+    bash = None
+    echo = None
 from plumbum.path.utils import delete
+from .unittesttools import skip_without_bash
 
 
+
+@skip_without_bash
 class NOHUP_LOCAL(unittest.TestCase):
     def read_file(self, filename):
         self.assertIn(filename, os.listdir('.'))
