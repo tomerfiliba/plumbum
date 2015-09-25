@@ -1,3 +1,2 @@
 paramiko
-nose
-wheel
+pytest

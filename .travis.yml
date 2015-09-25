@@ -17,7 +17,7 @@ matrix:
       env: PY3=3
 
 install: .ci/travis.sh
-script: cd tests $$ nosetests -vv -d
+script: cd tests && python -m pytest
 
 notifications:
     email:
