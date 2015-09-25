@@ -9,11 +9,11 @@ except ImportError:
     bash = None
     echo = None
 from plumbum.path.utils import delete
-from plumbum._testtools import skip_without_bash
+from plumbum._testtools import skip_on_windows
 
 
 
-@skip_without_bash
+@skip_on_windows
 class NOHUP_LOCAL(unittest.TestCase):
     def read_file(self, filename):
         self.assertIn(filename, os.listdir('.'))

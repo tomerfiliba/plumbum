@@ -3,14 +3,13 @@ import unittest
 import sys
 import signal
 import time
-from plumbum import local, LocalPath, FG, BG, TF, RETCODE, ERROUT
+from plumbum import (local, LocalPath, FG, BG, TF, RETCODE, ERROUT,
+                    CommandNotFound, ProcessExecutionError, ProcessTimedOut)
 from plumbum.lib import six, IS_WIN32
-from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
 from plumbum.path import RelativePath
 import plumbum
-from plumbum._testtools import (skip_without_bash, skip_on_windows,
-                                skip_without_tty, skip_without_chown)
+from plumbum._testtools import skip_on_windows, skip_without_tty, skip_without_chown
 
 class LocalPathTest(unittest.TestCase):
     def test_basename(self):
@@ -77,7 +76,6 @@ class LocalPathTest(unittest.TestCase):
             self.assertEqual(text, text2)
 
 
-@skip_without_bash
 class LocalMachineTest(unittest.TestCase):
     def test_getattr(self):
         pb = plumbum
@@ -87,7 +85,10 @@ class LocalMachineTest(unittest.TestCase):
         self.assertEqual(str(ls_cmd1), str(local['ls']))
         self.assertEqual(str(ls_cmd2), str(local['ls']))
 
+    # TODO: This probably fails because of odd ls behavior
+    @skip_on_windows
     def test_imports(self):
+
         from plumbum.cmd import ls
         self.assertTrue("test_local.py" in local["ls"]().splitlines())
         self.assertTrue("test_local.py" in ls().splitlines())
@@ -108,6 +109,7 @@ class LocalMachineTest(unittest.TestCase):
         self.assertRaises(CommandNotFound, lambda: local.get("non_exist1N9", "non_exist1N8"))
         self.assertRaises(CommandNotFound, lambda: local.get("non_exist1N9", "/tmp/non_exist1N8"))
 
+    @skip_on_windows
     def test_cwd(self):
         from plumbum.cmd import ls
         self.assertEqual(local.cwd, os.getcwd())
@@ -117,6 +119,7 @@ class LocalMachineTest(unittest.TestCase):
         self.assertTrue("__init__.py" not in ls().splitlines())
         self.assertRaises(OSError, local.cwd.chdir, "../non_exist1N9")
 
+    @skip_on_windows
     def test_mixing_chdir(self):
         self.assertEqual(local.cwd, os.getcwd())
         os.chdir('../plumbum')
@@ -124,6 +127,7 @@ class LocalMachineTest(unittest.TestCase):
         os.chdir('../tests')
         self.assertEqual(local.cwd, os.getcwd())
 
+    @skip_on_windows
     def test_path(self):
         self.assertFalse((local.cwd / "../non_exist1N9").exists())
         self.assertTrue((local.cwd / ".." / "plumbum").isdir())
@@ -145,6 +149,7 @@ class LocalMachineTest(unittest.TestCase):
                 found = True
         self.assertTrue(found)
 
+    @skip_on_windows
     def test_env(self):
         self.assertTrue("PATH" in local.env)
         self.assertFalse("FOOBAR72" in local.env)
@@ -174,6 +179,7 @@ class LocalMachineTest(unittest.TestCase):
         local["ls"]
         self.assertEqual(local.python("-c", "print ('hi there')").splitlines(), ["hi there"])
 
+    @skip_on_windows
     def test_piping(self):
         from plumbum.cmd import ls, grep
         chain = ls | grep["\\.py"]
@@ -182,6 +188,7 @@ class LocalMachineTest(unittest.TestCase):
         chain = (ls["-a"] | grep["test"] | grep["local"])
         self.assertTrue("test_local.py" in chain().splitlines())
 
+    @skip_on_windows
     def test_redirection(self):
         from plumbum.cmd import cat, ls, grep, rm
 
@@ -205,6 +212,7 @@ class LocalMachineTest(unittest.TestCase):
         self.assertEqual(rc, 2)
         self.assertTrue("usage" in out.lower())
 
+    @skip_on_windows
     def test_popen(self):
         from plumbum.cmd import ls
 
@@ -223,6 +231,7 @@ class LocalMachineTest(unittest.TestCase):
         from plumbum.cmd import sleep
         self.assertRaises(ProcessTimedOut, sleep, 10, timeout = 5)
 
+    @skip_on_windows
     def test_iter_lines_timeout(self):
         from plumbum.cmd import ping
 
@@ -237,6 +246,7 @@ class LocalMachineTest(unittest.TestCase):
             self.fail("Expected a timeout")
 
 
+    @skip_on_windows
     def test_iter_lines_error(self):
         from plumbum.cmd import ls
         try:
@@ -250,6 +260,7 @@ class LocalMachineTest(unittest.TestCase):
         else:
             self.fail("Expected an execution error")
 
+    @skip_on_windows
     def test_modifiers(self):
         from plumbum.cmd import ls, grep
         f = (ls["-a"] | grep["\\.py"]) & BG
@@ -272,6 +283,7 @@ class LocalMachineTest(unittest.TestCase):
         ls(*args)
         ls[args]
 
+    @skip_on_windows
     def test_session(self):
         sh = local.session()
         for _ in range(4):
@@ -330,6 +342,7 @@ class LocalMachineTest(unittest.TestCase):
             src.symlink(dst2)
             self.assertEqual(data, dst2.read())
 
+    @skip_on_windows
     def test_as_user(self):
         with local.as_root():
             local["date"]()
@@ -354,6 +367,7 @@ class LocalMachineTest(unittest.TestCase):
             self.fail("Expected KeyboardInterrupt")
 
     @skip_without_tty
+    @skip_on_windows
     def test_same_sesion(self):
         from plumbum.cmd import sleep
         p = sleep.popen([1000])
@@ -383,6 +397,7 @@ class LocalMachineTest(unittest.TestCase):
             self.fail("I shouldn't have any children by now -- they are daemons!")
         proc.wait()
 
+    @skip_on_windows
     def test_atomic_file(self):
         af1 = AtomicFile("tmp.txt")
         af2 = AtomicFile("tmp.txt")
@@ -392,6 +407,7 @@ class LocalMachineTest(unittest.TestCase):
         self.assertEqual(af2.read_atomic(), six.b("bar"))
         local.path("tmp.txt").delete()
 
+    @skip_on_windows
     def test_atomic_file2(self):
         af = AtomicFile("tmp.txt")
 
@@ -410,6 +426,7 @@ except (OSError, IOError):
 
         local.path("tmp.txt").delete()
 
+    @skip_on_windows
     def test_pid_file(self):
         code = """from __future__ import with_statement
 from plumbum.fs.atomic import PidFile, PidFileTaken
@@ -425,6 +442,7 @@ except PidFileTaken:
 
         local.path("mypid").delete()
 
+    @skip_on_windows
     def test_atomic_counter(self):
         local.path("counter").delete()
         num_of_procs = 20
@@ -454,6 +472,7 @@ for _ in range(%s):
         self.assertEqual(max(results), num_of_procs * num_of_increments - 1)
         local.path("counter").delete()
 
+    @skip_on_windows
     def test_atomic_counter2(self):
         local.path("counter").delete()
         afc = AtomicCounterFile.open("counter")
@@ -470,6 +489,7 @@ for _ in range(%s):
 
         local.path("counter").delete()
 
+    @skip_on_windows
     def test_bound_env(self):
         try:
             from plumbum.cmd import printenv

@@ -7,7 +7,7 @@ import logging
 from plumbum import RemotePath, SshMachine, ProcessExecutionError, local, ProcessTimedOut, NOHUP
 from plumbum import CommandNotFound
 from plumbum.lib import six
-from plumbum._testtools import skipIf, skip_without_chown, skip_without_bash, skip_on_windows
+from plumbum._testtools import skipIf, skip_without_chown, skip_on_windows
 
 
 #TEST_HOST = "192.168.1.143"
@@ -15,7 +15,7 @@ TEST_HOST = "127.0.0.1"
 if TEST_HOST not in ("::1", "127.0.0.1", "localhost"):
     import plumbum
     plumbum.local.env.path.append("c:\\Program Files\\Git\\bin")
-@skip_without_bash
+@skip_on_windows
 class RemotePathTest(unittest.TestCase):
     def _connect(self):
         return SshMachine(TEST_HOST)
@@ -63,7 +63,7 @@ class RemotePathTest(unittest.TestCase):
                 p.chown(p.uid.name)
                 self.assertEqual(p.uid, os.getuid())
 
-@skip_without_bash
+@skip_on_windows
 class BaseRemoteMachineTest(object):
     TUNNEL_PROG = r"""import sys, socket
 s = socket.socket()
@@ -181,7 +181,7 @@ s.close()
             else:
                 self.fail("Expected an execution error")
 
-@skip_without_bash
+@skip_on_windows
 class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
     def _connect(self):
         return SshMachine(TEST_HOST)

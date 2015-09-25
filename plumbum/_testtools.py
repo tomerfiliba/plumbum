@@ -31,6 +31,5 @@ ensure_skipIf(unittest)
 skipIf = unittest.skipIf
 
 skip_on_windows = unittest.skipIf(IS_WIN32, "Does not work on Windows (yet)")
-skip_without_bash = unittest.skipIf('ls' not in local, "Only works on bash envs")
 skip_without_chown = unittest.skipIf(not hasattr(os, "chown"), "os.chown not supported")
 skip_without_tty = unittest.skipIf(not sys.stdin.isatty(), "Not a TTY")
