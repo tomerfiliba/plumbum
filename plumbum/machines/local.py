@@ -295,7 +295,7 @@ class LocalMachine(BaseMachine):
             tasklist = local["tasklist"]
             lines = tasklist("/V", "/FO", "CSV").encode("utf8").splitlines()
             rows = csv.reader(lines)
-            header = rows.next()
+            header = next(rows)
             imgidx = header.index('Image Name')
             pididx = header.index('PID')
             statidx = header.index('Status')
