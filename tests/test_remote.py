@@ -7,7 +7,7 @@ import logging
 from plumbum import RemotePath, SshMachine, ProcessExecutionError, local, ProcessTimedOut, NOHUP
 from plumbum import CommandNotFound
 from plumbum.lib import six
-from .unittesttools import skipIf, skip_without_chown
+from plumbum._testtools import skipIf, skip_without_chown, skip_without_bash, skip_on_windows
 
 
 #TEST_HOST = "192.168.1.143"

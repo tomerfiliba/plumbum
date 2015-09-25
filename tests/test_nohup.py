@@ -9,7 +9,7 @@ except ImportError:
     bash = None
     echo = None
 from plumbum.path.utils import delete
-from .unittesttools import skip_without_bash
+from plumbum._testtools import skip_without_bash
 
 
 

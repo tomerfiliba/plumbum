@@ -9,7 +9,8 @@ from plumbum import CommandNotFound, ProcessExecutionError, ProcessTimedOut
 from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
 from plumbum.path import RelativePath
 import plumbum
-from .unittesttools import skip_without_bash, skip_on_windows, skip_without_tty
+from plumbum._testtools import (skip_without_bash, skip_on_windows,
+                                skip_without_tty, skip_without_chown)
 
 class LocalPathTest(unittest.TestCase):
     def test_basename(self):
