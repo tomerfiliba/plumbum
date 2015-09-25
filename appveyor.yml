@@ -22,5 +22,6 @@ install:
 build: false
 
 test_script:
-  - python setup.py nosetests
+  - ps: cd tests
+  - ps: nosetests
 
