@@ -2,8 +2,7 @@ environment:
   matrix:
     - PYTHON: "C:\\Python27"
     - PYTHON: "C:\\Python34"
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python35-x64"
+# Python 3.5 has to rebuild Crypto, because binaries are not available yet
 
 install:
   - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%

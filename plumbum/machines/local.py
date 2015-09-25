@@ -293,7 +293,7 @@ class LocalMachine(BaseMachine):
             """
             import csv
             tasklist = local["tasklist"]
-            lines = tasklist("/V", "/FO", "CSV").encode("utf8").splitlines()
+            lines = tasklist("/V", "/FO", "CSV").splitlines()
             rows = csv.reader(lines)
             header = next(rows)
             imgidx = header.index('Image Name')
@@ -301,8 +301,8 @@ class LocalMachine(BaseMachine):
             statidx = header.index('Status')
             useridx = header.index('User Name')
             for row in rows:
-                yield ProcInfo(int(row[pididx]), row[useridx].decode("utf8"),
-                    row[statidx].decode("utf8"), row[imgidx].decode("utf8"))
+                yield ProcInfo(int(row[pididx]), row[useridx],
+                    row[statidx], row[imgidx])
     else:
         def list_processes(self):
             """
