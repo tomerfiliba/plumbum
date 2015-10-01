@@ -20,13 +20,13 @@ class FSUser(int):
         self.name = name
         return self
 
-class Path(six.ABC):
+class Path(str, six.ABC):
     """An abstraction over file system paths. This class is abstract, and the two implementations
     are :class:`LocalPath <plumbum.machines.local.LocalPath>` and
     :class:`RemotePath <plumbum.path.remote.RemotePath>`.
     """
 
-    __slots__ = []
+    __slots__ = ()
     CASE_SENSITIVE = True
 
     def __repr__(self):
@@ -337,6 +337,8 @@ class RelativePath(object):
 
     Relative paths are created by subtracting paths (``Path.relative_to``)
     """
+    __slots__ = ('parts',)
+
     def __init__(self, parts):
         self.parts = parts
     def __str__(self):

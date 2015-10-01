@@ -30,14 +30,14 @@ class StatRes(object):
 class RemotePath(Path):
     """The class implementing remote-machine paths"""
 
-    __slots__ = ["_path", "remote"]
-    def __init__(self, remote, *parts):
+    __slots__ = ("remote", "CASE_SENSITIVE")
+
+    def __new__(cls, remote, *parts):
         if not parts:
-            raise TypeError("At least one path part is require (none given)")
-        self.remote = remote
-        windows = (self.remote.uname.lower() == "windows")
+            raise TypeError("At least one path part is required (none given)")
+        windows = (remote.uname.lower() == "windows")
         normed = []
-        parts = (self.remote.cwd,) + parts
+        parts = (remote._session.run("pwd")[1].strip(),) + parts
         for p in parts:
             if windows:
                 plist = str(p).replace("\\", "/").split("/")
@@ -55,16 +55,21 @@ class RemotePath(Path):
                 else:
                     normed.append(item)
         if windows:
+            self = super(RemotePath, cls).__new__(cls, "\\".join(normed))
             self.CASE_SENSITIVE = False
-            self._path = "\\".join(normed)
         else:
-            self._path = "/" + "/".join(normed)
+            self = super(RemotePath, cls).__new__(cls, "/" + "/".join(normed))
+            self.CASE_SENSITIVE = True
+
+        self.remote = remote
+        return self
 
     def _form(self, *parts):
         return RemotePath(self.remote, *parts)
 
-    def __str__(self):
-        return self._path
+    @property
+    def _path(self):
+        return str(self)
 
     @property
     @_setdoc(Path)
@@ -285,16 +290,16 @@ class RemotePath(Path):
 class RemoteWorkdir(RemotePath):
     """Remote working directory manipulator"""
 
-    def __init__(self, remote):
-        self.remote = remote
-        self._path = self.remote._session.run("pwd")[1].strip()
+    def __new__(cls, remote):
+        self = super(RemoteWorkdir, cls).__new__(cls, remote, remote._session.run("pwd")[1].strip())
+        return self
     def __hash__(self):
         raise TypeError("unhashable type")
 
     def chdir(self, newdir):
         """Changes the current working directory to the given one"""
         self.remote._session.run("cd %s" % (shquote(newdir),))
-        self._path = self.remote._session.run("pwd")[1].strip()
+        return self.__class__(self.remote)
 
     def getpath(self):
         """Returns the current working directory as a
@@ -310,9 +315,9 @@ class RemoteWorkdir(RemotePath):
                        :class:`RemotePath <plumbum.path.remote.RemotePath>`)
         """
         prev = self._path
-        self.chdir(newdir)
+        changed_dir = self.chdir(newdir)
         try:
-            yield
+            yield changed_dir
         finally:
             self.chdir(prev)
 

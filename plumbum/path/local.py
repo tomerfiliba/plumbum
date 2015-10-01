@@ -38,23 +38,24 @@ logger = logging.getLogger("plumbum.local")
 class LocalPath(Path):
     """The class implementing local-machine paths"""
 
-    __slots__ = ["_path"]
+    __slots__ = ()
     CASE_SENSITIVE = not IS_WIN32
 
-    def __init__(self, *parts):
-        if not parts:
-            raise TypeError("At least one path part is require (none given)")
-        if any(isinstance(path, RemotePath) for path in parts):
-            raise TypeError("LocalPath cannot be constructed from %r" % (parts,))
-        self._path = os.path.normpath(os.path.join(*(str(p) for p in parts)))
     def __new__(cls, *parts):
         if len(parts) == 1 and \
                 isinstance(parts[0], cls) and \
                 not isinstance(parts[0], LocalWorkdir):
             return parts[0]
-        return object.__new__(cls)
-    def __str__(self):
-        return self._path
+        if not parts:
+            raise TypeError("At least one path part is require (none given)")
+        if any(isinstance(path, RemotePath) for path in parts):
+            raise TypeError("LocalPath cannot be constructed from %r" % (parts,))
+        self = super(LocalPath, cls).__new__(cls, os.path.normpath(os.path.join(*(str(p) for p in parts))))
+        return self
+    @property
+    def _path(self):
+        return str(self)
+
     def _get_info(self):
         return self._path
     def __getstate__(self):
@@ -312,13 +313,12 @@ class LocalPath(Path):
 class LocalWorkdir(LocalPath):
     """Working directory manipulator"""
 
-    __slots__ = []
-    def __init__(self):
-        LocalPath.__init__(self, os.getcwd())
+    __slots__ = ()
+
     def __hash__(self):
         raise TypeError("unhashable type")
     def __new__(cls):
-        return object.__new__(cls)
+        return super(LocalWorkdir, cls).__new__(cls, os.getcwd())
 
     def chdir(self, newdir):
         """Changes the current working directory to the given one
@@ -329,7 +329,7 @@ class LocalWorkdir(LocalPath):
             raise TypeError("newdir cannot be %r" % (newdir,))
         logger.debug("Chdir to %s", newdir)
         os.chdir(str(newdir))
-        self._path = os.path.normpath(os.getcwd())
+        return self.__class__()
     def getpath(self):
         """Returns the current working directory as a ``LocalPath`` object"""
         return LocalPath(self._path)
@@ -341,9 +341,9 @@ class LocalWorkdir(LocalPath):
         :param newdir: The destination director (a string or a ``LocalPath``)
         """
         prev = self._path
-        self.chdir(newdir)
+        newdir = self.chdir(newdir)
         try:
-            yield
+            yield newdir 
         finally:
             self.chdir(prev)
 
