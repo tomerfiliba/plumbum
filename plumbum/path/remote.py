@@ -30,7 +30,6 @@ class StatRes(object):
 class RemotePath(Path):
     """The class implementing remote-machine paths"""
 
-    __slots__ = ("remote", "CASE_SENSITIVE")
 
     def __new__(cls, remote, *parts):
         if not parts:
@@ -56,7 +55,7 @@ class RemotePath(Path):
                     normed.append(item)
         if windows:
             self = super(RemotePath, cls).__new__(cls, "\\".join(normed))
-            self.CASE_SENSITIVE = False
+            self.CASE_SENSITIVE = False # On this object only
         else:
             self = super(RemotePath, cls).__new__(cls, "/" + "/".join(normed))
             self.CASE_SENSITIVE = True
