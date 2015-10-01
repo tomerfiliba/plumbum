@@ -145,14 +145,16 @@ class BaseRemoteMachine(BaseMachine):
 
     # allow inheritors to override the RemoteCommand class
     RemoteCommand = RemoteCommand
-
+    
+    @property
+    def cwd(self):
+        return RemoteWorkdir(self)
 
     def __init__(self, encoding = "utf8", connect_timeout = 10, new_session = False):
         self.encoding = encoding
         self.connect_timeout = connect_timeout
         self._session = self.session(new_session = new_session)
         self.uname = self._get_uname()
-        self.cwd = RemoteWorkdir(self)
         self.env = RemoteEnv(self)
         self._python = None
 
