@@ -16,7 +16,7 @@ from plumbum._testtools import skip_on_windows
 @skip_on_windows
 class NOHUP_LOCAL(unittest.TestCase):
     def read_file(self, filename):
-        self.assertIn(filename, os.listdir('.'))
+        self.assertTrue(filename in os.listdir('.'))
         with open(filename) as f:
             return f.read()
 
