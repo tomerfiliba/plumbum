@@ -38,7 +38,7 @@ def move(src, dst):
     if isinstance(src, (tuple, list)):
         if not dst.exists():
             dst.mkdir()
-        elif not dst.isdir():
+        elif not dst.is_dir():
             raise ValueError("When using multiple sources, dst %r must be a directory" % (dst,))
         for src2 in src:
             move(src2, dst)
@@ -73,7 +73,7 @@ def copy(src, dst):
     if isinstance(src, (tuple, list)):
         if not dst.exists():
             dst.mkdir()
-        elif not dst.isdir():
+        elif not dst.is_dir():
             raise ValueError("When using multiple sources, dst %r must be a directory" % (dst,))
         for src2 in src:
             copy(src2, dst)
@@ -95,7 +95,7 @@ def copy(src, dst):
     else:
         with local.tempdir() as tmp:
             copy(src, tmp)
-            copy(tmp / src.basename, dst)
+            copy(tmp / src.name, dst)
         return dst
 
 

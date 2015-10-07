@@ -109,13 +109,13 @@ etc. ::
     >>> p = local.path("c:\\windows")
     >>> p.exists()
     True
-    >>> p.isdir()
+    >>> p.is_dir()
     True
-    >>> p.isfile()
+    >>> p.is_file()
     False
     >>> p / "notepad.exe"
     <LocalPath c:\windows\notepad.exe>
-    >>> (p / "notepad.exe").isfile()
+    >>> (p / "notepad.exe").is_file()
     True
     >>> (p / "notepad.exe").with_suffix(".dll")
     <LocalPath c:\windows\notepad.dll>

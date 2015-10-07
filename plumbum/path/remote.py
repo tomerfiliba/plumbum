@@ -4,6 +4,10 @@ from plumbum.path.base import Path, FSUser
 from plumbum.lib import _setdoc, six
 from plumbum.commands import shquote
 
+try: # Py3
+    import urllib.request as urllib 
+except ImportError:
+    import urllib
 
 class StatRes(object):
     """POSIX-like stat result"""
@@ -64,7 +68,7 @@ class RemotePath(Path):
 
     @property
     @_setdoc(Path)
-    def basename(self):
+    def name(self):
         if not "/" in str(self):
             return str(self)
         return str(self).rsplit("/", 1)[1]
@@ -79,12 +83,12 @@ class RemotePath(Path):
     @property
     @_setdoc(Path)
     def suffix(self):
-        return '.' + self.basename.rsplit('.',1)[1]
+        return '.' + self.name.rsplit('.',1)[1]
 
     @property
     @_setdoc(Path)
     def suffixes(self):
-        name = self.basename
+        name = self.name
         exts = []
         while '.' in name:
             name, ext = name.rsplit('.',1)
@@ -112,26 +116,32 @@ class RemotePath(Path):
 
     @_setdoc(Path)
     def list(self):
-        if not self.isdir():
+        if not self.is_dir():
             return []
         return [self.join(fn) for fn in self.remote._path_listdir(self)]
+        
+    @_setdoc(Path)
+    def iterdir(self):
+        if not self.is_dir():
+            return ()
+        return (self.join(fn) for fn in self.remote._path_listdir(self))
 
     @_setdoc(Path)
-    def isdir(self):
+    def is_dir(self):
         res = self.remote._path_stat(self)
         if not res:
             return False
         return res.text_mode == "directory"
 
     @_setdoc(Path)
-    def isfile(self):
+    def is_file(self):
         res = self.remote._path_stat(self)
         if not res:
             return False
         return res.text_mode in ("regular file", "regular empty file")
 
     @_setdoc(Path)
-    def islink(self):
+    def is_symlink(self):
         res = self.remote._path_stat(self)
         if not res:
             return False
@@ -156,7 +166,7 @@ class RemotePath(Path):
     def with_suffix(self, suffix, depth=1):
         if (suffix and not suffix.startswith('.') or suffix == '.'):
             raise ValueError("Invalid suffix %r" % (suffix))
-        name = self.basename
+        name = self.name
         depth = len(self.suffixes) if depth is None else min(depth, len(self.suffixes))
         for i in range(depth):
             name, ext = name.rsplit('.',1)
@@ -217,7 +227,7 @@ class RemotePath(Path):
 
     @_setdoc(Path)
     def chown(self, owner = None, group = None, recursive = None):
-        self.remote._path_chown(self, owner, group, self.isdir() if recursive is None else recursive)
+        self.remote._path_chown(self, owner, group, self.is_dir() if recursive is None else recursive)
     @_setdoc(Path)
     def chmod(self, mode):
         self.remote._path_chmod(mode, self)
@@ -253,6 +263,24 @@ class RemotePath(Path):
     def open(self):
         pass
 
+    @_setdoc(Path)
+    def as_uri(self, scheme = 'ssh'):
+        return '{0}://{1}{2}'.format(scheme, self.remote._fqhost, urllib.pathname2url(str(self)))
+
+    @property
+    @_setdoc(Path)
+    def stem(self):
+        return self.name.rsplit('.')[0]
+        
+    @property
+    @_setdoc(Path)
+    def root(self):
+        return '/'
+        
+    @property
+    @_setdoc(Path)
+    def drive(self):
+        return ''
 
 class RemoteWorkdir(RemotePath):
     """Remote working directory manipulator"""
