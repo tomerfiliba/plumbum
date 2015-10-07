@@ -316,7 +316,7 @@ class Predicate(object):
 def ExistingDirectory(val):
     """A switch-type validator that ensures that the given argument is an existing directory"""
     p = local.path(val)
-    if not p.isdir():
+    if not p.is_dir():
         raise ValueError("%r is not a directory" % (val,))
     return p
 
@@ -324,7 +324,7 @@ def ExistingDirectory(val):
 def ExistingFile(val):
     """A switch-type validator that ensures that the given argument is an existing file"""
     p = local.path(val)
-    if not p.isfile():
+    if not p.is_file():
         raise ValueError("%r is not a file" % (val,))
     return p
 

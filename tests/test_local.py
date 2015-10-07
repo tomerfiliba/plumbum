@@ -10,18 +10,29 @@ from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
 from plumbum.path import RelativePath
 import plumbum
 
+try:
+    import pathlib
+except ImportError:
+    pathlib = None
+
 ensure_skipIf(unittest)
 
 class LocalPathTest(unittest.TestCase):
-    def test_basename(self):
-        name = LocalPath("/some/long/path/to/file.txt").basename
+    def setUp(self):
+        self.longpath = LocalPath("/some/long/path/to/file.txt")
+    
+    def test_name(self):
+        name = self.longpath.name
         self.assertTrue(isinstance(name, six.string_types))
         self.assertEqual("file.txt", str(name))
 
     def test_dirname(self):
-        name = LocalPath("/some/long/path/to/file.txt").dirname
+        name = self.longpath.dirname
         self.assertTrue(isinstance(name, LocalPath))
         self.assertEqual("/some/long/path/to", str(name).replace("\\", "/"))
+
+    def test_uri(self):
+        self.assertEqual("file:///some/long/path/to/file.txt", self.longpath.as_uri())
 
     @unittest.skipIf(not hasattr(os, "chown"), "os.chown not supported")
     def test_chown(self):
@@ -38,7 +49,7 @@ class LocalPathTest(unittest.TestCase):
         self.assertEqual(p.split(), ["var", "log", "messages"])
 
     def test_suffix(self):
-        p1 = local.path("/some/long/path/to/file.txt")
+        p1 = self.longpath
         p2 = local.path("file.tar.gz")
         self.assertEqual(p1.suffix, ".txt")
         self.assertEqual(p1.suffixes, [".txt"])
@@ -51,7 +62,7 @@ class LocalPathTest(unittest.TestCase):
         self.assertEqual(p2.with_suffix(".other", None), local.path("file.other"))
 
     def test_newname(self):
-        p1 = local.path("/some/long/path/to/file.txt")
+        p1 = self.longpath
         p2 = local.path("file.tar.gz")
         self.assertEqual(p1.with_name("something.tar"), local.path("/some/long/path/to/something.tar"))
         self.assertEqual(p2.with_name("something.tar"), local.path("something.tar"))
@@ -75,7 +86,48 @@ class LocalPathTest(unittest.TestCase):
             f.write(text, "utf8")
             text2 = f.read("utf8")
             self.assertEqual(text, text2)
+            
+    def test_parts(self):
+        parts = self.longpath.parts
+        self.assertEqual(parts, ('/', 'some', 'long', 'path', 'to', 'file.txt'))
+        
+    def test_stem(self):
+        self.assertEqual(self.longpath.stem, "file")
+        p = local.path("/some/directory")
+        self.assertEqual(p.stem, "directory")
+        
+    @unittest.skipIf(pathlib is None, "This test requires pathlib")
+    def test_root_drive(self):
+        pl_path = pathlib.Path("/some/long/path/to/file.txt").absolute()
+        self.assertEqual(self.longpath.root, pl_path.root)
+        self.assertEqual(self.longpath.drive, pl_path.drive)
+        
+        p_path = local.cwd / "somefile.txt"
+        pl_path = pathlib.Path("somefile.txt").absolute()
+        self.assertEqual(p_path.root, pl_path.root)
+        self.assertEqual(p_path.drive, pl_path.drive)
+        
+    @unittest.skipIf(pathlib is None, "This test requires pathlib")
+    def test_compare_pathlib(self):
+        def filename_compare(name):
+            p = local.path(str(name))
+            pl = pathlib.Path(str(name)).absolute()
+            self.assertEqual(str(p), str(pl))
+            self.assertEqual(p.parts, pl.parts)
+            self.assertEqual(p.exists(), pl.exists())
+            self.assertEqual(p.as_uri(), pl.as_uri())
+            self.assertEqual(str(p.with_suffix('.this')), str(pl.with_suffix('.this')))
+            self.assertEqual(p.name, pl.name)
 
+        filename_compare("/some/long/path/to/file.txt")
+        filename_compare(local.cwd / "somefile.txt")
+        filename_compare("/some/long/path/")
+        filename_compare("/some/long/path")
+        filename_compare(__file__)
+
+    def test_suffix_expected(self):
+        self.assertEqual(self.longpath.preferred_suffix('.tar'), self.longpath)
+        self.assertEqual((local.cwd / 'this').preferred_suffix('.txt'), local.cwd / 'this.txt')
 
 class LocalMachineTest(unittest.TestCase):
     def test_getattr(self):
@@ -125,22 +177,22 @@ class LocalMachineTest(unittest.TestCase):
 
     def test_path(self):
         self.assertFalse((local.cwd / "../non_exist1N9").exists())
-        self.assertTrue((local.cwd / ".." / "plumbum").isdir())
+        self.assertTrue((local.cwd / ".." / "plumbum").is_dir())
         # traversal
         found = False
         for fn in local.cwd / ".." / "plumbum":
-            if fn.basename == "__init__.py":
-                self.assertTrue(fn.isfile())
+            if fn.name == "__init__.py":
+                self.assertTrue(fn.is_file())
                 found = True
         self.assertTrue(found)
         # glob'ing
         found = False
         for fn in local.cwd / ".." // "*/*.rst":
-            if fn.basename == "index.rst":
+            if fn.name == "index.rst":
                 found = True
         self.assertTrue(found)
         for fn in local.cwd / ".." // ("*/*.rst", "*./*.html"):
-            if fn.basename == "index.rst":
+            if fn.name == "index.rst":
                 found = True
         self.assertTrue(found)
 
@@ -302,7 +354,7 @@ class LocalMachineTest(unittest.TestCase):
     def test_tempdir(self):
         from plumbum.cmd import cat
         with local.tempdir() as dir:
-            self.assertTrue(dir.isdir())
+            self.assertTrue(dir.is_dir())
             data = six.b("hello world")
             with open(str(dir / "test.txt"), "wb") as f:
                 f.write(data)
