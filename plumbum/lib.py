@@ -27,14 +27,13 @@ class six(object):
     A light-weight version of six (which works on IronPython)
     """
     PY3 = sys.version_info[0] >= 3
-    ABC = ABCMeta('ABC', (object,), {'__module__':__name__})
+    ABC = ABCMeta('ABC', (object,), {'__module__':__name__, '__slots__':()})
 
-    # Be sure to use named-tuple access, so that different order doesn't affect usage
+    # Be sure to use named-tuple access, so that usage is not affected
     try:
-        getargspec = staticmethod(inspect.getargspec)
+        getfullargspec = staticmethod(inspect.getfullargspec)
     except AttributeError:
-        getargspec = staticmethod(lambda func: inspect.getfullargspec(func)[:4])
-
+        getfullargspec = staticmethod(inspect.getargspec) # extra fields will not be available
 
     if PY3:
         integer_types = (int,)

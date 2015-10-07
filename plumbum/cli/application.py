@@ -1,7 +1,6 @@
 from __future__ import division, print_function, absolute_import
 import os
 import sys
-import inspect
 import functools
 from textwrap import TextWrapper
 from collections import defaultdict
@@ -299,7 +298,7 @@ class Application(object):
                 continue
 
             # handle argument
-            val = self._handle_argument(val, swinfo, name)
+            val = self._handle_argument(val, swinfo.argtype, name)
 
             if swinfo.func in swfuncs:
                 if swinfo.list:
@@ -329,7 +328,7 @@ class Application(object):
             if swinfo.func in swfuncs:
                 continue  # skip if overridden by command line arguments
 
-            val = self._handle_argument(envval, swinfo, env)
+            val = self._handle_argument(envval, swinfo.argtype, env)
             envname = "$%s" % (env,)
             if swinfo.list:
                 # multiple values over environment variables are not supported,
@@ -343,18 +342,19 @@ class Application(object):
         return swfuncs, tailargs
 
     @classmethod
-    def autocomplete(self, argv):
+    def autocomplete(cls, argv):
         """This is supplied to make subclassing and testing argument completion methods easier"""
         pass
 
-    def _handle_argument(self, val, swinfo, name):
-        if swinfo.argtype:
+    @staticmethod
+    def _handle_argument(val, argtype, name):
+        if argtype:
             try:
-                return swinfo.argtype(val)
+                return argtype(val)
             except (TypeError, ValueError):
                 ex = sys.exc_info()[1]  # compat
                 raise WrongArgumentType("Argument of %s expected to be %r, not %r:\n    %r" % (
-                    name, swinfo.argtype, val, ex))
+                    name, argtype, val, ex))
         else:
             return NotImplemented
 
@@ -388,19 +388,57 @@ class Application(object):
                 raise SwitchCombinationError("Given %s, the following are invalid %r" %
                     (swfuncs[func].swname, [swfuncs[f].swname for f in invalid]))
 
-        m_args, m_varargs, _, m_defaults = six.getargspec(self.main)
-        max_args = six.MAXSIZE if m_varargs else len(m_args) - 1
-        min_args = len(m_args) - 1 - (len(m_defaults) if m_defaults else 0)
+        m = six.getfullargspec(self.main)
+        max_args = six.MAXSIZE if m.varargs else len(m.args) - 1
+        min_args = len(m.args) - 1 - (len(m.defaults) if m.defaults else 0)
         if len(tailargs) < min_args:
             raise PositionalArgumentsError("Expected at least %d positional arguments, got %r" %
                 (min_args, tailargs))
         elif len(tailargs) > max_args:
             raise PositionalArgumentsError("Expected at most %d positional arguments, got %r" %
-                (max_args, tailargs))
+                (max_args, tailargs))            
+                
+        # Positional arguement validataion
+        if hasattr(self.main, 'positional'):
+            tailargs = self._positional_validate(tailargs, self.main.positional, self.main.positional_varargs, m.args[1:], m.varargs)
+            
+        elif hasattr(m, 'annotations'):
+            args_names = list(m.args[1:])
+            positional = [None]*len(args_names)
+            varargs = None
+            
+            
+             # All args are positional, so convert kargs to positional
+            for item in m.annotations:
+                if item == m.varargs:
+                    varargs = m.annotations[item]
+                else:
+                    positional[args_names.index(item)] = m.annotations[item]
+
+            tailargs = self._positional_validate(tailargs, positional, varargs,
+                                                 m.args[1:], m.varargs)
 
         ordered = [(f, a) for _, f, a in
             sorted([(sf.index, f, sf.val) for f, sf in swfuncs.items()])]
         return ordered, tailargs
+
+    def _positional_validate(self, args, validator_list, varargs, argnames, varargname):
+        """Makes sure args follows the validation given input"""
+        out_args = list(args)
+        
+        for i in range(min(len(args),len(validator_list))):
+            
+            if validator_list[i] is not None:
+                out_args[i] = self._handle_argument(args[i], validator_list[i], argnames[i])
+        
+        if len(args) > len(validator_list):
+            if varargs is not None:
+                out_args[len(validator_list):] = [
+                    self._handle_argument(a, varargs, varargname) for a in args[len(validator_list):]]
+            else:
+                out_args[len(validator_list):] = args[len(validator_list):]
+        
+        return out_args
 
     @classmethod
     def run(cls, argv = None, exit = True):  # @ReservedAssignment
@@ -473,23 +511,8 @@ class Application(object):
         """
 
         inst = cls("")
-        swfuncs = {}
-        for index, (swname, val) in enumerate(switches.items(), 1):
-            switch = getattr(cls, swname)
-            swinfo = inst._switches_by_func[switch._switch_info.func]
-            if isinstance(switch, CountOf):
-                p = (range(val),)
-            elif swinfo.list and not hasattr(val, "__iter__"):
-                raise SwitchError("Switch %r must be a sequence (iterable)" % (swname,))
-            elif not swinfo.argtype:
-                # a flag
-                if val not in (True, False, None, Flag):
-                    raise SwitchError("Switch %r is a boolean flag" % (swname,))
-                p = ()
-            else:
-                p = (val,)
-            swfuncs[swinfo.func] = SwitchParseInfo(swname, p, index)
-
+        
+        swfuncs = inst._parse_kwd_args(switches)
         ordered, tailargs = inst._validate_args(swfuncs, args)
         for f, a in ordered:
             f(inst, *a)
@@ -507,6 +530,26 @@ class Application(object):
             cleanup()
 
         return inst, retcode
+
+    def _parse_kwd_args(self, switches):
+        """Parses keywords (positional arguments), used by invoke."""
+        swfuncs = {}
+        for index, (swname, val) in enumerate(switches.items(), 1):
+            switch = getattr(type(self), swname)
+            swinfo = self._switches_by_func[switch._switch_info.func]
+            if isinstance(switch, CountOf):
+                p = (range(val),)
+            elif swinfo.list and not hasattr(val, "__iter__"):
+                raise SwitchError("Switch %r must be a sequence (iterable)" % (swname,))
+            elif not swinfo.argtype:
+                # a flag
+                if val not in (True, False, None, Flag):
+                    raise SwitchError("Switch %r is a boolean flag" % (swname,))
+                p = ()
+            else:
+                p = (val,)
+            swfuncs[swinfo.func] = SwitchParseInfo(swname, p, index)
+        return swfuncs
 
     def main(self, *args):
         """Implement me (no need to call super)"""
@@ -555,13 +598,13 @@ class Application(object):
         if self.DESCRIPTION:
             print(self.COLOR_DISCRIPTION[self.DESCRIPTION.strip() + '\n'])
 
-        m_args, m_varargs, _, m_defaults = six.getargspec(self.main)
-        tailargs = m_args[1:]  # skip self
-        if m_defaults:
-            for i, d in enumerate(reversed(m_defaults)):
+        m = six.getfullargspec(self.main)
+        tailargs = m.args[1:]  # skip self
+        if m.defaults:
+            for i, d in enumerate(reversed(m.defaults)):
                 tailargs[-i - 1] = "[%s=%r]" % (tailargs[-i - 1], d)
-        if m_varargs:
-            tailargs.append("%s..." % (m_varargs,))
+        if m.varargs:
+            tailargs.append("%s..." % (m.varargs,))
         tailargs = " ".join(tailargs)
 
         with self.COLOR_USAGE:

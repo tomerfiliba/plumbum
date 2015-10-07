@@ -1,11 +1,11 @@
-import sys
 import unittest
-from plumbum import cli
 import time
 
 from plumbum import cli, local
 from plumbum.cli.terminal import ask, choose, hexdump, Progress
-from plumbum.lib import six, captured_stdout, StringIO
+from plumbum.lib import captured_stdout, ensure_skipIf
+
+ensure_skipIf(unittest)
 
 class TestApp(cli.Application):
     @cli.switch(["a"])
@@ -28,6 +28,8 @@ class TestApp(cli.Application):
         self.eggs = "lalala"
         self.eggs = old
         self.tailargs = args
+        
+
 
 class Geet(cli.Application):
     debug = cli.Flag("--debug")
