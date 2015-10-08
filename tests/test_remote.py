@@ -79,17 +79,13 @@ class RemotePathTest(unittest.TestCase):
 class BaseRemoteMachineTest(object):
     TUNNEL_PROG = r"""import sys, socket
 s = socket.socket()
-if sys.version_info[0] < 3:
-    b = lambda x: x
-else:
-    b = lambda x: bytes(x, "utf8")
 s.bind(("", 0))
 s.listen(1)
-sys.stdout.write(b("%s\n" % (s.getsockname()[1],)))
+sys.stdout.write("{0}\n".format( s.getsockname()[1]))
 sys.stdout.flush()
 s2, _ = s.accept()
 data = s2.recv(100)
-s2.send(b("hello ") + data)
+s2.send(b"hello " + data)
 s2.close()
 s.close()
 """
@@ -202,7 +198,7 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
         with self._connect() as rem:
             p = (rem.python["-u"] << self.TUNNEL_PROG).popen()
             try:
-                port = int(p.stdout.readline().strip())
+                port = int(p.stdout.readline().decode("ascii").strip())
             except ValueError:
                 print(p.communicate())
                 raise
@@ -213,9 +209,9 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
                 s.send(six.b("world"))
                 data = s.recv(100)
                 s.close()
-                self.assertEqual(data, six.b("hello world"))
 
-            p.communicate()
+            print(p.communicate())
+            self.assertEqual(data, b"hello world")
 
     def test_get(self):
         with self._connect() as rem:
@@ -294,10 +290,12 @@ else:
                     raise
 
                 s = rem.connect_sock(port)
-                s.send(six.b("world"))
+                s.send(b"world")
                 data = s.recv(100)
                 s.close()
-                self.assertEqual(data, six.b("hello world"))
+            
+            print(p.communicate())
+            self.assertEqual(data, b"hello world")
 
         def test_piping(self):
             with self._connect() as rem:
