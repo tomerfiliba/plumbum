@@ -5,7 +5,7 @@ from plumbum import cli, local
 from plumbum.cli.terminal import ask, choose, hexdump, Progress
 from plumbum.lib import captured_stdout
 
-class TestApp(cli.Application):
+class SimpleApp(cli.Application):
     @cli.switch(["a"])
     def spam(self):
         print("!!a")
@@ -90,25 +90,25 @@ if not hasattr(unittest.TestCase, "assertIn"):
 
 class CLITest(unittest.TestCase):
     def test_meta_switches(self):
-        _, rc = TestApp.run(["foo", "-h"], exit = False)
+        _, rc = SimpleApp.run(["foo", "-h"], exit = False)
         self.assertEqual(rc, 0)
-        _, rc = TestApp.run(["foo", "--version"], exit = False)
+        _, rc = SimpleApp.run(["foo", "--version"], exit = False)
         self.assertEqual(rc, 0)
 
     def test_okay(self):
-        _, rc = TestApp.run(["foo", "--bacon=81"], exit = False)
+        _, rc = SimpleApp.run(["foo", "--bacon=81"], exit = False)
         self.assertEqual(rc, 0)
 
-        inst, rc = TestApp.run(["foo", "--bacon=81", "-a", "-v", "-e", "7", "-vv",
+        inst, rc = SimpleApp.run(["foo", "--bacon=81", "-a", "-v", "-e", "7", "-vv",
             "--", "lala", "-e", "7"], exit = False)
         self.assertEqual(rc, 0)
         self.assertEqual(inst.eggs, "7")
 
     def test_failures(self):
-        _, rc = TestApp.run(["foo"], exit = False)
+        _, rc = SimpleApp.run(["foo"], exit = False)
         self.assertEqual(rc, 2)
 
-        _, rc = TestApp.run(["foo", "--bacon=hello"], exit = False)
+        _, rc = SimpleApp.run(["foo", "--bacon=hello"], exit = False)
         self.assertEqual(rc, 2)
 
     def test_subcommands(self):
@@ -163,21 +163,21 @@ class CLITest(unittest.TestCase):
         self.assertIn("hello world", stream.getvalue())
 
     def test_reset_switchattr(self):
-        inst, rc = TestApp.run(["foo", "--bacon=81", "-e", "bar"], exit=False)
+        inst, rc = SimpleApp.run(["foo", "--bacon=81", "-e", "bar"], exit=False)
         self.assertEqual(rc, 0)
         self.assertEqual(inst.eggs, "bar")
 
-        inst, rc = TestApp.run(["foo", "--bacon=81"], exit=False)
+        inst, rc = SimpleApp.run(["foo", "--bacon=81"], exit=False)
         self.assertEqual(rc, 0)
         self.assertEqual(inst.eggs, None)
 
     def test_invoke(self):
-        inst, rc = TestApp.invoke("arg1", "arg2", eggs="sunny", bacon=10, verbose=2)
+        inst, rc = SimpleApp.invoke("arg1", "arg2", eggs="sunny", bacon=10, verbose=2)
         self.assertEqual((inst.eggs, inst.verbose, inst.tailargs), ("sunny", 2, ("arg1", "arg2")))
 
     def test_env_var(self):
         with captured_stdout() as stream:
-            _, rc = TestApp.run(["arg", "--bacon=10"], exit=False)
+            _, rc = SimpleApp.run(["arg", "--bacon=10"], exit=False)
             self.assertEqual(rc, 0)
             self.assertIn("10", stream.getvalue())
 
@@ -186,7 +186,7 @@ class CLITest(unittest.TestCase):
                 PLUMBUM_TEST_BACON='20',
                 PLUMBUM_TEST_EGGS='raw',
             ):
-                inst, rc = TestApp.run(["arg"], exit=False)
+                inst, rc = SimpleApp.run(["arg"], exit=False)
 
             self.assertEqual(rc, 0)
             self.assertIn("20", stream.getvalue())
@@ -194,7 +194,7 @@ class CLITest(unittest.TestCase):
 
     def test_mandatory_env_var(self):
         with captured_stdout() as stream:
-            _, rc = TestApp.run(["arg"], exit = False)
+            _, rc = SimpleApp.run(["arg"], exit = False)
             self.assertEqual(rc, 2)
             self.assertIn("bacon is mandatory", stream.getvalue())
 
