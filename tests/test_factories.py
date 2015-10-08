@@ -162,14 +162,6 @@ class TestANSIColor(unittest.TestCase):
         output = sys.stdout.getvalue().strip()
         self.assertEquals(output,str(colors.blue))
 
-    def testDirectCallArgs(self):
-        colors.blue("This is")
-
-        if not hasattr(sys.stdout, "getvalue"):
-            self.fail("Need to run in buffered mode!")
-
-        output = sys.stdout.getvalue().strip()
-        self.assertEquals(output,str(colors.blue | "This is"))
 
     def testPrint(self):
         colors.yellow.print('This is printed to stdout')

@@ -147,19 +147,8 @@ This will set the color (using sys.stdout by default) to that color, and restore
 The second method is to manually wrap a string. This can be done with ``color.wrap("string")`` or ``color["string"]``.
 These produce strings that can be further manipulated or printed.
 
-.. note::
 
-  ``color * "string"`` is also a valid way to wrap strings and has a well understood order of
-  operations by most people writing or reading code. Under some conditions, having an operator
-  that takes preference over concatination is prefered. However, a bug in Python 2.6 causes right
-  multiplication with a string, such as ``"string" * color``, to be impossible to implement.
-  This was fixed in all newer Pythons. If you are not planning on `supporting Python
-  2.6 <http://www.curiousefficiency.org/posts/2015/04/stop-supporting-python26.html>`_, feel
-  free to use this method.
-
-Finally, you can also print a color to stdout directly using ``color("string")`` or
-``color.print("string")``. Since the first can be an unsafe operation if you forget an argument,
-you may prefer the latter. This
+Finally, you can also print a color to stdout directly using ``color.print("string")``. This
 has the same syntax as the Python 3 print function. In Python 2, if you do not have
 ``from __future__ import print_function`` enabled, ``color.print_("string")`` is provided as
 an alternative, following the PyQT convention for method names that match reserved Python syntax.

@@ -470,15 +470,12 @@ class Style(object):
         ``"color | "String"`` syntax too. """
         return self.__and__(other)
 
-    def __call__(self, *printables, **kargs):
+    def __call__(self):
         """\
         This is a shortcut to print color immediately to the stdout. (Not safe)
-        If called with an argument, will wrap that argument and print (safe)"""
+        """
 
-        if printables or kargs:
-            return self.print(*printables, **kargs)
-        else:
-            self.now()
+        self.now()
 
     def now(self):
         '''Immediately writes color to stdout. (Not safe)'''
