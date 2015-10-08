@@ -1,8 +1,9 @@
 import unittest
 from plumbum import local, SshMachine
 from plumbum.path.utils import copy, delete, move
+from plumbum._testtools import skip_on_windows
 
-
+@skip_on_windows
 class UtilsTest(unittest.TestCase):
     def test_copy_move_delete(self):
         from plumbum.cmd import touch

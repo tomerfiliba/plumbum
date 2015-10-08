@@ -1,0 +1,27 @@
+environment:
+  matrix:
+    - PYTHON: "C:\\Python27"
+    - PYTHON: "C:\\Python34"
+# Python 3.5 has to rebuild Crypto, because binaries are not available yet
+
+install:
+  - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+
+  # Check that we have the expected version and architecture for Python
+  - python --version
+  - python -c "import struct; print(struct.calcsize('P') * 8)"
+
+  # Upgrade to the latest version of pip to avoid it displaying warnings
+  # about it being out of date.
+  - pip install --disable-pip-version-check --user --upgrade pip
+
+  - pip install -r dev-requirements.txt
+  - pip install pypiwin32
+  - pip install .
+
+build: false
+
+test_script:
+  - ps: cd tests
+  - python -m pytest
+

@@ -40,7 +40,7 @@ class TestVisualColor(unittest.TestCase):
         print()
         print(colors.fg.red["This is in red"], "but this is not")
         print(colors.fg.green + "Hi, " + colors.bg[23]
-              + "This is on a BG" + ~colors.bg + " and this is not")
+              + "This is on a BG" + ~colors.bg + " and this is not but is still green.")
         colors.yellow.print("This is printed from color.")
         colors.reset()
 
