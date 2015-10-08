@@ -377,6 +377,19 @@ class LocalMachineTest(unittest.TestCase):
 
         self.assertFalse(dir.exists())
 
+    def test_direct_open_tmpdir(self):
+        from plumbum.cmd import cat
+        with local.tempdir() as dir:
+            self.assertTrue(dir.is_dir())
+            data = six.b("hello world")
+            with open(dir / "test.txt", "wb") as f:
+                f.write(data)
+            with open(dir / "test.txt", "rb") as f:
+                self.assertEqual(f.read(), data)
+
+        self.assertFalse(dir.exists())
+
+
     def test_read_write(self):
         with local.tempdir() as tmp:
             data = six.b("hello world")
