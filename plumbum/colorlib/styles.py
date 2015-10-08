@@ -18,6 +18,7 @@ from plumbum.colorlib.names import FindNearest, attributes_ansi
 from plumbum.lib import six
 from plumbum import local
 from abc import abstractmethod
+import platform
 ABC = six.ABC
 
 __all__ = ['Color', 'Style', 'ANSIStyle', 'HTMLStyle', 'ColorNotFound', 'AttributeNotFound']
@@ -35,7 +36,7 @@ def get_color_repr():
 
     # Some terminals set TERM=xterm for compatibility
     if term == "xterm-256color" or term == "xterm":
-        return 4 if os.name == 'posix' else 3
+        return 3 if platform.system() == 'Darwin' else 4
     elif term == "xterm-16color":
         return 2
     elif os.name == 'nt':
