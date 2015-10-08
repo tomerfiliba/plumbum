@@ -87,4 +87,4 @@ if __name__ == '__main__':
     ac = ArgCompleter()
     ac.send_completions(['wowsa'])
     ac.done()
-    print("This is the program")
+    print("This is a test program")
