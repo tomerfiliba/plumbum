@@ -1,25 +1,23 @@
 sudo: required
 language: python
-python:
-    - "2.6"
-    - "2.7"
-    - "3.2"
-    - "3.3"
-    - "3.4"
-    - "3.5"
-    - "nightly"
-    - "pypy"
+matrix:
+  include:
+    - python: 2.6
+    - python: 2.7
+    - python: 3.2
+    - python: 3.3
+    - python: 3.4
+    - python: 3.5
+    - python: nightly
+    - python: pypy
+    - language: generic
+      os: osx
+    - language: generic
+      os: osx
+      env: PY3=3
 
-before_script:
-    - "pip install paramiko || true"
-    - "echo NoHostAuthenticationForLocalhost yes >> ~/.ssh/config"
-    - "echo StrictHostKeyChecking no >> ~/.ssh/config"
-    - "ssh-keygen -q -f ~/.ssh/id_rsa -N ''"
-    - "cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys"
-    - "python setup.py install"
-    - "cd tests"
-
-script: nosetests -vv -d
+install: .ci/travis.sh
+script: cd tests && python$PY3 -m pytest
 
 notifications:
     email:

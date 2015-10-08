@@ -6,16 +6,16 @@ import time
 import logging
 from plumbum import RemotePath, SshMachine, ProcessExecutionError, local, ProcessTimedOut, NOHUP
 from plumbum import CommandNotFound
-from plumbum.lib import six, ensure_skipIf
+from plumbum.lib import six
+from plumbum._testtools import skipIf, skip_without_chown, skip_on_windows
 
-ensure_skipIf(unittest)
 
 #TEST_HOST = "192.168.1.143"
 TEST_HOST = "127.0.0.1"
 if TEST_HOST not in ("::1", "127.0.0.1", "localhost"):
     import plumbum
     plumbum.local.env.path.append("c:\\Program Files\\Git\\bin")
-
+@skip_on_windows
 class RemotePathTest(unittest.TestCase):
     def _connect(self):
         return SshMachine(TEST_HOST)
@@ -63,7 +63,7 @@ class RemotePathTest(unittest.TestCase):
         strcmp(p1.with_name("something.tar"), RemotePath(self._connect(), "/some/long/path/to/something.tar"))
         strcmp(p2.with_name("something.tar"), RemotePath(self._connect(), "something.tar"))
 
-    @unittest.skipIf(not hasattr(os, "chown"), "os.chown not supported")
+    @skip_without_chown
     def test_chown(self):
         with self._connect() as rem:
             with rem.tempdir() as dir:
@@ -75,17 +75,17 @@ class RemotePathTest(unittest.TestCase):
                 p.chown(p.uid.name)
                 self.assertEqual(p.uid, os.getuid())
 
-
+@skip_on_windows
 class BaseRemoteMachineTest(object):
     TUNNEL_PROG = r"""import sys, socket
 s = socket.socket()
 s.bind(("", 0))
 s.listen(1)
-sys.stdout.write("%s\n" % (s.getsockname()[1],))
+sys.stdout.write("{0}\n".format( s.getsockname()[1]))
 sys.stdout.flush()
 s2, _ = s.accept()
 data = s2.recv(100)
-s2.send("hello " + data)
+s2.send(b"hello " + data)
 s2.close()
 s.close()
 """
@@ -189,7 +189,7 @@ s.close()
             else:
                 self.fail("Expected an execution error")
 
-
+@skip_on_windows
 class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
     def _connect(self):
         return SshMachine(TEST_HOST)
@@ -198,7 +198,7 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
         with self._connect() as rem:
             p = (rem.python["-u"] << self.TUNNEL_PROG).popen()
             try:
-                port = int(p.stdout.readline().strip())
+                port = int(p.stdout.readline().decode("ascii").strip())
             except ValueError:
                 print(p.communicate())
                 raise
@@ -209,9 +209,9 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
                 s.send(six.b("world"))
                 data = s.recv(100)
                 s.close()
-                self.assertEqual(data, six.b("hello world"))
 
-            p.communicate()
+            print(p.communicate())
+            self.assertEqual(data, b"hello world")
 
     def test_get(self):
         with self._connect() as rem:
@@ -247,7 +247,7 @@ class RemoteMachineTest(unittest.TestCase, BaseRemoteMachineTest):
                 self.assertEqual(printenv.with_env(FOO = "sea", BAR = "world")("FOO"), "sea\n")
                 self.assertEqual(printenv.with_env(FOO = "sea", BAR = "world")("BAR"), "world\n")
 
-    @unittest.skipIf('useradd' not in local, "System does not have useradd (Mac?)")
+    @skipIf('useradd' not in local, "System does not have useradd (Mac?)")
     def test_sshpass(self):
         with local.as_root():
             local["useradd"]("-m", "-b", "/tmp", "testuser")
@@ -275,7 +275,7 @@ except ImportError:
     print("Paramiko not avilable")
 else:
     from plumbum.machines.paramiko_machine import ParamikoMachine
-
+    @skip_on_windows
     class TestParamikoMachine(unittest.TestCase, BaseRemoteMachineTest):
         def _connect(self):
             return ParamikoMachine(TEST_HOST, missing_host_policy = paramiko.AutoAddPolicy())
@@ -290,10 +290,12 @@ else:
                     raise
 
                 s = rem.connect_sock(port)
-                s.send(six.b("world"))
+                s.send(b"world")
                 data = s.recv(100)
                 s.close()
-                self.assertEqual(data, six.b("hello world"))
+            
+            print(p.communicate())
+            self.assertEqual(data, b"hello world")
 
         def test_piping(self):
             with self._connect() as rem:

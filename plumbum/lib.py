@@ -27,14 +27,13 @@ class six(object):
     A light-weight version of six (which works on IronPython)
     """
     PY3 = sys.version_info[0] >= 3
-    ABC = ABCMeta('ABC', (object,), {'__module__':__name__})
+    ABC = ABCMeta('ABC', (object,), {'__module__':__name__, '__slots__':()})
 
-    # Be sure to use named-tuple access, so that different order doesn't affect usage
+    # Be sure to use named-tuple access, so that usage is not affected
     try:
-        getargspec = staticmethod(inspect.getargspec)
+        getfullargspec = staticmethod(inspect.getfullargspec)
     except AttributeError:
-        getargspec = staticmethod(lambda func: inspect.getfullargspec(func)[:4])
-
+        getfullargspec = staticmethod(inspect.getargspec) # extra fields will not be available
 
     if PY3:
         integer_types = (int,)
@@ -78,28 +77,6 @@ if six.PY3:
 else:
     from StringIO import StringIO
 
-def ensure_skipIf(unittest):
-    """
-    This will ensure that unittest has skipIf. Call like::
-
-        import unittest
-        ensure_skipIf(unittest)
-    """
-
-    if not hasattr(unittest, "skipIf"):
-        import logging
-        import functools
-        def skipIf(condition, reason):
-            def deco(func):
-                if not condition:
-                    return func
-                else:
-                    @functools.wraps(func)
-                    def wrapper(*args, **kwargs):
-                        logging.warn("skipping test: "+reason)
-                    return wrapper
-            return deco
-        unittest.skipIf = skipIf
 
 @contextmanager
 def captured_stdout(stdin = ""):
