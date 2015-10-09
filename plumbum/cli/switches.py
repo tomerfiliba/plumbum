@@ -262,24 +262,24 @@ class CountOf(SwitchAttr):
 class positional(object):
     """
     Runs a validator on the main function for a class.    
-    This should be used like this:
+    This should be used like this::
     
-    class MyApp(cli.Application):
-        @cli.positional(cli.Range(1,10), cli.ExistingFile)
-        def main(self, x, *f):
-            # x is a range, f's are all ExistingFile's)
+        class MyApp(cli.Application):
+            @cli.positional(cli.Range(1,10), cli.ExistingFile)
+            def main(self, x, *f):
+                # x is a range, f's are all ExistingFile's)
     
-    Or, Python 3 only:
+    Or, Python 3 only::
     
-    class MyApp(cli.Application):
-        def main(self, x : cli.Range(1,10), *f : cli.ExistingFile):
-            # x is a range, f's are all ExistingFile's)
+        class MyApp(cli.Application):
+            def main(self, x : cli.Range(1,10), *f : cli.ExistingFile):
+                # x is a range, f's are all ExistingFile's)
         
         
     If you do not want to validate on the annotations, use this decorator (
     even if empty) to override annotation validation.
     
-    Validators should be callable, and should have a .choices() function with
+    Validators should be callable, and should have a ``.choices()`` function with
     possible choices. (For future argument completion, for example)
     
     Default arguments do not go through the validator.
