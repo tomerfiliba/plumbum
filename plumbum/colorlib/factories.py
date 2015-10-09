@@ -176,6 +176,21 @@ class StyleFactory(ColorFactory):
 
         return prev if isinstance(prev, self._style) else prev.reset
 
+        
+    def filter(self, colored_string):
+        """Filters out colors in a string, returning only the name."""
+        if isinstance(colored_string, self._style):
+            return colored_string
+        return self._style.string_filter_ansi(colored_string)
+
+    def contains_colors(self, colored_string):
+        """Checks to see if a string contains colors."""
+        return self._style.string_contains_colors(colored_string)
+
+    def extract(self, colored_string):
+        """Gets colors from an ansi string, returns those colors"""
+        return self._style.from_ansi(colored_string, True)
+
     def load_stylesheet(self, stylesheet=default_styles):
         for item in stylesheet:
             setattr(self, item, self.get_colors_from_string(stylesheet[item]))

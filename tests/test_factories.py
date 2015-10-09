@@ -127,7 +127,7 @@ class TestANSIColor(unittest.TestCase):
     def testUndoColor(self):
         self.assertEqual('\033[39m', ~colors.fg)
         self.assertEqual('\033[49m', ~colors.bg)
-        self.assertEqual('\033[21m', ~colors.bold)
+        self.assertEqual('\033[22m', ~colors.bold)
         self.assertEqual('\033[22m', ~colors.dim)
         for i in range(7):
             self.assertEqual('\033[39m', ~colors(i))

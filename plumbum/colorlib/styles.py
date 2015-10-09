@@ -342,6 +342,9 @@ class Style(object):
     end = '\n'
     """The endline character. Override if needed in subclasses."""
 
+    ANSI_REG = re.compile('\033' + r'\[([\d;]+)m')
+    """The regular expression that finds ansi codes in a string."""
+
     @property
     def stdout(self):
         """\
@@ -526,7 +529,7 @@ class Style(object):
             else:
                 # Fixing bold inverse being 22 instead of 21 on some terminals:
                 codes.append(attributes_ansi[attribute]
-                        + 20 if attributes_ansi[attribute]!=1 else 21 )
+                        + 20 if attributes_ansi[attribute]!=1 else 22 )
 
         if self.fg:
             codes.extend(self.fg.ansi_codes)
@@ -575,18 +578,17 @@ class Style(object):
 
 
     @classmethod
-    def from_ansi(cls, ansi_string):
-        """This generated a style from an ansi string."""
+    def from_ansi(cls, ansi_string, filter_resets = False):
+        """This generated a style from an ansi string. Will ignore resets if filter_resets is True."""
         result = cls()
-        reg = re.compile('\033' + r'\[([\d;]+)m')
-        res = reg.search(ansi_string)
+        res = cls.ANSI_REG.search(ansi_string)
         for group in res.groups():
             sequence = map(int,group.split(';'))
-            result.add_ansi(sequence)
+            result.add_ansi(sequence, filter_resets)
         return result
 
-    def add_ansi(self, sequence):
-        """Adds a sequence of ansi numbers to the class"""
+    def add_ansi(self, sequence, filter_resets = False):
+        """Adds a sequence of ansi numbers to the class. Will ignore resets if filter_resets is True."""
 
         values = iter(sequence)
         try:
@@ -612,15 +614,17 @@ class Style(object):
                     else:
                         raise ColorNotFound("the value 5 or 2 should follow a 38 or 48")
                 elif value==0:
-                    self.isreset = True
+                    if filter_resets is False:
+                        self.isreset = True
                 elif value in attributes_ansi.values():
                     for name in attributes_ansi:
                         if value == attributes_ansi[name]:
                             self.attributes[name] = True
                 elif value in (20+n for n in attributes_ansi.values()):
-                    for name in attributes_ansi:
-                        if value == attributes_ansi[name] + 20:
-                            self.attributes[name] = False
+                    if filter_resets is False:
+                        for name in attributes_ansi:
+                            if value == attributes_ansi[name] + 20:
+                                self.attributes[name] = False
                 elif 30 <= value <= 37:
                     self.fg = self.color_class.from_simple(value-30)
                 elif 40 <= value <= 47:
@@ -630,13 +634,26 @@ class Style(object):
                 elif 100 <= value <= 107:
                     self.bg = self.color_class.from_simple(value-100+8, fg=False)
                 elif value == 39:
-                    self.fg = self.color_class()
+                    if filter_resets is False:
+                        self.fg = self.color_class()
                 elif value == 49:
-                    self.bg = self.color_class(fg=False)
+                    if filter_resets is False:
+                        self.bg = self.color_class(fg=False)
                 else:
                     raise ColorNotFound("The code {0} is not recognised".format(value))
         except StopIteration:
             return
+
+    @classmethod
+    def string_filter_ansi(cls, colored_string):
+        """Filters out colors in a string, returning only the name."""
+        return cls.ANSI_REG.sub('', colored_string)
+
+    @classmethod
+    def string_contains_colors(cls, colored_string):
+        """Checks to see if a string contains colors."""
+        return len(cls.ANSI_REG.findall(colored_string)) > 0
+
 
     def to_representation(self, rep):
         """This converts both colors to a specific representation"""
