@@ -216,28 +216,6 @@ these values. Here's an example ::
    All of these convert the argument to a :ref:`local path <guide-paths>`.
 
 
-Positional Arguements
-^^^^^^^^^^^^^^^^^^^^^
-
-You can supply positional argument validators using the ``cli.positional`` decorator. Simply
-pass the validators in the decorator matching the names in the main function. For example::
-
-    class MyApp(cli.Application):
-        @positional(cli.ExistingFile, cli.NonexistantPath)
-        def main(self, infile, *outfiles):
-            "infile is a path, outfiles are a list of paths, proper errors are given"
-
-If you only want to run your application in Python 3, you can also use annotations to
-specify the validators. For example::
-
-    class MyApp(cli.Application):
-        def main(self, infile : cli.ExistingFile, *outfiles : cli.NonexistantPath):
-        "Identical to above MyApp"
-
-Annotations are ignored if the positional decorator is present.
-    
-.. versionadded:: 1.6.0
-
 Repeatable Switches
 ^^^^^^^^^^^^^^^^^^^
 Many times, you would like to allow a certain switch to be given multiple times. For instance,
@@ -420,7 +398,30 @@ With varargs::
         -h, --help                 Prints this help message and quits
         -v, --version              Prints the program's version and quits
 
+Positional argument validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can supply positional argument validators using the ``cli.positional`` decorator. Simply
+pass the validators in the decorator matching the names in the main function. For example::
+
+    class MyApp(cli.Application):
+        @positional(cli.ExistingFile, cli.NonexistantPath)
+        def main(self, infile, *outfiles):
+            "infile is a path, outfiles are a list of paths, proper errors are given"
+
+If you only want to run your application in Python 3, you can also use annotations to
+specify the validators. For example::
+
+    class MyApp(cli.Application):
+        def main(self, infile : cli.ExistingFile, *outfiles : cli.NonexistantPath):
+        "Identical to above MyApp"
+
+Annotations are ignored if the positional decorator is present.
+    
+.. versionadded:: 1.6.0
+
 .. _guide-subcommands:
+
 
 Sub-commands
 ------------
