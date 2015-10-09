@@ -77,19 +77,37 @@ class-level attributes, such as ``PROGNAME``, ``VERSION`` and ``DESCRIPTION``. F
 Colors
 ^^^^^^
         
-Colors are supported through the class level attributes
-``COLOR_PROGNAME``,
-``COLOR_DISCRIPTION``,
-``COLOR_VERSION``,
-``COLOR_HEADING``,
-``COLOR_USAGE``,
-``COLOR_SUBCOMMANDS``,
-``COLOR_GROUPS[]``, and
-``COLOR_GROUPS_BODY[]``,
-which should contain anything that is valid to pass to ``plumbum.colors`` (Styles, ansi color sequences,
-color strings). The dictionaries support custom colors
-for named groups. The default is ``colors.do_nothing``, but if you just want more
-colorful defaults, subclass ``cli.ColorfulApplication``.
+Colors are supported. You can use a colored string on ``PROGNAME``, ``VERSION`` and ``DESCRIPTION`` directly.
+If you set ``PROGNAME`` to a color, you can get auto-naming and color.
+The color of the usage string is available as ``COLOR_USAGE``, and the different groups can be colored with a
+dictionary ``COLOR_GROUPS``.
+
+For instance, the following is valid::
+
+    class MyApp(cli.Application):
+        PROGNAME = colors.green
+        VERSION = colors.blue | "1.0.2"
+        COLOR_GROUPS = {"Meta-switches" : colors.bold & colors.yellow}
+        opts =  cli.Flag("--ops", help=colors.magenta | "This is help")
+
+
+
+.. raw:: html
+
+    <pre>
+    <font color="#00C000">SimpleColorCLI.py</font> <font color="#0000C0">1.0.2</font>
+    
+    Usage:
+        <font color="#00C000">SimpleColorCLI.py</font> [SWITCHES] 
+
+    <font color="#C0C000"><b>Meta-switches</b></font>
+        <font color="#C0C000"><b>-h, --help</b></font>         <font color="#C0C000"><b>Prints this help message and quits</b></font>
+        <font color="#C0C000"><b>--help-all</b></font>         <font color="#C0C000"><b>Print help messages of all subcommands and quit</b></font>
+        <font color="#C0C000"><b>-v, --version</b></font>      <font color="#C0C000"><b>Prints the program's version and quits</b></font>
+
+    Switches
+        --ops              <font color="#C000C0">This is help</font>
+    </pre>
 
 .. versionadded:: 1.6
 
@@ -218,7 +236,7 @@ specify the validators. For example::
 
 Annotations are ignored if the positional decorator is present.
     
-.. versionadded:: 1.5.0
+.. versionadded:: 1.6.0
 
 Repeatable Switches
 ^^^^^^^^^^^^^^^^^^^
@@ -325,7 +343,7 @@ if the switch is given) and ``CountingAttr`` (which counts the number of occurre
         enable_logging = cli.Flag("--no-log", default = True)
         verbosity_level = cli.CountingAttr("-v")
         
-        def main(self):
+        def main(selfy):
             print self.log_file, self.enable_logging, self.verbosity_level
 
 .. code-block:: bash

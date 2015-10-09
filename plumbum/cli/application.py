@@ -620,8 +620,8 @@ class Application(object):
                     prefix = swnames + argtype
                     yield si, prefix, self.COLOR_GROUPS[grp]
 
-                    if show_groups:
-                        print("")
+                if show_groups:
+                    print("")
 
         sw_width = max(len(prefix) for si, prefix, color in switchs(by_groups, False)) + 4
         cols, _ = get_terminal_size()
