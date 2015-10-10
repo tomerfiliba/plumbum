@@ -1,9 +1,9 @@
 1.6.0 (In development)
 ----------------------
-* Added support for Python 3.5, PyPy, and better Windows and Mac support, with CI testing (`#218 <https://github.com/tomerfiliba/plumbum/pull/218>`_, `#217 <https://github.com/tomerfiliba/plumbum/pull/217>`_, #226 <https://github.com/tomerfiliba/plumbum/pull/226>`_)
+* Added support for Python 3.5, PyPy, and better Windows and Mac support, with CI testing (`#218 <https://github.com/tomerfiliba/plumbum/pull/218>`_, `#217 <https://github.com/tomerfiliba/plumbum/pull/217>`_, `#226 <https://github.com/tomerfiliba/plumbum/pull/226>`_)
 * Colors: Added colors module, support for colors added to cli (`#213 <https://github.com/tomerfiliba/plumbum/pull/213>`_)
 * Machines: Added ``.get()`` method for checking several commands. (`#205 <https://github.com/tomerfiliba/plumbum/pull/205>`_)
-* Machines: ``local.cwd`` now is the current directory even if you change the directory with non-Plumbum methods. (`#207 <https://github.com/tomerfiliba/plumbum/pull/207>`_) 
+* Machines: ``local.cwd`` now is the current directory even if you change the directory with non-Plumbum methods (fixes unexpected behavior). (`#207 <https://github.com/tomerfiliba/plumbum/pull/207>`_) 
 * SSHMachine: Better error message for SSH (`#211 <https://github.com/tomerfiliba/plumbum/pull/211>`_)
 * SSHMachine: Support for FreeBSD remote (`#220 <https://github.com/tomerfiliba/plumbum/pull/220>`_)
 * Paths: Improved pathlib compatibility with several additions and renames (`#223 <https://github.com/tomerfiliba/plumbum/pull/223>`_)
