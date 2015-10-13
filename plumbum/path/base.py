@@ -180,6 +180,7 @@ class Path(str, six.ABC):
         """Returns ``True`` if this path exists, ``False`` otherwise"""
     @abstractmethod
     def stat(self):
+        """Returns the os.stats for a file"""
         pass
     @abstractmethod
     def with_name(self, name):
@@ -232,7 +233,7 @@ class Path(str, six.ABC):
         """Change ownership of this path.
 
         :param owner: The owner to set (either ``uid`` or ``username``), optional
-        :param owner: The group to set (either ``gid`` or ``groupname``), optional
+        :param group: The group to set (either ``gid`` or ``groupname``), optional
         :param recursive: whether to change ownership of all contained files and subdirectories.
                           Only meaningful when ``self`` is a directory. If ``None``, the value
                           will default to ``True`` if ``self`` is a directory, ``False`` otherwise.
