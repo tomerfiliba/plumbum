@@ -35,7 +35,7 @@ class RemotePathTest(unittest.TestCase):
         self.assertEqual("ftp://", p1.as_uri('ftp')[:6])
         self.assertEqual("ssh://", p1.as_uri('ssh')[:6])
         self.assertEqual("/some/long/path/to/file.txt", p1.as_uri()[-27:])
-        
+
     def test_stem(self):
         p = RemotePath(self._connect(), "/some/long/path/to/file.txt")
         self.assertEqual(p.stem, "file")
