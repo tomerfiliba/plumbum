@@ -95,45 +95,5 @@ properties for getting the username (``.user``), the home path (``.home``), and 
     >>> local.which("python")
     <Path c:\python32\python.exe>
 
-.. _guide-paths:
-
-Local Paths
-===========
-Apart from commands, Plumbum provides an easy to use path class that represents file system paths.
-You've already seen paths; for instance, ``local.cwd`` is one, and so is the result of 
-``local.which``. Paths are created by :func:`local.path() <platform.local_machine.LocalMachine.path>`,
-and you can join paths using ``/`` (division), perform globbing using ``//`` (floor division), 
-iterate over the files and subdirectories contained in a directory, read and write file contents, 
-etc. ::
-
-    >>> p = local.path("c:\\windows")
-    >>> p.exists()
-    True
-    >>> p.is_dir()
-    True
-    >>> p.is_file()
-    False
-    >>> p / "notepad.exe"
-    <LocalPath c:\windows\notepad.exe>
-    >>> (p / "notepad.exe").is_file()
-    True
-    >>> (p / "notepad.exe").with_suffix(".dll")
-    <LocalPath c:\windows\notepad.dll>
-    >>> for p2, _ in zip(p, range(3)):
-    ...     print p2
-    ...
-    c:\windows\addins
-    c:\windows\appcompat
-    c:\windows\apppatch
-    >>> p // "*.dll"
-    [<LocalPath c:\windows\masetupcaller.dll>, ...] 
-    >>> p // "*/*.dll"
-    [<LocalPath c:\windows\apppatch\acgenral.dll>, ...]
-    >>> local.cwd / "docs" // "*.rst"
-    [<LocalPath d:\workspace\plumbum\docs\cli.rst>, ...]
-
-
-If you need to **copy**, **move**, or **delete** paths, see the :ref:`utils modules <guide-utils>`
-
 
 

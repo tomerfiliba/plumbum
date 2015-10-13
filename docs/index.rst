@@ -110,6 +110,7 @@ you read it in order.
    :maxdepth: 2
    
    local_commands
+   paths
    local_machine
    remote
    utils

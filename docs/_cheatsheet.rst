@@ -21,7 +21,7 @@ also :ref:`import commands <import-hack>`:
     >>> grep
     LocalCommand(<LocalPath /bin/grep>)
 
-See :ref:`guide-local-commands`.
+See :ref:`guide-local-commands` and :ref:`guide-paths`.
 
 Piping
 ------
