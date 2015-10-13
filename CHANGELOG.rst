@@ -6,6 +6,7 @@
 * Machines: ``local.cwd`` now is the current directory even if you change the directory with non-Plumbum methods (fixes unexpected behavior). (`#207 <https://github.com/tomerfiliba/plumbum/pull/207>`_) 
 * SSHMachine: Better error message for SSH (`#211 <https://github.com/tomerfiliba/plumbum/pull/211>`_)
 * SSHMachine: Support for FreeBSD remote (`#220 <https://github.com/tomerfiliba/plumbum/pull/220>`_)
+* Paths: Now a subclass of ``str``, can be opened directly (`#228 <https://github.com/tomerfiliba/plumbum/pull/228>`_)
 * Paths: Improved pathlib compatibility with several additions and renames (`#223 <https://github.com/tomerfiliba/plumbum/pull/223>`_)
 * Paths: Added globbing multiple patterns at once  (`#221 <https://github.com/tomerfiliba/plumbum/pull/221>`_)
 * Commands: added ``NOHUP`` modifier (`#221 <https://github.com/tomerfiliba/plumbum/pull/221>`_)
