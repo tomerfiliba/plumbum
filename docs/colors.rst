@@ -3,7 +3,7 @@
 Colors
 ------
 
-.. versionadded:: 1.6.0
+.. versionadded:: 1.6
 
 
 The purpose of the `plumbum.colors` library is to make adding

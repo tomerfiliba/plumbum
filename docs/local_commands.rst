@@ -38,7 +38,9 @@ not in the path. For example::
 An exception is still raised if none of the commands are found. Unlike ``[]`` access,
 an exception will be raised if the executable does not exist.
 
-.. versionadded:: 1.5.1
+.. versionadded:: 1.6
+
+    The ``.get`` method
 
 .. _import-hack:
 
@@ -176,7 +178,9 @@ objects that can be applied to your command to run it and get or test the retcod
    ``FG=True`` to ``TF`` or ``RETCODE``.
    For instance, ``cat["non/existing.file"] & TF(1,FG=True)``
 
-.. versionadded:: 1.5.0
+.. versionadded:: 1.5
+
+    The ``TF`` and ``RETCODE`` modifiers
 
 Run and Popen
 -------------
@@ -241,7 +245,9 @@ If you want to redirect the input or output to something other than ``nohup.out`
 
     >>> ls["-a"] & NOHUP(stdout='/dev/null') # Or None
 
-.. versionadded:: 1.6.0
+.. versionadded:: 1.6
+
+    The ``NOHUP`` modifier
 
 .. _guide-local-commands-nesting:
     

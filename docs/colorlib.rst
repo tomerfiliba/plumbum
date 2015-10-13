@@ -3,7 +3,7 @@
 Colorlib design
 ---------------
 
-.. versionadded:: 1.6.0
+.. versionadded:: 1.6
 
 
 The purpose of this document is to describe the system

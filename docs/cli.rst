@@ -76,7 +76,8 @@ class-level attributes, such as ``PROGNAME``, ``VERSION`` and ``DESCRIPTION``. F
 
 Colors
 ^^^^^^
-        
+.. versionadded:: 1.6
+       
 Colors are supported. You can use a colored string on ``PROGNAME``, ``VERSION`` and ``DESCRIPTION`` directly.
 If you set ``PROGNAME`` to a color, you can get auto-naming and color.
 The color of the usage string is available as ``COLOR_USAGE``, and the different groups can be colored with a
@@ -109,7 +110,7 @@ For instance, the following is valid::
         --ops              <font color="#C000C0">This is help</font>
     </pre>
 
-.. versionadded:: 1.6
+
 
 Switch Functions
 ----------------
@@ -332,6 +333,7 @@ if the switch is given) and ``CountingAttr`` (which counts the number of occurre
 
 Environment Variables
 ^^^^^^^^^^^^^^^^^^^^^
+.. versionadded:: 1.6
 
 You can also set a ``SwitchAttr`` to take an environment variable as an input using the envname parameter.
 For example::
@@ -349,7 +351,7 @@ For example::
 
 Giving the switch on the command line will override the environment variable value.
 
-.. versionadded:: 1.6.0
+    
 
 Main
 ----
@@ -400,6 +402,7 @@ With varargs::
 
 Positional argument validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. versionadded:: 1.6
 
 You can supply positional argument validators using the ``cli.positional`` decorator. Simply
 pass the validators in the decorator matching the names in the main function. For example::
@@ -418,7 +421,7 @@ specify the validators. For example::
 
 Annotations are ignored if the positional decorator is present.
     
-.. versionadded:: 1.6.0
+
 
 .. _guide-subcommands:
 

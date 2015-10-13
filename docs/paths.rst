@@ -11,6 +11,10 @@ are immutable, may refer to a remote machine, and can be used like a ``str``.
 In many respects, paths provide a similar API to pathlib in the Python 3.4+ standard library,
 with a few improvements and extra features.
 
+.. versionadded:: 1.6
+
+    Paths now support more pathlib like syntax, several old names have been depreciated, like ``.basename``
+
 The primary ways to create paths are from ``.cwd``, ``.env.home``, or ``.path(...)`` on a local
 or remote machine, with ``/`` or ``//`` for composition.
 
@@ -70,12 +74,18 @@ Globing can be easily performed using ``//`` (floor division)::
     [<LocalPath d:\workspace\plumbum\docs\cli.rst>, ...]
 
 
+.. versionadded:: 1.6 
+
+    Globing a tuple will glob for each of the items in the tuple, and return the aggregated result.
+
 Files can be opened and read directly::
     >>> with(open(local.cwd / "docs" / "index.rst")) as f:
     ...     print(read(f))
     <...output...>
 
-.. versionadded:: 1.6.0
+.. versionadded:: 1.6
+
+    Support for treating a path exactly like a ``str``, so they can be used directly in ``open()``.
 
 Paths also supply ``.delete()``, ``.copy(destination, override=False)``, and ``.move(destination)``. On systems that 
 support it, you can also use ``.symlink(destination)``, ``.link(destination)``, and ``.unlink()``. You can change permissions with ``.chmod(mode)``,
