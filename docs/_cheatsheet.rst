@@ -21,7 +21,7 @@ also :ref:`import commands <import-hack>`:
     >>> grep
     LocalCommand(<LocalPath /bin/grep>)
 
-See :ref:`guide-local-commands` and :ref:`guide-paths`.
+See :ref:`guide-local-commands`.
 
 Piping
 ------
@@ -62,7 +62,7 @@ Working-directory manipulation
     ...
     u'15\n'
 
-See :ref:`guide-local-machine`.
+See :ref:`guide-paths` and :ref:`guide-local-machine`.
 
 Foreground and background execution
 -----------------------------------
