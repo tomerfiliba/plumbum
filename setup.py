@@ -32,7 +32,7 @@ setup(name = "plumbum",
     packages = ["plumbum", "plumbum.cli", "plumbum.commands", "plumbum.machines", "plumbum.path", "plumbum.fs", "plumbum.colorlib"],
     platforms = ["POSIX", "Windows"],
     provides = ["plumbum"],
-    keywords = "path, local, remote, ssh, shell, pipe, popen, process, execution",
+    keywords = "path, local, remote, ssh, shell, pipe, popen, process, execution, color, cli",
     cmdclass = {
                 'docs':PyDocs},
     # use_2to3 = False,
