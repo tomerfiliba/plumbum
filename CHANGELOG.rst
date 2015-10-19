@@ -1,3 +1,8 @@
+1.6.1 (In development)
+----------------------
+
+* Bugfixes: Progress on Python 2.6 (`#230 <https://github.com/tomerfiliba/plumbum/pull/218>`_, `#217 <https://github.com/tomerfiliba/plumbum/pull/217>`_)
+
 1.6.0
 -----
 * Added support for Python 3.5, PyPy, and better Windows and Mac support, with CI testing (`#218 <https://github.com/tomerfiliba/plumbum/pull/218>`_, `#217 <https://github.com/tomerfiliba/plumbum/pull/217>`_, `#226 <https://github.com/tomerfiliba/plumbum/pull/226>`_)
