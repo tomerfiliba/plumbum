@@ -1,7 +1,8 @@
 1.6.1 (In development)
 ----------------------
 
-* Bugfixes: Progress on Python 2.6 (`#230 <https://github.com/tomerfiliba/plumbum/pull/218>`_)
+* Bugfixes: ``Progress`` works on Python 2.6 (`#230 <https://github.com/tomerfiliba/plumbum/issues/230>`_),
+  colors now are better with different terminals (`#231 <https://ithub.com/tomerfiliba/plumbum/issues/231>`_)
 
 1.6.0
 -----

@@ -35,14 +35,16 @@ def get_color_repr():
     term =local.env.get("TERM", "")
 
     # Some terminals set TERM=xterm for compatibility
-    if term == "xterm-256color" or term == "xterm":
+    if term.endswith("256color") or term == "xterm":
         return 3 if platform.system() == 'Darwin' else 4
-    elif term == "xterm-16color":
+    elif term.endswith("16color"):
         return 2
+    elif term == "screen":
+        return 1
     elif os.name == 'nt':
         return 1
     else:
-        return False
+        return 3
 
 class ColorNotFound(Exception):
     """Thrown when a color is not valid for a particular method."""
