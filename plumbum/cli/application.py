@@ -97,6 +97,9 @@ class Application(object):
     * ``COLOR_GROUPS`` - A dictionary that sets colors for the groups, like Meta-switches, Switches,
       and Subcommands
 
+    * ``SUBCOMMAND_HELPMSG`` - Controls the printing of extra "see subcommand -h" help message.
+      Default is a message, set to false to remove.
+
     A note on sub-commands: when an application is the root, its ``parent`` attribute is set to
     ``None``. When it is used as a nested-command, ``parent`` will point to be its direct ancestor.
     Likewise, when an application is invoked with a sub-command, its ``nested_command`` attribute
@@ -111,7 +114,7 @@ class Application(object):
     COLOR_USAGE = None
     COLOR_GROUPS = None
     CALL_MAIN_IF_NESTED_COMMAND = True
-    SUBCOMMAND_HELPMSG = True
+    SUBCOMMAND_HELPMSG = "see '{parent} {sub} --help' for more info"
 
     parent = None
     nested_command = None
@@ -658,7 +661,7 @@ class Application(object):
                     doc = subapp.DESCRIPTION if subapp.DESCRIPTION else getdoc(subapp)
                     if self.SUBCOMMAND_HELPMSG:
                         help = doc + "; " if doc else ""  # @ReservedAssignment
-                        help += "see '%s %s --help' for more info" % (self.PROGNAME, name)
+                        help += self.SUBCOMMAND_HELPMSG.format(parent=self.PROGNAME, sub=name)
                     else:
                         help = doc if doc else "" # @ReservedAssignment
 
