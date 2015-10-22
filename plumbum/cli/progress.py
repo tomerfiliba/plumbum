@@ -8,6 +8,7 @@ from abc import abstractmethod
 import datetime
 from plumbum.lib import six
 from plumbum.cli.termsize import get_terminal_size
+import sys
 
 class ProgressBase(six.ABC):
     """Base class for progress bars. Customize for types of progress bars.
@@ -81,7 +82,9 @@ class ProgressBase(six.ABC):
         if self.value < 1:
             return None, None
         elapsed_time = datetime.datetime.now() - self._start_time
-        time_each = elapsed_time / self.value
+        time_each = (elapsed_time.days*24*60*60
+                     + elapsed_time.seconds
+                     + elapsed_time.microseconds/1000.0) / self.value
         time_remaining = time_each * (self.length - self.value)
         return elapsed_time, time_remaining
 
@@ -151,7 +154,8 @@ class Progress(ProgressBase):
             print(disptxt)
         else:
             print("\r", end='')
-            print(disptxt, end='', flush=True)
+            print(disptxt, end='')
+            sys.stdout.flush()
 
 
 class ProgressIPy(ProgressBase):

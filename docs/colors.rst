@@ -16,9 +16,9 @@ API for creating other color schemes for other systems using escapes.
 
 .. note:: Enabling color
 
-    ``ANSIStyle`` assumes that only a terminal on a posix-identity
-    system can display color. You can force the use of color globally by setting
-    ``colors.use_color=True`` (or ``False`` to turn off colors). See this :ref:`note <guide-usecolors>`
+    ``ANSIStyle`` assumes that only a terminal can display color, and looks at
+    the value of the environment variable ``TERM``. You can force the use of color globally by setting
+    ``colors.use_color=4`` (The levels 0-4 are available, with 0 being off). See this :ref:`note <guide-usecolors>`
     for more options.
 
 Quick start
@@ -145,7 +145,7 @@ are remembered, so this is a non-destructive operation.
 
     Some terminals only support a subset of colors, so keep this in mind when using a larger color set. The standard Ubuntu terminal handles 24 bit color, the Mac terminal only handles 256 colors, and Colorama on Windows only handles 8. See `this gist <https://gist.github.com/XVilka/8346728>`_ for information about support in terminals.
     If you need to limit the output color, you can set ``colors.use_color`` to
-    1 (8 colors), 2 (16 colors), or 3 (256 colors). This option will be
+    0 (no colors), 1 (8 colors), 2 (16 colors), or 3 (256 colors), or 4 (24-bit colors). This option will be
     automatically guessed for you on initialization.
 
 
