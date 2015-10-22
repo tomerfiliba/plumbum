@@ -111,6 +111,7 @@ class Application(object):
     COLOR_USAGE = None
     COLOR_GROUPS = None
     CALL_MAIN_IF_NESTED_COMMAND = True
+    SUBCOMMAND_HELPMSG = True
 
     parent = None
     nested_command = None
@@ -375,18 +376,18 @@ class Application(object):
                 (min_args, tailargs))
         elif len(tailargs) > max_args:
             raise PositionalArgumentsError("Expected at most %d positional arguments, got %r" %
-                (max_args, tailargs))            
-                
+                (max_args, tailargs))
+
         # Positional arguement validataion
         if hasattr(self.main, 'positional'):
             tailargs = self._positional_validate(tailargs, self.main.positional, self.main.positional_varargs, m.args[1:], m.varargs)
-            
+
         elif hasattr(m, 'annotations'):
             args_names = list(m.args[1:])
             positional = [None]*len(args_names)
             varargs = None
-            
-            
+
+
              # All args are positional, so convert kargs to positional
             for item in m.annotations:
                 if item == m.varargs:
@@ -404,19 +405,19 @@ class Application(object):
     def _positional_validate(self, args, validator_list, varargs, argnames, varargname):
         """Makes sure args follows the validation given input"""
         out_args = list(args)
-        
+
         for i in range(min(len(args),len(validator_list))):
-            
+
             if validator_list[i] is not None:
                 out_args[i] = self._handle_argument(args[i], validator_list[i], argnames[i])
-        
+
         if len(args) > len(validator_list):
             if varargs is not None:
                 out_args[len(validator_list):] = [
                     self._handle_argument(a, varargs, varargname) for a in args[len(validator_list):]]
             else:
                 out_args[len(validator_list):] = args[len(validator_list):]
-        
+
         return out_args
 
     @classmethod
@@ -490,7 +491,7 @@ class Application(object):
         """
 
         inst = cls("")
-        
+
         swfuncs = inst._parse_kwd_args(switches)
         ordered, tailargs = inst._validate_args(swfuncs, args)
         for f, a in ordered:
@@ -655,8 +656,11 @@ class Application(object):
                 with gc:
                     subapp = subcls.get()
                     doc = subapp.DESCRIPTION if subapp.DESCRIPTION else getdoc(subapp)
-                    help = doc + "; " if doc else ""  # @ReservedAssignment
-                    help += "see '%s %s --help' for more info" % (self.PROGNAME, name)
+                    if self.SUBCOMMAND_HELPMSG:
+                        help = doc + "; " if doc else ""  # @ReservedAssignment
+                        help += "see '%s %s --help' for more info" % (self.PROGNAME, name)
+                    else:
+                        help = doc if doc else "" # @ReservedAssignment
 
                     msg = indentation.join(wrapper.wrap(" ".join(l.strip() for l in help.splitlines())))
 
@@ -664,7 +668,14 @@ class Application(object):
                         padding = indentation
                     else:
                         padding = " " * max(cols - wrapper.width - len(name) - 4, 1)
-                    print(description_indent % (subcls.name, padding, gc | colors.filter(msg)))
+                    if colors.contains_colors(subcls.name):
+                        bodycolor = colors.extract(subcls.name)
+                    else:
+                        bodycolor = gc
+
+                    print(description_indent
+                            % (subcls.name, padding,
+                               bodycolor | colors.filter(msg)))
 
 
 
