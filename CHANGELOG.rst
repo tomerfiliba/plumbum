@@ -1,8 +1,9 @@
 1.6.1 (In development)
 ----------------------
 
-* Bugfixes: ``Progress`` works on Python 2.6 (`#230 <https://github.com/tomerfiliba/plumbum/issues/230>`_),
-  colors now are better with different terminals (`#231 <https://ithub.com/tomerfiliba/plumbum/issues/231>`_)
+* Bugfix: ``Progress`` works on Python 2.6 (`#230 <https://github.com/tomerfiliba/plumbum/issues/230>`_),
+* Bugfix: Colors now work with more terminals (`#231 <https://github.com/tomerfiliba/plumbum/issues/231>`_)
+* Bugfix: Getting an executible no longer returns a directory  (`#234 <https://ithub.com/tomerfiliba/plumbum/issues/234>`_)
 
 1.6.0
 -----

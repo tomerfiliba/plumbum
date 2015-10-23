@@ -546,7 +546,7 @@ remaining displayed. If you need to create a progress bar for a fast iterator bu
 
 If you have something that produces output, but still needs a progress bar, pass ``has_output=True`` to force the bar not to try to erase the old one each time.
 
-For the full list of helpers, see the :ref:`api docs <api-cli>`.
+For the full list of helpers or more information, see the :ref:`api docs <api-cli>`.
 
 
 

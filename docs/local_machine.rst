@@ -96,4 +96,4 @@ properties for getting the username (``.user``), the home path (``.home``), and 
     <Path c:\python32\python.exe>
 
 
-
+For further information, see the :ref:`api docs <api-local-machine>`.

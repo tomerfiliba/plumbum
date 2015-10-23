@@ -98,3 +98,4 @@ in a more general helper function form, see the :ref:`utils modules <guide-utils
 Relative paths can be computed using ``.relative_to(source)`` or ``mypath - basepath``, though it should be noted
 that relative paths are not as powerful as absolute paths, and are primarily for recording a path or printing.
 
+For further information, see the :ref:`api docs <api-path>`.

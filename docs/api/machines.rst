@@ -1,3 +1,6 @@
+.. _api-local-machine:
+
+
 Package plumbum.machines
 ========================
 .. automodule:: plumbum.machines.env
@@ -11,6 +14,8 @@ Package plumbum.machines
 .. automodule:: plumbum.machines.session
    :members:
    :special-members:
+
+.. _api-remote-machines:
 
 Remote Machines
 ---------------

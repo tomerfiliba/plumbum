@@ -1,3 +1,5 @@
+.. _api-commands:
+
 Package plumbum.commands
 ========================
 .. automodule:: plumbum.commands.base

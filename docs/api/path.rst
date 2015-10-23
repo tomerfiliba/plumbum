@@ -1,3 +1,5 @@
+.. _api-path:
+
 Package plumbum.path
 ====================
 .. automodule:: plumbum.path.base

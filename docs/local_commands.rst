@@ -291,3 +291,4 @@ we run the command chain. As you can see, ``|`` and the backslashes have been qu
 them from executing on the first-level shell; this way, they would safey get to the 
 second-level shell.
 
+For further information, see the :ref:`api docs <api-commands>`.
