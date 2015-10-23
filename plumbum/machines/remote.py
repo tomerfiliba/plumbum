@@ -215,7 +215,7 @@ class BaseRemoteMachine(BaseMachine):
         for name in alternatives:
             for p in self.env.path:
                 fn = p / name
-                if fn.access("x"):
+                if fn.access("x") and not fn.is_dir():
                     return fn
 
         raise CommandNotFound(progname, self.env.path)

@@ -162,6 +162,24 @@ class LocalMachineTest(unittest.TestCase):
         self.assertRaises(CommandNotFound, lambda: local.get("non_exist1N9", "non_exist1N8"))
         self.assertRaises(CommandNotFound, lambda: local.get("non_exist1N9", "/tmp/non_exist1N8"))
 
+    def test_shadowed_by_dir(self):
+        real_ls = local['ls']
+        with local.tempdir() as tdir:
+            with local.cwd(tdir):
+                ls_dir = tdir / 'ls'
+                ls_dir.mkdir()
+                fake_ls = local['ls']
+                assert fake_ls.executable == real_ls.executable
+
+                local.env.path.insert(0, tdir)
+                fake_ls = local['ls']
+                del local.env.path[0]
+                assert fake_ls.executable == real_ls.executable
+            
+
+
+        
+
     @skip_on_windows
     def test_cwd(self):
         from plumbum.cmd import ls

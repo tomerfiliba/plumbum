@@ -141,7 +141,7 @@ class LocalMachine(BaseMachine):
             for p in cls.env.path:
                 for ext in cls._EXTENSIONS:
                     fn = p / (progname + ext)
-                    if fn.access("x"):
+                    if fn.access("x") and not fn.is_dir():
                         return fn
             return None
     else:
@@ -149,7 +149,7 @@ class LocalMachine(BaseMachine):
         def _which(cls, progname):
             for p in cls.env.path:
                 fn = p / progname
-                if fn.access("x"):
+                if fn.access("x") and not fn.is_dir():
                     return fn
             return None
 
