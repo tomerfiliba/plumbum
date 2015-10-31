@@ -99,3 +99,10 @@ def copy(src, dst):
         return dst
 
 
+def xdg_open(filename):
+    """This selects the proper gui open function. This can
+       also be achieved with webbrowser, but that is not supported."""
+    if(hasattr(os, "startfile")):
+        os.startfile(filename)
+    else:
+        local.get('xgd-open', 'open')(filename)
