@@ -116,6 +116,18 @@ class Application(object):
     nested_command = None
     _unbound_switches = ()
 
+    def __new__(cls, executable=None):
+        """Allows running the class directly as a shortcut for main.
+        This is neccisary for some setup scripts that want a single function,
+        instead of an expression with a dot in it."""
+
+
+        if executable is None:
+            return cls.run()
+            # This return value was not a class instance, so __init__ is never called
+        else:
+            return super(Application, cls).__new__(cls)
+
     def __init__(self, executable):
         # Filter colors
 
@@ -161,6 +173,7 @@ class Application(object):
                     self._switches_by_func[swinfo.func] = swinfo
                     if swinfo.envname:
                         self._switches_by_envar[swinfo.envname] = swinfo
+
 
     @property
     def root_app(self):
@@ -375,18 +388,18 @@ class Application(object):
                 (min_args, tailargs))
         elif len(tailargs) > max_args:
             raise PositionalArgumentsError("Expected at most %d positional arguments, got %r" %
-                (max_args, tailargs))            
-                
+                (max_args, tailargs))
+
         # Positional arguement validataion
         if hasattr(self.main, 'positional'):
             tailargs = self._positional_validate(tailargs, self.main.positional, self.main.positional_varargs, m.args[1:], m.varargs)
-            
+
         elif hasattr(m, 'annotations'):
             args_names = list(m.args[1:])
             positional = [None]*len(args_names)
             varargs = None
-            
-            
+
+
              # All args are positional, so convert kargs to positional
             for item in m.annotations:
                 if item == m.varargs:
@@ -404,19 +417,19 @@ class Application(object):
     def _positional_validate(self, args, validator_list, varargs, argnames, varargname):
         """Makes sure args follows the validation given input"""
         out_args = list(args)
-        
+
         for i in range(min(len(args),len(validator_list))):
-            
+
             if validator_list[i] is not None:
                 out_args[i] = self._handle_argument(args[i], validator_list[i], argnames[i])
-        
+
         if len(args) > len(validator_list):
             if varargs is not None:
                 out_args[len(validator_list):] = [
                     self._handle_argument(a, varargs, varargname) for a in args[len(validator_list):]]
             else:
                 out_args[len(validator_list):] = args[len(validator_list):]
-        
+
         return out_args
 
     @classmethod
@@ -490,7 +503,7 @@ class Application(object):
         """
 
         inst = cls("")
-        
+
         swfuncs = inst._parse_kwd_args(switches)
         ordered, tailargs = inst._validate_args(swfuncs, args)
         for f, a in ordered:
