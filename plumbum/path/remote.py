@@ -298,6 +298,7 @@ class RemoteWorkdir(RemotePath):
     def chdir(self, newdir):
         """Changes the current working directory to the given one"""
         self.remote._session.run("cd %s" % (shquote(newdir),))
+        self.remote._cwd = None
         return self.__class__(self.remote)
 
     def getpath(self):

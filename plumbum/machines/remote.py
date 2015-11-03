@@ -141,6 +141,9 @@ class BaseRemoteMachine(BaseMachine):
     * ``env`` - the remote environment
     * ``encoding`` - the remote machine's default encoding (assumed to be UTF8)
     * ``connect_timeout`` - the connection timeout
+
+
+    There also is a _cwd attribute that is None if the cwd is not current (set to None if cwd is changed).
     """
 
     # allow inheritors to override the RemoteCommand class
@@ -148,7 +151,9 @@ class BaseRemoteMachine(BaseMachine):
     
     @property
     def cwd(self):
-        return RemoteWorkdir(self)
+        if self._cwd is None:
+            self._cwd = RemoteWorkdir(self)
+        return self._cwd
 
     def __init__(self, encoding = "utf8", connect_timeout = 10, new_session = False):
         self.encoding = encoding
@@ -157,6 +162,7 @@ class BaseRemoteMachine(BaseMachine):
         self.uname = self._get_uname()
         self.env = RemoteEnv(self)
         self._python = None
+        self._cwd = None
 
     def _get_uname(self):
         rc, out, _ = self._session.run("uname", retcode = None)
