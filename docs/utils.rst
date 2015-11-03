@@ -31,4 +31,4 @@ imported into the namespace of ``plumbum`` directly, and you have to explicitly 
     from plumbum.path.utils import delete
     delete(local.cwd // "*/*.pyc", local.cwd // "*/__pycache__")
 
-* :func:`xdg_open(path) <plumbum.path.utils.xdg_open>` - Opens a file in the default editor on Windows, Mac, or Linux. Uses `os.startfile` if available (Windows), `xdg_open` (GNU), or `open` (Mac). 
+* :func:`gui_open(path) <plumbum.path.utils.xdg_open>` - Opens a file in the default editor on Windows, Mac, or Linux. Uses `os.startfile` if available (Windows), `xdg_open` (GNU), or `open` (Mac). 
