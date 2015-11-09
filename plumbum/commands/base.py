@@ -5,6 +5,7 @@ from plumbum.commands.processes import run_proc, iter_lines
 from plumbum.lib import six
 from tempfile import TemporaryFile
 from subprocess import PIPE, Popen
+from types import MethodType
 
 
 class RedirectionError(Exception):
@@ -296,6 +297,16 @@ class Pipeline(BaseCommand):
             dstproc.returncode = rc_src or rc_dst
             return dstproc.returncode
         dstproc.wait = wait2
+
+        dstproc_verify = dstproc.verify
+        def verify(proc, retcode, timeout, stdout, stderr):
+            #TODO: right now it's impossible to specify different expected
+            # return codes for different stages of the pipeline, but we
+            # should make that possible.
+            proc.srcproc.verify(retcode, timeout, stdout, stderr)
+            dstproc_verify(retcode, timeout, stdout, stderr)
+        dstproc.verify = MethodType(verify, dstproc)
+
         return dstproc
 
 class BaseRedirection(BaseCommand):
