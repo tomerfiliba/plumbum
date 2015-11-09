@@ -103,9 +103,9 @@ class ProgressBase(six.ABC):
         pass
 
     @classmethod
-    def range(cls, value, **kargs):
+    def range(cls, *value, **kargs):
         """Fast shortcut to create a range based progress bar, assumes work done in body"""
-        return cls(range(value), value, body=True, **kargs)
+        return cls(range(*value), body=True, **kargs)
 
     @classmethod
     def wrap(cls, iterator, length=None, **kargs):
