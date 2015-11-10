@@ -5,7 +5,7 @@ import sys
 try:
     import pathlib
 except ImportError:
-    patlib = None
+    pathlib = None
 
 skip_without_pathlib = pytest.mark.skipif(pathlib is None,
         reason="This requires pathlib to be installed")
