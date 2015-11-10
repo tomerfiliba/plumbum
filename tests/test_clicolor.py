@@ -12,7 +12,7 @@ class SimpleApp(cli.Application):
         print("lalala")
 
 
-class TestSimpleApp(object):
+class TestSimpleApp:
     def test_runs(self):
         _, rc = SimpleApp.run(['SimpleApp'], exit = False)
         assert rc == 0
@@ -46,7 +46,7 @@ class TestSimpleApp(object):
 
 
 
-class TestNSApp(object):
+class TestNSApp:
 
     def test_colorful_output(self, capsys):
         colors.use_color = 4
