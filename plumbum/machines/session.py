@@ -4,6 +4,7 @@ import logging
 import threading
 from plumbum.commands import BaseCommand, run_proc
 from plumbum.lib import six
+from plumbum.machines.base import PopenAddons
 
 
 class ShellSessionError(Exception):
@@ -53,7 +54,7 @@ class MarkedPipe(object):
         return line
 
 
-class SessionPopen(object):
+class SessionPopen(PopenAddons):
     """A shell-session-based ``Popen``-like object (has the following attributes: ``stdin``,
     ``stdout``, ``stderr``, ``returncode``)"""
     def __init__(self, argv, isatty, stdin, stdout, stderr, encoding):

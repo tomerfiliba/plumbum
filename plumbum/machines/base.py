@@ -1,6 +1,22 @@
 from plumbum.commands.processes import CommandNotFound
 
 
+class PopenAddons(object):
+    def verify(self, retcode, timeout, stdout, stderr):
+        if getattr(self, "_timed_out", False):
+            raise ProcessTimedOut("Process did not terminate within %s seconds" % (timeout,),
+                getattr(self, "argv", None))
+
+        if retcode is not None:
+            if hasattr(retcode, "__contains__"):
+                if self.returncode not in retcode:
+                    raise ProcessExecutionError(getattr(self, "argv", None), self.returncode,
+                        stdout, stderr)
+            elif self.returncode != retcode:
+                raise ProcessExecutionError(getattr(self, "argv", None), self.returncode,
+                    stdout, stderr)
+
+
 class BaseMachine(object):
     """This is a base class for other machines. It contains common code to
     all machines in Plumbum."""
