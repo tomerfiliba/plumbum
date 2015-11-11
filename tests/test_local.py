@@ -310,7 +310,7 @@ class LocalMachineTest(unittest.TestCase):
         true = LocalCommand('true')
         try:
             (false | true) & FG
-        except ProcessExecutionError, e:
+        except ProcessExecutionError as e:
             self.assertEqual(e.argv, ['false'])
         else:
             self.fail("Expected a ProcessExecutionError")
