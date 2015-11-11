@@ -11,11 +11,9 @@ from tempfile import mkdtemp
 from contextlib import contextmanager
 from plumbum.path.remote import RemotePath
 from plumbum.commands import CommandNotFound, ConcreteCommand
-from plumbum.commands.processes import ProcessExecutionError
 from plumbum.machines.session import ShellSession
 from plumbum.lib import ProcInfo, IS_WIN32, six, StaticProperty
 from plumbum.commands.daemons import win32_daemonize, posix_daemonize
-from plumbum.commands.processes import ProcessTimedOut
 from plumbum.commands.processes import iter_lines
 from plumbum.machines.base import BaseMachine
 from plumbum.machines.base import PopenAddons

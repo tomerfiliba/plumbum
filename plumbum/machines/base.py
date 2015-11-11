@@ -1,5 +1,6 @@
 from plumbum.commands.processes import CommandNotFound
-
+from plumbum.commands.processes import ProcessExecutionError
+from plumbum.commands.processes import ProcessTimedOut
 
 class PopenAddons(object):
     def verify(self, retcode, timeout, stdout, stderr):
