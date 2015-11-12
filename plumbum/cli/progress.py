@@ -84,9 +84,9 @@ class ProgressBase(six.ABC):
         elapsed_time = datetime.datetime.now() - self._start_time
         time_each = (elapsed_time.days*24*60*60
                      + elapsed_time.seconds
-                     + elapsed_time.microseconds/1000.0) / self.value
+                     + elapsed_time.microseconds/1000000.0) / self.value
         time_remaining = time_each * (self.length - self.value)
-        return elapsed_time, time_remaining
+        return elapsed_time, datetime.timedelta(0,time_remaining,0)
 
     def str_time_remaining(self):
         """Returns a string version of time remaining"""
