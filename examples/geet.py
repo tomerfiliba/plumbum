@@ -49,6 +49,7 @@ except ImportError:
 from plumbum import cli, colors
 
 class Geet(cli.Application):
+    SUBCOMMAND_HELPMSG = False
     DESCRIPTION = colors.yellow | """The l33t version control"""
     PROGNAME = colors.green
     VERSION = colors.blue | "1.7.2"

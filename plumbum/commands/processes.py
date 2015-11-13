@@ -20,18 +20,7 @@ except ImportError:
 # utility functions
 #===================================================================================================
 def _check_process(proc, retcode, timeout, stdout, stderr):
-    if getattr(proc, "_timed_out", False):
-        raise ProcessTimedOut("Process did not terminate within %s seconds" % (timeout,),
-            getattr(proc, "argv", None))
-
-    if retcode is not None:
-        if hasattr(retcode, "__contains__"):
-            if proc.returncode not in retcode:
-                raise ProcessExecutionError(getattr(proc, "argv", None), proc.returncode,
-                    stdout, stderr)
-        elif proc.returncode != retcode:
-            raise ProcessExecutionError(getattr(proc, "argv", None), proc.returncode,
-                stdout, stderr)
+    proc.verify(retcode, timeout, stdout, stderr)
     return proc.returncode, stdout, stderr
 
 def _iter_lines(proc, decode, linesize):

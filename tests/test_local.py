@@ -7,6 +7,7 @@ from plumbum import (local, LocalPath, FG, BG, TF, RETCODE, ERROUT,
                     CommandNotFound, ProcessExecutionError, ProcessTimedOut)
 from plumbum.lib import six, IS_WIN32
 from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
+from plumbum.machines.local import LocalCommand
 from plumbum.path import RelativePath
 import plumbum
 
@@ -318,6 +319,19 @@ class TestLocalMachine:
 
         (cat['/dev/urndom'] | head['-c', '10']) & FG(retcode=1)
         assert 'urndom' in capfd.readouterr()[1]
+
+    @skip_on_windows
+    def test_fair_error_attribution(self):
+        # use LocalCommand directly for predictable argv
+        false = LocalCommand('false')
+        true = LocalCommand('true')
+        try:
+            (false | true) & FG
+        except ProcessExecutionError as e:
+            self.assertEqual(e.argv, ['false'])
+        else:
+            self.fail("Expected a ProcessExecutionError")
+
 
     @skip_on_windows
     def test_iter_lines_timeout(self):
