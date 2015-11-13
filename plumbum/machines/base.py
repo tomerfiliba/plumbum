@@ -3,7 +3,11 @@ from plumbum.commands.processes import ProcessExecutionError
 from plumbum.commands.processes import ProcessTimedOut
 
 class PopenAddons(object):
+    """This adds a verify to popen objects to that the correct command is attributed when
+    an error is thrown."""
+
     def verify(self, retcode, timeout, stdout, stderr):
+        """This verifies that the correct command is attributed."""
         if getattr(self, "_timed_out", False):
             raise ProcessTimedOut("Process did not terminate within %s seconds" % (timeout,),
                 getattr(self, "argv", None))

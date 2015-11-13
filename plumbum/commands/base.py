@@ -294,16 +294,16 @@ class Pipeline(BaseCommand):
         def wait2(*args, **kwargs):
             rc_dst = dstproc_wait(*args, **kwargs)
             rc_src = srcproc.wait(*args, **kwargs)
-            dstproc.returncode = rc_src or rc_dst
+            dstproc.returncode = rc_dst
             return dstproc.returncode
         dstproc.wait = wait2
 
         dstproc_verify = dstproc.verify
         def verify(proc, retcode, timeout, stdout, stderr):
             #TODO: right now it's impossible to specify different expected
-            # return codes for different stages of the pipeline, but we
-            # should make that possible.
-            proc.srcproc.verify(retcode, timeout, stdout, stderr)
+            # return codes for different stages of the pipeline
+
+            proc.srcproc.verify(0, timeout, stdout, stderr)
             dstproc_verify(retcode, timeout, stdout, stderr)
         dstproc.verify = MethodType(verify, dstproc)
 

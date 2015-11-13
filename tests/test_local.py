@@ -296,7 +296,7 @@ class LocalMachineTest(unittest.TestCase):
     def test_run(self):
         from plumbum.cmd import ls, grep
 
-        rc, out, err = (ls | grep["non_exist1N9"]).run(retcode = (0, 1))
+        rc, out, err = (ls | grep["non_exist1N9"]).run(retcode = 1)
         self.assertEqual(rc, 1)
 
     def test_timeout(self):
