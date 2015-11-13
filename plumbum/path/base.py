@@ -292,7 +292,7 @@ class Path(str, six.ABC):
     @property
     def parts(self):
         """Splits the directory into parts, including the base directroy, returns a tuple"""
-        return tuple([self.root] + self.split())
+        return tuple([self.drive + self.root] + self.split())
 
     def relative_to(self, source):
         """Computes the "relative path" require to get from ``source`` to ``self``. They satisfy the invariant
