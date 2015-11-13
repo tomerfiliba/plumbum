@@ -1,6 +1,8 @@
 1.6.1 (In development)
 ----------------------
 
+* Bugfix: Pipelined return codes now give correct attribution (`#243 <https://github.com/tomerfiliba/plumbum/pull/243>`_)
+* CLI: More control over help message (`#233 <https://github.com/tomerfiliba/plumbum/pull/233>`_)
 * Bugfix: ``Progress`` works on Python 2.6 (`#230 <https://github.com/tomerfiliba/plumbum/issues/230>`_),
 * Bugfix: Colors now work with more terminals (`#231 <https://github.com/tomerfiliba/plumbum/issues/231>`_)
 * Bugfix: Getting an executible no longer returns a directory  (`#234 <https://ithub.com/tomerfiliba/plumbum/issues/234>`_)

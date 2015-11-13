@@ -4,10 +4,10 @@ matrix:
   include:
     - python: 2.6
     - python: 2.7
-    - python: 3.2
     - python: 3.3
     - python: 3.4
     - python: 3.5
+      env: PYCOV=1
     - python: nightly
     - python: pypy
     - language: generic
@@ -18,6 +18,10 @@ matrix:
 
 install: .ci/travis.sh
 script: cd tests && python$PY3 -m pytest
+after_success:
+    - if [[ $PYCOV == 1 ]]; then
+          coveralls;
+      fi
 
 notifications:
     email:

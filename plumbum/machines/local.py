@@ -295,7 +295,11 @@ class LocalMachine(BaseMachine):
             """
             import csv
             tasklist = local["tasklist"]
-            lines = tasklist("/V", "/FO", "CSV").splitlines()
+            output = tasklist("/V", "/FO", "CSV")
+            if not six.PY3:
+                # The Py2 csv reader does not support non-ascii values
+                output = output.encode('ascii', 'ignore')
+            lines = output.splitlines()
             rows = csv.reader(lines)
             header = next(rows)
             imgidx = header.index('Image Name')

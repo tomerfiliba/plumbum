@@ -13,3 +13,4 @@ __pycache__
 *~
 *.spyder*
 /tests/.cache/*
+.coverage

@@ -1,5 +1,12 @@
 .. image:: https://travis-ci.org/tomerfiliba/plumbum.svg?branch=master
     :target: https://travis-ci.org/tomerfiliba/plumbum
+.. image:: https://ci.appveyor.com/api/projects/status/github/tomerfiliba/plumbum?branch=master&svg=true
+    :target: https://ci.appveyor.com/project/HenrySchreiner/plumbum/branch/master
+.. image:: https://coveralls.io/repos/tomerfiliba/plumbum/badge.svg?branch=master&service=github
+   :target: https://coveralls.io/github/tomerfiliba/plumbum?branch=master
+
+
+
 
 Plumbum: Shell Combinators
 ==========================
@@ -174,8 +181,4 @@ Colors and Styles
     print("Unsafe " + colors.bg.dark_khaki + "color access" + colors.bg.reset + " is available too.")
 
 
-
-.. image:: https://d2weczhvl823v0.cloudfront.net/tomerfiliba/plumbum/trend.png
-   :alt: Bitdeli badge
-   :target: https://bitdeli.com/free
 
