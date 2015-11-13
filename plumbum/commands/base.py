@@ -302,8 +302,11 @@ class Pipeline(BaseCommand):
         def verify(proc, retcode, timeout, stdout, stderr):
             #TODO: right now it's impossible to specify different expected
             # return codes for different stages of the pipeline
-
-            proc.srcproc.verify(0, timeout, stdout, stderr)
+            try:
+                or_retcode = [0] + list(retcode)
+            except TypeError:
+                or_retcode = [0, retcode]
+            proc.srcproc.verify(or_retcode, timeout, stdout, stderr)
             dstproc_verify(retcode, timeout, stdout, stderr)
         dstproc.verify = MethodType(verify, dstproc)
 
