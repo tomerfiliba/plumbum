@@ -19,7 +19,7 @@ from plumbum._testtools import (
     skip_on_windows)
 
 class TestLocalPath:
-    longpath = LocalPath("/some/long/path/to/file.txt")
+    longpath = local.path("/some/long/path/to/file.txt")
     
     def test_name(self):
         name = self.longpath.name
