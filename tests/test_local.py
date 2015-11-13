@@ -325,12 +325,9 @@ class TestLocalMachine:
         # use LocalCommand directly for predictable argv
         false = LocalCommand('false')
         true = LocalCommand('true')
-        try:
+        with pytest.raises(ProcessExecutionError) as e:
             (false | true) & FG
-        except ProcessExecutionError as e:
-            self.assertEqual(e.argv, ['false'])
-        else:
-            self.fail("Expected a ProcessExecutionError")
+        assert e.value.argv == ['false']
 
 
     @skip_on_windows
