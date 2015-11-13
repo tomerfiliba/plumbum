@@ -2,6 +2,7 @@ import logging
 import errno
 import stat
 import socket
+from plumbum.machines.base import PopenAddons
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
 from plumbum.lib import _setdoc, six
@@ -23,7 +24,7 @@ except ImportError:
 
 logger = logging.getLogger("plumbum.paramiko")
 
-class ParamikoPopen(object):
+class ParamikoPopen(PopenAddons):
     def __init__(self, argv, stdin, stdout, stderr, encoding, stdin_file = None,
             stdout_file = None, stderr_file = None):
         self.argv = argv

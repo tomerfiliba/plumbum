@@ -7,6 +7,7 @@ from plumbum import (local, LocalPath, FG, BG, TF, RETCODE, ERROUT,
                     CommandNotFound, ProcessExecutionError, ProcessTimedOut)
 from plumbum.lib import six, IS_WIN32
 from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
+from plumbum.machines.local import LocalCommand
 from plumbum.path import RelativePath
 import plumbum
 from plumbum._testtools import (skipIf, skip_on_windows,
@@ -295,12 +296,25 @@ class LocalMachineTest(unittest.TestCase):
     def test_run(self):
         from plumbum.cmd import ls, grep
 
-        rc, out, err = (ls | grep["non_exist1N9"]).run(retcode = 1)
+        rc, out, err = (ls | grep["non_exist1N9"]).run(retcode = (0, 1))
         self.assertEqual(rc, 1)
 
     def test_timeout(self):
         from plumbum.cmd import sleep
         self.assertRaises(ProcessTimedOut, sleep, 10, timeout = 5)
+
+    @skip_on_windows
+    def test_fair_error_attribution(self):
+        # use LocalCommand directly for predictable argv
+        false = LocalCommand('false')
+        true = LocalCommand('true')
+        try:
+            (false | true) & FG
+        except ProcessExecutionError as e:
+            self.assertEqual(e.argv, ['false'])
+        else:
+            self.fail("Expected a ProcessExecutionError")
+
 
     @skip_on_windows
     def test_iter_lines_timeout(self):

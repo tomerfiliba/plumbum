@@ -16,6 +16,7 @@ from plumbum.lib import ProcInfo, IS_WIN32, six, StaticProperty
 from plumbum.commands.daemons import win32_daemonize, posix_daemonize
 from plumbum.commands.processes import iter_lines
 from plumbum.machines.base import BaseMachine
+from plumbum.machines.base import PopenAddons
 from plumbum.machines.env import BaseEnv
 
 if sys.version_info >= (3, 2):
@@ -31,10 +32,11 @@ else:
         from subprocess import Popen, PIPE
         has_new_subprocess = False
 
-class IterablePopen(Popen):
+class IterablePopen(Popen, PopenAddons):
     iter_lines = iter_lines
     def __iter__(self):
         return self.iter_lines()
+
 
 logger = logging.getLogger("plumbum.local")
 
