@@ -2,6 +2,11 @@
     :target: https://travis-ci.org/tomerfiliba/plumbum
 .. image:: https://ci.appveyor.com/api/projects/status/github/tomerfiliba/plumbum?branch=master&svg=true
     :target: https://ci.appveyor.com/project/HenrySchreiner/plumbum/branch/master
+.. image:: https://coveralls.io/repos/tomerfiliba/plumbum/badge.svg?branch=master&service=github
+   :target: https://coveralls.io/github/tomerfiliba/plumbum?branch=master
+
+
+
 
 Plumbum: Shell Combinators
 ==========================
