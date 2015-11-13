@@ -1,6 +1,5 @@
 .. image:: https://travis-ci.org/tomerfiliba/plumbum.svg?branch=master
     :target: https://travis-ci.org/tomerfiliba/plumbum
-.. image:: https://ci.appveyor.com/project/henryiii/plumbum-rqghj/branch/master?svg=true
 .. image:: https://ci.appveyor.com/api/projects/status/github/tomerfiliba/plumbum?branch=master&svg=true
     :target: https://ci.appveyor.com/project/HenrySchreiner/plumbum/branch/master
 
