@@ -3,10 +3,15 @@ language: python
 matrix:
   include:
     - python: 2.6
+      env: PY=2.6
     - python: 2.7
+      env: PY=2.7
     - python: 3.3
+      env: PY=3.3
     - python: 3.4
+      env: PY=3.4
     - python: 3.5
+      env: PY=3.5
     - python: nightly
     - python: pypy
     - language: generic
@@ -18,7 +23,9 @@ matrix:
 install: .ci/travis.sh
 script: cd tests && python$PY3 -m pytest --cov=plumbum --cov-config=.coveragerc
 after_success:
-    - coveralls
+    - if [[ $PY ]] then;
+         coveralls
+      fi
 
 notifications:
     email:
