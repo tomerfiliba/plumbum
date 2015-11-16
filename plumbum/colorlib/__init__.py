@@ -10,7 +10,7 @@ from plumbum.colorlib.styles import Style, ANSIStyle, HTMLStyle, ColorNotFound
 ansicolors = StyleFactory(ANSIStyle)
 htmlcolors = StyleFactory(HTMLStyle)
 
-def load_ipython_extension(ipython):
+def load_ipython_extension(ipython): # pragma: no cover
     try:
         from plumbum.colorlib._ipython_ext import OutputMagics
     except ImportError:

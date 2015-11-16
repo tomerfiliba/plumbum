@@ -16,7 +16,7 @@ matrix:
       env: PY3=3
 
 install: .ci/travis.sh
-script: cd tests && python$PY3 -m pytest --cov=plumbum --cov-config=.converagerc
+script: cd tests && python$PY3 -m pytest --cov=plumbum --cov-config=.coveragerc
 after_success:
     - coveralls
 

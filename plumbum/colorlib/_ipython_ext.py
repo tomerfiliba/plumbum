@@ -14,7 +14,7 @@ import sys
 valid_choices = [x[8:] for x in dir(IPython.display) if 'display_' == x[:8]]
 
 @magics_class
-class OutputMagics(Magics):
+class OutputMagics(Magics): # pragma: no cover
 
     @needs_local_scope
     @cell_magic
