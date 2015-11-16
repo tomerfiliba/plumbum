@@ -4,11 +4,9 @@ matrix:
   include:
     - python: 2.6
     - python: 2.7
-      env: PYCOV="--cov=plumbum"
     - python: 3.3
     - python: 3.4
     - python: 3.5
-      env: PYCOV="--cov=plumbum"
     - python: nightly
     - python: pypy
     - language: generic
@@ -18,11 +16,9 @@ matrix:
       env: PY3=3
 
 install: .ci/travis.sh
-script: cd tests && python$PY3 -m pytest $PYCOV
+script: cd tests && python$PY3 -m pytest --cov=plumbum --cov-config=.converagerc
 after_success:
-    - if [[ $PYCOV ]]; then
-          coveralls;
-      fi
+    - coveralls
 
 notifications:
     email:
