@@ -5,11 +5,11 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
     brew install python$PY3
     pip$PY3 install -r dev-requirements.txt
     pip$PY3 install coveralls
-    pip$PY3 install .
+    pip$PY3 install -e .
 else
     pip install -r dev-requirements.txt
     pip install coveralls
-    pip install .
+    pip install -e .
 fi
 
 echo NoHostAuthenticationForLocalhost yes >> ~/.ssh/config
