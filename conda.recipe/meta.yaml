@@ -1,0 +1,43 @@
+package:
+  name: plumbum
+  version: {{ environ.get('GIT_DESCRIBE_TAG', '') }}
+
+source:
+    path: ../
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
+    - paramiko
+
+build:
+  number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
+  {% if environ.get('GIT_DESCRIBE_NUMBER', '0') == '0' %}string: py{{ environ.get('PY_VER').replace('.', '') }}_0
+  {% else %}string: py{{ environ.get('PY_VER').replace('.', '') }}_{{ environ.get('GIT_BUILD_STR', 'GIT_STUB') }}{% endif %}
+
+test:
+  # Python imports
+  imports:
+    - plumbum
+    - plumbum.cli
+    - plumbum.colorlib
+    - plumbum.commands
+    - plumbum.fs
+    - plumbum.machines
+    - plumbum.path
+
+
+  requires:
+    # Put any additional test requirements here.  For example
+    - pytest
+    - paramiko
+
+about:
+  home: http://plumbum.readthedocs.org
+  license: MIT License
+  summary: 'Plumbum: shell combinators library'
+
