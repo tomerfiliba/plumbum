@@ -6,6 +6,8 @@
 * Bugfix: ``Progress`` works on Python 2.6 (`#230 <https://github.com/tomerfiliba/plumbum/issues/230>`_),
 * Bugfix: Colors now work with more terminals (`#231 <https://github.com/tomerfiliba/plumbum/issues/231>`_)
 * Bugfix: Getting an executible no longer returns a directory  (`#234 <https://ithub.com/tomerfiliba/plumbum/issues/234>`_)
+* Bugfix: Iterdir now works on Python <3.5
+* Testing is now expanded and fully written in Pytest, with coverage reporting.
 
 1.6.0
 -----

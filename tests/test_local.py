@@ -115,8 +115,8 @@ class TestLocalPath:
     def test_iterdir(self):
         cwd = local.path('.')
         files = list(cwd.iterdir())
-        assert 'test_local.py' in files
-        assert 'test_remote.py' in files
+        assert cwd / 'test_local.py' in files
+        assert cwd / 'test_remote.py' in files
 
     def test_stem(self):
         assert self.longpath.stem == "file"
