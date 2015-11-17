@@ -144,7 +144,27 @@ class TestLocalPath:
             assert one.is_file()
             one.delete()
             assert not one.is_file()
+
+
+    def test_copy_override(self):
+        with local.tempdir() as tmp:
+            one = tmp / 'one'
+            one.touch()
+            two = tmp / 'two'
             assert one.is_file()
+            assert not two.is_file()
+            one.copy(two)
+            assert  one.is_file()
+            assert two.is_file()
+
+            one.write(b'lala')
+            two.write(b'baba')
+            with pytest.raises(TypeError):
+                one.copy(two)
+
+            one.copy(two, override = True)
+            assert one.read() == b'lala'
+
 
 class TestLocalMachine:
     def test_getattr(self):

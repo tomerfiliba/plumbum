@@ -211,6 +211,12 @@ class RemotePath(Path):
             if isinstance(dst, six.string_types):
                 dst = RemotePath(self.remote, dst)
             dst.remove()
+        else:
+            if isinstance(dst, six.string_types):
+                dst = RemotePath(self.remote, dst)
+            if dst.exists():
+                raise TypeError("Override not specified and dst exists")
+
         self.remote._path_copy(self, dst)
 
     @_setdoc(Path)

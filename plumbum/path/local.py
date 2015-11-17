@@ -191,6 +191,8 @@ class LocalPath(Path):
         dst = LocalPath(dst)
         if override:
             dst.delete()
+        elif dst.exists():
+            raise TypeError("File exists and override was not specified")
         if self.is_dir():
             shutil.copytree(str(self), str(dst))
         else:
