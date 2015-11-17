@@ -4,10 +4,19 @@ import os
 import socket
 import time
 import logging
+import plumbum
+from copy import deepcopy
 from plumbum import RemotePath, SshMachine, ProcessExecutionError, local, ProcessTimedOut, NOHUP
 from plumbum import CommandNotFound
 from plumbum.lib import six
 from plumbum._testtools import skip_without_chown, skip_on_windows
+
+try:
+    import paramiko
+except ImportError:
+    paramiko = None
+else:
+    from plumbum.machines.paramiko_machine import ParamikoMachine
 
 def strassert(one, two):
     assert str(one) == str(two)
@@ -15,7 +24,6 @@ def strassert(one, two):
 #TEST_HOST = "192.168.1.143"
 TEST_HOST = "127.0.0.1"
 if TEST_HOST not in ("::1", "127.0.0.1", "localhost"):
-    import plumbum
     plumbum.local.env.path.append("c:\\Program Files\\Git\\bin")
 
 @skip_on_windows
@@ -76,7 +84,6 @@ class TestRemotePath:
                 p.chown(p.uid.name)
                 assert p.uid == os.getuid()
 
-@skip_on_windows
 class BaseRemoteMachineTest(object):
     TUNNEL_PROG = r"""import sys, socket
 s = socket.socket()
@@ -274,43 +281,37 @@ class TestRemoteMachine(BaseRemoteMachineTest):
             with local.as_root():
                 local["userdel"]("-r", "testuser")
 
+@skip_on_windows
+class TestParamikoMachine(BaseRemoteMachineTest):
+    def _connect(self):
+        if paramiko is None:
+            pytest.skip("System does not have paramiko installed")
+        return ParamikoMachine(TEST_HOST, missing_host_policy = paramiko.AutoAddPolicy())
 
+    def test_tunnel(self):
+        with self._connect() as rem:
+            p = rem.python["-c", self.TUNNEL_PROG].popen()
+            try:
+                port = int(p.stdout.readline().strip())
+            except ValueError:
+                print(p.communicate())
+                raise
 
-try:
-    import paramiko
-except ImportError:
-    print("Paramiko not avilable")
-else:
-    from plumbum.machines.paramiko_machine import ParamikoMachine
-    @skip_on_windows
-    class TestParamikoMachine(BaseRemoteMachineTest):
-        def _connect(self):
-            return ParamikoMachine(TEST_HOST, missing_host_policy = paramiko.AutoAddPolicy())
+            s = rem.connect_sock(port)
+            s.send(b"world")
+            data = s.recv(100)
+            s.close()
+        
+        print(p.communicate())
+        assert data == b"hello world"
 
-        def test_tunnel(self):
-            with self._connect() as rem:
-                p = rem.python["-c", self.TUNNEL_PROG].popen()
-                try:
-                    port = int(p.stdout.readline().strip())
-                except ValueError:
-                    print(p.communicate())
-                    raise
-
-                s = rem.connect_sock(port)
-                s.send(b"world")
-                data = s.recv(100)
-                s.close()
-            
-            print(p.communicate())
-            assert data == b"hello world"
-
-        def test_piping(self):
-            with self._connect() as rem:
-                try:
-                    cmd = rem["ls"] | rem["cat"]
-                except NotImplementedError:
-                    pass
-                else:
-                    pytest.fail("Should not pipe")
+    def test_piping(self):
+        with self._connect() as rem:
+            try:
+                cmd = rem["ls"] | rem["cat"]
+            except NotImplementedError:
+                pass
+            else:
+                pytest.fail("Should not pipe")
 
 

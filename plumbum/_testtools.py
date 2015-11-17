@@ -2,14 +2,6 @@ import pytest
 import os
 import sys
 
-try:
-    import pathlib
-except ImportError:
-    pathlib = None
-
-skip_without_pathlib = pytest.mark.skipif(pathlib is None,
-        reason="This requires pathlib to be installed")
-
 skip_without_chown = pytest.mark.skipif(not hasattr(os, "chown"),
         reason="os.chown not supported")
 

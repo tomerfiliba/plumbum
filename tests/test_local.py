@@ -1,4 +1,5 @@
 import pytest
+import pickle
 import os
 import sys
 import signal
@@ -12,8 +13,6 @@ from plumbum.path import RelativePath
 import plumbum
 
 from plumbum._testtools import (
-    pathlib,
-    skip_without_pathlib, 
     skip_without_chown,
     skip_without_tty,
     skip_on_windows)
@@ -37,6 +36,18 @@ class TestLocalPath:
         else:
             assert "file:///some/long/path/to/file.txt" == self.longpath.as_uri()
 
+    def test_pickle(self):
+        path1 = local.path('.')
+        path2 = local.path('~')
+        assert pickle.loads(pickle.dumps(self.longpath)) == self.longpath
+        assert pickle.loads(pickle.dumps(path1)) == path1
+        assert pickle.loads(pickle.dumps(path2)) == path2
+
+
+    def test_empty(self):
+        with pytest.raises(TypeError):
+            LocalPath()
+        assert local.path() == local.path('.')
 
     @skip_without_chown
     def test_chown(self):
@@ -64,6 +75,9 @@ class TestLocalPath:
         assert p2.with_suffix(".other", 2) == local.path("file.other")
         assert p2.with_suffix(".other", 0) == local.path("file.tar.gz.other")
         assert p2.with_suffix(".other", None) == local.path("file.other")
+
+        with pytest.raises(ValueError):
+            p1.with_suffix('nodot')
 
     def test_newname(self):
         p1 = self.longpath
@@ -97,14 +111,20 @@ class TestLocalPath:
             assert parts == ('C:\\', 'some', 'long', 'path', 'to', 'file.txt')
         else:
             assert parts == ('/', 'some', 'long', 'path', 'to', 'file.txt')
-        
+       
+    def test_iterdir(self):
+        cwd = local.path('.')
+        files = list(cwd.iterdir())
+        assert 'test_local.py' in files
+        assert 'test_remote.py' in files
+
     def test_stem(self):
         assert self.longpath.stem == "file"
         p = local.path("/some/directory")
         assert p.stem == "directory"
         
-    @skip_without_pathlib
     def test_root_drive(self):
+        pathlib = pytest.importorskip("pathlib")
         pl_path = pathlib.Path("/some/long/path/to/file.txt").absolute()
         assert self.longpath.root == pl_path.root
         assert self.longpath.drive == pl_path.drive
@@ -114,14 +134,15 @@ class TestLocalPath:
         assert p_path.root == pl_path.root
         assert p_path.drive == pl_path.drive
         
-    @skip_without_pathlib
     def test_compare_pathlib(self):
+        pathlib = pytest.importorskip("pathlib")
         def filename_compare(name):
             p = local.path(str(name))
             pl = pathlib.Path(str(name)).absolute()
             assert str(p) == str(pl)
             assert p.parts == pl.parts
             assert p.exists() == pl.exists()
+            assert p.is_symlink() == pl.is_symlink()
             assert p.as_uri() == pl.as_uri()
             assert str(p.with_suffix('.this')) == str(pl.with_suffix('.this'))
             assert p.name == pl.name
@@ -164,6 +185,33 @@ class TestLocalPath:
 
             one.copy(two, override = True)
             assert one.read() == b'lala'
+
+    def test_copy_nonexistant_dir(self):
+        with local.tempdir() as tmp:
+            one = tmp / 'one'
+            one.write(b'lala')
+            two = tmp / 'two' / 'one'
+            three = tmp / 'three' / 'two' / 'one'
+            
+            one.copy(two)
+            assert one.read() == two.read()
+            one.copy(three)
+            assert one.read() == three.read()
+
+    def test_unlink(self):
+        with local.tempdir() as tmp:
+            one = tmp / 'one'
+            one.touch()
+            assert one.exists()
+            one.unlink()
+            assert not one.exists()
+
+    def test_unhashable(self):
+        with pytest.raises(TypeError):
+            hash(local.cwd)
+
+    def test_getpath(self):
+        assert local.cwd.getpath() == local.path('.')
 
 
 class TestLocalMachine:
