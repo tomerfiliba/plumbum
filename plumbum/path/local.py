@@ -113,7 +113,7 @@ class LocalPath(Path):
     def iterdir(self):
         try:
             return (self.__class__(fn.name) for fn in os.scandir(str(self)))
-        except NameError:
+        except AttributeError:
             return (self / fn for fn in os.listdir(str(self)))
 
     @_setdoc(Path)
