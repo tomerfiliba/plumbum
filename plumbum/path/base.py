@@ -229,6 +229,9 @@ class Path(str, six.ABC):
         """writes the given data to this file. By default the data is expected to be binary (``bytes``),
         but you can specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
     @abstractmethod
+    def touch(self):
+        """Update the access time. Creates an empty file if none exists."""
+    @abstractmethod
     def chown(self, owner = None, group = None, recursive = None):
         """Change ownership of this path.
 

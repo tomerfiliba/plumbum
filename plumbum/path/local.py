@@ -231,6 +231,11 @@ class LocalPath(Path):
             f.write(data)
 
     @_setdoc(Path)
+    def touch(self):
+        with open(str(self), 'a'):
+            os.utime(str(self), None)
+
+    @_setdoc(Path)
     def chown(self, owner = None, group = None, recursive = None):
         if not hasattr(os, "chown"):
             raise OSError("os.chown() not supported")

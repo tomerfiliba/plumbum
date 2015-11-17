@@ -187,6 +187,14 @@ s.close()
                 assert i == 1
             assert ex.value.stderr.startswith("/bin/ls: ")
 
+    def test_touch(self):
+        with self._connect() as rem:
+            rfile = rem.cwd / 'sillyfile'
+            assert not rfile.exists()
+            rfile.touch()
+            assert rfile.exists()
+            rfile.delete()
+
 @skip_on_windows
 class TestRemoteMachine(BaseRemoteMachineTest):
     def _connect(self):

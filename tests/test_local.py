@@ -136,6 +136,16 @@ class TestLocalPath:
         assert self.longpath.preferred_suffix('.tar') == self.longpath
         assert (local.cwd / 'this').preferred_suffix('.txt') == local.cwd / 'this.txt'
 
+    def test_touch(self):
+        with local.tempdir() as tmp:
+            one = tmp / 'one'
+            assert not one.is_file()
+            one.touch()
+            assert one.is_file()
+            one.delete()
+            assert not one.is_file()
+            assert one.is_file()
+
 class TestLocalMachine:
     def test_getattr(self):
         pb = plumbum
