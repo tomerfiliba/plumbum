@@ -105,8 +105,7 @@ class TestTerminal:
 000060 | 41 41 41 41 66 6f 6f 20 62 61 72                | AAAAfoo bar"""
         assert "\n".join(hexdump(data)) == output
 
-        with StringIO(data) as dat:
-            assert "\n".join(hexdump(dat)) == output
+        assert "\n".join(hexdump(StringIO(data))) == output
 
     def test_progress(self, capsys):
         for i in Progress.range(4, has_output=True, timer=False):
