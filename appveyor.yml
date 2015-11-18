@@ -1,7 +1,10 @@
 environment:
   matrix:
+    - PYTHON: "C:\\Python26"
     - PYTHON: "C:\\Python27"
+    - PYTHON: "C:\\Python33"
     - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python35"
 # Python 3.5 has to rebuild Crypto, because binaries are not available yet
 
 install:
@@ -17,7 +20,6 @@ install:
 
   - pip install -r dev-requirements.txt
   - pip install pypiwin32
-  - pip install coveralls
   - pip install -e .
 
 build: false
@@ -26,5 +28,11 @@ test_script:
   - python setup.py test -c
 
 after_test:
-  - coveralls
+  - python setup.py bdist_wheel
 
+artifacts:
+  - path: .coverage
+    name: Coverage
+
+  - path: dist\*
+    name: Wheels
