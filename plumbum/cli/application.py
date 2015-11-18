@@ -120,6 +120,18 @@ class Application(object):
     nested_command = None
     _unbound_switches = ()
 
+    def __new__(cls, executable=None):
+        """Allows running the class directly as a shortcut for main.
+        This is neccisary for some setup scripts that want a single function,
+        instead of an expression with a dot in it."""
+
+
+        if executable is None:
+            return cls.run()
+            # This return value was not a class instance, so __init__ is never called
+        else:
+            return super(Application, cls).__new__(cls)
+
     def __init__(self, executable):
         # Filter colors
 
@@ -165,6 +177,7 @@ class Application(object):
                     self._switches_by_func[swinfo.func] = swinfo
                     if swinfo.envname:
                         self._switches_by_envar[swinfo.envname] = swinfo
+
 
     @property
     def root_app(self):

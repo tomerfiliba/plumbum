@@ -48,6 +48,9 @@ And you can run it::
 
 So far you've only seen the very basic usage. We'll now start to explore the library.
 
+.. versionadded:: 1.6.1
+
+    You can also directly run the app, as ``MyApp()``, without arguments, instead of calling ``.main()``.
 
 Application
 -----------

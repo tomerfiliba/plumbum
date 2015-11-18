@@ -55,5 +55,5 @@ class MyCompiler(cli.Application):
 
 
 if __name__ == "__main__":
-    MyCompiler.run()
+    MyCompiler()
 
