@@ -109,6 +109,17 @@ def choose(question, options, default = None):
         return choices[choice]
 
 def prompt(question, type = int, default = NotImplemented, validator = lambda val: True):
+
+    """
+    Presents the user with a validated question, keeps asking if validation does not pass.
+
+    :param question: The question to ask
+    :param type: The type of the answer, defaults to str
+    :param default: The default choice
+    :param validator: An extra validator called after type conversion, can raise ValueError or return False to trigger a retry.
+
+    :returns: the user's choice
+    """
     question = question.rstrip(" \t:")
     if default is not NotImplemented:
         question += " [%s]" % (default,)
@@ -130,9 +141,13 @@ def prompt(question, type = int, default = NotImplemented, validator = lambda va
             sys.stdout.write("Invalid value (%s), please try again\n" % (ex,))
             continue
         try:
-            validator(ans)
+            valid = validator(ans)
         except ValueError as ex:
             sys.stdout.write("%s, please try again\n" % (ex,))
+            continue
+        if not valid:
+            sys.stdout.write("Value not in specified range, please try again\n")
+            continue
         return ans
 
 def hexdump(data_or_stream, bytes_per_line = 16, aggregate = True):

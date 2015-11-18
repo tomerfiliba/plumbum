@@ -1,11 +1,7 @@
 import pytest
-import time
 import sys
-from contextlib import contextmanager
 
 from plumbum import cli, local
-from plumbum.cli.terminal import ask, choose, hexdump, Progress
-from plumbum.lib import StringIO
 
 class SimpleApp(cli.Application):
     @cli.switch(["a"])
@@ -188,66 +184,4 @@ class TestCLI:
         assert "bacon is mandatory" in stdout
 
 
-@contextmanager
-def send_stdin(stdin = "\n"):
-    prevstdin = sys.stdin
-    sys.stdin = StringIO(stdin)
-    try:
-        yield sys.stdin
-    finally:
-        sys.stdin = prevstdin
-
-class TestTerminal:
-    def test_ask(self, capsys):
-        with send_stdin("\n"):
-            assert ask("Do you like cats?", default = True)
-        assert capsys.readouterr()[0] == "Do you like cats? [Y/n] "
-
-        with send_stdin("\nyes"):
-            assert ask("Do you like cats?")
-        assert capsys.readouterr()[0] == "Do you like cats? (y/n) Invalid response, please try again\nDo you like cats? (y/n) "
-
-    def test_choose(self, capsys):
-        with send_stdin("foo\n2\n"):
-            assert choose("What is your favorite color?", ["blue", "yellow", "green"]) == "yellow"
-        assert capsys.readouterr()[0] == "What is your favorite color?\n(1) blue\n(2) yellow\n(3) green\nChoice: Invalid choice, please try again\nChoice: "
-
-        with send_stdin("foo\n2\n"):
-            assert choose("What is your favorite color?", [("blue", 10), ("yellow", 11), ("green", 12)]) == 11
-        assert capsys.readouterr()[0] == "What is your favorite color?\n(1) blue\n(2) yellow\n(3) green\nChoice: Invalid choice, please try again\nChoice: "
-
-        with send_stdin("foo\n\n"):
-            assert choose("What is your favorite color?", ["blue", "yellow", "green"], default = "yellow") == "yellow"
-        assert capsys.readouterr()[0] == "What is your favorite color?\n(1) blue\n(2) yellow\n(3) green\nChoice [2]: Invalid choice, please try again\nChoice [2]: "
-
-    def test_hexdump(self):
-        data = "hello world my name is queen marry" + "A" * 66 + "foo bar"
-        output = """\
-000000 | 68 65 6c 6c 6f 20 77 6f 72 6c 64 20 6d 79 20 6e | hello world my n
-000010 | 61 6d 65 20 69 73 20 71 75 65 65 6e 20 6d 61 72 | ame is queen mar
-000020 | 72 79 41 41 41 41 41 41 41 41 41 41 41 41 41 41 | ryAAAAAAAAAAAAAA
-000030 | 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 41 | AAAAAAAAAAAAAAAA
-*
-000060 | 41 41 41 41 66 6f 6f 20 62 61 72                | AAAAfoo bar"""
-        assert "\n".join(hexdump(data)) == output
-
-    def test_progress(self, capsys):
-        for i in Progress.range(4, has_output=True, timer=False):
-            print('hi')
-            time.sleep(.5)
-        stdout, stderr = capsys.readouterr()
-        output = """\
-0% complete
-0% complete
-hi
-25% complete
-hi
-50% complete
-hi
-75% complete
-hi
-100% complete
-
-"""
-        assert stdout ==  output
 
