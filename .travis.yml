@@ -15,10 +15,11 @@ matrix:
     - python: nightly
     - python: pypy
     - language: generic
+      env: PYV=Mac2
       os: osx
     - language: generic
       os: osx
-      env: PY3=3
+      env: PY3=3 PYV=Mac3
 
 install: .ci/travis.sh
 script: python$PY3 setup.py test -c

@@ -17,10 +17,14 @@ install:
 
   - pip install -r dev-requirements.txt
   - pip install pypiwin32
+  - pip install coveralls
   - pip install -e .
 
 build: false
 
 test_script:
   - python setup.py test -c
+
+after_test:
+  - coveralls
 
