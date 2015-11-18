@@ -18,9 +18,6 @@ except ImportError:
 else:
     from plumbum.machines.paramiko_machine import ParamikoMachine
 
-DIR = local.path(__file__).dirname
-
-
 def strassert(one, two):
     assert str(one) == str(two)
 
@@ -122,16 +119,16 @@ s.close()
                 assert "test_remote.py" in filenames
                 assert "slow_process.bash" in filenames
 
+    @pytest.mark.usefixtures("testdir")
     def test_download_upload(self):
         with self._connect() as rem:
-            with local.cwd(DIR):
-                rem.upload("test_remote.py", "/tmp")
-                r_ls = rem["ls"]
-                r_rm = rem["rm"]
-                assert "test_remote.py" in r_ls("/tmp").splitlines()
-                rem.download("/tmp/test_remote.py", "/tmp/test_download.txt")
-                r_rm("/tmp/test_remote.py")
-                r_rm("/tmp/test_download.txt")
+            rem.upload("test_remote.py", "/tmp")
+            r_ls = rem["ls"]
+            r_rm = rem["rm"]
+            assert "test_remote.py" in r_ls("/tmp").splitlines()
+            rem.download("/tmp/test_remote.py", "/tmp/test_download.txt")
+            r_rm("/tmp/test_remote.py")
+            r_rm("/tmp/test_download.txt")
 
     def test_session(self):
         with self._connect() as rem:
