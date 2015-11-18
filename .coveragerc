@@ -4,7 +4,7 @@ source =
     plumbum
 omit =
     *ipython*.py
-    __main__.py
+    *__main__.py
 
 [report]
 exclude_lines =

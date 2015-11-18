@@ -2,10 +2,19 @@ import pytest
 import sys
 import time
 from contextlib import contextmanager
-from collections import OrderedDict
 
 from plumbum.cli.terminal import ask, choose, prompt, hexdump, Progress
 from plumbum.lib import StringIO
+
+try:
+    from collections import OrderedDict
+except ImportError:
+    try:
+        from ordereddict import OrderedDict
+    except ImportError:
+        OrderedDict = None
+needs_od = pytest.mark.skipif(OrderedDict is None,
+        reason="Ordered dict not available (Py 2.6)")
 
 @contextmanager
 def send_stdin(stdin = "\n"):
@@ -75,6 +84,8 @@ class TestTerminal:
             value = choose("Pick", dict(one="a",two="b"))
             assert value in ("a","b")
 
+    @needs_od
+    def test_ordered_dict(self):
         dic = OrderedDict()
         dic["one"] = "a"
         dic["two"] = "b"
@@ -85,6 +96,7 @@ class TestTerminal:
             value = choose("Pick", dic)
             assert value == "b"
 
+    @needs_od
     def test_choose_dict_default(self, capsys):
         dic = OrderedDict()
         dic["one"] = "a"
