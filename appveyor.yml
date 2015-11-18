@@ -1,11 +1,9 @@
 environment:
   matrix:
-    - PYTHON: "C:\\Python26"
     - PYTHON: "C:\\Python27"
     - PYTHON: "C:\\Python33"
     - PYTHON: "C:\\Python34"
     - PYTHON: "C:\\Python35"
-# Python 3.5 has to rebuild Crypto, because binaries are not available yet
 
 install:
   - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
@@ -19,6 +17,7 @@ install:
   - pip install --disable-pip-version-check --user --upgrade pip
 
   - pip install -r dev-requirements.txt
+  - pip install wheel
   - pip install pypiwin32
   - pip install -e .
 
