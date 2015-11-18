@@ -1,6 +1,7 @@
 from plumbum.path.base import Path
 from plumbum.lib import six
 from plumbum.machines.local import local, LocalPath
+import os
 
 
 def delete(*paths):
@@ -99,3 +100,10 @@ def copy(src, dst):
         return dst
 
 
+def gui_open(filename):
+    """This selects the proper gui open function. This can
+       also be achieved with webbrowser, but that is not supported."""
+    if(hasattr(os, "startfile")):
+        os.startfile(filename)
+    else:
+        local.get('xgd-open', 'open')(filename)
