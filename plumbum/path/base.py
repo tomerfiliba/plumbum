@@ -213,7 +213,8 @@ class Path(str, six.ABC):
         return self.move(self.up() / newname)
     @abstractmethod
     def copy(self, dst, override = False):
-        """Copies this path (recursively, if a directory) to the destination path"""
+        """Copies this path (recursively, if a directory) to the destination path. Raises TypeError if
+        dst exists and override is False."""
     @abstractmethod
     def mkdir(self):
         """Creates a directory at this path; if the directory already exists, silently ignore"""
@@ -228,6 +229,9 @@ class Path(str, six.ABC):
     def write(self, data, encoding=None):
         """writes the given data to this file. By default the data is expected to be binary (``bytes``),
         but you can specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
+    @abstractmethod
+    def touch(self):
+        """Update the access time. Creates an empty file if none exists."""
     @abstractmethod
     def chown(self, owner = None, group = None, recursive = None):
         """Change ownership of this path.
@@ -292,7 +296,7 @@ class Path(str, six.ABC):
     @property
     def parts(self):
         """Splits the directory into parts, including the base directroy, returns a tuple"""
-        return tuple([self.root] + self.split())
+        return tuple([self.drive + self.root] + self.split())
 
     def relative_to(self, source):
         """Computes the "relative path" require to get from ``source`` to ``self``. They satisfy the invariant

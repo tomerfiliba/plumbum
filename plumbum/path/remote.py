@@ -211,6 +211,12 @@ class RemotePath(Path):
             if isinstance(dst, six.string_types):
                 dst = RemotePath(self.remote, dst)
             dst.remove()
+        else:
+            if isinstance(dst, six.string_types):
+                dst = RemotePath(self.remote, dst)
+            if dst.exists():
+                raise TypeError("Override not specified and dst exists")
+
         self.remote._path_copy(self, dst)
 
     @_setdoc(Path)
@@ -228,6 +234,10 @@ class RemotePath(Path):
         if encoding:
             data = data.encode(encoding)
         self.remote._path_write(self, data)
+
+    @_setdoc(Path)
+    def touch(self):
+        self.remote._path_touch(str(self))
 
     @_setdoc(Path)
     def chown(self, owner = None, group = None, recursive = None):

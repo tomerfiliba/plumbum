@@ -276,14 +276,14 @@ class Pipeline(BaseCommand):
     def popen(self, args = (), **kwargs):
         src_kwargs = kwargs.copy()
         src_kwargs["stdout"] = PIPE
-        src_kwargs["stderr"] = PIPE
 
         srcproc = self.srccmd.popen(args, **src_kwargs)
         kwargs["stdin"] = srcproc.stdout
         dstproc = self.dstcmd.popen(**kwargs)
         # allow p1 to receive a SIGPIPE if p2 exits
         srcproc.stdout.close()
-        srcproc.stderr.close()
+        if srcproc.stderr is not None:
+            dstproc.stderr = srcproc.stderr
         if srcproc.stdin:
             srcproc.stdin.close()
         dstproc.srcproc = srcproc

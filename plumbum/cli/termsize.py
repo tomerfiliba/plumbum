@@ -16,7 +16,7 @@ def get_terminal_size(default=(80, 25)):
     Originally from: http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
     """
     current_os = platform.system()
-    if current_os == 'Windows':
+    if current_os == 'Windows': # pragma: no branch
         size = _get_terminal_size_windows()
         if not size:
             # needed for window's python in cygwin's xterm!
@@ -28,7 +28,7 @@ def get_terminal_size(default=(80, 25)):
         size = default
     return size
 
-def _get_terminal_size_windows():
+def _get_terminal_size_windows(): # pragma: no cover
     try:
         from ctypes import windll, create_string_buffer
         STDERR_HANDLE = -12

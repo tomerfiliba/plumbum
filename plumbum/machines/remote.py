@@ -350,6 +350,8 @@ class BaseRemoteMachine(BaseMachine):
         self._session.run("mkdir -p %s" % (shquote(fn),))
     def _path_chmod(self, mode, fn):
         self._session.run("chmod %o %s" % (mode, shquote(fn)))
+    def _path_touch(self, path):
+        self._session.run("touch {path}".format(path=path))
     def _path_chown(self, fn, owner, group, recursive):
         args = ["chown"]
         if recursive:

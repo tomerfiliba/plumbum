@@ -158,7 +158,7 @@ class Progress(ProgressBase):
             sys.stdout.flush()
 
 
-class ProgressIPy(ProgressBase): # pragma: nocover
+class ProgressIPy(ProgressBase): # pragma: no cover
     HTMLBOX = '<div class="widget-hbox widget-progress"><div class="widget-label" style="display:block;">{}</div></div>'
 
     def __init__(self, *args, **kargs):
@@ -212,7 +212,7 @@ class ProgressAuto(ProgressBase):
     """
     def __new__(cls, *args, **kargs):
         """Uses the generator trick that if a cls instance is returned, the __init__ method is not called."""
-        try: #pragma: nocover
+        try: # pragma: no cover
             __IPYTHON__
             try:
                 from traitlets import TraitError

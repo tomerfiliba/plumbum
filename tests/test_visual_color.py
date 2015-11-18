@@ -4,6 +4,8 @@ import unittest
 import os
 from plumbum import colors
 
+# This is really intended to be run manually, so the output can be observed, rather than with py.test
+
 class TestVisualColor(unittest.TestCase):
 
     def setUp(self):

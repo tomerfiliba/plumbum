@@ -46,7 +46,7 @@ class LocalPath(Path):
                 not isinstance(parts[0], LocalWorkdir):
             return parts[0]
         if not parts:
-            raise TypeError("At least one path part is require (none given)")
+            raise TypeError("At least one path part is required (none given)")
         if any(isinstance(path, RemotePath) for path in parts):
             raise TypeError("LocalPath cannot be constructed from %r" % (parts,))
         self = super(LocalPath, cls).__new__(cls, os.path.normpath(os.path.join(*(str(p) for p in parts))))
@@ -57,8 +57,6 @@ class LocalPath(Path):
 
     def _get_info(self):
         return self._path
-    def __getstate__(self):
-        return {"_path" : self._path}
 
     def _form(self, *parts):
         return LocalPath(*parts)
@@ -114,8 +112,8 @@ class LocalPath(Path):
     @_setdoc(Path)
     def iterdir(self):
         try:
-            return (self.__class__(fn.name) for fn in os.scandir(str(self)))
-        except NameError:
+            return (self / fn.name for fn in os.scandir(str(self)))
+        except AttributeError:
             return (self / fn for fn in os.listdir(str(self)))
 
     @_setdoc(Path)
@@ -171,7 +169,7 @@ class LocalPath(Path):
         else:
             try:
                 os.remove(str(self))
-            except OSError:
+            except OSError: # pragma: no cover
                 # file might already been removed (a race with other threads/processes)
                 _, ex, _ = sys.exc_info()
                 if ex.errno != errno.ENOENT:
@@ -191,6 +189,8 @@ class LocalPath(Path):
         dst = LocalPath(dst)
         if override:
             dst.delete()
+        elif dst.exists():
+            raise TypeError("File exists and override was not specified")
         if self.is_dir():
             shutil.copytree(str(self), str(dst))
         else:
@@ -205,7 +205,7 @@ class LocalPath(Path):
         if not self.exists():
             try:
                 os.makedirs(str(self))
-            except OSError:
+            except OSError: # pragma: no cover
                 # directory might already exist (a race with other threads/processes)
                 _, ex, _ = sys.exc_info()
                 if ex.errno != errno.EEXIST:
@@ -229,6 +229,11 @@ class LocalPath(Path):
             data = data.encode(encoding)
         with self.open("wb") as f:
             f.write(data)
+
+    @_setdoc(Path)
+    def touch(self):
+        with open(str(self), 'a'):
+            os.utime(str(self), None)
 
     @_setdoc(Path)
     def chown(self, owner = None, group = None, recursive = None):
@@ -287,7 +292,7 @@ class LocalPath(Path):
             else:
                 # windows: use rmdir for directories and directory symlinks
                 os.rmdir(str(self))
-        except OSError:
+        except OSError: # pragma: no cover
             # file might already been removed (a race with other threads/processes)
             _, ex, _ = sys.exc_info()
             if ex.errno != errno.ENOENT:
