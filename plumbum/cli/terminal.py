@@ -13,6 +13,7 @@ from plumbum.cli.progress import Progress
 def readline(message = ""):
     """Gets a line of input from the user (stdin)"""
     sys.stdout.write(message)
+    sys.stdout.flush()
     return sys.stdin.readline()
 
 def ask(question, default = None):
@@ -164,7 +165,7 @@ def hexdump(data_or_stream, bytes_per_line = 16, aggregate = True):
         skipped = False
 
 
-def pager(rows, pagercmd = None):
+def pager(rows, pagercmd = None): # pragma: no cover
     """Opens a pager (e.g., ``less``) to display the given text. Requires a terminal.
 
     :param rows: a ``bytes`` or a list/iterator of "rows" (``bytes``)

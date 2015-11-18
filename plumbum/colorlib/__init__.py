@@ -20,7 +20,7 @@ def load_ipython_extension(ipython): # pragma: no cover
     ipython.push({"colors":htmlcolors})
     ipython.register_magics(OutputMagics)
 
-def main():
+def main(): # pragma: no cover
     """Color changing script entry. Call using
     python -m plumbum.colors, will reset if no arguments given."""
     import sys
