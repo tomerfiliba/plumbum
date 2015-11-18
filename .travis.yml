@@ -21,7 +21,7 @@ matrix:
       env: PY3=3
 
 install: .ci/travis.sh
-script: cd tests && python$PY3 -m pytest --cov=plumbum --cov-config=.coveragerc
+script: python$PY3 setup.py test -c
 after_success:
     - if [ -n "$PYV" ] ; then coveralls; fi
 

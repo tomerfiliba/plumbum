@@ -10,7 +10,7 @@ except ImportError:
 from plumbum.path.utils import delete
 from plumbum._testtools import skip_on_windows
 
-
+DIR = local.path(__file__).dirname
 
 @skip_on_windows
 class TestNohupLocal:
@@ -20,17 +20,18 @@ class TestNohupLocal:
             return f.read()
 
     def test_slow(self):
-        delete('nohup.out')
-        sp = bash['slow_process.bash']
-        sp & NOHUP
-        time.sleep(.5)
-        assert self.read_file('slow_process.out') == 'Starting test\n1\n'
-        assert self.read_file('nohup.out') == '1\n'
-        time.sleep(1)
-        assert self.read_file('slow_process.out') == 'Starting test\n1\n2\n'
-        assert self.read_file('nohup.out') == '1\n2\n'
-        time.sleep(2)
-        delete('nohup.out', 'slow_process.out')
+        with local.cwd(DIR):
+            delete('nohup.out')
+            sp = bash['slow_process.bash']
+            sp & NOHUP
+            time.sleep(.5)
+            assert self.read_file('slow_process.out') == 'Starting test\n1\n'
+            assert self.read_file('nohup.out') == '1\n'
+            time.sleep(1)
+            assert self.read_file('slow_process.out') == 'Starting test\n1\n2\n'
+            assert self.read_file('nohup.out') == '1\n2\n'
+            time.sleep(2)
+            delete('nohup.out', 'slow_process.out')
 
     def test_append(self):
         delete('nohup.out')

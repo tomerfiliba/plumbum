@@ -22,6 +22,26 @@ class PyDocs(Command):
         errno = subprocess.call(['make', 'html'])
         sys.exit(errno)
 
+class PyTest(Command):
+    user_options = [('cov', 'c', 'Produce coverage'),
+                    ('report', 'r', 'Produce html coverage report')]
+
+    def initialize_options(self):
+        self.cov = None
+        self.report = None
+    def finalize_options(self):
+        pass
+    def run(self):
+        import sys, subprocess
+        proc = [sys.executable, '-m', 'pytest']
+        if self.cov or self.report:
+            proc += ['--cov','--cov-config=.coveragerc']
+        if self.report:
+            proc += ['--cov-report=html']
+        errno = subprocess.call(proc)
+        raise SystemExit(errno)
+
+
 setup(name = "plumbum",
     version = version_string,  # @UndefinedVariable
     description = "Plumbum: shell combinators library",
@@ -33,7 +53,7 @@ setup(name = "plumbum",
     platforms = ["POSIX", "Windows"],
     provides = ["plumbum"],
     keywords = "path, local, remote, ssh, shell, pipe, popen, process, execution, color, cli",
-    cmdclass = {
+    cmdclass = {'test':PyTest,
                 'docs':PyDocs},
     # use_2to3 = False,
     # zip_safe = True,

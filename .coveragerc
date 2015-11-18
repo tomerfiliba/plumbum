@@ -1,5 +1,9 @@
 [run]
 branch = True
+source =
+    plumbum
+omit =
+    *ipython*.py
 
 [report]
 exclude_lines =

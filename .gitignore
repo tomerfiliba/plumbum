@@ -12,7 +12,8 @@ __pycache__
 *.swp
 *~
 *.spyder*
-/tests/.cache/*
+*.cache/*
+tests/.cache/*
 .coverage
 *,cover
 *htmlcov

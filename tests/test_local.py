@@ -17,6 +17,10 @@ from plumbum._testtools import (
     skip_without_tty,
     skip_on_windows)
 
+# This is a string since we are testing local paths
+SDIR = os.path.dirname(os.path.abspath(__file__))
+
+
 class TestLocalPath:
     longpath = local.path("/some/long/path/to/file.txt")
     
@@ -111,7 +115,8 @@ class TestLocalPath:
             assert parts == ('C:\\', 'some', 'long', 'path', 'to', 'file.txt')
         else:
             assert parts == ('/', 'some', 'long', 'path', 'to', 'file.txt')
-       
+    
+    @pytest.mark.usefixtures("testdir")
     def test_iterdir(self):
         cwd = local.path('.')
         files = list(cwd.iterdir())
@@ -213,8 +218,13 @@ class TestLocalPath:
     def test_getpath(self):
         assert local.cwd.getpath() == local.path('.')
 
+    def test_path_dir(self):
+        assert local.path(__file__).dirname == SDIR
 
+
+@pytest.mark.usefixtures("testdir")
 class TestLocalMachine:
+
     def test_getattr(self):
         pb = plumbum
         assert getattr(pb.cmd, 'does_not_exist', 1) == 1
