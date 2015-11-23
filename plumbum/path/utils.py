@@ -106,4 +106,4 @@ def gui_open(filename):
     if(hasattr(os, "startfile")):
         os.startfile(filename)
     else:
-        local.get('xgd-open', 'open')(filename)
+        local.get('xdg-open', 'open')(filename)
