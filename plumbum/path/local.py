@@ -183,14 +183,14 @@ class LocalPath(Path):
         return LocalPath(dst)
 
     @_setdoc(Path)
-    def copy(self, dst, override = False):
+    def copy(self, dst, override = False, overwrite = True):
         if isinstance(dst, RemotePath):
             raise TypeError("Cannot copy local path %s to %r" % (self, dst))
         dst = LocalPath(dst)
+        if not overwrite and dst.exists():
+            raise TypeError("File exists and override was not specified")
         if override:
             dst.delete()
-        elif dst.exists():
-            raise TypeError("File exists and override was not specified")
         if self.is_dir():
             shutil.copytree(str(self), str(dst))
         else:
