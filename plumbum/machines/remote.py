@@ -13,6 +13,7 @@ class RemoteEnv(BaseEnv):
     """The remote machine's environment; exposes a dict-like interface"""
 
     __slots__ = ["_orig", "remote"]
+
     def __init__(self, remote):
         self.remote = remote
         session = remote._session
@@ -141,6 +142,9 @@ class BaseRemoteMachine(BaseMachine):
     * ``env`` - the remote environment
     * ``encoding`` - the remote machine's default encoding (assumed to be UTF8)
     * ``connect_timeout`` - the connection timeout
+
+
+    There also is a _cwd attribute that exists if the cwd is not current (del if cwd is changed).
     """
 
     # allow inheritors to override the RemoteCommand class
@@ -148,7 +152,9 @@ class BaseRemoteMachine(BaseMachine):
     
     @property
     def cwd(self):
-        return RemoteWorkdir(self)
+        if not hasattr(self, '_cwd'):
+            self._cwd = RemoteWorkdir(self)
+        return self._cwd
 
     def __init__(self, encoding = "utf8", connect_timeout = 10, new_session = False):
         self.encoding = encoding
