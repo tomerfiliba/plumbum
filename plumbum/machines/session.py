@@ -19,6 +19,12 @@ class SSHCommsError(EOFError):
 class SSHCommsChannel2Error(SSHCommsError):
     """Raises when channel 2 (stderr) is not available"""
 
+class IncorrectLogin(SSHCommsError):
+    """Raises when incorrect login credentials are provided"""
+
+class HostPublicKeyUnknown(SSHCommsError):
+    """Raises when the host public key isn't known"""
+
 shell_logger = logging.getLogger("plumbum.shell")
 
 
@@ -57,7 +63,8 @@ class MarkedPipe(object):
 class SessionPopen(PopenAddons):
     """A shell-session-based ``Popen``-like object (has the following attributes: ``stdin``,
     ``stdout``, ``stderr``, ``returncode``)"""
-    def __init__(self, argv, isatty, stdin, stdout, stderr, encoding):
+    def __init__(self, proc, argv, isatty, stdin, stdout, stderr, encoding):
+        self.proc = proc
         self.argv = argv
         self.isatty = isatty
         self.stdin = stdin
@@ -102,6 +109,13 @@ class SessionPopen(PopenAddons):
                 shell_logger.debug("%s> %r", name, line)
             except EOFError:
                 shell_logger.debug("%s> Nothing returned.", name)
+
+                self.proc.poll()
+                returncode = self.proc.returncode
+                if returncode == 5:
+                    raise IncorrectLogin("Incorrect username or password provided")
+                elif returncode == 6:
+                    raise HostPublicKeyUnknown("The authenticity of the host can't be established")
                 msg = "No communication channel detected. Does the remote exist?"
                 msgerr = "No stderr result detected. Does the remote have Bash as the default shell?"
                 raise SSHCommsChannel2Error(msgerr) if name=="2" else SSHCommsError(msg)
@@ -221,7 +235,7 @@ class ShellSession(object):
         shell_logger.debug("Running %r", full_cmd)
         self.proc.stdin.write(full_cmd + six.b("\n"))
         self.proc.stdin.flush()
-        self._current = SessionPopen(full_cmd, self.isatty, self.proc.stdin,
+        self._current = SessionPopen(self.proc, full_cmd, self.isatty, self.proc.stdin,
             MarkedPipe(self.proc.stdout, marker), MarkedPipe(self.proc.stderr, marker),
             self.encoding)
         return self._current
