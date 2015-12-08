@@ -1,4 +1,5 @@
 import sys
+import os
 from contextlib import contextmanager
 from abc import ABCMeta
 import inspect
@@ -117,3 +118,18 @@ def getdoc(object):
         return None
     return inspect.cleandoc(doc)
 
+def read_fd_decode_safely(fd, size=4096):
+    """
+    This reads a utf-8 file descriptor and returns a chunck, growing up to
+    three bytes if needed to decode the character at the end.
+
+    Returns the data and the decoded text.
+    """
+    data = os.read(fd.fileno(), size)
+    for i in range(4):
+        try:
+            return data, data.decode("utf-8")
+        except UnicodeDecodeError:
+            if i == 3:
+                raise
+            data += os.read(fd.fileno(), 1)
