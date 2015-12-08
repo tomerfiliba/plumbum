@@ -129,7 +129,9 @@ def read_fd_decode_safely(fd, size=4096):
     for i in range(4):
         try:
             return data, data.decode("utf-8")
-        except UnicodeDecodeError:
+        except UnicodeDecodeError as e:
+            if e.reason != 'unexpected end of data':
+                raise
             if i == 3:
                 raise
             data += os.read(fd.fileno(), 1)
