@@ -23,7 +23,7 @@ SDIR = os.path.dirname(os.path.abspath(__file__))
 
 class TestLocalPath:
     longpath = local.path("/some/long/path/to/file.txt")
-    
+
     def test_name(self):
         name = self.longpath.name
         assert isinstance(name, six.string_types)
@@ -115,7 +115,7 @@ class TestLocalPath:
             assert parts == ('C:\\', 'some', 'long', 'path', 'to', 'file.txt')
         else:
             assert parts == ('/', 'some', 'long', 'path', 'to', 'file.txt')
-    
+
     @pytest.mark.usefixtures("testdir")
     def test_iterdir(self):
         cwd = local.path('.')
@@ -127,18 +127,18 @@ class TestLocalPath:
         assert self.longpath.stem == "file"
         p = local.path("/some/directory")
         assert p.stem == "directory"
-        
+
     def test_root_drive(self):
         pathlib = pytest.importorskip("pathlib")
         pl_path = pathlib.Path("/some/long/path/to/file.txt").absolute()
         assert self.longpath.root == pl_path.root
         assert self.longpath.drive == pl_path.drive
-        
+
         p_path = local.cwd / "somefile.txt"
         pl_path = pathlib.Path("somefile.txt").absolute()
         assert p_path.root == pl_path.root
         assert p_path.drive == pl_path.drive
-        
+
     def test_compare_pathlib(self):
         pathlib = pytest.importorskip("pathlib")
         def filename_compare(name):
@@ -173,6 +173,7 @@ class TestLocalPath:
 
 
     def test_copy_override(self):
+        """Edit this when override behavior is added"""
         with local.tempdir() as tmp:
             one = tmp / 'one'
             one.touch()
@@ -183,13 +184,6 @@ class TestLocalPath:
             assert  one.is_file()
             assert two.is_file()
 
-            one.write(b'lala')
-            two.write(b'baba')
-            with pytest.raises(TypeError):
-                one.copy(two)
-
-            one.copy(two, override = True)
-            assert one.read() == b'lala'
 
     def test_copy_nonexistant_dir(self):
         with local.tempdir() as tmp:
@@ -197,7 +191,7 @@ class TestLocalPath:
             one.write(b'lala')
             two = tmp / 'two' / 'one'
             three = tmp / 'three' / 'two' / 'one'
-            
+
             one.copy(two)
             assert one.read() == two.read()
             one.copy(three)
@@ -249,7 +243,7 @@ class TestLocalMachine:
     def test_get(self):
         assert str(local['ls']) == str(local.get('ls'))
         assert str(local['ls']) == str(local.get('non_exist1N9', 'ls'))
-        
+
         with pytest.raises(CommandNotFound):
             local.get("non_exist1N9")
         with pytest.raises(CommandNotFound):
@@ -270,10 +264,10 @@ class TestLocalMachine:
                 fake_ls = local['ls']
                 del local.env.path[0]
                 assert fake_ls.executable == real_ls.executable
-            
 
 
-        
+
+
 
     @skip_on_windows
     def test_cwd(self):
