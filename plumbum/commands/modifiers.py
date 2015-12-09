@@ -54,7 +54,7 @@ class Future(object):
         return self._returncode
 
 #===================================================================================================
-# execution modifiers 
+# execution modifiers
 #===================================================================================================
 
 
@@ -181,7 +181,7 @@ class TEE(ExecutionModifier):
                 ready, _, _ = select((out, err), (), ())
                 for fd in ready:
                     buf = buffers[fd]
-                    data, text = read_fd_decode_safetly(fd, 4096)
+                    data, text = read_fd_decode_safely(fd, 4096)
                     if not data:  # eof
                         continue
 
@@ -292,11 +292,11 @@ class NOHUP(ExecutionModifier):
     sent to stdout. Use ``os.devnull`` for null output. Will respect redirected output.
     Example::
 
-        sleep[5] & NOHUP                       # Outputs to nohup.out 
+        sleep[5] & NOHUP                       # Outputs to nohup.out
         sleep[5] & NOHUP(stdout=os.devnull)    # No output
 
     The equivelent bash command would be
-  
+
     .. code-block:: bash
 
         nohup sleep 5 &
@@ -326,6 +326,6 @@ class NOHUP(ExecutionModifier):
         else:
             stdout = self.stdout
             append = self.append
-        return cmd.nohup(cmd, self.cwd, stdout, self.stderr, append) 
+        return cmd.nohup(cmd, self.cwd, stdout, self.stderr, append)
 
 NOHUP = NOHUP()
