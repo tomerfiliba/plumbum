@@ -6,6 +6,7 @@ from itertools import chain
 
 from plumbum.commands.processes import run_proc, ProcessExecutionError
 from plumbum.commands.base import AppendingStdoutRedirection, StdoutRedirection
+from plumbum.lib import read_fd_decode_safely
 
 
 class Future(object):
@@ -180,13 +181,16 @@ class TEE(ExecutionModifier):
                 ready, _, _ = select((out, err), (), ())
                 for fd in ready:
                     buf = buffers[fd]
-                    data = os.read(fd.fileno(), 4096)
+                    data, text = read_fd_decode_safetly(fd, 4096)
                     if not data:  # eof
                         continue
 
                     # Python conveniently line-buffers stdout and stderr for
                     # us, so all we need to do is write to them
-                    tee_to[fd].write(data.decode('utf-8'))
+
+                    # This will automatically add up to three bytes if it cannot be decoded
+                    tee_to[fd].write(text)
+
                     # And then "unbuffered" is just flushing after each write
                     if not self.buffered:
                         tee_to[fd].flush()

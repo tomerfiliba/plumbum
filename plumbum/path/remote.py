@@ -36,7 +36,12 @@ class RemotePath(Path):
             raise TypeError("At least one path part is required (none given)")
         windows = (remote.uname.lower() == "windows")
         normed = []
-        parts = (remote._session.run("pwd")[1].strip(),) + parts
+
+        # Simple skip if path is absolute
+        if parts[0][0] not in ("/","\\"):
+            cwd = (remote._cwd if hasattr(remote, '_cwd') else remote._session.run("pwd")[1].strip())
+            parts = (cwd,) + parts
+
         for p in parts:
             if windows:
                 plist = str(p).replace("\\", "/").split("/")
@@ -308,6 +313,7 @@ class RemoteWorkdir(RemotePath):
     def chdir(self, newdir):
         """Changes the current working directory to the given one"""
         self.remote._session.run("cd %s" % (shquote(newdir),))
+        del self.remote._cwd
         return self.__class__(self.remote)
 
     def getpath(self):

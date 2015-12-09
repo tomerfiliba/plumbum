@@ -188,7 +188,7 @@ class Path(str, six.ABC):
     @abstractmethod
     def with_suffix(self, suffix, depth=1):
         """Returns a path with the suffix replaced. Up to last ``depth`` suffixes will be
-        replaces. None will replace all suffixes. If there are less than ``depth`` suffixes,
+        replaced. None will replace all suffixes. If there are less than ``depth`` suffixes,
         this will replace all suffixes. ``.tar.gz`` is an example where ``depth=2`` or
         ``depth=None`` is useful"""
 

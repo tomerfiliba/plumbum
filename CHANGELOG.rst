@@ -4,6 +4,7 @@
 * CLI: `Application` subclasses can now be run directly, instead of calling `.run()`, to facilitate using as entry points (`#237 <https://github.com/tomerfiliba/plumbum/pull/237>`_)
 * CLI: `gui_open` added to allow easy opening of paths in default gui editor (`#239 <https://github.com/tomerfiliba/plumbum/pull/239>`_)
 * CLI: More control over help message (`#233 <https://github.com/tomerfiliba/plumbum/pull/233>`_)
+* Remote: `cwd` is now stashed to reduce network usage (similar to Plumbum <1.6 behavior), and absolute paths are faster, (`#238 <https://github.com/tomerfiliba/plumbum/pull/238>`_)
 * Bugfix: Pipelined return codes now give correct attribution (`#243 <https://github.com/tomerfiliba/plumbum/pull/243>`_)
 * Bugfix: ``Progress`` works on Python 2.6 (`#230 <https://github.com/tomerfiliba/plumbum/issues/230>`_),
 * Bugfix: Colors now work with more terminals (`#231 <https://github.com/tomerfiliba/plumbum/issues/231>`_)
