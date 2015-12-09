@@ -6,9 +6,10 @@ import time
 import logging
 import plumbum
 from copy import deepcopy
-from plumbum import RemotePath, SshMachine, ProcessExecutionError, local, ProcessTimedOut, NOHUP
+from plumbum import RemotePath, SshMachine, CommandNotFound, ProcessExecutionError, local, ProcessTimedOut, NOHUP
 from plumbum import CommandNotFound
 from plumbum.lib import six
+from plumbum.machines.session import IncorrectLogin, HostPublicKeyUnknown
 from plumbum._testtools import skip_without_chown, skip_on_windows
 
 try:
@@ -25,6 +26,35 @@ def strassert(one, two):
 TEST_HOST = "127.0.0.1"
 if TEST_HOST not in ("::1", "127.0.0.1", "localhost"):
     plumbum.local.env.path.append("c:\\Program Files\\Git\\bin")
+
+
+@pytest.fixture(scope='session')
+def sshpass():
+    try:
+        return plumbum.local['sshpass']
+    except CommandNotFound:
+        pytest.skip('Test requires sshpass')
+
+
+def test_connection():
+    SshMachine(TEST_HOST)
+
+
+def test_incorrect_login(sshpass):
+    def connect():
+        SshMachine(TEST_HOST, password='swordfish',
+                   ssh_opts=['-o', 'PubkeyAuthentication=no',
+                             '-o', 'PreferredAuthentications=password'])
+    pytest.raises(IncorrectLogin, connect)
+
+
+def test_hostpubkey_unknown(sshpass):
+    def connect():
+        SshMachine(TEST_HOST, password='swordfish',
+                   ssh_opts=['-o', 'UserKnownHostsFile=/dev/null',
+                             '-o', 'UpdateHostKeys=no'])
+    pytest.raises(HostPublicKeyUnknown, connect)
+
 
 @skip_on_windows
 class TestRemotePath:
@@ -302,7 +332,7 @@ class TestParamikoMachine(BaseRemoteMachineTest):
             s.send(b"world")
             data = s.recv(100)
             s.close()
-        
+
         print(p.communicate())
         assert data == b"hello world"
 
