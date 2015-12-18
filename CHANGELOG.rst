@@ -1,5 +1,5 @@
-1.6.1 (In development)
-----------------------
+1.6.1
+-----
 
 * CLI: `Application` subclasses can now be run directly, instead of calling `.run()`, to facilitate using as entry points (`#237 <https://github.com/tomerfiliba/plumbum/pull/237>`_)
 * CLI: `gui_open` added to allow easy opening of paths in default gui editor (`#239 <https://github.com/tomerfiliba/plumbum/pull/239>`_)
