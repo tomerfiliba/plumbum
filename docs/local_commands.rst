@@ -249,6 +249,8 @@ If you want to redirect the input or output to something other than ``nohup.out`
 
     The ``NOHUP`` modifier
 
+You can also use the ``TEE`` modifier, which causes output to be redirected to the screen (like ``FG``), but also provides access to the output (like ``BG``).
+
 .. _guide-local-commands-nesting:
     
 Command Nesting
