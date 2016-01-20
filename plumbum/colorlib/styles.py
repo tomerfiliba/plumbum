@@ -42,7 +42,7 @@ def get_color_repr():
     elif term == "screen":
         return 1
     elif os.name == 'nt':
-        return 1
+        return 0
     else:
         return 3
 
