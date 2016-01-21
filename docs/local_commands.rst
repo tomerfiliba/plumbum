@@ -237,6 +237,10 @@ or input from the user. ::
     '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\nplumbum\n[...]'
 
 
+If you want to redirect the output, you can pass those arguments to the BG modifier.
+So the command ``ls & BG(stdout=sys.stdout, stderr=sys.stderr)``
+has exactly the same effect as ``ls &`` in a terminal.
+
 You can also start a long running process and detach it in ``nohup`` mode using the ``NOHUP`` modifier::
 
     >>> ls["-a"] & NOHUP
