@@ -325,7 +325,7 @@ if the switch is given) and ``CountingAttr`` (which counts the number of occurre
         enable_logging = cli.Flag("--no-log", default = True)
         verbosity_level = cli.CountingAttr("-v")
         
-        def main(selfy):
+        def main(self):
             print self.log_file, self.enable_logging, self.verbosity_level
 
 .. code-block:: bash
