@@ -94,13 +94,14 @@ class BG(ExecutionModifier):
        every once in a while, using a monitoring thread/reactor in the background.
        For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
     """
-    __slots__ = ("retcode",)
+    __slots__ = ("retcode", "kargs")
 
-    def __init__(self, retcode=0):
+    def __init__(self, retcode=0, **kargs):
         self.retcode = retcode
+        self.kargs = kargs
 
     def __rand__(self, cmd):
-        return Future(cmd.popen(), self.retcode)
+        return Future(cmd.popen(**self.kargs), self.retcode)
 
 BG = BG()
 
