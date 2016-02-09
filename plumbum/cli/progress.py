@@ -18,9 +18,10 @@ class ProgressBase(six.ABC):
     :param timer: Try to time the completion status of the iterator
     :param body: True if the slow portion occurs outside the iterator (in a loop, for example)
     :param has_output: True if the iteration body produces output to the screen (forces rewrite off)
+    :param clear: Clear the progress bar afterwards, if applicable.
     """
 
-    def __init__(self, iterator=None, length=None, timer=True, body=False, has_output=False):
+    def __init__(self, iterator=None, length=None, timer=True, body=False, has_output=False, clear=True):
         if length is None:
             length = len(iterator)
         elif iterator is None:
@@ -33,6 +34,7 @@ class ProgressBase(six.ABC):
         self.timer = timer
         self.body = body
         self.has_output = has_output
+        self.clear = clear
 
     def __len__(self):
         return self.length
@@ -123,7 +125,10 @@ class Progress(ProgressBase):
     def done(self):
         self.value = self.length
         self.display()
-        print()
+        if self.clear and not self.has_output:
+            print("\r", len(str(self)) * " ", "\r", end='', sep='')
+        else:
+            print()
 
 
     def __str__(self):
@@ -197,7 +202,8 @@ class ProgressIPy(ProgressBase): # pragma: no cover
         pass
 
     def done(self):
-        self._box.close()
+        if self.clear:
+            self._box.close()
 
 
 class ProgressAuto(ProgressBase):

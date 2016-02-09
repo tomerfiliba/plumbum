@@ -1,7 +1,8 @@
 1.6.2 (In Development)
 ----------------------
 
-* CLI: ``Progress`` now start on next line without having to manually add ``\n``.
+* CLI: ``Progress`` now has a clear keyword that hides the bar on completion
+* CLI: ``Progress`` without clear now starts on next line without having to manually add ``\n``.
 * Commands: ``BG`` modifier now allows ``stdout``/``stderr`` redirection (to screen, for example) (`#258 <https://github.com/tomerfiliba/plumbum/pull/258>`_)
 * Added better support for SunOS and other OS's. (`#260 <https://github.com/tomerfiliba/plumbum/pull/260>`_)
 
