@@ -1,12 +1,19 @@
+1.6.2 (In Development)
+----------------------
+
+* CLI: ``Progress`` now start on next line without having to manually add ``\n``.
+* Commands: ``BG`` modifier now allows ``stdout``/``stderr`` redirection (to screen, for example) (`#258 <https://github.com/tomerfiliba/plumbum/pull/258>`_)
+* Added better support for SunOS and other OS's. (`#260 <https://github.com/tomerfiliba/plumbum/pull/260>`_)
+
 1.6.1
 -----
 
-* CLI: `Application` subclasses can now be run directly, instead of calling `.run()`, to facilitate using as entry points (`#237 <https://github.com/tomerfiliba/plumbum/pull/237>`_)
-* CLI: `gui_open` added to allow easy opening of paths in default gui editor (`#239 <https://github.com/tomerfiliba/plumbum/pull/239>`_)
+* CLI: ``Application`` subclasses can now be run directly, instead of calling ``.run()``, to facilitate using as entry points (`#237 <https://github.com/tomerfiliba/plumbum/pull/237>`_)
+* CLI: ``gui_open`` added to allow easy opening of paths in default gui editor (`#239 <https://github.com/tomerfiliba/plumbum/pull/239>`_)
 * CLI: More control over help message (`#233 <https://github.com/tomerfiliba/plumbum/pull/233>`_)
-* Remote: `cwd` is now stashed to reduce network usage (similar to Plumbum <1.6 behavior), and absolute paths are faster, (`#238 <https://github.com/tomerfiliba/plumbum/pull/238>`_)
+* Remote: ``cwd`` is now stashed to reduce network usage (similar to Plumbum <1.6 behavior), and absolute paths are faster, (`#238 <https://github.com/tomerfiliba/plumbum/pull/238>`_)
 * Bugfix: Pipelined return codes now give correct attribution (`#243 <https://github.com/tomerfiliba/plumbum/pull/243>`_)
-* Bugfix: ``Progress`` works on Python 2.6 (`#230 <https://github.com/tomerfiliba/plumbum/issues/230>`_),
+* Bugfix: ``Progress`` works on Python 2.6 (`#230 <https://github.com/tomerfiliba/plumbum/issues/230>`_)
 * Bugfix: Colors now work with more terminals (`#231 <https://github.com/tomerfiliba/plumbum/issues/231>`_)
 * Bugfix: Getting an executible no longer returns a directory  (`#234 <https://ithub.com/tomerfiliba/plumbum/issues/234>`_)
 * Bugfix: Iterdir now works on Python <3.5

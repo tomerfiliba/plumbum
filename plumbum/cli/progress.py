@@ -17,6 +17,7 @@ class ProgressBase(six.ABC):
     :param length: The length of the iterator (will use ``__len__`` if None)
     :param timer: Try to time the completion status of the iterator
     :param body: True if the slow portion occurs outside the iterator (in a loop, for example)
+    :param has_output: True if the iteration body produces output to the screen (forces rewrite off)
     """
 
     def __init__(self, iterator=None, length=None, timer=True, body=False, has_output=False):
@@ -122,8 +123,7 @@ class Progress(ProgressBase):
     def done(self):
         self.value = self.length
         self.display()
-        if self.has_output:
-            print()
+        print()
 
 
     def __str__(self):
