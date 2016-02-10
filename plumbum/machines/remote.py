@@ -116,7 +116,7 @@ class RemoteCommand(ConcreteCommand):
         return self.remote.popen(self[args], **kwargs)
     def nohup(self, cwd='.', stdout='nohup.out', stderr=None, append=True):
         """Runs a command detached."""
-        return machine.nohup(self, cwd, stdout, stderr, append)
+        return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)
 
 class ClosedRemoteMachine(Exception):
     pass
