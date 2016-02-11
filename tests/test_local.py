@@ -266,7 +266,9 @@ class TestLocalMachine:
                 assert fake_ls.executable == real_ls.executable
 
 
-
+    def test_repr_command(self):
+        assert "BG" in repr(BG)
+        assert "FG" in repr(FG)
 
 
     @skip_on_windows
