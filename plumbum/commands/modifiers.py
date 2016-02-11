@@ -65,7 +65,7 @@ class ExecutionModifier(object):
         """Automatically creates a representation for given subclass with slots.
         Ignore hidden properties."""
         slots = {}
-        for cls in self.__mro__:
+        for cls in self.__class__.__mro__:
             for prop in getattr(cls, "__slots__", ()):
                 if prop[0] != '_':
                     slots[prop] = getattr(self, prop)
