@@ -11,7 +11,7 @@ import warnings
 class SshTunnel(object):
     """An object representing an SSH tunnel (created by
     :func:`SshMachine.tunnel <plumbum.machines.remote.SshMachine.tunnel>`)"""
-    __slots__ = ["_session"]
+    __slots__ = ["_session", "__weakref__"]
     def __init__(self, session):
         self._session = session
     def __repr__(self):

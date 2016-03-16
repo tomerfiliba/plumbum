@@ -46,7 +46,7 @@ def shquote_list(seq):
 class BaseCommand(object):
     """Base of all command objects"""
 
-    __slots__ = ["cwd", "env", "encoding"]
+    __slots__ = ["cwd", "env", "encoding", "__weakref__"]
 
     def __str__(self):
         return " ".join(self.formulate())

@@ -3,7 +3,7 @@ from contextlib import contextmanager
 
 
 class EnvPathList(list):
-    __slots__ = ["_path_factory", "_pathsep"]
+    __slots__ = ["_path_factory", "_pathsep", "__weakref__"]
 
     def __init__(self, path_factory, pathsep):
         self._path_factory = path_factory
@@ -28,7 +28,7 @@ class EnvPathList(list):
 
 class BaseEnv(object):
     """The base class of LocalEnv and RemoteEnv"""
-    __slots__ = ["_curr", "_path", "_path_factory"]
+    __slots__ = ["_curr", "_path", "_path_factory", "__weakref__"]
     CASE_SENSITIVE = True
 
     def __init__(self, path_factory, pathsep):

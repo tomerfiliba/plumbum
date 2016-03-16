@@ -21,7 +21,7 @@ class ShowVersion(SwitchError):
     pass
 
 class SwitchParseInfo(object):
-    __slots__ = ["swname", "val", "index"]
+    __slots__ = ["swname", "val", "index", "__weakref__"]
     def __init__(self, swname, val, index):
         self.swname = swname
         self.val = val

@@ -106,7 +106,7 @@ class Color(ABC):
 
         """
 
-    __slots__ = ('fg', 'isreset', 'rgb', 'number', 'representation', 'exact')
+    __slots__ = ('fg', 'isreset', 'rgb', 'number', 'representation', 'exact', '__weakref__')
 
     def __init__(self, r_or_color=None, g=None, b=None, fg=True):
         """This works from color values, or tries to load non-simple ones."""
@@ -333,7 +333,7 @@ class Style(object):
     and can be called in a with statement.
     """
 
-    __slots__ = ('attributes','fg', 'bg', 'isreset')
+    __slots__ = ('attributes','fg', 'bg', 'isreset', '__weakref__')
 
     color_class = Color
     """The class of color to use. Never hardcode ``Color`` call when writing a Style

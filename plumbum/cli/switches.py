@@ -317,7 +317,7 @@ class positional(object):
         return function
     
 class Validator(six.ABC):
-    __slots__ = ()
+    __slots__ = ('__weakref__')
     
     @abstractmethod
     def __call__(self, obj):

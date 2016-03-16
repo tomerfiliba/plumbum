@@ -34,7 +34,7 @@ shell_logger = logging.getLogger("plumbum.shell")
 class MarkedPipe(object):
     """A pipe-like object from which you can read lines; the pipe will return report EOF (the
     empty string) when a special marker is detected"""
-    __slots__ = ["pipe", "marker"]
+    __slots__ = ["pipe", "marker", "__weakref__"]
     def __init__(self, pipe, marker):
         self.pipe = pipe
         self.marker = marker
