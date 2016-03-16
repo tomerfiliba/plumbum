@@ -411,7 +411,7 @@ You can supply positional argument validators using the ``cli.positional`` decor
 pass the validators in the decorator matching the names in the main function. For example::
 
     class MyApp(cli.Application):
-        @positional(cli.ExistingFile, cli.NonexistantPath)
+        @cli.positional(cli.ExistingFile, cli.NonexistantPath)
         def main(self, infile, *outfiles):
             "infile is a path, outfiles are a list of paths, proper errors are given"
 
