@@ -59,14 +59,17 @@ class Future(object):
 
 
 class ExecutionModifier(object):
-    __slots__ = ("__weakref__")
+    __slots__ = ("__weakref__",)
 
     def __repr__(self):
         """Automatically creates a representation for given subclass with slots.
         Ignore hidden properties."""
         slots = {}
         for cls in self.__class__.__mro__:
-            for prop in getattr(cls, "__slots__", ()):
+            slots_list = getattr(cls, "__slots__", ())
+            if isinstance(slots_list, str):
+                slots_list = (slots_list,)
+            for prop in slots_list:
                 if prop[0] != '_':
                     slots[prop] = getattr(self, prop)
         mystrs = ("{0} = {1}".format(name, slots[name]) for name in slots)
