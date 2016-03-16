@@ -59,7 +59,7 @@ class Future(object):
 
 
 class ExecutionModifier(object):
-    __slots__ = ()
+    __slots__ = ("__weakref__")
 
     def __repr__(self):
         """Automatically creates a representation for given subclass with slots.
