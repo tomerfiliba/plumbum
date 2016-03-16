@@ -511,10 +511,12 @@ class Style(object):
     def __enter__(self):
         """Context manager support"""
         self.stdout.write(str(self))
+        self.stdout.flush()
 
     def __exit__(self, type, value, traceback):
         """Runs even if exception occurred, does not catch it."""
         self.stdout.write(str(~self))
+        self.stdout.flush()
         return False
 
     @property
