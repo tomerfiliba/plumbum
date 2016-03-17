@@ -162,7 +162,7 @@ one you passed::
 
 
 If you need the value of the exit code, there are two ways to do it. You can call ``.run(retcode=None)``
-(or any other valid retcode value) on a command, you will get a tuple ``(retcode, stdin, stdout)`` (see
+(or any other valid retcode value) on a command, you will get a tuple ``(retcode, stdout, stderr)`` (see
 `Run and Popen`_. If you just need the recode, or want to check the retcode, there are two special
 objects that can be applied to your command to run it and get or test the retcode. For example::
 
