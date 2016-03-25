@@ -1,6 +1,6 @@
 import os
 from select import select
-from subprocess import PIPE
+from subprocess import STDOUT
 import sys
 from itertools import chain
 
@@ -164,46 +164,13 @@ class TEE(ExecutionModifier):
 
     __slots__ = ("retcode", "buffered")
 
-    def __init__(self, retcode=0, buffered=True):
-        """`retcode` is the return code to expect to mean "success".  Set
-        `buffered` to False to disable line-buffering the output, which may
-        cause stdout and stderr to become more entangled than usual.
-        """
+    def __init__(self, retcode=0):
+        """`retcode` is the return code to expect to mean "success"."""
         self.retcode = retcode
-        self.buffered = buffered
 
 
     def __rand__(self, cmd):
-        with cmd.bgrun(retcode=self.retcode, stdin=None, stdout=PIPE, stderr=PIPE) as p:
-            outbuf = []
-            errbuf = []
-            out = p.stdout
-            err = p.stderr
-            buffers = {out: outbuf, err: errbuf}
-            tee_to = {out: sys.stdout, err: sys.stderr}
-            while p.poll() is None:
-                ready, _, _ = select((out, err), (), ())
-                for fd in ready:
-                    buf = buffers[fd]
-                    data, text = read_fd_decode_safely(fd, 4096)
-                    if not data:  # eof
-                        continue
-
-                    # Python conveniently line-buffers stdout and stderr for
-                    # us, so all we need to do is write to them
-
-                    # This will automatically add up to three bytes if it cannot be decoded
-                    tee_to[fd].write(text)
-
-                    # And then "unbuffered" is just flushing after each write
-                    if not self.buffered:
-                        tee_to[fd].flush()
-
-                    buf.append(data)
-
-            stdout = ''.join([x.decode('utf-8') for x in outbuf])
-            stderr = ''.join([x.decode('utf-8') for x in errbuf])
-            return p.returncode, stdout, stderr
+        return cmd.run(retcode=self.retcode, stderr=STDOUT)
 
 TEE = TEE()
 
