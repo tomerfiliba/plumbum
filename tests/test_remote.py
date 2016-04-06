@@ -142,6 +142,14 @@ s.close()
                 assert "test_remote.py" in cmd()
                 assert "test_remote.py" in [f.name for f in rem.cwd // "*.py"]
 
+    # Testing for #271
+    def test_double_chdir(self):
+        with self._connect() as rem:
+            with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
+                 rem["ls"]()
+            with rem.cwd("/tmp"):
+                 rem["pwd"]()
+
     def test_glob(self):
         with self._connect() as rem:
             with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
