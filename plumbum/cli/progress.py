@@ -139,9 +139,9 @@ class Progress(ProgressBase):
         if width - len(ending) < 10 or self.has_output:
             self.width = 0
             if self.timer:
-                return "{0:%} complete: {1}".format(percent, self.str_time_remaining())
+                return "{0:.0%} complete: {1}".format(percent, self.str_time_remaining())
             else:
-                return "{0:%} complete".format(percent)
+                return "{0:.0%} complete".format(percent)
 
         else:
             self.width = width - len(ending) - 2 - 1
