@@ -341,7 +341,7 @@ class LocalWorkdir(LocalPath):
         """A context manager used to ``chdir`` into a directory and then ``chdir`` back to
         the previous location; much like ``pushd``/``popd``.
 
-        :param newdir: The destination director (a string or a ``LocalPath``)
+        :param newdir: The destination directory (a string or a ``LocalPath``)
         """
         prev = self._path
         newdir = self.chdir(newdir)
