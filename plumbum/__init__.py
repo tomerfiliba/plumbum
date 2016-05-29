@@ -32,7 +32,7 @@ manipulation, process execution, remote process execution over SSH, tunneling,
 SCP-based upload/download, and a {arg|opt}parse replacement for the easy creation
 of command-line interface (CLI) programs.
 
-See http://plumbum.readthedocs.org for full details
+See https://plumbum.readthedocs.io for full details
 """
 from plumbum.commands import ProcessExecutionError, CommandNotFound, ProcessTimedOut
 from plumbum.commands import FG, BG, TEE, TF, RETCODE, ERROUT, NOHUP

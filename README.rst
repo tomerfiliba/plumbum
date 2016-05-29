@@ -14,7 +14,7 @@
    :target: https://ci.appveyor.com/project/HenrySchreiner/plumbum/branch/master
    :alt: Windows Build Status
 .. image:: https://readthedocs.org/projects/plumbum/badge/
-   :target: http://plumbum.readthedocs.org/en/latest/
+   :target: https://plumbum.readthedocs.io/en/latest/
    :alt: Documentation Status
 
 
@@ -34,7 +34,7 @@ manipulation, and a programmatic Command-Line Interface (CLI) application toolki
 Now let's see some code!
 
 *This is only a teaser; the full documentation can be found at*
-`Read the Docs <http://plumbum.readthedocs.org>`_
+`Read the Docs <https://plumbum.readthedocs.io>`_
 
 Cheat Sheet
 -----------
