@@ -37,7 +37,7 @@ test:
     - paramiko
 
 about:
-  home: http://plumbum.readthedocs.org
+  home: https://plumbum.readthedocs.io
   license: MIT License
   summary: 'Plumbum: shell combinators library'
 

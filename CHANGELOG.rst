@@ -135,7 +135,7 @@
 ---
 * `Paramiko <http://pypi.python.org/pypi/paramiko/1.8.0>`_ integration 
   (`#10 <https://github.com/tomerfiliba/plumbum/issues/10>`_)
-* CLI: now with built-in support for `sub-commands <http://plumbum.readthedocs.org/en/latest/cli.html#sub-commands>`_.
+* CLI: now with built-in support for `sub-commands <https://plumbum.readthedocs.io/en/latest/cli.html#sub-commands>`_.
   See also: `#43 <https://github.com/tomerfiliba/plumbum/issues/43>`_
 * The "import hack" has moved to the package's ``__init__.py``, to make it importable directly
   (`#45 <https://github.com/tomerfiliba/plumbum/issues/45>`_)
