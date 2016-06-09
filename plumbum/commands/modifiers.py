@@ -2,6 +2,7 @@ import os
 from select import select
 from subprocess import PIPE
 import sys
+import time
 from itertools import chain
 
 from plumbum.commands.processes import run_proc, ProcessExecutionError
@@ -99,12 +100,13 @@ class BG(ExecutionModifier):
     """
     __slots__ = ("retcode", "kargs")
 
-    def __init__(self, retcode=0, **kargs):
+    def __init__(self, retcode=0, timeout=None, **kargs):
         self.retcode = retcode
         self.kargs = kargs
+        self.timeout = timeout
 
     def __rand__(self, cmd):
-        return Future(cmd.popen(**self.kargs), self.retcode)
+        return Future(cmd.popen(**self.kargs), self.retcode, timeout=self.timeout)
 
 BG = BG()
 
@@ -141,11 +143,13 @@ class FG(ExecutionModifier):
     """
     __slots__ = ("retcode",)
 
-    def __init__(self, retcode=0):
+    def __init__(self, retcode=0, timeout=None):
         self.retcode = retcode
+        self.timeout = timeout
 
     def __rand__(self, cmd):
-        cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None)
+        cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None,
+            timeout = self.timeout)
 
 FG = FG()
 
@@ -164,17 +168,19 @@ class TEE(ExecutionModifier):
 
     __slots__ = ("retcode", "buffered")
 
-    def __init__(self, retcode=0, buffered=True):
+    def __init__(self, retcode=0, buffered=True, timeout=None):
         """`retcode` is the return code to expect to mean "success".  Set
         `buffered` to False to disable line-buffering the output, which may
         cause stdout and stderr to become more entangled than usual.
         """
         self.retcode = retcode
         self.buffered = buffered
+        self.timeout = timeout
 
 
     def __rand__(self, cmd):
-        with cmd.bgrun(retcode=self.retcode, stdin=None, stdout=PIPE, stderr=PIPE) as p:
+        with cmd.bgrun(retcode=self.retcode, stdin=None, stdout=PIPE, stderr=PIPE,
+                       timeout=self.timeout) as p:
             outbuf = []
             errbuf = []
             out = p.stdout
@@ -226,12 +232,13 @@ class TF(ExecutionModifier):
 
     __slots__ = ("retcode", "FG")
 
-    def __init__(self, retcode=0, FG=False):
+    def __init__(self, retcode=0, FG=False, timeout=None):
         """`retcode` is the return code to expect to mean "success".  Set
         `FG` to True to run in the foreground.
         """
         self.retcode = retcode
         self.FG = FG
+        self.timeout = timeout
 
     @classmethod
     def __call__(cls, *args, **kwargs):
@@ -240,9 +247,10 @@ class TF(ExecutionModifier):
     def __rand__(self, cmd):
         try:
             if self.FG:
-                cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None)
+                cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None,
+                    timeout = self.timeout)
             else:
-                cmd(retcode = self.retcode)
+                cmd(retcode = self.retcode, timeout = self.timeout)
             return True
         except ProcessExecutionError:
             return False
@@ -277,9 +285,10 @@ class RETCODE(ExecutionModifier):
 
     def __rand__(self, cmd):
             if self.foreground:
-                return cmd.run(retcode = None, stdin = None, stdout = None, stderr = None)[0]
+                return cmd.run(retcode = None, stdin = None, stdout = None, stderr = None,
+                               timeout = self.timeout)[0]
             else:
-                return cmd.run(retcode = None)[0]
+                return cmd.run(retcode = None, timeout = self.timeout)[0]
 
 RETCODE = RETCODE()
 
@@ -316,7 +325,6 @@ class NOHUP(ExecutionModifier):
         self.stdout = stdout
         self.stderr = stderr
         self.append = append
-
 
     def __rand__(self, cmd):
         if isinstance(cmd, StdoutRedirection):
