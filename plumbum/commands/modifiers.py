@@ -98,7 +98,7 @@ class BG(ExecutionModifier):
        every once in a while, using a monitoring thread/reactor in the background.
        For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
     """
-    __slots__ = ("retcode", "kargs")
+    __slots__ = ("retcode", "kargs", "timeout")
 
     def __init__(self, retcode=0, timeout=None, **kargs):
         self.retcode = retcode
@@ -141,7 +141,7 @@ class FG(ExecutionModifier):
         vim & FG       # run vim in the foreground, expecting an exit code of 0
         vim & FG(7)    # run vim in the foreground, expecting an exit code of 7
     """
-    __slots__ = ("retcode",)
+    __slots__ = ("retcode", "timeout")
 
     def __init__(self, retcode=0, timeout=None):
         self.retcode = retcode
@@ -166,7 +166,7 @@ class TEE(ExecutionModifier):
     Returns a tuple of (return code, stdout, stderr), just like ``run()``.
     """
 
-    __slots__ = ("retcode", "buffered")
+    __slots__ = ("retcode", "buffered", "timeout")
 
     def __init__(self, retcode=0, buffered=True, timeout=None):
         """`retcode` is the return code to expect to mean "success".  Set
@@ -230,7 +230,7 @@ class TF(ExecutionModifier):
         local['touch']['/root/test'] & TF(FG=True) * Returns False, will show error message
     """
 
-    __slots__ = ("retcode", "FG")
+    __slots__ = ("retcode", "FG", "timeout")
 
     def __init__(self, retcode=0, FG=False, timeout=None):
         """`retcode` is the return code to expect to mean "success".  Set
@@ -272,12 +272,13 @@ class RETCODE(ExecutionModifier):
         local['touch']['/root/test'] & RETCODE(FG=True) * Returns 1, will show error message
     """
 
-    __slots__ = ("foreground",)
+    __slots__ = ("foreground", "timeout")
 
-    def __init__(self,  FG=False):
+    def __init__(self,  FG=False, timeout=None):
         """`FG` to True to run in the foreground.
         """
         self.foreground = FG
+        self.timeout = timeout
 
     @classmethod
     def __call__(cls, *args, **kwargs):
