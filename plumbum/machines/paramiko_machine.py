@@ -214,7 +214,7 @@ class ParamikoMachine(BaseRemoteMachine):
         chan = trans.open_session()
         if isatty:
             chan.get_pty(term, width, height)
-            chan.set_combine_stderr()
+            chan.set_combine_stderr(True)
         chan.invoke_shell()
         stdin = chan.makefile('wb', -1)
         stdout = chan.makefile('rb', -1)
