@@ -135,6 +135,10 @@ missing from the guide, so you might want to consult with the API reference in t
    api/colors
    colorlib
 
+.. note::
+
+   The ``local`` object is an instance of a ``machine``.
+
 About
 =====
 The original purpose of Plumbum was to enable local and remote program execution with ease, 
