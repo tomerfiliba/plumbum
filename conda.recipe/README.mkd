@@ -1,0 +1,35 @@
+# Building instructions
+
+
+Change to the `conda.recipies` directory. Run
+```bash
+$ conda install conda-build
+```
+to aquire the conda build tools. Then you can build with
+```bash
+conda build --python 3.5 .
+```
+and pay attention to the output directory. You should see something that looks like
+```
+anaconda upload //anaconda/conda-bld/osx-64/plumbum-v1.6.2-py35_0.tar.bz2
+```
+
+Now, you will need to convert to other architectures. On non-Windows systems:
+```
+conda convert --platform all //anaconda/conda-bld/osx-64/plumbum-v1.6.2-py35_0.tar.bz2 -o outputdir\
+
+```
+and Windows users will need to add a `-f`.
+
+Rerun the following steps for all python versions.
+
+
+To upload packages,
+```bash
+conda install anaconda-client
+anaconda login
+for f in `ls outputdir/*/*.tar.bz2`; do anaconda upload $f; done
+anaconda logout
+```
+
+
