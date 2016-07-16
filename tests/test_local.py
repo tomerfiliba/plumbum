@@ -459,6 +459,7 @@ class TestLocalMachine:
         assert command_false & RETCODE == 1
 
 
+    @skip_on_windows
     @xfail_on_pypy
     def test_tee_modifier(self, capfd):
         from plumbum.cmd import echo

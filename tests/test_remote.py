@@ -36,6 +36,7 @@ def sshpass():
         pytest.skip('Test requires sshpass')
 
 
+@skip_on_windows
 def test_connection():
     SshMachine(TEST_HOST)
 
