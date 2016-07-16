@@ -15,7 +15,8 @@ import plumbum
 from plumbum._testtools import (
     skip_without_chown,
     skip_without_tty,
-    skip_on_windows)
+    skip_on_windows,
+    xfail_on_pypy)
 
 # This is a string since we are testing local paths
 SDIR = os.path.dirname(os.path.abspath(__file__))
@@ -458,6 +459,7 @@ class TestLocalMachine:
         assert command_false & RETCODE == 1
 
 
+    @xfail_on_pypy
     def test_tee_modifier(self, capfd):
         from plumbum.cmd import echo
 
