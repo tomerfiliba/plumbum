@@ -69,6 +69,10 @@ class Path(str, six.ABC):
         return bool(str(self))
     __bool__ = __nonzero__
 
+    def __fpath__(self):
+        """Added for Python 3.6 support"""
+        return str(self)
+
     @abstractmethod
     def _form(self, *parts):
         pass
