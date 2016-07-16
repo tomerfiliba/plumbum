@@ -4,7 +4,7 @@ import os
 import sys
 import signal
 import time
-from plumbum import (local, LocalPath, FG, BG, TF, RETCODE, ERROUT,
+from plumbum import (local, LocalPath, FG, BG, TF, RETCODE, ERROUT, TEE,
                     CommandNotFound, ProcessExecutionError, ProcessTimedOut)
 from plumbum.lib import six, IS_WIN32
 from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
@@ -458,6 +458,12 @@ class TestLocalMachine:
         assert command_false & RETCODE == 1
 
 
+    def test_tee_modifier(self, capfd):
+        from plumbum.cmd import echo
+
+        result = echo['This is fun'] & TEE
+        assert result[1] == 'This is fun\n'
+        assert 'This is fun\n' == capfd.readouterr()[0]
 
     def test_arg_expansion(self):
         from plumbum.cmd import ls
