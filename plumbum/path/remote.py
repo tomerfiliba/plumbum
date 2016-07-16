@@ -38,7 +38,7 @@ class RemotePath(Path):
         normed = []
 
         # Simple skip if path is absolute
-        if parts[0][0] not in ("/","\\"):
+        if parts[0] and parts[0][0] not in ("/","\\"):
             cwd = (remote._cwd if hasattr(remote, '_cwd') else remote._session.run("pwd")[1].strip())
             parts = (cwd,) + parts
 
