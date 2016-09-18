@@ -293,7 +293,7 @@ class Path(str, six.ABC):
     def unlink(self):
         """Deletes a symbolic link"""
 
-    def split(self):
+    def split(self, *dummy_args, **dummy_kargs):
         """Splits the path on directory separators, yielding a list of directories, e.g,
         ``"/var/log/messages"`` will yield ``['var', 'log', 'messages']``.
         """
