@@ -73,6 +73,13 @@ class Path(str, six.ABC):
         """Added for Python 3.6 support"""
         return str(self)
 
+    def __contains__(self, item):
+        """Paths should support checking to see if an file or folder is in them."""
+        try:
+            return (self.path / item.name).exists()
+        except AttributeError:
+            return (self.path / item).exists()
+
     @abstractmethod
     def _form(self, *parts):
         pass

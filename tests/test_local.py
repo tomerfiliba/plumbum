@@ -291,6 +291,10 @@ class TestLocalMachine:
         os.chdir('../tests')
         assert local.cwd == os.getcwd()
 
+    def test_contains(self):
+        assert 'plumbum' in local.cwd / '..'
+        assert 'non_exist1N91' not in local.cwd / '..'
+
     @skip_on_windows
     def test_path(self):
         assert not (local.cwd / "../non_exist1N9").exists()
