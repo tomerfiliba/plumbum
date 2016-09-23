@@ -714,4 +714,11 @@ for _ in range(%s):
         with pytest.raises(ProcessExecutionError):
             (ls["--no-such-option"] | head)()
 
+    def test_pipeline_retcode(self):
+        "From PR #288"
+        from plumbum.cmd import echo, grep
+        print( (echo['one two three four'] | grep['two'] | grep['three'])(retcode=None))
+        print( (echo['one two three four'] | grep['five'] | grep['three'])(retcode=None))
+        print( (echo['one two three four'] | grep['two'] | grep['five'])(retcode=None))
+        print( (echo['one two three four'] | grep['six'] | grep['five'])(retcode=None))
 
