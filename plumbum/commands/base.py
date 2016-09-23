@@ -305,7 +305,10 @@ class Pipeline(BaseCommand):
             try:
                 or_retcode = [0] + list(retcode)
             except TypeError:
-                or_retcode = [0, retcode]
+                if (retcode is None):
+                    or_retcode = None # no-retcode-verification acts "greedily"
+                else:
+                    or_retcode = [0, retcode]
             proc.srcproc.verify(or_retcode, timeout, stdout, stderr)
             dstproc_verify(retcode, timeout, stdout, stderr)
         dstproc.verify = MethodType(verify, dstproc)
