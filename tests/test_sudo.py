@@ -2,6 +2,7 @@
 import pytest
 
 import plumbum
+from plubmum import local
 
 from plumbum._testtools import (
     skip_on_windows
