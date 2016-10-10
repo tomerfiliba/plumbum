@@ -317,13 +317,13 @@ a certain switch is given. For this purpose, the toolkit provides
 :class:`SwitchAttr <plumbum.cli.SwitchAttr>`, which is `data descriptor 
 <http://docs.python.org/howto/descriptor.html>`_ that stores the argument in an instance attribute.
 There are two additional "flavors" of ``SwitchAttr``: ``Flag`` (which toggles its default value
-if the switch is given) and ``CountingAttr`` (which counts the number of occurrences of the switch)
+if the switch is given) and ``CountOf`` (which counts the number of occurrences of the switch)
 ::
 
     class MyApp(cli.Application):
         log_file = cli.SwitchAttr("--log-file", str, default = None)
         enable_logging = cli.Flag("--no-log", default = True)
-        verbosity_level = cli.CountingAttr("-v")
+        verbosity_level = cli.CountOf("-v")
         
         def main(self):
             print self.log_file, self.enable_logging, self.verbosity_level
