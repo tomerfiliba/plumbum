@@ -1,8 +1,12 @@
 #!/bin/bash -e
 
 if [[ "$(uname -s)" == 'Darwin' ]]; then
-    brew update
-    brew install python$PY3
+    if brew ls --versions python > /dev/null; then
+        echo "Brew python is already installed"
+    else
+        brew update
+        brew install python$PY3
+    fi
     pip$PY3 install -r dev-requirements.txt
     pip$PY3 install coveralls
     pip$PY3 install -e .
