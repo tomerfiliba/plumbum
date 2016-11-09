@@ -49,8 +49,12 @@ def show_image_pil_double(im, size=None):
 class ShowImage(cli.Application):
     'Display an image on the terminal'
     double = cli.Flag(['-d','--double'], help="Double resolution (only looks good with some fonts)")
-    size = cli.SwitchAttr(['-s','--size'], help="Size, should be in the form 100x150")
 
+    @cli.switch(['-c','--colors'], cli.Range(1,4), help="Level of color, 1-4")
+    def colors_set(self, n):
+        colors.use_color = n
+
+    size = cli.SwitchAttr(['-s','--size'], help="Size, should be in the form 100x150")
     @cli.positional(cli.ExistingFile)
     def main(self, filename):
 
