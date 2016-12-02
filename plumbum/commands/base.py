@@ -79,7 +79,7 @@ class BaseCommand(object):
         bound_command."""
         if not isinstance(args, (tuple, list)):
             args = [args, ]
-        return self.bound_command(args)
+        return self.bound_command(*args)
 
     def bound_command(self, *args):
         """Creates a bound-command with the given arguments"""
