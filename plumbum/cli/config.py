@@ -1,4 +1,4 @@
-from __future import print_function, division
+from __future__ import print_function, division
 
 from abc import abstractmethod
 from plumbum.lib import six
@@ -7,7 +7,7 @@ import os
 
 try:
     from configparser import ConfigParser # Py3
-else:
+except ImportError:
     from ConfigParser import ConfigParser # Py2
 
 class ConfigBase(six.ABC):
@@ -30,7 +30,7 @@ class ConfigBase(six.ABC):
         self.changed = False
 
     def __enter__(self):
-        if !self.filename.exists():
+        if not self.filename.exists():
             self.filename.touch()
         self.read()
 
@@ -74,7 +74,7 @@ class ConfigINI(ConfigBase):
             self.parser.save(f)
 
     @classmethod
-    def _sec_opt(cls, option)
+    def _sec_opt(cls, option):
         if '.' not in option:
             sec = cls.DEFAULT_SECTION
         else:
@@ -86,7 +86,7 @@ class ConfigINI(ConfigBase):
 
         try:
             return self.parser.get(sec, option)
-        except ConfigParser.NoSectionError, ConfigParser.NoOptionError:
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
             raise KeyError("{sec}:{option}".format(sec=sec, option=option))
 
 
