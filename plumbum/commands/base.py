@@ -75,15 +75,21 @@ class BaseCommand(object):
         return StdinDataRedirection(self, data)
 
     def __getitem__(self, args):
-        """Creates a bound-command with the given arguments"""
+        """Creates a bound-command with the given arguments. Shortcut for
+        bound_command."""
         if not isinstance(args, (tuple, list)):
             args = [args, ]
+        return self.bound_command(args)
+
+    def bound_command(self, *args):
+        """Creates a bound-command with the given arguments"""
         if not args:
             return self
         if isinstance(self, BoundCommand):
             return BoundCommand(self.cmd, self.args + list(args))
         else:
             return BoundCommand(self, args)
+
 
     def __call__(self, *args, **kwargs):
         """A shortcut for `run(args)`, returning only the process' stdout"""
