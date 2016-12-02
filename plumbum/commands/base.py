@@ -75,15 +75,21 @@ class BaseCommand(object):
         return StdinDataRedirection(self, data)
 
     def __getitem__(self, args):
-        """Creates a bound-command with the given arguments"""
+        """Creates a bound-command with the given arguments. Shortcut for
+        bound_command."""
         if not isinstance(args, (tuple, list)):
             args = [args, ]
+        return self.bound_command(args)
+
+    def bound_command(self, *args):
+        """Creates a bound-command with the given arguments"""
         if not args:
             return self
         if isinstance(self, BoundCommand):
             return BoundCommand(self.cmd, self.args + list(args))
         else:
             return BoundCommand(self, args)
+
 
     def __call__(self, *args, **kwargs):
         """A shortcut for `run(args)`, returning only the process' stdout"""
@@ -135,7 +141,7 @@ class BaseCommand(object):
         :returns: A ``Popen``-like object
         """
         raise NotImplementedError()
-        
+
     def nohup(self, command, cwd='.', stdout='nohup.out', stderr=None, append=True):
         """Runs a command detached."""
         return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)
@@ -423,13 +429,13 @@ class ConcreteCommand(BaseCommand):
         self.encoding = encoding
         self.cwd = None
         self.env = None
-        
+
     def __str__(self):
         return str(self.executable)
-        
+
     def __repr__(self):
-        return "{0}({1})".format(type(self).__name__, self.executable)        
-    
+        return "{0}({1})".format(type(self).__name__, self.executable)
+
     def _get_encoding(self):
         return self.encoding
 
@@ -451,8 +457,8 @@ class ConcreteCommand(BaseCommand):
         #    argv = [a.encode(self.encoding) for a in argv if isinstance(a, six.string_types)]
         return argv
 
-        
-        
+
+
 
 
 
