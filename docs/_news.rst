@@ -1,3 +1,5 @@
+* **2016.12.3**: Version 1.6.2 is now available through `conda-forge <https://conda-forge.github.io>`_, as well.
+
 * **2016.6.25**: Version 1.6.2 released. This is mostly a bug fix release, but a few new features are included. Modifiers allow some new arguments, and ``Progress`` is improved. Better support for SunOS and other OS's.
 
 * **2015.12.18**: Version 1.6.1 released. The release mostly contains smaller fixes for CLI, 2.6/3.5 support, and colors. PyTest is now used for tests, and Conda is supported.
