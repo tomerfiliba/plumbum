@@ -1,11 +1,16 @@
 1.6.3 (in progress)
 -------------------
+* Commands: Better handling of return codes for pipelines (`#288 <https://github.com/tomerfiliba/plumbum/pull/288>`_)
+* Paths: Return split support (regression) (`#286 <https://github.com/tomerfiliba/plumbum/issues/286>`) - also supports dummy args for better ``str`` compatibility
+* Paths: Added support for Python 3.6 path protocol
+* Paths: Support Python's ``in`` syntax
+* Test improvements, expecially on non-linux systems
 
 1.6.2
 -----
 * CLI: ``Progress`` now has a clear keyword that hides the bar on completion
 * CLI: ``Progress`` without clear now starts on next line without having to manually add ``\n``.
-* Commands: modifiers now accept a timeout parameter (#281 <https://github.com/tomerfiliba/plumbum/pull/281>`_)
+* Commands: modifiers now accept a timeout parameter (`#281 <https://github.com/tomerfiliba/plumbum/pull/281>`_)
 * Commands: ``BG`` modifier now allows ``stdout``/``stderr`` redirection (to screen, for example) (`#258 <https://github.com/tomerfiliba/plumbum/pull/258>`_)
 * Commands: Modifiers no longer crash on repr (see `#262 <https://github.com/tomerfiliba/plumbum/issues/262>`_)
 * Remote: ``nohup`` works again, typo fixed (`#261 <https://github.com/tomerfiliba/plumbum/issues/261>`_)
