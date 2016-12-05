@@ -104,7 +104,7 @@ User Guide
 ==========
 The user guide covers most of the features of Plumbum, with lots of code-snippets to get you 
 swimming in no time. It introduces the concepts and "syntax" gradually, so it's recommended 
-you read it in order.
+you read it in order. A quick :ref:`reference guide is available <guide-quickref>`.
 
 .. toctree::
    :maxdepth: 2
@@ -117,6 +117,7 @@ you read it in order.
    cli
    colors
    changelog
+   quickref
 
 API Reference
 =============
