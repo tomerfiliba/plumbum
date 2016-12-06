@@ -59,7 +59,7 @@ class ConfigBase(six.ABC):
 
     @abstractmethod
     def _set(self, option, value):
-        '''Internal set function for subclasses'''
+        '''Internal set function for subclasses. Must return the value that was set.'''
         pass
 
     def get(self, option, default=None):
@@ -67,9 +67,8 @@ class ConfigBase(six.ABC):
         try:
             return self._get(option)
         except KeyError:
-            self._set(option, default)
             self.changed = True
-            return default
+            return self._set(option, default)
 
     def set(self, option, value):
         """Set an item, mark this object as changed"""
@@ -127,6 +126,7 @@ class ConfigINI(ConfigBase):
         except NoSectionError:
             self.parser.add_section(sec)
             self.parser.set(sec, option, str(value))
+        return str(value)
 
 
 Config = ConfigINI
