@@ -1,19 +1,21 @@
 from __future__ import print_function, division
 
 from abc import abstractmethod
-from plumbum.lib import six
+from plumbum.lib import six, _setdoc
 from plumbum import local
 import os
 
 try:
-    from configparser import ConfigParser # Py3
+    from configparser import ConfigParser, NoOptionError, NoSectionError # Py3
 except ImportError:
-    from ConfigParser import ConfigParser # Py2
+    from ConfigParser import ConfigParser, NoOptionError, NoSectionError # Py2
 
 class ConfigBase(six.ABC):
     """Base class for Config parsers.
 
     :param filename: The file to use
+
+    The ``with`` statement can be used to automatically try to read on entering and write if changed on exiting. Otherwise, use ``.read`` and ``.write`` as needed. Set and get the options using ``[]`` syntax.
 
     Usage:
 
@@ -30,28 +32,38 @@ class ConfigBase(six.ABC):
         self.changed = False
 
     def __enter__(self):
-        if not self.filename.exists():
-            self.filename.touch()
-        self.read()
+        try:
+            self.read()
+        except FileNotFoundError:
+            pass
+        return self
 
-    @ABC.abstractmethod
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.changed:
+            self.write()
+
+    @abstractmethod
     def read(self):
+        '''Read in the linked file'''
         pass
 
-    @ABC.abstractmethod
-    def save(self):
-        pass
+    @abstractmethod
+    def write(self):
+        '''Write out the linked file'''
+        self.changed = False
 
-    @ABC.abstractmethod
+    @abstractmethod
     def _get(self, option):
+        '''Internal get function for subclasses'''
         pass
 
-    @ABC.abstractmethod
+    @abstractmethod
     def _set(self, option, value):
+        '''Internal set function for subclasses'''
         pass
 
     def get(self, option, default=None):
-        "Get an item from the store"
+        "Get an item from the store, returns default if fails"
         try:
             return self._get(option)
         except KeyError:
@@ -59,19 +71,35 @@ class ConfigBase(six.ABC):
             self.changed = True
             return default
 
+    def set(self, option, value):
+        """Set an item, mark this object as changed"""
+        self.changed = True
+        self._set(option, value)
+
     def __getitem__(self, option):
-        return self.get(option)
+        return self._get(option)
+
+    def __setitem__(self, option, value):
+        return self.set(option, value)
 
 class ConfigINI(ConfigBase):
-    DEFAULT_SECTION = 'default'
+    DEFAULT_SECTION = 'DEFAULT'
     slots = "parser".split()
-    def read(self):
-        self.parser = ConfigParser()
-        self.parser.read(self.filename)
 
-    def save(self):
-        with open(self.filename, 'wb') as f:
-            self.parser.save(f)
+    def __init__(self, filename):
+        super(ConfigINI, self).__init__(filename)
+        self.parser = ConfigParser()
+
+    @_setdoc(ConfigBase)
+    def read(self):
+        self.parser.read(self.filename)
+        super(ConfigINI, self).read()
+
+    @_setdoc(ConfigBase)
+    def write(self):
+        with open(self.filename, 'w') as f:
+            self.parser.write(f)
+        super(ConfigINI, self).write()
 
     @classmethod
     def _sec_opt(cls, option):
@@ -81,17 +109,24 @@ class ConfigINI(ConfigBase):
             sec, option = option.split('.',1)
         return sec, option
 
+    @_setdoc(ConfigBase)
     def _get(self, option):
         sec, option = self._sec_opt(option)
 
         try:
             return self.parser.get(sec, option)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+        except (NoSectionError, NoOptionError):
             raise KeyError("{sec}:{option}".format(sec=sec, option=option))
 
 
+    @_setdoc(ConfigBase)
     def _set(self, option, value):
         sec, option = self._sec_opt(option)
-        self.parser.set(sec, option, value)
+        try:
+            self.parser.set(sec, option, str(value))
+        except NoSectionError:
+            self.parser.add_section(sec)
+            self.parser.set(sec, option, str(value))
+
 
 Config = ConfigINI
