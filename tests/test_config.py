@@ -7,9 +7,8 @@ from plumbum.cli import Config, ConfigINI
 
 fname =  'test_config.ini'
 
+@pytest.mark.usefixtures('cleandir')
 class TestConfig:
-
-    @pytest.mark.usefixtures('cleandir')
     def test_makefile(self):
         with ConfigINI(fname) as conf:
             conf['value'] = 12
@@ -71,3 +70,12 @@ two = hello''', file=f)
 
         finally:
             mypath.unlink()
+
+    def test_notouch(self):
+        conf = ConfigINI(fname)
+        assert not local.path(fname).exists()
+
+    def test_only_string(self):
+        conf = ConfigINI(fname)
+        value = conf.get('value', 2)
+        assert value == '2'
