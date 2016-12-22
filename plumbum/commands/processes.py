@@ -177,7 +177,7 @@ atexit.register(_shutdown_bg_threads)
 def run_proc(proc, retcode, timeout = None):
     """Waits for the given process to terminate, with the expected exit code
 
-    :param proc: a running Popen-like object
+    :param proc: a running Popen-like object, with all the expected methods.
 
     :param retcode: the expected return (exit) code of the process. It defaults to 0 (the
                     convention for success). If ``None``, the return code is ignored.
