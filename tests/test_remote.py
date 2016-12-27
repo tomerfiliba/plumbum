@@ -212,7 +212,7 @@ s.close()
     def test_iter_lines_timeout(self):
         with self._connect() as rem:
             try:
-                for i, (out, err) in enumerate(rem["ping"]["-i", 0.5, "127.0.0.1"].popen().iter_lines(timeout=2)):
+                for i, (out, err) in enumerate(rem["ping"]["-i", 0.5, "127.0.0.1"].popen().iter_lines(timeout=4)):
                     print("out:", out)
                     print("err:", err)
             except NotImplementedError:

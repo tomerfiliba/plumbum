@@ -12,6 +12,8 @@ matrix:
       env: PYV=3.4
     - python: 3.5
       env: PYV=3.5
+    - python: 3.6
+      env: PYV=3.6
 #    - python: nightly
     - python: pypy
     - language: generic

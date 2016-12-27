@@ -1,9 +1,6 @@
 .. image:: https://coveralls.io/repos/tomerfiliba/plumbum/badge.svg?branch=master&service=github
    :target: https://coveralls.io/github/tomerfiliba/plumbum?branch=master
    :alt: Coverage Status
-.. image:: https://img.shields.io/pypi/dm/plumbum.svg
-   :target: https://pypi.python.org/pypi/plumbum/
-   :alt: PyPI Downloads Per Month
 .. image:: https://img.shields.io/pypi/v/plumbum.svg
    :target: https://pypi.python.org/pypi/plumbum/ 
    :alt: PyPI Status

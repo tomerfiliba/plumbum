@@ -98,13 +98,13 @@ Download
 --------
 
 You can **download** the library from the `Python Package Index <http://pypi.python.org/pypi/plumbum#downloads>`_ 
-(in a variety of formats), or ``easy-install plumbum`` / ``pip install plumbum`` directly. 
+(in a variety of formats), or run ``pip install plumbum`` directly. If you use Anaconda, you can also get it from the ``conda-forge`` channel with ``conda install -c conda-forge plumbum``.
 
 User Guide
 ==========
 The user guide covers most of the features of Plumbum, with lots of code-snippets to get you 
 swimming in no time. It introduces the concepts and "syntax" gradually, so it's recommended 
-you read it in order.
+you read it in order. A quick :ref:`reference guide is available <guide-quickref>`.
 
 .. toctree::
    :maxdepth: 2
@@ -117,6 +117,7 @@ you read it in order.
    cli
    colors
    changelog
+   quickref
 
 API Reference
 =============
