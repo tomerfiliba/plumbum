@@ -392,7 +392,7 @@ class TestLocalMachine:
         p = ls.popen(["-a"])
         out, _ = p.communicate()
         assert p.returncode == 0
-        assert "test_local.py" in out.decode(local.custom_encoding).splitlines()
+        assert "test_local.py" in out.decode(local.encoding).splitlines()
 
     def test_run(self):
         from plumbum.cmd import ls, grep
