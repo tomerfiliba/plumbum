@@ -61,6 +61,14 @@ class BaseMachine(object):
             return False
         else:
             return True
+
+    @property
+    def encoding(self):
+        'This is a wrapper for custom_encoding'
+        return self.custom_encoding
+    @encoding.setter
+    def encoding(self, value):
+        self.custom_encoding = value
             
     def daemonic_popen(self, command, cwd = "/", stdout=None, stderr=None, append=True):
         raise NotImplementedError("This is not implemented on this machine!")
