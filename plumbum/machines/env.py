@@ -129,19 +129,19 @@ class BaseEnv(object):
     def _get_home(self):
         if "HOME" in self:
             return self._path_factory(self["HOME"])
-        elif "USERPROFILE" in self:
+        elif "USERPROFILE" in self: # pragma: no cover
             return self._path_factory(self["USERPROFILE"])
-        elif "HOMEPATH" in self:
+        elif "HOMEPATH" in self: # pragma: no cover
             return self._path_factory(self.get("HOMEDRIVE", ""), self["HOMEPATH"])
         return None
     def _set_home(self, p):
         if "HOME" in self:
             self["HOME"] = str(p)
-        elif "USERPROFILE" in self:
+        elif "USERPROFILE" in self: # pragma: no cover
             self["USERPROFILE"] = str(p)
-        elif "HOMEPATH" in self:
+        elif "HOMEPATH" in self: # pragma: no cover
             self["HOMEPATH"] = str(p)
-        else:
+        else: # pragma: no cover
             self["HOME"] = str(p)
     home = property(_get_home, _set_home)
     """Get or set the home path"""
@@ -150,7 +150,7 @@ class BaseEnv(object):
     def user(self):
         """Return the user name, or ``None`` if it is not set"""
         # adapted from getpass.getuser()
-        for name in ('LOGNAME', 'USER', 'LNAME', 'USERNAME'):
+        for name in ('LOGNAME', 'USER', 'LNAME', 'USERNAME'): # pragma: no branch
             if name in self:
                 return self[name]
         try:
