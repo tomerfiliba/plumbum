@@ -5,7 +5,7 @@ import shutil
 import errno
 import logging
 from contextlib import contextmanager
-from plumbum.lib import _setdoc, IS_WIN32
+from plumbum.lib import _setdoc, IS_WIN32, six
 from plumbum.path.base import Path, FSUser
 from plumbum.path.remote import RemotePath
 try:
@@ -23,7 +23,7 @@ except ImportError:
 
 try: # Py3
     import urllib.parse as urlparse
-    import urllib.request as urllib 
+    import urllib.request as urllib
 except ImportError:
     import urlparse
     import urllib
@@ -108,7 +108,7 @@ class LocalPath(Path):
     @_setdoc(Path)
     def list(self):
         return [self / fn for fn in os.listdir(str(self))]
-        
+
     @_setdoc(Path)
     def iterdir(self):
         try:
@@ -158,7 +158,7 @@ class LocalPath(Path):
     @_setdoc(Path)
     def glob(self, pattern):
         fn = lambda pat: [LocalPath(m) for m in glob.glob(str(self / pat))]
-        return self._glob(pattern, fn) 
+        return self._glob(pattern, fn)
 
     @_setdoc(Path)
     def delete(self):
@@ -212,22 +212,29 @@ class LocalPath(Path):
                     raise
 
     @_setdoc(Path)
-    def open(self, mode = "rb"):
+    def open(self, mode = "r"):
         return open(str(self), mode)
 
     @_setdoc(Path)
-    def read(self, encoding=None):
-        with self.open("rb") as f:
+    def read(self, encoding=None, mode = 'r'):
+        if encoding and 'b' not in mode:
+            mode = mode + 'b'
+        with self.open(mode) as f:
             data = f.read()
             if encoding:
                 data = data.decode(encoding)
             return data
 
     @_setdoc(Path)
-    def write(self, data, encoding=None):
+    def write(self, data, encoding=None, mode = None):
         if encoding:
             data = data.encode(encoding)
-        with self.open("wb") as f:
+        if mode is None:
+            if isinstance(data, six.unicode_type):
+                mode = 'w'
+            else:
+                mode = 'wb'
+        with self.open(mode) as f:
             f.write(data)
 
     @_setdoc(Path)
@@ -311,7 +318,7 @@ class LocalPath(Path):
     @_setdoc(Path)
     def root(self):
         return os.path.sep
-    
+
 
 
 class LocalWorkdir(LocalPath):
@@ -346,7 +353,7 @@ class LocalWorkdir(LocalPath):
         prev = self._path
         newdir = self.chdir(newdir)
         try:
-            yield newdir 
+            yield newdir
         finally:
             self.chdir(prev)
 

@@ -529,18 +529,30 @@ class TestLocalMachine:
         assert not dir.exists()
 
 
-    def test_read_write(self):
+    def test_read_write_str(self):
+        with local.tempdir() as tmp:
+            data = "hello world"
+            (tmp / "foo.txt").write(data)
+            assert (tmp / "foo.txt").read() == data
+
+    def test_read_write_unicode(self):
+        with local.tempdir() as tmp:
+            data = six.u("hello world")
+            (tmp / "foo.txt").write(data)
+            assert (tmp / "foo.txt").read() == data
+
+    def test_read_write_bin(self):
         with local.tempdir() as tmp:
             data = six.b("hello world")
             (tmp / "foo.txt").write(data)
-            assert (tmp / "foo.txt").read() == data
+            assert (tmp / "foo.txt").read(mode='rb') == data
 
     def test_links(self):
         with local.tempdir() as tmp:
             src = tmp / "foo.txt"
             dst1 = tmp / "bar.txt"
             dst2 = tmp / "spam.txt"
-            data = six.b("hello world")
+            data = "hello world"
             src.write(data)
             src.link(dst1)
             assert data == dst1.read()
