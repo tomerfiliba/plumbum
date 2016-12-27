@@ -17,7 +17,7 @@ def get_terminal_size(default=(80, 25)):
     Originally from: http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
     """
     current_os = platform.system()
-    if current_os == 'Windows': # pragma: no branch
+    if current_os == 'Windows': # pragma: no cover
         size = _get_terminal_size_windows()
         if not size:
             # needed for window's python in cygwin's xterm!
@@ -25,7 +25,7 @@ def get_terminal_size(default=(80, 25)):
     elif current_os in ('Linux', 'Darwin', 'FreeBSD', 'SunOS') or current_os.startswith('CYGWIN'):
         size = _get_terminal_size_linux()
 
-    else:
+    else: # pragma: no cover
         warnings.warn("Plumbum does not know the type of the current OS for term size, defaulting to UNIX")
         size = _get_terminal_size_linux()
 
@@ -48,7 +48,7 @@ def _get_terminal_size_windows(): # pragma: no cover
     except Exception:
         return None
 
-def _get_terminal_size_tput():
+def _get_terminal_size_tput(): # pragma: no cover
     # get terminal width
     # src: http://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
     try:
