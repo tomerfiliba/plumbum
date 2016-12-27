@@ -32,7 +32,7 @@ class ParamikoPopen(PopenAddons):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
-        self.encoding = encoding
+        self.custom_encoding = encoding
         self.returncode = None
         self.pid = None
         self.stdin_file = stdin_file
@@ -219,8 +219,8 @@ class ParamikoMachine(BaseRemoteMachine):
         stdin = chan.makefile('wb', -1)
         stdout = chan.makefile('rb', -1)
         stderr = chan.makefile_stderr('rb', -1)
-        proc = ParamikoPopen(["<shell>"], stdin, stdout, stderr, self.encoding)
-        return ShellSession(proc, self.encoding, isatty)
+        proc = ParamikoPopen(["<shell>"], stdin, stdout, stderr, self.custom_encoding)
+        return ShellSession(proc, self.custom_encoding, isatty)
 
     @_setdoc(BaseRemoteMachine)
     def popen(self, args, stdin = None, stdout = None, stderr = None, new_session = False, cwd = None):
@@ -235,7 +235,7 @@ class ParamikoMachine(BaseRemoteMachine):
         cmdline = " ".join(argv)
         logger.debug(cmdline)
         si, so, se = streams = self._client.exec_command(cmdline, 1)
-        return ParamikoPopen(argv, si, so, se, self.encoding, stdin_file = stdin,
+        return ParamikoPopen(argv, si, so, se, self.custom_encoding, stdin_file = stdin,
             stdout_file = stdout, stderr_file = stderr)
 
     @_setdoc(BaseRemoteMachine)
@@ -313,8 +313,8 @@ class ParamikoMachine(BaseRemoteMachine):
         f.close()
         return data
     def _path_write(self, fn, data):
-        if self.encoding and isinstance(data, six.unicode_type):
-            data = data.encode(self.encoding)
+        if self.custom_encoding and isinstance(data, six.unicode_type):
+            data = data.encode(self.custom_encoding)
         f = self.sftp.open(str(fn), 'wb')
         f.write(data)
         f.close()

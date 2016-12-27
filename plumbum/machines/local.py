@@ -95,7 +95,7 @@ class LocalCommand(ConcreteCommand):
 
     def __init__(self, executable, encoding = "auto"):
         ConcreteCommand.__init__(self, executable,
-            local.encoding if encoding == "auto" else encoding)
+            local.custom_encoding if encoding == "auto" else encoding)
 
     @property
     def machine(self):
@@ -122,13 +122,13 @@ class LocalMachine(BaseMachine):
 
     * ``cwd`` - the local working directory
     * ``env`` - the local environment
-    * ``encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``)
+    * ``custom_encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``)
     """
 
     cwd = StaticProperty(LocalWorkdir)
     env = LocalEnv()
 
-    encoding = sys.getfilesystemencoding()
+    custom_encoding = sys.getfilesystemencoding()
     uname = platform.uname()[0]
 
     def __init__(self):
@@ -258,7 +258,7 @@ class LocalMachine(BaseMachine):
         proc = IterablePopen(argv, executable = str(executable), stdin = stdin, stdout = stdout,
             stderr = stderr, cwd = str(cwd), env = env, **kwargs)  # bufsize = 4096
         proc._start_time = time.time()
-        proc.encoding = self.encoding
+        proc.custom_encoding = self.custom_encoding
         proc.argv = argv
         return proc
 
@@ -377,7 +377,7 @@ class LocalMachine(BaseMachine):
         """A shorthand for :func:`as_user("root") <plumbum.machines.local.LocalMachine.as_user>`"""
         return self.as_user()
 
-    python = LocalCommand(sys.executable, encoding)
+    python = LocalCommand(sys.executable, custom_encoding)
     """A command that represents the current python interpreter (``sys.executable``)"""
 
 local = LocalMachine()
@@ -389,5 +389,5 @@ Attributes:
 
 * ``cwd`` - the local working directory
 * ``env`` - the local environment
-* ``encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``)
+* ``custom_encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``)
 """

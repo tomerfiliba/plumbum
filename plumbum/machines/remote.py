@@ -106,7 +106,7 @@ class RemoteCommand(ConcreteCommand):
     def __init__(self, remote, executable, encoding = "auto"):
         self.remote = remote
         ConcreteCommand.__init__(self, executable,
-            remote.encoding if encoding == "auto" else encoding)
+            remote.custom_encoding if encoding == "auto" else encoding)
     @property
     def machine(self):
         return self.remote
@@ -140,7 +140,7 @@ class BaseRemoteMachine(BaseMachine):
 
     * ``cwd`` - the remote working directory
     * ``env`` - the remote environment
-    * ``encoding`` - the remote machine's default encoding (assumed to be UTF8)
+    * ``custom_encoding`` - the remote machine's default encoding (assumed to be UTF8)
     * ``connect_timeout`` - the connection timeout
 
 
@@ -149,7 +149,7 @@ class BaseRemoteMachine(BaseMachine):
 
     # allow inheritors to override the RemoteCommand class
     RemoteCommand = RemoteCommand
-    
+
     @property
     def cwd(self):
         if not hasattr(self, '_cwd'):
@@ -157,7 +157,7 @@ class BaseRemoteMachine(BaseMachine):
         return self._cwd
 
     def __init__(self, encoding = "utf8", connect_timeout = 10, new_session = False):
-        self.encoding = encoding
+        self.custom_encoding = encoding
         self.connect_timeout = connect_timeout
         self._session = self.session(new_session = new_session)
         self.uname = self._get_uname()
@@ -373,12 +373,12 @@ class BaseRemoteMachine(BaseMachine):
 
     def _path_read(self, fn):
         data = self["cat"](fn)
-        if self.encoding and isinstance(data, six.unicode_type):
-            data = data.encode(self.encoding)
+        if self.custom_encoding and isinstance(data, six.unicode_type):
+            data = data.encode(self.custom_encoding)
         return data
     def _path_write(self, fn, data):
-        if self.encoding and isinstance(data, six.unicode_type):
-            data = data.encode(self.encoding)
+        if self.custom_encoding and isinstance(data, six.unicode_type):
+            data = data.encode(self.custom_encoding)
         with NamedTemporaryFile() as f:
             f.write(data)
             f.flush()
