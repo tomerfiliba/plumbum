@@ -5,6 +5,7 @@ source =
 omit =
     *ipython*.py
     *__main__.py
+    *_windows.py
 
 [report]
 exclude_lines =
