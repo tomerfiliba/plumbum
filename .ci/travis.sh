@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 if [[ "$(uname -s)" == 'Darwin' ]]; then
-    if brew ls --versions python > /dev/null; then
+    if brew ls --versions python$PY3 > /dev/null; then
         echo "Brew python is already installed"
     else
         brew update
@@ -11,9 +11,9 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
     python$PY3 -m pip install coveralls
     python$PY3 -m pip install -e .
 else
-    python -m pip install -r dev-requirements.txt
-    python -m pip install coveralls
-    python -m pip install -e .
+    pip install -r dev-requirements.txt
+    pip install coveralls
+    pip install -e .
 fi
 
 echo NoHostAuthenticationForLocalhost yes >> ~/.ssh/config
