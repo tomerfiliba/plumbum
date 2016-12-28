@@ -70,7 +70,7 @@ class SessionPopen(PopenAddons):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
-        self.encoding = encoding
+        self.custom_encoding = encoding
         self.returncode = None
         self._done = False
     def poll(self):
@@ -157,7 +157,7 @@ class ShellSession(object):
     """
     def __init__(self, proc, encoding = "auto", isatty = False, connect_timeout = 5):
         self.proc = proc
-        self.encoding = proc.encoding if encoding == "auto" else encoding
+        self.custom_encoding = proc.custom_encoding if encoding == "auto" else encoding
         self.isatty = isatty
         self._current = None
         if connect_timeout:
@@ -230,14 +230,14 @@ class ShellSession(object):
         full_cmd += "echo $? ; echo '%s'" % (marker,)
         if not self.isatty:
             full_cmd += " ; echo '%s' 1>&2" % (marker,)
-        if self.encoding:
-            full_cmd = full_cmd.encode(self.encoding)
+        if self.custom_encoding:
+            full_cmd = full_cmd.encode(self.custom_encoding)
         shell_logger.debug("Running %r", full_cmd)
         self.proc.stdin.write(full_cmd + six.b("\n"))
         self.proc.stdin.flush()
         self._current = SessionPopen(self.proc, full_cmd, self.isatty, self.proc.stdin,
             MarkedPipe(self.proc.stdout, marker), MarkedPipe(self.proc.stderr, marker),
-            self.encoding)
+            self.custom_encoding)
         return self._current
 
     def run(self, cmd, retcode = 0):

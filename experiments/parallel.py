@@ -24,7 +24,7 @@ class ConcurrentPopen(object):
         self.stdin = None
         self.stdout = None
         self.stderr = None
-        self.encoding = None
+        self.custom_encoding = None
         self.returncode = None
     @property
     def argv(self):
