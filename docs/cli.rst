@@ -569,6 +569,14 @@ remaining displayed. If you need to create a progress bar for a fast iterator bu
 
 If you have something that produces output, but still needs a progress bar, pass ``has_output=True`` to force the bar not to try to erase the old one each time.
 
+A command line image plotter (``Image``) is provided in ``plumbum.cli.image``. It can plot a PIL-like image ``im`` using::
+
+    Image().show_pil(im)
+
+The Image constructor can take an optional size (defaults to the current terminal size if None), and a `char_ratio`, a height to width measure for your current font. It defaults to a common value of 2.45. If set to None, the ratio is ignored and the image will no longer be constrained to scale proportionately. To directly plot an image, the ``show`` method takes a filename and a double parameter, which doubles the vertical resolution on some fonts. The `show_pil` and `show_pil_double`
+methods directly take a PIL-like object. To plot an image from the command line,  
+the module can be run directly: ``python -m plumbum.cli.image myimage.png``.
+
 For the full list of helpers or more information, see the :ref:`api docs <api-cli>`.
 
 
