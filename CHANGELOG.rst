@@ -6,7 +6,8 @@
 * Paths: Added support for Python 3.6 path protocol
 * Paths: Support Python's ``in`` syntax
 * CLI: Added Config parser (provisional) (`#304 <https://github.com/          tomerfiliba/plumbum/pull/304>`)
-* Color: image plots with `python -m plumbum.cli.image` (`#304 <https://github.com/          tomerfiliba/plumbum/pull/304>`)
+* Color: image plots with `python -m plumbum.cli.image` (`#304 <https://github.com/tomerfiliba/plumbum/pull/304>`)
+* SSH: No longer hangs on failure (`#306 <https://github.com/tomerfiliba/plumbum/issues/306>`)
 * Test improvements, especially on non-linux systems
 
 1.6.2
