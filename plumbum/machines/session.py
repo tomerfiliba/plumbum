@@ -166,7 +166,11 @@ class ShellSession(object):
                 self.close()
             timer = threading.Timer(connect_timeout, self.close)
             timer.start()
-        self.run("")
+        try:
+            self.run("")
+        except SSHCommsError:
+            timer.cancel()
+            raise
         if connect_timeout:
             timer.cancel()
 
