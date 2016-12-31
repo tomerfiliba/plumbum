@@ -168,11 +168,9 @@ class ShellSession(object):
             timer.start()
         try:
             self.run("")
-        except SSHCommsError:
-            timer.cancel()
-            raise
-        if connect_timeout:
-            timer.cancel()
+        finally:
+            if connect_timeout:
+                timer.cancel()
 
     def __enter__(self):
         return self
