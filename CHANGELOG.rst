@@ -1,13 +1,13 @@
-1.6.3 (in progress)
--------------------
+1.6.3
+-----
 * Python 3.6 is now supported, critical bug fixed  (`#302 <https://github.com/tomerfiliba/plumbum/issues/302>`)
 * Commands: Better handling of return codes for pipelines (`#288 <https://github.com/tomerfiliba/plumbum/pull/288>`_)
 * Paths: Return split support (regression) (`#286 <https://github.com/tomerfiliba/plumbum/issues/286>`) - also supports dummy args for better ``str`` compatibility
 * Paths: Added support for Python 3.6 path protocol
 * Paths: Support Python's ``in`` syntax
-* CLI: Added Config parser (provisional) (`#304 <https://github.com/          tomerfiliba/plumbum/pull/304>`)
+* CLI: Added Config parser (provisional) (`#304 <https://github.com/tomerfiliba/plumbum/pull/304>`)
 * Color: image plots with `python -m plumbum.cli.image` (`#304 <https://github.com/tomerfiliba/plumbum/pull/304>`)
-* SSH: No longer hangs on failure (`#306 <https://github.com/tomerfiliba/plumbum/issues/306>`)
+* SSH: No longer hangs for ``timeout`` seconds on failure (`#306 <https://github.com/tomerfiliba/plumbum/issues/306>`)
 * Test improvements, especially on non-linux systems
 
 1.6.2
