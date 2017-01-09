@@ -23,9 +23,9 @@ might look like this::
         verbose = cli.Flag(["v", "verbose"], help = "If given, I will be very talkative")
         
         def main(self, filename):
-            print "I will now read", filename
+            print("I will now read {0}".format(filename))
             if self.verbose:
-                print "Yadda " * 200
+                print("Yadda " * 200)
     
     if __name__ == "__main__":
         MyApp.run()
@@ -174,7 +174,7 @@ For instance ::
             self._port = port
         
         def main(self):
-            print self._port
+            print(self._port)
 
 ::
 
@@ -202,7 +202,7 @@ these values. Here's an example ::
             self._mode = mode
         
         def main(self):
-            print self._port, self._mode
+            print(self._port, self._mode)
 
 ::
 
@@ -235,7 +235,7 @@ only be given once, unless you allow multiple occurrences by passing ``list = Tr
             self._dirs = dirs
         
         def main(self):
-            print self._dirs
+            print(self._dirs)
 
 ::
 
@@ -326,7 +326,7 @@ if the switch is given) and ``CountOf`` (which counts the number of occurrences 
         verbosity_level = cli.CountOf("-v")
         
         def main(self):
-            print self.log_file, self.enable_logging, self.verbosity_level
+            print(self.log_file, self.enable_logging, self.verbosity_level)
 
 .. code-block:: bash
 
@@ -369,7 +369,7 @@ arguments that may be given is unbound ::
 
     class MyApp(cli.Application):
         def main(self, src, dst, mode = "normal"):
-            print src, dst, mode
+            print(src, dst, mode)
 
 ::
 
@@ -391,7 +391,7 @@ With varargs::
 
     class MyApp(cli.Application):
         def main(self, src, dst, *eggs):
-            print src, dst, eggs
+            print(src, dst, eggs)
 
 ::
 
@@ -467,10 +467,10 @@ attached to the root application using the ``subcommand`` decorator ::
         
         def main(self, *args):
             if args:
-                print "Unknown command %r" % (args[0],)
+                print("Unknown command {0!r}".format(args[0]))
                 return 1   # error exit code
             if not self.nested_command:           # will be ``None`` if no sub-command follows
-                print "No command given"
+                print("No command given")
                 return 1   # error exit code
 
     @Geet.subcommand("commit")                    # attach 'geet commit'
@@ -481,13 +481,13 @@ attached to the root application using the ``subcommand`` decorator ::
         message = cli.SwitchAttr("-m", str, mandatory = True, help = "sets the commit message")
 
         def main(self):
-            print "doing the commit..."
+            print("doing the commit...")
 
     @Geet.subcommand("push")                      # attach 'geet push'
     class GeetPush(cli.Application):
         """pushes the current local branch to the remote one"""
         def main(self, remote, branch = None):
-            print "doing the push..."
+            print("doing the push...")
 
     if __name__ == "__main__":
         Geet.run()
