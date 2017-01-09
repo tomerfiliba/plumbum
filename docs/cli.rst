@@ -411,7 +411,7 @@ You can supply positional argument validators using the ``cli.positional`` decor
 pass the validators in the decorator matching the names in the main function. For example::
 
     class MyApp(cli.Application):
-        @cli.positional(cli.ExistingFile, cli.NonexistantPath)
+        @cli.positional(cli.ExistingFile, cli.NonexistentPath)
         def main(self, infile, *outfiles):
             "infile is a path, outfiles are a list of paths, proper errors are given"
 
@@ -419,7 +419,7 @@ If you only want to run your application in Python 3, you can also use annotatio
 specify the validators. For example::
 
     class MyApp(cli.Application):
-        def main(self, infile : cli.ExistingFile, *outfiles : cli.NonexistantPath):
+        def main(self, infile : cli.ExistingFile, *outfiles : cli.NonexistentPath):
         "Identical to above MyApp"
 
 Annotations are ignored if the positional decorator is present.
