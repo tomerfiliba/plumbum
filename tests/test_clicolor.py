@@ -1,35 +1,45 @@
 from plumbum import cli, colors
 
-class SimpleApp(cli.Application):
-    PROGNAME = colors.green
-    VERSION = colors.red | "1.0.3"
+colors.use_color = 3
 
-    @cli.switch(["a"])
-    def spam(self):
-        print("!!a")
+def make_app():
+    class SimpleApp(cli.Application):
+        PROGNAME = colors.green
+        VERSION = colors.red | "1.0.3"
 
-    def main(self, *args):
-        print("lalala")
+        @cli.switch(["a"])
+        def spam(self):
+            print("!!a")
 
+        def main(self, *args):
+            print("lalala")
+    return SimpleApp
 
 class TestSimpleApp:
+
+
     def test_runs(self):
+        SimpleApp = make_app()
         _, rc = SimpleApp.run(['SimpleApp'], exit = False)
         assert rc == 0
 
     def test_colorless_run(self, capsys):
         colors.use_color = 0
+        SimpleApp = make_app()
         _, rc = SimpleApp.run(["SimpleApp"], exit = False)
         assert capsys.readouterr()[0]  == 'lalala\n'
 
 
+    def test_colorful_run(self, capsys):
         colors.use_color = 4
+        SimpleApp = make_app()
         _, rc = SimpleApp.run(["SimpleApp"], exit = False)
         assert capsys.readouterr()[0]  == 'lalala\n'
 
 
     def test_colorless_output(self, capsys):
         colors.use_color = 0
+        SimpleApp = make_app()
         _, rc = SimpleApp.run(["SimpleApp", "-h"], exit = False)
         output = capsys.readouterr()[0]
         assert 'SimpleApp 1.0.3' in output
@@ -37,12 +47,11 @@ class TestSimpleApp:
 
     def test_colorful_help(self, capsys):
         colors.use_color = 4
+        SimpleApp = make_app()
         _, rc = SimpleApp.run(["SimpleApp", "-h"], exit = False)
         output = capsys.readouterr()[0]
         assert 'SimpleApp 1.0.3' not in output
         assert SimpleApp.PROGNAME | 'SimpleApp' in output
-
-
 
 
 
@@ -69,7 +78,7 @@ class TestNSApp:
         _, rc = NotSoSimpleApp.run(["NotSoSimpleApp", "-h"], exit=False)
         output = capsys.readouterr()[0]
         assert rc == 0
-        expected = str((colors.blue | "NSApp") + " 1.2.3") 
+        expected = str((colors.blue | "NSApp") + " 1.2.3")
         assert "-b" in output
         assert str(colors.red | "crunchy") in output
         assert expected in output
