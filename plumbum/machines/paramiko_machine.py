@@ -94,8 +94,8 @@ class ParamikoPopen(PopenAddons):
             else:
                 coll.append(line)
         self.wait()
-        stdout = six.b("").join(six.b(s) for s in stdout)
-        stderr = six.b("").join(six.b(s) for s in stderr)
+        stdout = "".join(s for s in stdout).encode(self.custom_encoding)
+        stderr = "".join(s for s in stderr).encode(self.custom_encoding)
         return stdout, stderr
 
     def iter_lines(self, timeout=None, **kwargs):
@@ -381,13 +381,13 @@ def _iter_lines(proc, decode, linesize):
 
     for _ in selector():
         if proc.stdout.channel.recv_ready():
-            yield 0, decode(six.b(proc.stdout.readline(linesize)))
+            yield 0, proc.stdout.readline(linesize)
         if proc.stdout.channel.recv_stderr_ready():
-            yield 1, decode(six.b(proc.stderr.readline(linesize)))
+            yield 1, proc.stderr.readline(linesize)
         if proc.poll() is not None:
             break
 
     for line in proc.stdout:
-        yield 0, decode(six.b(line))
+        yield 0, line
     for line in proc.stderr:
-        yield 1, decode(six.b(line))
+        yield 1, line
