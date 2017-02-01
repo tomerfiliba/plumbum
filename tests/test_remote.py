@@ -355,12 +355,4 @@ class TestParamikoMachine(BaseRemoteMachineTest):
             else:
                 pytest.fail("Should not pipe")
 
-    def test_encoding(self):
-        with self._connect() as rem:
-            unicode_half = b"\xc2\xbd".decode("utf8")
 
-            ret = rem['bash']("-c", 'echo -e "\xC2\xBD"')
-            assert ret == "%s\n" % unicode_half
-
-            ret = list(rem['bash']["-c", 'echo -e "\xC2\xBD"'].popen())
-            assert ret == [["%s\n" % unicode_half, None]]
