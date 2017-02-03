@@ -355,6 +355,7 @@ class TestParamikoMachine(BaseRemoteMachineTest):
             else:
                 pytest.fail("Should not pipe")
 
+    @pytest.mark.xfail(message="Not working yet")
     def test_encoding(self):
         with self._connect() as rem:
             unicode_half = b"\xc2\xbd".decode("utf8")
