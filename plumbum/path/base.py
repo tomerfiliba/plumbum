@@ -341,6 +341,24 @@ class Path(str, six.ABC):
                 results.extend(fn(single_pattern))
             return sorted(list(set(results)))
 
+    def resolve(strict=False):
+        """Added to allow pathlib like syntax. Does nothing since
+        plubmum paths are always absolute. Does not (currently) resolve
+        symlinks."""
+        # TODO: Resolve symlinks here
+        return self
+
+    @property
+    def parents(self):
+        """Pathlib like sequence of ancestors"""
+        join = lambda x,y: self.__class__(x) / y
+        as_list = (reduce(join,self.parts[:i],self.parts[0]) for i in range(len(self.parts)-1,0,-1))
+        return tuple(as_list)
+
+    @property
+    def parent(self):
+        """Pathlib like parent of the path."""
+        return self.parents[0]
 
 
 class RelativePath(object):
