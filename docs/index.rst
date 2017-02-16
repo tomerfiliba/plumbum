@@ -73,8 +73,8 @@ Cheat Sheet
 Development and Installation
 ============================
 
-The library is developed on `github <https://github.com/tomerfiliba/plumbum>`_, and will happily 
-accept `patches <http://help.github.com/send-pull-requests/>`_ from users. Please use the github's 
+The library is developed on `GitHub <https://github.com/tomerfiliba/plumbum>`_, and will happily 
+accept `patches <http://help.github.com/send-pull-requests/>`_ from users. Please use the GitHub's 
 built-in `issue tracker <https://github.com/tomerfiliba/plumbum/issues>`_ to report any problem 
 you encounter or to request features. The library is released under the permissive `MIT license 
 <https://github.com/tomerfiliba/plumbum/blob/master/LICENSE>`_.
@@ -82,8 +82,10 @@ you encounter or to request features. The library is released under the permissi
 Requirements
 ------------
 
-Plumbum supports **Python 2.6-3.5** and **PyPy** and has been 
-tested on **Linux**, **Mac**, and **Windows** machines. Any Unix-like machine should work fine out of the box,
+Plumbum supports **Python 2.6-3.6** and **PyPy** and is continually 
+tested on **Linux**, **Mac**, and **Windows** machines through `Travis CI <https://travis-ci.org/tomerfiliba/plumbum>`_
+and `Appveyor <https://ci.appveyor.com/project/HenrySchreiner/plumbum/branch/master>`_. 
+Any Unix-like machine should work fine out of the box,
 but on Windows, you'll probably want to install a decent `coreutils <http://en.wikipedia.org/wiki/Coreutils>`_ 
 environment and add it to your ``PATH``. I can recommend `mingw <http://mingw.org/>`_ (which comes 
 bundled with `Git for Windows <http://msysgit.github.com/>`_), but `cygwin <http://www.cygwin.com/>`_ 
