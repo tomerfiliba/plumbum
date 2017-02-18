@@ -1,8 +1,8 @@
 from __future__ import print_function, division
 
 from plumbum import colors
-from plumbum.cli.termsize import get_terminal_size
-from plumbum import cli
+from .termsize import get_terminal_size
+import . as cli
 import sys
 
 class Image(object):

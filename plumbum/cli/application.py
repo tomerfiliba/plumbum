@@ -6,11 +6,11 @@ from textwrap import TextWrapper
 from collections import defaultdict
 
 from plumbum.lib import six, getdoc
-from plumbum.cli.terminal import get_terminal_size
-from plumbum.cli.switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,
+from .terminal import get_terminal_size
+from .switches import (SwitchError, UnknownSwitch, MissingArgument, WrongArgumentType,
     MissingMandatorySwitch, SwitchCombinationError, PositionalArgumentsError, switch,
     SubcommandError, Flag, CountOf)
-from plumbum import colors, local
+from plumbum import colors
 
 
 class ShowHelp(SwitchError):
@@ -317,7 +317,7 @@ class Application(object):
         envindex = 0
         for env, swinfo in self._switches_by_envar.items():
             envindex -= 1
-            envval = local.env.get(env)
+            envval = os.environ.get(env)
             if envval is None:
                 continue
 
