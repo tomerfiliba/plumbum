@@ -4,7 +4,7 @@ and attributes like bold and
 underlined text. It also provides ``reset`` to recover the normal font.
 """
 
-from __future__ import print_function, abs_import
+from __future__ import print_function, absolute_import
 
 from .factories import StyleFactory
 from .styles import Style, ANSIStyle, HTMLStyle, ColorNotFound
