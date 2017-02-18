@@ -15,8 +15,10 @@ from copy import copy
 from .names import color_names, color_html
 from .names import color_codes_simple, from_html
 from .names import FindNearest, attributes_ansi
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta
 import platform
+
+ABC = ABCMeta('ABC', (object,), {'__module__':__name__, '__slots__':()})
 
 __all__ = ['Color', 'Style', 'ANSIStyle', 'HTMLStyle', 'ColorNotFound', 'AttributeNotFound']
 
