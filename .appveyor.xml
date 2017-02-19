@@ -4,6 +4,7 @@ environment:
     - PYTHON: "C:\\Python33"
     - PYTHON: "C:\\Python34"
     - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python36"
 
 install:
   - set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
