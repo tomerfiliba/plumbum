@@ -86,6 +86,36 @@ class LocalEnv(BaseEnv):
             os.environ = prev
         return output
 
+class DetachedEnv(dict):
+    """This class is a wrapper on dict to provide with support and set operations"""
+    __slots__ = ('machine', 'ctx')
+    def __new__(cls, machine, *args, **kargs):
+        self = super(DetachedEnv, cls).__new__(cls, *args, **kargs)
+        self.machine = machine
+        return self
+
+    def __init__(self, machine, *args, **kargs):
+        super(DetachedEnv, self).__init__(*args, **kargs)
+
+    def __repr__(self):
+        return '{0.__class__.__name__}({0.machine.__class__.__name__}(),{1})'.format(
+                self, super(DetachedEnv, self).__repr__())
+    def __str__(self):
+        return super(DetachedEnv, self).__repr__()
+
+    def __enter__(self):
+        self.ctx = self.machine.env(**self)
+        return self.ctx.__enter__()
+    def __exit__(self, *args, **kargs):
+        return self.ctx.__exit__(*args, **kargs)
+
+    def __sub__(self, other):
+        return self.__class__(self.machine, {k:self.get(k,other.get(k)) for k in set(self) - set(other)})
+    def __and__(self, other):
+        return self.__class__(self.machine, {k:self.get(k,other.get(k)) for k in set(self) & set(other)})
+    def __or__(self, other):
+        return self.__class__(self.machine, {k:self.get(k,other.get(k)) for k in set(self) | set(other)})
+
 #===================================================================================================
 # Local Commands
 #===================================================================================================
@@ -130,6 +160,19 @@ class LocalMachine(BaseMachine):
 
     custom_encoding = sys.getfilesystemencoding()
     uname = platform.uname()[0]
+
+    def source(self, filename=None):
+        """Get an environment from a command.
+        """
+        if filename is not None:
+            cmd = 'source ' + str(filename) + " && env"
+        else:
+            cmd = "env"
+        output = self['sh']('-c', cmd)
+        valid = re.compile(r'[^\s=\(\)%]+=')
+        dic = {line.split('=',1)[0]:line.split('=',1)[1] for line in output.splitlines() if valid.match(line)}
+        return DetachedEnv(self, dic)
+
 
     def __init__(self):
         self._as_user_stack = []
