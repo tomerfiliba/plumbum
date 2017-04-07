@@ -1,6 +1,5 @@
 from plumbum.lib import six, getdoc
 from plumbum import local
-from plumbum.cmd import mkdir
 
 from abc import abstractmethod
 
@@ -423,7 +422,8 @@ def MakeDirectory(val):
     p = local.path(val)
     if p.is_file():
         raise ValueError('%r is a file, should be nonexistent, or a directory' % (val,))
-    mkdir('-p', p)
+    elif not p.exists():
+        p.mkdir()
     return p
 
 @Predicate
