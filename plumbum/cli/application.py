@@ -349,8 +349,8 @@ class Application(object):
                 return argtype(val)
             except (TypeError, ValueError):
                 ex = sys.exc_info()[1]  # compat
-                raise WrongArgumentType("Argument of %s expected to be %r, not %r:\n    %r" % (
-                    name, str(argtype), val, ex))
+                raise WrongArgumentType("Argument of {name} expected to be {argtype}, not {val!r}:\n    {ex!r}".format(
+                    name=name, argtype=argtype, val=val, ex=ex))
         else:
             return NotImplemented
 
