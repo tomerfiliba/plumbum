@@ -350,7 +350,7 @@ class Application(object):
             except (TypeError, ValueError):
                 ex = sys.exc_info()[1]  # compat
                 raise WrongArgumentType("Argument of %s expected to be %r, not %r:\n    %r" % (
-                    name, argtype, val, ex))
+                    name, str(argtype), val, ex))
         else:
             return NotImplemented
 
@@ -711,4 +711,3 @@ class Application(object):
         ver = self._get_prog_version()
         ver_name = ver if ver is not None else "(version not set)"
         print('{0} {1}'.format(self.PROGNAME, ver_name))
-
