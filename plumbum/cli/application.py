@@ -627,7 +627,7 @@ class Application(object):
                     swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names
                         if n in self._switches_by_name and self._switches_by_name[n] == si)
                     if si.argtype:
-                        if isinstance(si.argtype, type):
+                        if hasattr(si.argtype, '__name__'):
                             typename = si.argtype.__name__
                         else:
                             typename = str(si.argtype)
