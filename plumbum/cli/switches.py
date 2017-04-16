@@ -376,12 +376,18 @@ class Set(Validator):
         class MyApp(Application):
             mode = SwitchAttr(["--mode"], Set("TCP", "UDP", case_sensitive = False))
 
+        -- or --
+        
+        class MyApp(Application):
+            mode = SwitchAttr(["--mode"], Set(values=ArbitraryList, case_insensitive = False))
+
     :param values: The set of values (strings)
     :param case_sensitive: A keyword argument that indicates whether to use case-sensitive
                              comparison or not. The default is ``False``
     """
     def __init__(self, *values, **kwargs):
         self.case_sensitive = kwargs.pop("case_sensitive", False)
+        values = kwargs.pop("values", values)  # accept values as either args or kwarg
         if kwargs:
             raise TypeError("got unexpected keyword argument(s): %r" % (kwargs.keys(),))
         self.values = dict(((v if self.case_sensitive else v.lower()), v) for v in values)
