@@ -164,6 +164,10 @@ class BaseRemoteMachine(BaseMachine):
         self.env = RemoteEnv(self)
         self._python = None
 
+    def __add__(self, other):
+        from plumbum.machines import multi
+        return multi.MultiCommand(self, other)
+
     def _get_uname(self):
         rc, out, _ = self._session.run("uname", retcode = None)
         if rc == 0:

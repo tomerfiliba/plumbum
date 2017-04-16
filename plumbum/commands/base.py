@@ -51,6 +51,10 @@ class BaseCommand(object):
     def __str__(self):
         return " ".join(self.formulate())
 
+    def __add__(self, other):
+        from plumbum.machines import multi
+        return multi.MultiCommand(self, other)
+
     def __or__(self, other):
         """Creates a pipe with the other command"""
         return Pipeline(self, other)
