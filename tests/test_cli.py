@@ -47,6 +47,12 @@ class GeetAdd(cli.Application):
 class GeetCommit(cli.Application):
     message = cli.Flag("-m", str)
 
+    def __init__(self, *args, **kwargs):
+        # This code is here to test that the help-all
+        # is passing the parent in the init
+        super(GeetCommit, self).__init__(*args, **kwargs)
+        self.is_parent_debug = self.parent.debug
+
     def main(self):
         if self.parent.debug:
             return "committing in debug"
@@ -177,11 +183,18 @@ class TestCLI:
         assert inst.eggs == 'raw'
 
     def test_mandatory_env_var(self, capsys):
-        
+
         _, rc = SimpleApp.run(["arg"], exit = False)
         assert rc == 2
         stdout, stderr = capsys.readouterr()
         assert "bacon is mandatory" in stdout
 
+    def test_helpall(self, capsys):
+         _, rc = Geet.run(["geet.py", "--help-all"], exit=False)
+         assert rc == 0
+         stdout, stderr = capsys.readouterr()
 
-
+         assert "-m" in stdout
+         assert "--version" in stdout
+         assert "add" in stdout
+         assert "commit" in stdout
