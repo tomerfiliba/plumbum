@@ -319,6 +319,14 @@ class TestLocalMachine:
         assert found
 
     @skip_on_windows
+    def test_glob_spaces(self):
+        fileloc = local.cwd / 'file with space.txt'
+        assert fileloc.exists()
+
+        assert local.cwd // "*space.txt"
+        assert local.cwd // "file with*"
+
+    @skip_on_windows
     def test_env(self):
         assert "PATH" in local.env
         assert "FOOBAR72" not in local.env
