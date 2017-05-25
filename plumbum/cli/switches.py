@@ -416,6 +416,16 @@ def ExistingDirectory(val):
         raise ValueError("%r is not a directory" % (val,))
     return p
 
+
+@Predicate
+def MakeDirectory(val):
+    p = local.path(val)
+    if p.is_file():
+        raise ValueError('%r is a file, should be nonexistent, or a directory' % (val,))
+    elif not p.exists():
+        p.mkdir()
+    return p
+
 @Predicate
 def ExistingFile(val):
     """A switch-type validator that ensures that the given argument is an existing file"""
