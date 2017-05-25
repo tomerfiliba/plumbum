@@ -280,5 +280,6 @@ See Also
 ========
 
 * `colored <https://pypi.python.org/pypi/colored>`_ Another library with 256 color support
+* `colorful <https://github.com/timofurrer/colorful>`_ A fairly new libary with a similar feature set
 * `colorama <https://pypi.python.org/pypi/colorama>`_ A library that supports colored text on Windows,
     can be combined with Plumbum.colors (if you force ``use_color``, doesn't support all extended colors)

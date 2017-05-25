@@ -349,8 +349,8 @@ class Application(object):
                 return argtype(val)
             except (TypeError, ValueError):
                 ex = sys.exc_info()[1]  # compat
-                raise WrongArgumentType("Argument of %s expected to be %r, not %r:\n    %r" % (
-                    name, argtype, val, ex))
+                raise WrongArgumentType("Argument of {name} expected to be {argtype}, not {val!r}:\n    {ex!r}".format(
+                    name=name, argtype=argtype, val=val, ex=ex))
         else:
             return NotImplemented
 
@@ -627,7 +627,7 @@ class Application(object):
                     swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names
                         if n in self._switches_by_name and self._switches_by_name[n] == si)
                     if si.argtype:
-                        if isinstance(si.argtype, type):
+                        if hasattr(si.argtype, '__name__'):
                             typename = si.argtype.__name__
                         else:
                             typename = str(si.argtype)
@@ -711,4 +711,3 @@ class Application(object):
         ver = self._get_prog_version()
         ver_name = ver if ver is not None else "(version not set)"
         print('{0} {1}'.format(self.PROGNAME, ver_name))
-
