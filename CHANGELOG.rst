@@ -1,3 +1,8 @@
+1.6.4 (in progress)
+-------------------
+
+* Fixes for globbing with spaces in filename on a remote server (`#322 <https://github.com/tomerfiliba/plumbum/issues/322>`_)
+
 1.6.3
 -----
 * Python 3.6 is now supported, critical bug fixed  (`#302 <https://github.com/tomerfiliba/plumbum/issues/302>`_)

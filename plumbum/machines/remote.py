@@ -321,7 +321,10 @@ class BaseRemoteMachine(BaseMachine):
         files.remove("..")
         return files
     def _path_glob(self, fn, pattern):
-        matches = self._session.run("for fn in %s/%s; do echo $fn; done" % (fn, pattern))[1].splitlines()
+        # shquote does not work here due to the way bash loops use space as a seperator
+        pattern = pattern.replace(" ", r"\ ")
+        fn = fn.replace(" ", r"\ ")
+        matches = self._session.run(r'for fn in {0}/{1}; do echo $fn; done'.format(fn,pattern))[1].splitlines()
         if len(matches) == 1 and not self._path_stat(matches[0]):
             return []  # pattern expansion failed
         return matches
