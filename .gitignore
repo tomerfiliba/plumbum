@@ -17,3 +17,5 @@ tests/.cache/*
 .coverage
 *,cover
 *htmlcov
+*.po.new
+*.pot

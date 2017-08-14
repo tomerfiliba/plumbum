@@ -1,8 +1,12 @@
 from plumbum.lib import six, getdoc
+from plumbum.cli.i18n import get_translation_for
 from plumbum import local
 
 from abc import abstractmethod
 
+__name__.split('.')
+_translation = get_translation_for(__name__)
+_, ngettext = _translation.gettext, _translation.ngettext
 
 class SwitchError(Exception):
     """A general switch related-error (base class of all other switch errors)"""
@@ -138,7 +142,7 @@ def switch(names, argtype = None, argname = None, list = False, mandatory = Fals
             if len(argspec) == 2:
                 argname2 = argspec[1]
             else:
-                argname2 = "VALUE"
+                argname2 = _("VALUE")
         else:
             argname2 = argname
         help2 = getdoc(func) if help is None else help
@@ -180,10 +184,10 @@ class SwitchAttr(object):
     """
     ATTR_NAME = '__plumbum_switchattr_dict__'
 
-    def __init__(self, names, argtype = str, default = None, list = False, argname = "VALUE", **kwargs):
+    def __init__(self, names, argtype = str, default = None, list = False, argname = _("VALUE"), **kwargs):
         self.__doc__ = "Sets an attribute"  # to prevent the help message from showing SwitchAttr's docstring
         if "help" in kwargs and default and argtype is not None:
-            kwargs["help"] += "; the default is %r" % (default,)
+            kwargs["help"] += _("; the default is %r") % (default,)
 
         switch(names, argtype = argtype, argname = argname, list = list, **kwargs)(self)
         listtype = type([])
@@ -261,75 +265,75 @@ class CountOf(SwitchAttr):
 
 class positional(object):
     """
-    Runs a validator on the main function for a class.    
+    Runs a validator on the main function for a class.
     This should be used like this::
-    
+
         class MyApp(cli.Application):
             @cli.positional(cli.Range(1,10), cli.ExistingFile)
             def main(self, x, *f):
                 # x is a range, f's are all ExistingFile's)
-    
+
     Or, Python 3 only::
-    
+
         class MyApp(cli.Application):
             def main(self, x : cli.Range(1,10), *f : cli.ExistingFile):
                 # x is a range, f's are all ExistingFile's)
-        
-        
+
+
     If you do not want to validate on the annotations, use this decorator (
     even if empty) to override annotation validation.
-    
+
     Validators should be callable, and should have a ``.choices()`` function with
     possible choices. (For future argument completion, for example)
-    
+
     Default arguments do not go through the validator.
-    
+
     #TODO: Check with MyPy
-    
+
     """
-    
+
     def __init__(self, *args, **kargs):
         self.args = args
         self.kargs = kargs
-    
+
     def __call__(self, function):
         m = six.getfullargspec(function)
         args_names = list(m.args[1:])
-            
+
         positional = [None]*len(args_names)
         varargs = None
-        
+
         for i in range(min(len(positional),len(self.args))):
             positional[i] = self.args[i]
-        
+
         if len(args_names) + 1 == len(self.args):
             varargs = self.args[-1]
-        
+
          # All args are positional, so convert kargs to positional
         for item in self.kargs:
             if item == m.varargs:
                 varargs = self.kargs[item]
             else:
                 positional[args_names.index(item)] = self.kargs[item]
-            
+
         function.positional = positional
         function.positional_varargs = varargs
         return function
-    
+
 class Validator(six.ABC):
     __slots__ = ('__weakref__')
-    
+
     @abstractmethod
     def __call__(self, obj):
         "Must be implemented for a Validator to work"
-        
+
     def choices(self, partial=""):
         """Should return set of valid choices, can be given optional partial info"""
         return set()
-        
+
     def __repr__(self):
         """If not overridden, will print the slots as args"""
-        
+
         slots = {}
         for cls in self.__mro__:
             for prop in getattr(cls, "__slots__", ()):
@@ -337,7 +341,7 @@ class Validator(six.ABC):
                     slots[prop] = getattr(self, prop)
         mystrs = ("{0} = {1}".format(name, slots[name]) for name in slots)
         return "{0}({1})".format(self.__class__.__name__, ", ".join(mystrs))
-    
+
 #===================================================================================================
 # Switch type validators
 #===================================================================================================
@@ -353,7 +357,7 @@ class Range(Validator):
     :param end: The maximal value
     """
     __slots__ = ("start", "end")
-    
+
     def __init__(self, start, end):
         self.start = start
         self.end = end
@@ -362,7 +366,7 @@ class Range(Validator):
     def __call__(self, obj):
         obj = int(obj)
         if obj < self.start or obj > self.end:
-            raise ValueError("Not in range [%d..%d]" % (self.start, self.end))
+            raise ValueError(_("Not in range [{}..{}]").format(self.start, self.end))
         return obj
     def choices(self, partial=""):
         # TODO: Add partial handling
@@ -383,7 +387,7 @@ class Set(Validator):
     def __init__(self, *values, **kwargs):
         self.case_sensitive = kwargs.pop("case_sensitive", False)
         if kwargs:
-            raise TypeError("got unexpected keyword argument(s): %r" % (kwargs.keys(),))
+            raise TypeError(_("got unexpected keyword argument(s): %r") % (kwargs.keys(),))
         self.values = dict(((v if self.case_sensitive else v.lower()), v) for v in values)
     def __repr__(self):
         return "{%s}" % (", ".join(repr(v) for v in self.values.values()))
@@ -391,7 +395,7 @@ class Set(Validator):
         if not self.case_sensitive:
             obj = obj.lower()
         if obj not in self.values:
-            raise ValueError("Expected one of %r" % (list(self.values.values()),))
+            raise ValueError(_("Expected one of %r") % (list(self.values.values()),))
         return self.values[obj]
     def choices(self, partial=""):
         # TODO: Add case sensitive/insensitive parital completion
@@ -413,7 +417,7 @@ def ExistingDirectory(val):
     """A switch-type validator that ensures that the given argument is an existing directory"""
     p = local.path(val)
     if not p.is_dir():
-        raise ValueError("%r is not a directory" % (val,))
+        raise ValueError(_("%r is not a directory") % (val,))
     return p
 
 
@@ -431,7 +435,7 @@ def ExistingFile(val):
     """A switch-type validator that ensures that the given argument is an existing file"""
     p = local.path(val)
     if not p.is_file():
-        raise ValueError("%r is not a file" % (val,))
+        raise ValueError(_("%r is not a file") % (val,))
     return p
 
 @Predicate
@@ -439,8 +443,5 @@ def NonexistentPath(val):
     """A switch-type validator that ensures that the given argument is a nonexistent path"""
     p = local.path(val)
     if p.exists():
-        raise ValueError("%r already exists" % (val,))
+        raise ValueError(_("%r already exists") % (val,))
     return p
-
-
-
