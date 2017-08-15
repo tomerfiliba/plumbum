@@ -1,8 +1,7 @@
 import gettext
-from typing import Tuple
 import pkg_resources
 
-def get_translation_for(package_name: str) -> gettext.NullTranslations:
+def get_translation_for(package_name): # type: (str) -> gettext.NullTranslations
     'find and return gettext translation for package'
     if '.' in package_name:
         package_name = '.'.join(package_name.split('.')[:-1])
@@ -16,7 +15,8 @@ def get_translation_for(package_name: str) -> gettext.NullTranslations:
     return gettext.translation(package_name, localedir=localedir, fallback=True)
 
 
-def get_translation_functions(package_name: str, names: Tuple[str, ...]=('gettext',)):
+def get_translation_functions(package_name, names=('gettext',)):
+    # type: (str, Tuple[str, ...])
     'finds and installs translation functions for package'
     translation = get_translation_for(package_name)
     return [getattr(translation, x) for x in names]
