@@ -44,12 +44,12 @@ class Subcommand(object):
             try:
                 cls = getattr(mod, clsname)
             except AttributeError:
-                raise ImportError("cannot import name %s" % (clsname,))
+                raise ImportError("cannot import name {}".format(clsname))
             self.subapplication = cls
         return self.subapplication
 
     def __repr__(self):
-        return T_("Subcommand({}, {})").format(self.name, self.subapplication)
+        return T_("Subcommand({self.name}, {self.subapplication})").format(self=self)
 
 _switch_groups = ['Switches', 'Meta-switches']
 _switch_groups_l10n = [T_('Switches'), T_('Meta-switches')]
@@ -152,9 +152,11 @@ class Application(object):
             self.DESCRIPTION = getdoc(self)
 
         # Allow None for the colors
-        self.COLOR_GROUPS=defaultdict(lambda:colors.do_nothing, dict() if type(self).COLOR_GROUPS is None else type(self).COLOR_GROUPS )
+        self.COLOR_GROUPS = defaultdict(
+            lambda:colors.do_nothing,
+            dict() if type(self).COLOR_GROUPS is None else type(self).COLOR_GROUPS)
         if type(self).COLOR_USAGE is None:
-            self.COLOR_USAGE=colors.do_nothing
+            self.COLOR_USAGE = colors.do_nothing
 
         self.executable = executable
         self._switches_by_name = {}
@@ -179,7 +181,8 @@ class Application(object):
                     if name in self._unbound_switches:
                         continue
                     if name in self._switches_by_name and not self._switches_by_name[name].overridable:
-                        raise SwitchError(T_("Switch %r already defined and is not overridable") % (name,))
+                        raise SwitchError(
+                            T_("Switch {name} already defined and is not overridable").format(name=name))
                     self._switches_by_name[name] = swinfo
                     self._switches_by_func[swinfo.func] = swinfo
                     if swinfo.envname:
@@ -226,7 +229,8 @@ class Application(object):
 
         """
         def wrapper(subapp):
-            attrname = "_subcommand_%s" % (subapp if isinstance(subapp, str) else subapp.__name__,)
+            attrname = "_subcommand_{}".format(
+                subapp if isinstance(subapp, str) else subapp.__name__)
             setattr(cls, attrname, Subcommand(name, subapp))
             return subapp
         return wrapper(subapp) if subapp else wrapper
@@ -261,18 +265,18 @@ class Application(object):
                     name = a[2:]
                 swname = "--" + name
                 if name not in self._switches_by_name:
-                    raise UnknownSwitch(T_("Unknown switch %s") % (swname,))
+                    raise UnknownSwitch(T_("Unknown switch {}").format(swname))
                 swinfo = self._switches_by_name[name]
                 if swinfo.argtype:
                     if not argv:
-                        raise MissingArgument(T_("Switch %s requires an argument") % (swname,))
+                        raise MissingArgument(T_("Switch {} requires an argument").format(swname))
                     a = argv.pop(0)
                     if a and a[0] == "=":
                         if len(a) >= 2:
                             val = a[1:]
                         else:
                             if not argv:
-                                raise MissingArgument(T_("Switch %s requires an argument") % (swname))
+                                raise MissingArgument(T_("Switch {} requires an argument").format(swname))
                             val = argv.pop(0)
                     else:
                         val = a
@@ -282,21 +286,21 @@ class Application(object):
                 name = a[1]
                 swname = "-" + name
                 if name not in self._switches_by_name:
-                    raise UnknownSwitch(T_("Unknown switch %s") % (swname,))
+                    raise UnknownSwitch(T_("Unknown switch {}").format(swname))
                 swinfo = self._switches_by_name[name]
                 if swinfo.argtype:
                     if len(a) >= 3:
                         val = a[2:]
                     else:
                         if not argv:
-                            raise MissingArgument(T_("Switch %s requires an argument") % (swname,))
+                            raise MissingArgument(T_("Switch {} requires an argument").format(swname))
                         val = argv.pop(0)
                 elif len(a) >= 3:
                     argv.insert(0, "-" + a[2:])
 
             else:
                 if a.startswith("-"):
-                    raise UnknownSwitch(T_("Unknown switch %s") % (a,))
+                    raise UnknownSwitch(T_("Unknown switch {}").format(a))
                 tailargs.append(a)
                 continue
 
@@ -308,7 +312,7 @@ class Application(object):
                     swfuncs[swinfo.func].val[0].append(val)
                 else:
                     if swfuncs[swinfo.func].swname == swname:
-                        raise SwitchError(T_("Switch %r already given") % (swname,))
+                        raise SwitchError(T_("Switch {} already given").format(swname))
                     else:
                         raise SwitchError(
                             T_("Switch {} already given ({} is equivalent)").format(
@@ -333,7 +337,7 @@ class Application(object):
                 continue  # skip if overridden by command line arguments
 
             val = self._handle_argument(envval, swinfo.argtype, env)
-            envname = "$%s" % (env,)
+            envname = "${}".format(env)
             if swinfo.list:
                 # multiple values over environment variables are not supported,
                 # this will require some sort of escaping and separator convention
@@ -374,8 +378,8 @@ class Application(object):
         exclusions = {}
         for swinfo in self._switches_by_func.values():
             if swinfo.mandatory and not swinfo.func in swfuncs:
-                raise MissingMandatorySwitch(T_("Switch %s is mandatory") %
-                    ("/".join(("-" if len(n) == 1 else "--") + n for n in swinfo.names),))
+                raise MissingMandatorySwitch(T_("Switch {} is mandatory").format(
+                    "/".join(("-" if len(n) == 1 else "--") + n for n in swinfo.names)))
             requirements[swinfo.func] = set(self._switches_by_name[req] for req in swinfo.requires)
             exclusions[swinfo.func] = set(self._switches_by_name[exc] for exc in swinfo.excludes)
 
@@ -486,7 +490,7 @@ class Application(object):
             inst.version()
         except SwitchError:
             ex = sys.exc_info()[1]  # compatibility with python 2.5
-            print(T_("Error: %s") % (ex,))
+            print(T_("Error: {}").format(ex))
             print(T_("------"))
             inst.help()
             retcode = 2
@@ -555,11 +559,11 @@ class Application(object):
             if isinstance(switch, CountOf):
                 p = (range(val),)
             elif swinfo.list and not hasattr(val, "__iter__"):
-                raise SwitchError(T_("Switch %r must be a sequence (iterable)") % (swname,))
+                raise SwitchError(T_("Switch {} must be a sequence (iterable)").format(swname))
             elif not swinfo.argtype:
                 # a flag
                 if val not in (True, False, None, Flag):
-                    raise SwitchError(T_("Switch %r is a boolean flag") % (swname,))
+                    raise SwitchError(T_("Switch {} is a boolean flag").format(swname))
                 p = ()
             else:
                 p = (val,)
@@ -570,7 +574,7 @@ class Application(object):
         """Implement me (no need to call super)"""
         if self._subcommands:
             if args:
-                print(T_("Unknown sub-command %r") % (args[0],))
+                print(T_("Unknown sub-command {}").format(args[0]))
                 print(T_("------"))
                 self.help()
                 return 1
@@ -599,7 +603,7 @@ class Application(object):
 
         if self._subcommands:
             for name, subcls in sorted(self._subcommands.items()):
-                subapp = (subcls.get())("%s %s" % (self.PROGNAME, name))
+                subapp = (subcls.get())("{0} {1}".format(self.PROGNAME, name))
                 subapp.parent = self
                 for si in subapp._switches_by_func.values():
                     if si.group == "Meta-switches":
@@ -621,19 +625,19 @@ class Application(object):
         tailargs = m.args[1:]  # skip self
         if m.defaults:
             for i, d in enumerate(reversed(m.defaults)):
-                tailargs[-i - 1] = "[%s=%r]" % (tailargs[-i - 1], d)
+                tailargs[-i - 1] = "[{}={}]".format(tailargs[-i - 1], d)
         if m.varargs:
-            tailargs.append("%s..." % (m.varargs,))
+            tailargs.append("{}...".format(m.varargs,))
         tailargs = " ".join(tailargs)
 
         with self.COLOR_USAGE:
             print(T_("Usage:"))
             if not self.USAGE:
                 if self._subcommands:
-                    self.USAGE = T_("    %(progname)s [SWITCHES] [SUBCOMMAND [SWITCHES]] %(tailargs)s\n")
+                    self.USAGE = T_("    {progname} [SWITCHES] [SUBCOMMAND [SWITCHES]] {tailargs}\n")
                 else:
-                    self.USAGE = T_("    %(progname)s [SWITCHES] %(tailargs)s\n")
-            print(self.USAGE % {"progname": colors.filter(self.PROGNAME), "tailargs": tailargs})
+                    self.USAGE = T_("    {progname} [SWITCHES] {tailargs}\n")
+            print(self.USAGE.format(progname=colors.filter(self.PROGNAME), tailargs=tailargs))
 
         by_groups = {}
         for si in self._switches_by_func.values():
@@ -655,7 +659,7 @@ class Application(object):
                             typename = si.argtype.__name__
                         else:
                             typename = str(si.argtype)
-                        argtype = " %s:%s" % (si.argname.upper(), typename)
+                        argtype = " {}:{}".format(si.argname.upper(), typename)
                     else:
                         argtype = ""
                     prefix = swnames + argtype
@@ -666,20 +670,26 @@ class Application(object):
 
         sw_width = max(len(prefix) for si, prefix, color in switchs(by_groups, False)) + 4
         cols, _ = get_terminal_size()
-        description_indent = "    %s%s%s"
+        description_indent = "    {}{}{}"
         wrapper = TextWrapper(width = max(cols - min(sw_width, 60), 50) - 6)
         indentation = "\n" + " " * (cols - wrapper.width)
 
-        for si, prefix, color in switchs(by_groups, True):
-            help = si.help  # @ReservedAssignment
-            if si.list:
+        for switch_info, prefix, color in switchs(by_groups, True):
+            help = switch_info.help  # @ReservedAssignment
+            if switch_info.list:
                 help += T_("; may be given multiple times")
-            if si.mandatory:
+            if switch_info.mandatory:
                 help += T_("; required")
-            if si.requires:
-                help += T_("; requires %s") % (", ".join((("-" if len(s) == 1 else "--") + s) for s in si.requires))
-            if si.excludes:
-                help += T_("; excludes %s") % (", ".join((("-" if len(s) == 1 else "--") + s) for s in si.excludes))
+            if switch_info.requires:
+                help += T_("; requires {}").format(
+                    ", ".join(
+                        (("-" if len(switch) == 1 else "--") + switch)
+                        for switch in switch_info.requires))
+            if switch_info.excludes:
+                help += T_("; excludes {}").format(
+                    ", ".join(
+                        (("-" if len(switch) == 1 else "--") + switch)
+                        for switch in switch_info.excludes))
 
             msg = indentation.join(wrapper.wrap(" ".join(l.strip() for l in help.splitlines())))
 
@@ -687,7 +697,7 @@ class Application(object):
                 padding = indentation
             else:
                 padding = " " * max(cols - wrapper.width - len(prefix) - 4, 1)
-            print(description_indent % (color | prefix, padding, color | msg))
+            print(description_indent.format(color | prefix, padding, color | msg))
 
         if self._subcommands:
             gc = self.COLOR_GROUPS["Subcommands"]
@@ -713,10 +723,9 @@ class Application(object):
                     else:
                         bodycolor = gc
 
-                    print(description_indent
-                            % (subcls.name, padding,
-                               bodycolor | colors.filter(msg)))
-
+                    print(description_indent.format(
+                        subcls.name, padding,
+                        bodycolor | colors.filter(msg)))
 
 
     def _get_prog_version(self):

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-08-14 23:56+0200\n"
+"POT-Creation-Date: 2017-08-21 00:08+0200\n"
 "PO-Revision-Date: 2017-08-14 10:21+0200\n"
 "Last-Translator:  <cpp.create@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -24,42 +24,37 @@ msgid "VALUE"
 msgstr "ЗНАЧЕНИЕ"
 
 #: plumbum/cli/switches.py:190
-#, python-format
-msgid "; the default is %r"
-msgstr "; по умолчанию - %r"
+msgid "; the default is {}"
+msgstr "; по умолчанию - {}"
 
 #: plumbum/cli/switches.py:369
 msgid "Not in range [{}..{}]"
 msgstr "Не в промежутке [{}..{}]"
 
 #: plumbum/cli/switches.py:390
-#, python-format
-msgid "got unexpected keyword argument(s): %r"
-msgstr "получен(ы) неожиданный(е) аргумент(ы) ключ-значение: %r"
+msgid "got unexpected keyword argument(s): {}"
+msgstr "получен(ы) неожиданный(е) аргумент(ы) ключ-значение: {}"
 
 #: plumbum/cli/switches.py:398
-#, python-format
-msgid "Expected one of %r"
-msgstr "Ожидался один из %r"
+msgid "Expected one of {}"
+msgstr "Ожидался один из {}"
 
 #: plumbum/cli/switches.py:420
-#, python-format
-msgid "%r is not a directory"
-msgstr "%r - это не папка"
+msgid "{} is not a directory"
+msgstr "{} - это не папка"
 
 #: plumbum/cli/switches.py:438
-#, python-format
-msgid "%r is not a file"
-msgstr "%r - это не файл"
+msgid "{} is not a file"
+msgstr "{} - это не файл"
 
 #: plumbum/cli/switches.py:446
-#, python-format
-msgid "%r already exists"
-msgstr "%r уже была передана"
+msgid "{} already exists"
+msgstr "{} уже была передана"
 
 #: plumbum/cli/application.py:52
-msgid "Subcommand({}, {})"
-msgstr "Подкоманда({},{})"
+#, python-brace-format
+msgid "Subcommand({self.name}, {self.subapplication})"
+msgstr "Подкоманда({self.name}, {self.subapplication})"
 
 #: plumbum/cli/application.py:55
 msgid "Switches"
@@ -74,37 +69,34 @@ msgstr "Мета-опции"
 msgid "see '{parent} {sub} --help' for more info"
 msgstr "вызовите '{parent} {sub} --help' для более полной справки"
 
-#: plumbum/cli/application.py:170
+#: plumbum/cli/application.py:172
 msgid "Subcommand names cannot start with '-'"
 msgstr "Имена подкомманд не могут начинаться с '-'"
 
-#: plumbum/cli/application.py:182
-#, python-format
-msgid "Switch %r already defined and is not overridable"
-msgstr "Опция %r уже определена и не может быть переопределена"
+#: plumbum/cli/application.py:185
+#, python-brace-format
+msgid "Switch {name} already defined and is not overridable"
+msgstr "Опция {name} уже определена и не может быть переопределена"
 
-#: plumbum/cli/application.py:264 plumbum/cli/application.py:285
-#: plumbum/cli/application.py:299
-#, python-format
-msgid "Unknown switch %s"
-msgstr "Неизестная опция %s"
+#: plumbum/cli/application.py:268 plumbum/cli/application.py:289
+#: plumbum/cli/application.py:303
+msgid "Unknown switch {}"
+msgstr "Неизестная опция {}"
 
-#: plumbum/cli/application.py:268 plumbum/cli/application.py:275
-#: plumbum/cli/application.py:292
-#, python-format
-msgid "Switch %s requires an argument"
-msgstr "Для опции %s необходим аргумент"
+#: plumbum/cli/application.py:272 plumbum/cli/application.py:279
+#: plumbum/cli/application.py:296
+msgid "Switch {} requires an argument"
+msgstr "Для опции {} необходим аргумент"
 
-#: plumbum/cli/application.py:311
-#, python-format
-msgid "Switch %r already given"
-msgstr "Опция %r уже была передана"
+#: plumbum/cli/application.py:315
+msgid "Switch {} already given"
+msgstr "Опция {} уже была передана"
 
-#: plumbum/cli/application.py:314
+#: plumbum/cli/application.py:318
 msgid "Switch {} already given ({} is equivalent)"
 msgstr "Опция {} уже была передана (эквивалентна {})"
 
-#: plumbum/cli/application.py:360
+#: plumbum/cli/application.py:364
 msgid ""
 "Argument of {name} expected to be {argtype}, not {val!r}:\n"
 "    {ex!r}"
@@ -112,20 +104,19 @@ msgstr ""
 "Аргумент опции {name} должен быть типа {argtype}, но не {val!r}:\n"
 "    {ex!r}"
 
-#: plumbum/cli/application.py:377
-#, python-format
-msgid "Switch %s is mandatory"
-msgstr "Опция %s обязательна"
+#: plumbum/cli/application.py:381
+msgid "Switch {} is mandatory"
+msgstr "Опция {} обязательна"
 
-#: plumbum/cli/application.py:389
+#: plumbum/cli/application.py:393
 msgid "Given {}, the following are missing {}"
 msgstr "При передаче {}, необходимо также указать {}"
 
-#: plumbum/cli/application.py:395
+#: plumbum/cli/application.py:399
 msgid "Given {}, the following are invalid {}"
 msgstr "При передаче {}, нельзя указать {}"
 
-#: plumbum/cli/application.py:404
+#: plumbum/cli/application.py:408
 #, python-brace-format
 msgid "Expected at least {0} positional argument, got {1}"
 msgid_plural "Expected at least {0} positional arguments, got {1}"
@@ -133,94 +124,88 @@ msgstr[0] "Ожидая как минимум {} позиционный аргу
 msgstr[1] "Ожидая как минимум {} позиционных аргумента, получено {}"
 msgstr[2] "Ожидая как минимум {} позиционных аргументов, получено {}"
 
-#: plumbum/cli/application.py:411
+#: plumbum/cli/application.py:415
 msgid "Expected at most {} positional argument, got {}"
 msgid_plural "Expected at most {} positional arguments, got {}"
 msgstr[0] "Ожидая как максимум {} позиционный аргумент, получено {}"
 msgstr[1] "Ожидая как максимум {} позиционных аргумента, получено {}"
 msgstr[2] "Ожидая как максимум {} позиционных аргументов, получено {}"
 
-#: plumbum/cli/application.py:489
-#, python-format
-msgid "Error: %s"
-msgstr "Ошибка: %s"
+#: plumbum/cli/application.py:493
+msgid "Error: {}"
+msgstr "Ошибка: {}"
 
-#: plumbum/cli/application.py:490 plumbum/cli/application.py:574
-#: plumbum/cli/application.py:579
+#: plumbum/cli/application.py:494 plumbum/cli/application.py:578
+#: plumbum/cli/application.py:583
 msgid "------"
 msgstr "-------"
 
-#: plumbum/cli/application.py:558
-#, python-format
-msgid "Switch %r must be a sequence (iterable)"
-msgstr "Опция %r должна быть последовательностью (перечислением)"
-
 #: plumbum/cli/application.py:562
-#, python-format
-msgid "Switch %r is a boolean flag"
-msgstr "Опция %s - это булев флаг"
+msgid "Switch {} must be a sequence (iterable)"
+msgstr "Опция {} должна быть последовательностью (перечислением)"
 
-#: plumbum/cli/application.py:573
-#, python-format
-msgid "Unknown sub-command %r"
-msgstr "Неизестная подкоманда %s"
+#: plumbum/cli/application.py:566
+msgid "Switch {} is a boolean flag"
+msgstr "Опция {} - это булев флаг"
 
-#: plumbum/cli/application.py:578
+#: plumbum/cli/application.py:577
+msgid "Unknown sub-command {}"
+msgstr "Неизестная подкоманда {}"
+
+#: plumbum/cli/application.py:582
 msgid "No sub-command given"
 msgstr "Подкоманда не задана"
 
-#: plumbum/cli/application.py:583
+#: plumbum/cli/application.py:587
 msgid "main() not implemented"
 msgstr "Функция main() не реализована"
 
-#: plumbum/cli/application.py:594
+#: plumbum/cli/application.py:598
 msgid "Print help messages of all subcommands and quit"
 msgstr "Печатает помощь по всем подкомандам и выходит"
 
-#: plumbum/cli/application.py:611
+#: plumbum/cli/application.py:615
 msgid "Prints this help message and quits"
 msgstr "Печатает это сообщение и выходит"
 
-#: plumbum/cli/application.py:630
+#: plumbum/cli/application.py:634
 msgid "Usage:"
 msgstr "Использование:"
 
-#: plumbum/cli/application.py:633
-#, python-format
-msgid "    %(progname)s [SWITCHES] [SUBCOMMAND [SWITCHES]] %(tailargs)s\n"
-msgstr "    %(progname)s [ОПЦИИ] [ПОДКОМАНДА [ОПЦИИ]] %(tailargs)s\n"
+#: plumbum/cli/application.py:637
+#, python-brace-format
+msgid "    {progname} [SWITCHES] [SUBCOMMAND [SWITCHES]] {tailargs}\n"
+msgstr "    {progname} [ОПЦИИ] [ПОДКОМАНДА [ОПЦИИ]] {tailargs}\n"
 
-#: plumbum/cli/application.py:635
-#, python-format
-msgid "    %(progname)s [SWITCHES] %(tailargs)s\n"
-msgstr "    %(progname)s [ОПЦИИ] %(tailargs)s\n"
+#: plumbum/cli/application.py:639
+#, python-brace-format
+msgid "    {progname} [SWITCHES] {tailargs}\n"
+msgstr "    {progname} [ОПЦИИ] {tailargs}\n"
 
-#: plumbum/cli/application.py:676
+#: plumbum/cli/application.py:680
 msgid "; may be given multiple times"
 msgstr "; может быть передана несколько раз"
 
-#: plumbum/cli/application.py:678
+#: plumbum/cli/application.py:682
 msgid "; required"
 msgstr "; обязательная"
 
-#: plumbum/cli/application.py:680
-#, python-format
-msgid "; requires %s"
-msgstr "; запрашивает %s"
+#: plumbum/cli/application.py:684
+msgid "; requires {}"
+msgstr "; запрашивает {}"
 
-#: plumbum/cli/application.py:682
-#, python-format
-msgid "; excludes %s"
-msgstr "; исключает %s"
+#: plumbum/cli/application.py:689
+msgid "; excludes {}"
+msgstr "; исключает {}"
 
-#: plumbum/cli/application.py:694
+#: plumbum/cli/application.py:704
 msgid "Subcommands:"
 msgstr "Подкоманды:"
 
-#: plumbum/cli/application.py:734
+#: plumbum/cli/application.py:743
 msgid "Prints the program's version and quits"
 msgstr "Печатает версию этой программы и выходит"
 
-#: plumbum/cli/application.py:738
+#: plumbum/cli/application.py:747
 msgid "(version not set)"
 msgstr "(версия не задана)"

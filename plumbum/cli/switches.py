@@ -187,7 +187,7 @@ class SwitchAttr(object):
     def __init__(self, names, argtype = str, default = None, list = False, argname = _("VALUE"), **kwargs):
         self.__doc__ = "Sets an attribute"  # to prevent the help message from showing SwitchAttr's docstring
         if "help" in kwargs and default and argtype is not None:
-            kwargs["help"] += _("; the default is %r") % (default,)
+            kwargs["help"] += _("; the default is {}").format(default)
 
         switch(names, argtype = argtype, argname = argname, list = list, **kwargs)(self)
         listtype = type([])
@@ -362,7 +362,7 @@ class Range(Validator):
         self.start = start
         self.end = end
     def __repr__(self):
-        return "[%d..%d]" % (self.start, self.end)
+        return "[{:d}..{:d}]".format(self.start, self.end)
     def __call__(self, obj):
         obj = int(obj)
         if obj < self.start or obj > self.end:
@@ -387,15 +387,15 @@ class Set(Validator):
     def __init__(self, *values, **kwargs):
         self.case_sensitive = kwargs.pop("case_sensitive", False)
         if kwargs:
-            raise TypeError(_("got unexpected keyword argument(s): %r") % (kwargs.keys(),))
+            raise TypeError(_("got unexpected keyword argument(s): {}").format(kwargs.keys()))
         self.values = dict(((v if self.case_sensitive else v.lower()), v) for v in values)
     def __repr__(self):
-        return "{%s}" % (", ".join(repr(v) for v in self.values.values()))
+        return "{{{}}}".format(", ".join(repr(v) for v in self.values.values()))
     def __call__(self, obj):
         if not self.case_sensitive:
             obj = obj.lower()
         if obj not in self.values:
-            raise ValueError(_("Expected one of %r") % (list(self.values.values()),))
+            raise ValueError(_("Expected one of {}").format(list(self.values.values())))
         return self.values[obj]
     def choices(self, partial=""):
         # TODO: Add case sensitive/insensitive parital completion
@@ -417,7 +417,7 @@ def ExistingDirectory(val):
     """A switch-type validator that ensures that the given argument is an existing directory"""
     p = local.path(val)
     if not p.is_dir():
-        raise ValueError(_("%r is not a directory") % (val,))
+        raise ValueError(_("{} is not a directory").format(val))
     return p
 
 
@@ -425,7 +425,7 @@ def ExistingDirectory(val):
 def MakeDirectory(val):
     p = local.path(val)
     if p.is_file():
-        raise ValueError('%r is a file, should be nonexistent, or a directory' % (val,))
+        raise ValueError('{} is a file, should be nonexistent, or a directory'.format(val))
     elif not p.exists():
         p.mkdir()
     return p
@@ -435,7 +435,7 @@ def ExistingFile(val):
     """A switch-type validator that ensures that the given argument is an existing file"""
     p = local.path(val)
     if not p.is_file():
-        raise ValueError(_("%r is not a file") % (val,))
+        raise ValueError(_("{} is not a file").format(val))
     return p
 
 @Predicate
@@ -443,5 +443,5 @@ def NonexistentPath(val):
     """A switch-type validator that ensures that the given argument is a nonexistent path"""
     p = local.path(val)
     if p.exists():
-        raise ValueError(_("%r already exists") % (val,))
+        raise ValueError(_("{} already exists").format(val,))
     return p
