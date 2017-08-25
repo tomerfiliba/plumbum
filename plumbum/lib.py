@@ -71,6 +71,8 @@ class six(object):
         def get_method_function(m):
             return m.im_func
 
+    str = unicode_type
+
 # Try/except fails because io has the wrong StringIO in Python2
 # You'll get str/unicode errors
 if six.PY3:
