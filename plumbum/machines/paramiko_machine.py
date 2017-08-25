@@ -143,6 +143,16 @@ class ParamikoMachine(BaseRemoteMachine):
                           private key files in ``~/.ssh``
 
     :param connect_timeout: timeout for TCP connection
+
+    .. note:: If Paramiko 1.15 or above is installed, can use GSS_API authentication
+
+    :param bool gss_auth: ``True`` if you want to use GSS-API authentication
+
+    :param bool gss_kex: Perform GSS-API Key Exchange and user authentication
+
+    :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
+
+    :param str gss_host: The targets name in the kerberos database. default: hostname
     """
 
     class RemoteCommand(BaseRemoteMachine.RemoteCommand):
@@ -161,7 +171,8 @@ class ParamikoMachine(BaseRemoteMachine):
 
     def __init__(self, host, user = None, port = None, password = None, keyfile = None,
             load_system_host_keys = True, missing_host_policy = None, encoding = "utf8",
-            look_for_keys = None, connect_timeout = None, keep_alive = 0):
+            look_for_keys = None, connect_timeout = None, keep_alive = 0, gss_auth = False,
+            gss_kex = None, gss_deleg_creds = None, gss_host = None):
         self.host = host
         kwargs = {}
         if user:
@@ -184,6 +195,13 @@ class ParamikoMachine(BaseRemoteMachine):
             kwargs["look_for_keys"] = look_for_keys
         if connect_timeout is not None:
             kwargs["timeout"] = connect_timeout
+        if gss_auth:
+            kwargs['gss_auth'] = gss_auth
+            kwargs['gss_kex'] = gss_kex
+            kwargs['gss_deleg_creds'] = gss_deleg_creds
+            if not gss_host:
+                gss_host = host
+            kwargs['gss_host'] = gss_host
         self._client.connect(host, **kwargs)
         self._keep_alive = keep_alive
         self._sftp = None

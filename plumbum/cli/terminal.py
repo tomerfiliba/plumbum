@@ -108,7 +108,7 @@ def choose(question, options, default = None):
             continue
         return choices[choice]
 
-def prompt(question, type = int, default = NotImplemented, validator = lambda val: True):
+def prompt(question, type = str, default = NotImplemented, validator = lambda val: True):
 
     """
     Presents the user with a validated question, keeps asking if validation does not pass.

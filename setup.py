@@ -59,6 +59,9 @@ setup(name = "plumbum",
     license = "MIT",
     url = "https://plumbum.readthedocs.io",
     packages = ["plumbum", "plumbum.cli", "plumbum.commands", "plumbum.machines", "plumbum.path", "plumbum.fs", "plumbum.colorlib"],
+    package_data={
+        "plumbum.cli":["i18n/*/LC_MESSAGES/*.mo"]
+    },
     platforms = ["POSIX", "Windows"],
     provides = ["plumbum"],
     keywords = "path, local, remote, ssh, shell, pipe, popen, process, execution, color, cli",

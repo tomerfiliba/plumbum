@@ -158,6 +158,15 @@ s.close()
                 assert "test_remote.py" in filenames
                 assert "slow_process.bash" in filenames
 
+    def test_glob_spaces(self):
+        with self._connect() as rem:
+            with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
+                filenames = [f.name for f in rem.cwd // ("*space.txt")]
+                assert "file with space.txt" in filenames
+
+                filenames = [f.name for f in rem.cwd // ("*with space.txt")]
+                assert "file with space.txt" in filenames
+
     @pytest.mark.usefixtures("testdir")
     def test_download_upload(self):
         with self._connect() as rem:
