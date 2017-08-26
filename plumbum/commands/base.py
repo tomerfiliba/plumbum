@@ -23,7 +23,7 @@ def shquote(text):
     """Quotes the given text with shell escaping (assumes as syntax similar to ``sh``)"""
     if not text:
         return "''"
-    text = str(text)
+    text = six.str(text)
     if not text:
         return "''"
     for c in text:
@@ -33,8 +33,8 @@ def shquote(text):
         return text
     if "'" not in text:
         return "'" + text + "'"
-    res = "".join(('\\' + c if c in _funnychars else c) for c in text)
-    return '"' + res + '"'
+    res = six.str("").join((six.str('\\' + c) if c in _funnychars else c) for c in text)
+    return six.str('"') + res + six.str('"')
 
 def shquote_list(seq):
     return [shquote(item) for item in seq]
@@ -440,7 +440,7 @@ class ConcreteCommand(BaseCommand):
         return self.custom_encoding
 
     def formulate(self, level = 0, args = ()):
-        argv = [str(self.executable)]
+        argv = [six.str(self.executable)]
         for a in args:
             if a is None:
                 continue
@@ -450,18 +450,10 @@ class ConcreteCommand(BaseCommand):
                 else:
                     argv.extend(a.formulate(level + 1))
             elif isinstance(a, (list, tuple)):
-                argv.extend(shquote(b) if level >= self.QUOTE_LEVEL else str(b) for b in a)
+                argv.extend(shquote(b) if level >= self.QUOTE_LEVEL else six.str(b) for b in a)
             else:
-                argv.append(shquote(a) if level >= self.QUOTE_LEVEL else str(a))
+                argv.append(shquote(a) if level >= self.QUOTE_LEVEL else six.str(a))
         # if self.custom_encoding:
         #    argv = [a.encode(self.custom_encoding) for a in argv if isinstance(a, six.string_types)]
         return argv
-
-
-
-
-
-
-
-
 

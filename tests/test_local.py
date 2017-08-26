@@ -738,3 +738,40 @@ for _ in range(%s):
         print( (echo['one two three four'] | grep['two'] | grep['five'])(retcode=None))
         print( (echo['one two three four'] | grep['six'] | grep['five'])(retcode=None))
 
+
+class TestLocalEncoding:
+    try:
+        richstr = unichr(40960)
+    except NameError:
+        richstr = chr(40960)
+
+    def test_inout_rich(self):
+        from plumbum.cmd import echo
+        out = echo(self.richstr)
+        assert self.richstr in out
+
+    @pytest.mark.usefixtures("cleandir")
+    def test_out_rich(self):
+        from plumbum.cmd import cat
+        import io
+
+        with io.open('temp.txt', 'w', encoding='utf8') as f:
+            f.write(self.richstr)
+        out = cat('temp.txt')
+        assert self.richstr in out
+
+    @pytest.mark.skipif(not six.PY3,
+                        reason="Unicode paths only supported on Python 3")
+    @pytest.mark.usefixtures("cleandir")
+    def test_runfile_rich(self):
+        import stat, os
+
+        name = self.richstr + six.str("_program")
+        with open(name, 'w') as f:
+            f.write("#!/usr/bin/env python\nprint('yes')")
+
+        st = os.stat(name)
+        os.chmod(name, st.st_mode | stat.S_IEXEC)
+
+        assert "yes" in local[local.cwd / name]()
+
