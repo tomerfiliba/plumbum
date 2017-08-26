@@ -88,10 +88,8 @@ Subtraction     Relative path
 =============== =============================
 
 ================================================= =========================== ==================
-Method                                            Description                 Compare to Pathlib
+Property                                          Description                 Compare to Pathlib
 ================================================= =========================== ==================
-`.up(count = 1)`                                  Go up count directories
-`.walk(filter=*, dir_filter=*)`                   Traverse directories
 `.name`                                           The file name
 `.basename`                                       DEPRACATED
 `.stem`                                           Name without extension
@@ -102,6 +100,16 @@ Method                                            Description                 Co
 `.suffixes`                                       A list of suffixes
 `.uid`                                            User ID
 `.gid`                                            Group ID
+`.parts`                                          Tuple of `split`
+`.parents`                                        The ansestors of the path
+`.parent`                                         The ansestor of the path
+================================================= =========================== ==================
+
+================================================= =========================== ==================
+Method                                            Description                 Compare to Pathlib
+================================================= =========================== ==================
+`.up(count = 1)`                                  Go up count directories
+`.walk(filter=*, dir_filter=*)`                   Traverse directories
 `.as_uri(scheme=None)`                            Universal Resource ID
 `.join(part, ...)`                                Put together paths (`/`)
 `.list()`                                         Files in directory
@@ -118,6 +126,18 @@ Method                                            Description                 Co
 `.with_suffix(suffix, depth=1)`                   Replace suffix
 `.preferred_suffix(suffix)`                       Replace suffix if no suffix
 `.glob(pattern)`                                  Search for pattern
+`.split()`                                        Split into directories
+`.relative_to(source)`                            Relative path (`-`)
+`.resolve(strict=False)`                          Does nothing                Added for compat
+`.access(mode = 0)`                               Check access permissions
+================================================= =========================== ==================
+
+================================================= =========================== ==================
+Method (changes files)                            Description                 Compare to Pathlib
+================================================= =========================== ==================
+`.link(dst)`                                      Make a hard link
+`.symlink(dst)`                                   Make a symlink
+`.unlink()`                                       Unlink a file (delete)
 `.delete()`                                       Delete file
 `.move(dst)`                                      Move file
 `.rename(newname)`                                Change the file name
@@ -129,11 +149,18 @@ Method                                            Description                 Co
 `.touch()`                                        Touch a file
 `.chown(owner=None, group=None, recursive=None)`  Change owner
 `.chmod(mode)`                                    Change permissions
-`.access(mode = 0)`                               Check access permissions
-`.link(dst)`                                      Make a hard link
-`.symlink(dst)`                                   Make a symlink
-`.unlink()`                                       Unlink a file (delete)
-`.split()`                                        Split into directories
-`.parts`                                          Tuple of `split`
-`.relative_to(source)`                            Relative path (`-`)
 ================================================= =========================== ==================
+
+
+Colors
+======
+
+You pick colors from fg or bg, also can reset
+
+Main colors: black red green yellow blue magenta cyan white
+
+Default styles: warn title fatal highlight info success
+
+Attrs: bold dim underline italics reverse strikeout hidden
+
+
