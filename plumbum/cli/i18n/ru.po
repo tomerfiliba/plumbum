@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-08-21 08:38+0200\n"
+"POT-Creation-Date: 2017-08-26 00:16-0700\n"
 "PO-Revision-Date: 2017-08-14 10:21+0200\n"
 "Last-Translator:  <cpp.create@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -18,45 +18,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-
-#: plumbum/cli/switches.py:145 plumbum/cli/switches.py:187
-msgid "VALUE"
-msgstr "ЗНАЧЕНИЕ"
-
-#: plumbum/cli/switches.py:190
-#, python-brace-format
-msgid "; the default is {0}"
-msgstr "; по умолчанию - {0}"
-
-#: plumbum/cli/switches.py:369
-#, python-brace-format
-msgid "Not in range [{0:d}..{1:d}]"
-msgstr "Не в промежутке [{0:d}..{1:d}]"
-
-#: plumbum/cli/switches.py:390
-#, python-brace-format
-msgid "got unexpected keyword argument(s): {0}"
-msgstr "получен(ы) неожиданный(е) аргумент(ы) ключ-значение: {0}"
-
-#: plumbum/cli/switches.py:398
-#, python-brace-format
-msgid "Expected one of {0}"
-msgstr "Ожидался один из {0}"
-
-#: plumbum/cli/switches.py:420
-#, python-brace-format
-msgid "{0} is not a directory"
-msgstr "{0} - это не папка"
-
-#: plumbum/cli/switches.py:438
-#, python-brace-format
-msgid "{0} is not a file"
-msgstr "{0} - это не файл"
-
-#: plumbum/cli/switches.py:446
-#, python-brace-format
-msgid "{0} already exists"
-msgstr "{0} уже была передана"
 
 #: plumbum/cli/application.py:52
 #, python-brace-format
@@ -230,3 +191,42 @@ msgstr "Печатает версию этой программы и выход�
 #: plumbum/cli/application.py:747
 msgid "(version not set)"
 msgstr "(версия не задана)"
+
+#: plumbum/cli/switches.py:145 plumbum/cli/switches.py:187
+msgid "VALUE"
+msgstr "ЗНАЧЕНИЕ"
+
+#: plumbum/cli/switches.py:190
+#, python-brace-format
+msgid "; the default is {0}"
+msgstr "; по умолчанию - {0}"
+
+#: plumbum/cli/switches.py:369
+#, python-brace-format
+msgid "Not in range [{0:d}..{1:d}]"
+msgstr "Не в промежутке [{0:d}..{1:d}]"
+
+#: plumbum/cli/switches.py:390
+#, python-brace-format
+msgid "got unexpected keyword argument(s): {0}"
+msgstr "получен(ы) неожиданный(е) аргумент(ы) ключ-значение: {0}"
+
+#: plumbum/cli/switches.py:398
+#, python-brace-format
+msgid "Expected one of {0}"
+msgstr "Ожидался один из {0}"
+
+#: plumbum/cli/switches.py:420
+#, python-brace-format
+msgid "{0} is not a directory"
+msgstr "{0} - это не папка"
+
+#: plumbum/cli/switches.py:438
+#, python-brace-format
+msgid "{0} is not a file"
+msgstr "{0} - это не файл"
+
+#: plumbum/cli/switches.py:446
+#, python-brace-format
+msgid "{0} already exists"
+msgstr "{0} уже была передана"
