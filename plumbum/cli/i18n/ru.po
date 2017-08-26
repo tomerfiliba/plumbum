@@ -1,0 +1,232 @@
+# Russian translations for PACKAGE package
+# Английские переводы для пакета PACKAGE.
+# Copyright (C) 2017 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#  <cpp.create@gmail.com>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-08-21 08:38+0200\n"
+"PO-Revision-Date: 2017-08-14 10:21+0200\n"
+"Last-Translator:  <cpp.create@gmail.com>\n"
+"Language-Team: Russian <ru@li.org>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: plumbum/cli/switches.py:145 plumbum/cli/switches.py:187
+msgid "VALUE"
+msgstr "ЗНАЧЕНИЕ"
+
+#: plumbum/cli/switches.py:190
+#, python-brace-format
+msgid "; the default is {0}"
+msgstr "; по умолчанию - {0}"
+
+#: plumbum/cli/switches.py:369
+#, python-brace-format
+msgid "Not in range [{0:d}..{1:d}]"
+msgstr "Не в промежутке [{0:d}..{1:d}]"
+
+#: plumbum/cli/switches.py:390
+#, python-brace-format
+msgid "got unexpected keyword argument(s): {0}"
+msgstr "получен(ы) неожиданный(е) аргумент(ы) ключ-значение: {0}"
+
+#: plumbum/cli/switches.py:398
+#, python-brace-format
+msgid "Expected one of {0}"
+msgstr "Ожидался один из {0}"
+
+#: plumbum/cli/switches.py:420
+#, python-brace-format
+msgid "{0} is not a directory"
+msgstr "{0} - это не папка"
+
+#: plumbum/cli/switches.py:438
+#, python-brace-format
+msgid "{0} is not a file"
+msgstr "{0} - это не файл"
+
+#: plumbum/cli/switches.py:446
+#, python-brace-format
+msgid "{0} already exists"
+msgstr "{0} уже была передана"
+
+#: plumbum/cli/application.py:52
+#, python-brace-format
+msgid "Subcommand({self.name}, {self.subapplication})"
+msgstr "Подкоманда({self.name}, {self.subapplication})"
+
+#: plumbum/cli/application.py:55
+msgid "Switches"
+msgstr "Опции"
+
+#: plumbum/cli/application.py:55
+msgid "Meta-switches"
+msgstr "Мета-опции"
+
+#: plumbum/cli/application.py:124
+#, python-brace-format
+msgid "see '{parent} {sub} --help' for more info"
+msgstr "вызовите '{parent} {sub} --help' для более полной справки"
+
+#: plumbum/cli/application.py:172
+msgid "Subcommand names cannot start with '-'"
+msgstr "Имена подкомманд не могут начинаться с '-'"
+
+#: plumbum/cli/application.py:185
+#, python-brace-format
+msgid "Switch {name} already defined and is not overridable"
+msgstr "Опция {name} уже определена и не может быть переопределена"
+
+#: plumbum/cli/application.py:268 plumbum/cli/application.py:289
+#: plumbum/cli/application.py:303
+#, python-brace-format
+msgid "Unknown switch {0}"
+msgstr "Неизестная опция {0}"
+
+#: plumbum/cli/application.py:272 plumbum/cli/application.py:279
+#: plumbum/cli/application.py:296
+#, python-brace-format
+msgid "Switch {0} requires an argument"
+msgstr "Для опции {0} необходим аргумент"
+
+#: plumbum/cli/application.py:315
+#, python-brace-format
+msgid "Switch {0} already given"
+msgstr "Опция {0} уже была передана"
+
+#: plumbum/cli/application.py:318
+#, python-brace-format
+msgid "Switch {0} already given ({1} is equivalent)"
+msgstr "Опция {0} уже была передана (эквивалентна {})"
+
+#: plumbum/cli/application.py:364
+msgid ""
+"Argument of {name} expected to be {argtype}, not {val!r}:\n"
+"    {ex!r}"
+msgstr ""
+"Аргумент опции {name} должен быть типа {argtype}, но не {val!r}:\n"
+"    {ex!r}"
+
+#: plumbum/cli/application.py:381
+#, python-brace-format
+msgid "Switch {0} is mandatory"
+msgstr "Опция {0} обязательна"
+
+#: plumbum/cli/application.py:393
+#, python-brace-format
+msgid "Given {0}, the following are missing {1}"
+msgstr "При передаче {0}, необходимо также указать {1}"
+
+#: plumbum/cli/application.py:399
+#, python-brace-format
+msgid "Given {0}, the following are invalid {1}"
+msgstr "При передаче {0}, нельзя указать {1}"
+
+#: plumbum/cli/application.py:408
+#, python-brace-format
+msgid "Expected at least {0} positional argument, got {1}"
+msgid_plural "Expected at least {0} positional arguments, got {1}"
+msgstr[0] "Ожидая как минимум {0} позиционный аргумент, получено {1}"
+msgstr[1] "Ожидая как минимум {0} позиционных аргумента, получено {1}"
+msgstr[2] "Ожидая как минимум {0} позиционных аргументов, получено {1}"
+
+#: plumbum/cli/application.py:415
+#, python-brace-format
+msgid "Expected at most {0} positional argument, got {1}"
+msgid_plural "Expected at most {0} positional arguments, got {1}"
+msgstr[0] "Ожидая как максимум {0} позиционный аргумент, получено {1}"
+msgstr[1] "Ожидая как максимум {0} позиционных аргумента, получено {1}"
+msgstr[2] "Ожидая как максимум {0} позиционных аргументов, получено {1}"
+
+#: plumbum/cli/application.py:493
+#, python-brace-format
+msgid "Error: {0}"
+msgstr "Ошибка: {0}"
+
+#: plumbum/cli/application.py:494 plumbum/cli/application.py:578
+#: plumbum/cli/application.py:583
+msgid "------"
+msgstr "-------"
+
+#: plumbum/cli/application.py:562
+#, python-brace-format
+msgid "Switch {0} must be a sequence (iterable)"
+msgstr "Опция {0} должна быть последовательностью (перечислением)"
+
+#: plumbum/cli/application.py:566
+#, python-brace-format
+msgid "Switch {0} is a boolean flag"
+msgstr "Опция {0} - это булев флаг"
+
+#: plumbum/cli/application.py:577
+#, python-brace-format
+msgid "Unknown sub-command '{0}'"
+msgstr "Неизестная подкоманда '{0}'"
+
+#: plumbum/cli/application.py:582
+msgid "No sub-command given"
+msgstr "Подкоманда не задана"
+
+#: plumbum/cli/application.py:587
+msgid "main() not implemented"
+msgstr "Функция main() не реализована"
+
+#: plumbum/cli/application.py:598
+msgid "Print help messages of all subcommands and quit"
+msgstr "Печатает помощь по всем подкомандам и выходит"
+
+#: plumbum/cli/application.py:615
+msgid "Prints this help message and quits"
+msgstr "Печатает это сообщение и выходит"
+
+#: plumbum/cli/application.py:634
+msgid "Usage:"
+msgstr "Использование:"
+
+#: plumbum/cli/application.py:637
+#, python-brace-format
+msgid "    {progname} [SWITCHES] [SUBCOMMAND [SWITCHES]] {tailargs}\n"
+msgstr "    {progname} [ОПЦИИ] [ПОДКОМАНДА [ОПЦИИ]] {tailargs}\n"
+
+#: plumbum/cli/application.py:639
+#, python-brace-format
+msgid "    {progname} [SWITCHES] {tailargs}\n"
+msgstr "    {progname} [ОПЦИИ] {tailargs}\n"
+
+#: plumbum/cli/application.py:680
+msgid "; may be given multiple times"
+msgstr "; может быть передана несколько раз"
+
+#: plumbum/cli/application.py:682
+msgid "; required"
+msgstr "; обязательная"
+
+#: plumbum/cli/application.py:684
+#, python-brace-format
+msgid "; requires {0}"
+msgstr "; запрашивает {0}"
+
+#: plumbum/cli/application.py:689
+#, python-brace-format
+msgid "; excludes {0}"
+msgstr "; исключает {0}"
+
+#: plumbum/cli/application.py:704
+msgid "Subcommands:"
+msgstr "Подкоманды:"
+
+#: plumbum/cli/application.py:743
+msgid "Prints the program's version and quits"
+msgstr "Печатает версию этой программы и выходит"
+
+#: plumbum/cli/application.py:747
+msgid "(version not set)"
+msgstr "(версия не задана)"
