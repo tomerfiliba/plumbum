@@ -330,7 +330,7 @@ class Application(object):
         envindex = 0
         for env, swinfo in self._switches_by_envar.items():
             envindex -= 1
-            envval = os.environ.get(env)
+            envval = local.env.get(env)
             if envval is None:
                 continue
 
