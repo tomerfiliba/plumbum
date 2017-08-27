@@ -1,4 +1,6 @@
-from plumbum.cli.switches import SwitchError, switch, autoswitch, SwitchAttr, Flag, CountOf, positional
-from plumbum.cli.switches import Range, Set, ExistingDirectory, ExistingFile, NonexistentPath, Predicate
-from plumbum.cli.application import Application
-from plumbum.cli.config import ConfigINI, Config
+from __future__ import absolute_import
+
+from .switches import SwitchError, switch, autoswitch, SwitchAttr, Flag, CountOf, positional
+from .switches import Range, Set, ExistingDirectory, ExistingFile, NonexistentPath, Predicate
+from .application import Application
+from .config import ConfigINI, Config

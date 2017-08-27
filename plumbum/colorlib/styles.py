@@ -7,19 +7,18 @@ but merely provides the workhorse for finding and manipulating colors.
 With the ``Style`` class, any color can be directly called or given to a with statement.
 """
 
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 import sys
 import os
 import re
 from copy import copy
-from plumbum.colorlib.names import color_names, color_html
-from plumbum.colorlib.names import color_codes_simple, from_html
-from plumbum.colorlib.names import FindNearest, attributes_ansi
-from plumbum.lib import six
-from plumbum import local
-from abc import abstractmethod
+from .names import color_names, color_html
+from .names import color_codes_simple, from_html
+from .names import FindNearest, attributes_ansi
+from abc import abstractmethod, ABCMeta
 import platform
-ABC = six.ABC
+
+ABC = ABCMeta('ABC', (object,), {'__module__':__name__, '__slots__':()})
 
 __all__ = ['Color', 'Style', 'ANSIStyle', 'HTMLStyle', 'ColorNotFound', 'AttributeNotFound']
 
@@ -31,8 +30,8 @@ def get_color_repr():
     """Gets best colors for current system."""
     if not sys.stdout.isatty():
         return False
-    
-    term =local.env.get("TERM", "")
+
+    term =os.environ.get("TERM", "")
 
     # Some terminals set TERM=xterm for compatibility
     if term.endswith("256color") or term == "xterm":

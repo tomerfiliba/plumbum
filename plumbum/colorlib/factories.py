@@ -3,11 +3,11 @@ Color-related factories. They produce Styles.
 
 """
 
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 import sys
 from functools import reduce
-from plumbum.colorlib.names import color_names, default_styles
-from plumbum.colorlib.styles import ColorNotFound
+from .names import color_names, default_styles
+from .styles import ColorNotFound
 
 __all__ = ['ColorFactory', 'StyleFactory']
 
@@ -176,7 +176,7 @@ class StyleFactory(ColorFactory):
 
         return prev if isinstance(prev, self._style) else prev.reset
 
-        
+
     def filter(self, colored_string):
         """Filters out colors in a string, returning only the name."""
         if isinstance(colored_string, self._style):

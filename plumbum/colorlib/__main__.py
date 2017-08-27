@@ -4,6 +4,8 @@ This is provided as a quick way to recover your terminal. Simply run
 to recover terminal color.
 """
 
-from plumbum.colorlib import main
+from __future__ import absolute_import
+
+from . import main
 
 main()

@@ -4,15 +4,17 @@ and attributes like bold and
 underlined text. It also provides ``reset`` to recover the normal font.
 """
 
-from plumbum.colorlib.factories import StyleFactory
-from plumbum.colorlib.styles import Style, ANSIStyle, HTMLStyle, ColorNotFound
+from __future__ import print_function, absolute_import
+
+from .factories import StyleFactory
+from .styles import Style, ANSIStyle, HTMLStyle, ColorNotFound
 
 ansicolors = StyleFactory(ANSIStyle)
 htmlcolors = StyleFactory(HTMLStyle)
 
 def load_ipython_extension(ipython): # pragma: no cover
     try:
-        from plumbum.colorlib._ipython_ext import OutputMagics
+        from ._ipython_ext import OutputMagics
     except ImportError:
         print("IPython required for the IPython extension to be loaded.")
         raise
