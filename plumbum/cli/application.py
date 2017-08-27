@@ -432,7 +432,7 @@ class Application(object):
             for item in m.annotations:
                 if item == m.varargs:
                     varargs = m.annotations[item]
-                else:
+                elif item != 'return':
                     positional[args_names.index(item)] = m.annotations[item]
 
             tailargs = self._positional_validate(tailargs, positional, varargs,
