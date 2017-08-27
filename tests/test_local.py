@@ -153,6 +153,8 @@ class TestLocalPath:
             assert p.as_uri() == pl.as_uri()
             assert str(p.with_suffix('.this')) == str(pl.with_suffix('.this'))
             assert p.name == pl.name
+            assert str(p.parent) == str(pl.parent)
+            assert list(map(str,p.parents)) == list(map(str, pl.parents))
 
         filename_compare("/some/long/path/to/file.txt")
         filename_compare(local.cwd / "somefile.txt")
@@ -774,4 +776,3 @@ class TestLocalEncoding:
         os.chmod(name, st.st_mode | stat.S_IEXEC)
 
         assert "yes" in local[local.cwd / name]()
-

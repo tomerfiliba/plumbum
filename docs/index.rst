@@ -64,6 +64,7 @@ News
 .. include:: _news.rst
 
 * :doc:`changelog`
+* :doc:`quickref`
 
 Cheat Sheet
 ===========
