@@ -56,7 +56,7 @@ Apart from :ref:`shell-like syntax <guide-local-commands>` and :ref:`handy short
 the library provides local and :ref:`remote <guide-remote-commands>` command execution (over SSH), 
 local and remote file-system :ref:`paths <guide-paths>`, easy working-directory and 
 environment :ref:`manipulation <guide-local-machine>`, quick access to ANSI :ref:`colors <guide-colors>`, and a programmatic 
-:ref:`guide-cli` application toolkit. Now let's see some code! (If you are an old pro, :ref:`here is a quick-ref guide<guide-quickref>`.
+:ref:`guide-cli` application toolkit. Now let's see some code!
 
 News
 ====
@@ -64,6 +64,7 @@ News
 .. include:: _news.rst
 
 * :doc:`changelog`
+* :doc:`quickref`
 
 Cheat Sheet
 ===========

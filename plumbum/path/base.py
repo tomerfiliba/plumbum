@@ -343,7 +343,7 @@ class Path(str, six.ABC):
 
     def resolve(strict=False):
         """Added to allow pathlib like syntax. Does nothing since
-        plubmum paths are always absolute. Does not (currently) resolve
+        Plumbum paths are always absolute. Does not (currently) resolve
         symlinks."""
         # TODO: Resolve symlinks here
         return self
