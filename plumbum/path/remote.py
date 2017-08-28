@@ -5,9 +5,9 @@ from plumbum.lib import _setdoc, six
 from plumbum.commands import shquote
 
 try: # Py3
-    import urllib.request as urllib 
+    import urllib.request as urllib
 except ImportError:
-    import urllib
+    import urllib # type: ignore
 
 class StatRes(object):
     """POSIX-like stat result"""
@@ -75,26 +75,26 @@ class RemotePath(Path):
     def _path(self):
         return str(self)
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def name(self):
         if not "/" in str(self):
             return str(self)
         return str(self).rsplit("/", 1)[1]
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def dirname(self):
         if not "/" in str(self):
             return str(self)
         return self.__class__(self.remote, str(self).rsplit("/", 1)[0])
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def suffix(self):
         return '.' + self.name.rsplit('.',1)[1]
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def suffixes(self):
         name = self.name
@@ -104,13 +104,13 @@ class RemotePath(Path):
             exts.append('.' + ext)
         return list(reversed(exts))
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def uid(self):
         uid, name = self.remote._path_getuid(self)
         return FSUser(int(uid), name)
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def gid(self):
         gid, name = self.remote._path_getgid(self)
@@ -128,7 +128,7 @@ class RemotePath(Path):
         if not self.is_dir():
             return []
         return [self.join(fn) for fn in self.remote._path_listdir(self)]
-        
+
     @_setdoc(Path)
     def iterdir(self):
         if not self.is_dir():
@@ -286,17 +286,17 @@ class RemotePath(Path):
     def as_uri(self, scheme = 'ssh'):
         return '{0}://{1}{2}'.format(scheme, self.remote._fqhost, urllib.pathname2url(str(self)))
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def stem(self):
         return self.name.rsplit('.')[0]
-        
-    @property
+
+    @property # type: ignore
     @_setdoc(Path)
     def root(self):
         return '/'
-        
-    @property
+
+    @property # type: ignore
     @_setdoc(Path)
     def drive(self):
         return ''

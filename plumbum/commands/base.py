@@ -7,7 +7,6 @@ from tempfile import TemporaryFile
 from subprocess import PIPE, Popen
 from types import MethodType
 
-
 class RedirectionError(Exception):
     """Raised when an attempt is made to redirect an process' standard handle,
     which was already redirected to/from a file"""
@@ -46,7 +45,7 @@ def shquote_list(seq):
 class BaseCommand(object):
     """Base of all command objects"""
 
-    __slots__ = ["cwd", "env", "custom_encoding", "__weakref__"]
+    __slots__ = ("cwd", "env", "custom_encoding", "__weakref__")
 
     def __str__(self):
         return " ".join(self.formulate())
@@ -227,7 +226,7 @@ class BaseCommand(object):
 
 
 class BoundCommand(BaseCommand):
-    __slots__ = ["cmd", "args"]
+    __slots__ = ("cmd", "args")
     def __init__(self, cmd, args):
         self.cmd = cmd
         self.args = list(args)
@@ -246,7 +245,7 @@ class BoundCommand(BaseCommand):
         return self.cmd.popen(self.args + list(args), **kwargs)
 
 class BoundEnvCommand(BaseCommand):
-    __slots__ = ["cmd", "envvars"]
+    __slots__ = ("cmd", "envvars")
     def __init__(self, cmd, envvars):
         self.cmd = cmd
         self.envvars = envvars
@@ -264,7 +263,7 @@ class BoundEnvCommand(BaseCommand):
             return self.cmd.popen(args, **kwargs)
 
 class Pipeline(BaseCommand):
-    __slots__ = ["srccmd", "dstcmd"]
+    __slots__ = ("srccmd", "dstcmd")
     def __init__(self, srccmd, dstcmd):
         self.srccmd = srccmd
         self.dstcmd = dstcmd
@@ -322,10 +321,10 @@ class Pipeline(BaseCommand):
         return dstproc
 
 class BaseRedirection(BaseCommand):
-    __slots__ = ["cmd", "file"]
-    SYM = None
-    KWARG = None
-    MODE = None
+    __slots__ = ("cmd", "file")
+    SYM = None # type: str
+    KWARG = None # type: str
+    MODE = None # type: str
 
     def __init__(self, cmd, file):
         self.cmd = cmd
@@ -359,38 +358,38 @@ class BaseRedirection(BaseCommand):
                 f.close()
 
 class StdinRedirection(BaseRedirection):
-    __slots__ = []
+    __slots__ = ()
     SYM = "<"
     KWARG = "stdin"
     MODE = "r"
 
 class StdoutRedirection(BaseRedirection):
-    __slots__ = []
+    __slots__ = ()
     SYM = ">"
     KWARG = "stdout"
     MODE = "w"
 
 class AppendingStdoutRedirection(BaseRedirection):
-    __slots__ = []
+    __slots__ = ()
     SYM = ">>"
     KWARG = "stdout"
     MODE = "a"
 
 class StderrRedirection(BaseRedirection):
-    __slots__ = []
+    __slots__ = ()
     SYM = "2>"
     KWARG = "stderr"
     MODE = "w"
 
-class ERROUT(int):
+class _ERROUT(int):
     def __repr__(self):
         return "ERROUT"
     def __str__(self):
         return "&1"
-ERROUT = ERROUT(subprocess.STDOUT)
+ERROUT = _ERROUT(subprocess.STDOUT)
 
 class StdinDataRedirection(BaseCommand):
-    __slots__ = ["cmd", "data"]
+    __slots__ = ("cmd", "data")
     CHUNK_SIZE = 16000
 
     def __init__(self, cmd, data):
@@ -422,8 +421,8 @@ class StdinDataRedirection(BaseCommand):
         #    f.close()
 
 class ConcreteCommand(BaseCommand):
-    QUOTE_LEVEL = None
-    __slots__ = ["executable", "custom_encoding"]
+    QUOTE_LEVEL = None # type: int
+    __slots__ = ("executable", "custom_encoding")
     def __init__(self, executable, encoding):
         self.executable = executable
         self.custom_encoding = encoding

@@ -50,6 +50,11 @@ __version__ = version
 import sys
 from types import ModuleType
 
+try:
+    from typing import List
+except ImportError:
+    pass
+
 class LocalModule(ModuleType):
     """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
     __all__ = ()  # to make help() happy
@@ -59,7 +64,7 @@ class LocalModule(ModuleType):
             return local[name]
         except CommandNotFound:
             raise AttributeError(name)
-    __path__ = []
+    __path__ = [] # type: List[str]
     __file__ = __file__
 
 cmd = LocalModule(__name__ + ".cmd", LocalModule.__doc__)

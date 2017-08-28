@@ -90,14 +90,3 @@ class TestProg:
         assert "1 3" ==  capsys.readouterr()[0].strip()
 
 
-# Unfortionatly, Py3 anotations are a syntax error in Py2, so using exec to add test for Py3
-if six.PY3:
-    exec("""
-class Main3Validator(cli.Application):
-    def main(self, myint:int, myint2:int, *mylist:int):
-        print(myint, myint2, mylist)
-class TestProg3:
-    def test_prog(self, capsys):
-        _, rc = Main3Validator.run(["prog", "1", "2", '3', '4', '5'], exit = False)
-        assert rc == 0
-        assert "1 2 (3, 4, 5)" in capsys.readouterr()[0]""")

@@ -18,7 +18,16 @@ from .names import FindNearest, attributes_ansi
 from abc import abstractmethod, ABCMeta
 import platform
 
-ABC = ABCMeta('ABC', (object,), {'__module__':__name__, '__slots__':()})
+try:
+    from abc import ABC
+except ImportError:
+    from abc import ABCMeta # type: ignore
+    ABC = ABCMeta('ABC', (object,), {'__module__':__name__, '__slots__':('__weakref__')}) # type: ignore
+
+try:
+    from typing import IO, Dict, Union
+except ImportError:
+    pass
 
 __all__ = ['Color', 'Style', 'ANSIStyle', 'HTMLStyle', 'ColorNotFound', 'AttributeNotFound']
 
@@ -105,7 +114,7 @@ class Color(ABC):
 
         """
 
-    __slots__ = ('fg', 'isreset', 'rgb', 'number', 'representation', 'exact', '__weakref__')
+    __slots__ = ('fg', 'isreset', 'rgb', 'number', 'representation', 'exact')
 
     def __init__(self, r_or_color=None, g=None, b=None, fg=True):
         """This works from color values, or tries to load non-simple ones."""
@@ -338,8 +347,8 @@ class Style(object):
     """The class of color to use. Never hardcode ``Color`` call when writing a Style
     method."""
 
-    attribute_names = None # should be a dict of valid names
-    _stdout = None
+    attribute_names = None # type: Union[Dict[str,str], Dict[str,int]]
+    _stdout = None # type: IO
     end = '\n'
     """The endline character. Override if needed in subclasses."""
 

@@ -46,7 +46,7 @@ logger = logging.getLogger("plumbum.local")
 #===================================================================================================
 class LocalEnv(BaseEnv):
     """The local machine's environment; exposes a dict-like interface"""
-    __slots__ = []
+    __slots__ = ()
     CASE_SENSITIVE = not IS_WIN32
 
     def __init__(self):
@@ -90,7 +90,7 @@ class LocalEnv(BaseEnv):
 # Local Commands
 #===================================================================================================
 class LocalCommand(ConcreteCommand):
-    __slots__ = []
+    __slots__ = ()
     QUOTE_LEVEL = 2
 
     def __init__(self, executable, encoding = "auto"):
