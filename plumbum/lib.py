@@ -32,7 +32,7 @@ class six(object):
         from abc import ABC
     except ImportError:
         from abc import ABCMeta # type: ignore
-        ABC = ABCMeta('ABC', (object,), {'__module__':__name__, '__slots__':('__weakref__')}) # type: ignore
+        ABC = ABCMeta('ABC', (object,), {'__module__':__name__, '__slots__':()}) # type: ignore
 
     # Be sure to use named-tuple access, so that usage is not affected
     try:
