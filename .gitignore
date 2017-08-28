@@ -19,3 +19,5 @@ tests/.cache/*
 *htmlcov
 *.po.new
 *.pot
+/*venv*
+*.mypy_cache

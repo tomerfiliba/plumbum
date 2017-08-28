@@ -8,7 +8,7 @@ import os
 try:
     from configparser import ConfigParser, NoOptionError, NoSectionError # Py3
 except ImportError:
-    from ConfigParser import ConfigParser, NoOptionError, NoSectionError # Py2
+    from ConfigParser import ConfigParser, NoOptionError, NoSectionError # type: ignore
 
 class ConfigBase(six.ABC):
     """Base class for Config parsers.

@@ -35,7 +35,7 @@ def get_terminal_size(default=(80, 25)):
 
 def _get_terminal_size_windows(): # pragma: no cover
     try:
-        from ctypes import windll, create_string_buffer
+        from ctypes import windll, create_string_buffer # type: ignore
         STDERR_HANDLE = -12
         h = windll.kernel32.GetStdHandle(STDERR_HANDLE)
         csbi_struct = Struct("hhhhHhhhhhh")
@@ -52,7 +52,7 @@ def _get_terminal_size_tput(): # pragma: no cover
     # get terminal width
     # src: http://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
     try:
-        from plumbum.cmd import tput
+        tput = local['tput']
         cols = int(tput('cols'))
         rows = int(tput('lines'))
         return (cols, rows)

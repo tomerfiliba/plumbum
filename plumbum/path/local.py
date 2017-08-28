@@ -12,21 +12,21 @@ try:
     from pwd import getpwuid, getpwnam
     from grp import getgrgid, getgrnam
 except ImportError:
-    def getpwuid(x):
+    def getpwuid(x): # type: ignore
         return (None,)
-    def getgrgid(x):
+    def getgrgid(x): # type: ignore
         return (None,)
-    def getpwnam(x):
+    def getpwnam(x): # type: ignore
         raise OSError("`getpwnam` not supported")
-    def getgrnam(x):
+    def getgrnam(x): # type: ignore
         raise OSError("`getgrnam` not supported")
 
 try: # Py3
     import urllib.parse as urlparse
     import urllib.request as urllib
 except ImportError:
-    import urlparse
-    import urllib
+    import urlparse # type: ignore
+    import urllib # type: ignore
 
 
 logger = logging.getLogger("plumbum.local")
@@ -61,17 +61,17 @@ class LocalPath(Path):
     def _form(self, *parts):
         return LocalPath(*parts)
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def name(self):
         return os.path.basename(str(self))
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def dirname(self):
         return LocalPath(os.path.dirname(str(self)))
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def suffix(self):
         return os.path.splitext(str(self))[1]
@@ -87,14 +87,14 @@ class LocalPath(Path):
             else:
                 return list(reversed(exts))
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def uid(self):
         uid = self.stat().st_uid
         name = getpwuid(uid)[0]
         return FSUser(uid, name)
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def gid(self):
         gid = self.stat().st_gid
@@ -140,7 +140,7 @@ class LocalPath(Path):
     def with_name(self, name):
         return LocalPath(self.dirname) / name
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def stem(self):
         return self.name.rsplit(os.path.extsep)[0]
@@ -309,12 +309,12 @@ class LocalPath(Path):
     def as_uri(self, scheme='file'):
         return urlparse.urljoin(str(scheme)+':', urllib.pathname2url(str(self)))
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def drive(self):
         return os.path.splitdrive(str(self))[0]
 
-    @property
+    @property # type: ignore
     @_setdoc(Path)
     def root(self):
         return os.path.sep

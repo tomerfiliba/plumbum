@@ -80,7 +80,7 @@ class ExecutionModifier(object):
     def __call__(cls, *args, **kwargs):
         return cls(*args, **kwargs)
 
-class BG(ExecutionModifier):
+class _BG(ExecutionModifier):
     """
     An execution modifier that runs the given command in the background, returning a
     :class:`Future <plumbum.commands.Future>` object. In order to mimic shell syntax, it applies
@@ -108,9 +108,9 @@ class BG(ExecutionModifier):
     def __rand__(self, cmd):
         return Future(cmd.popen(**self.kargs), self.retcode, timeout=self.timeout)
 
-BG = BG()
+BG = _BG()
 
-class FG(ExecutionModifier):
+class _FG(ExecutionModifier):
     """
     An execution modifier that runs the given command in the foreground, passing it the
     current process' stdin, stdout and stderr. Useful for interactive programs that require
@@ -133,10 +133,10 @@ class FG(ExecutionModifier):
         cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None,
             timeout = self.timeout)
 
-FG = FG()
+FG = _FG()
 
 
-class TEE(ExecutionModifier):
+class _TEE(ExecutionModifier):
     """Run a command, dumping its stdout/stderr to the current process's stdout
     and stderr, but ALSO return them.  Useful for interactive programs that
     expect a TTY but also have valuable output.
@@ -193,9 +193,9 @@ class TEE(ExecutionModifier):
             stderr = ''.join([x.decode('utf-8') for x in errbuf])
             return p.returncode, stdout, stderr
 
-TEE = TEE()
+TEE = _TEE()
 
-class TF(ExecutionModifier):
+class _TF(ExecutionModifier):
     """
     An execution modifier that runs the given command, but returns True/False depending on the retcode.
     This returns True if the expected exit code is returned, and false if it is not.
@@ -237,10 +237,10 @@ class TF(ExecutionModifier):
         except ProcessExecutionError:
             return False
 
-TF = TF()
+TF = _TF()
 
 
-class RETCODE(ExecutionModifier):
+class _RETCODE(ExecutionModifier):
     """
     An execution modifier that runs the given command, causing it to run and return the retcode.
     This is useful for working with bash commands that have important retcodes but not very
@@ -273,10 +273,10 @@ class RETCODE(ExecutionModifier):
             else:
                 return cmd.run(retcode = None, timeout = self.timeout)[0]
 
-RETCODE = RETCODE()
+RETCODE = _RETCODE()
 
 
-class NOHUP(ExecutionModifier):
+class _NOHUP(ExecutionModifier):
     """
     An execution modifier that runs the given command in the background, disconnected
     from the current process, returning a
@@ -323,4 +323,4 @@ class NOHUP(ExecutionModifier):
             append = self.append
         return cmd.nohup(cmd, self.cwd, stdout, self.stderr, append)
 
-NOHUP = NOHUP()
+NOHUP = _NOHUP()

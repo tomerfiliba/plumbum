@@ -8,12 +8,12 @@ from plumbum.lib import IS_WIN32, six
 try:
     from queue import Queue, Empty as QueueEmpty
 except ImportError:
-    from Queue import Queue, Empty as QueueEmpty
+    from Queue import Queue, Empty as QueueEmpty # type: ignore
 
 try:
     from io import StringIO
 except ImportError:
-    from cStringIO import StringIO
+    from cStringIO import StringIO # type: ignore
 
 
 #===================================================================================================
