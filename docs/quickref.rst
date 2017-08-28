@@ -74,93 +74,126 @@ Utility           Usage
 Paths
 =====
 
-=============== =============================
-Idiom           Description
-=============== =============================
-`local.cwd`     Common way to make paths
-`/` Construct   Composition of parts
-`//` Construct  Grep for files
-Sorting         Alphabetical
-Iteration       By parts
-To str          Canoncical full path
-Subtraction     Relative path
-`in`            Check for file in folder
-=============== =============================
+================= =============================
+Idiom             Description
+================= =============================
+``local.cwd``     Common way to make paths
+``/`` Construct   Composition of parts
+``//`` Construct  Grep for files
+Sorting           Alphabetical
+Iteration         By parts
+To str            Canonical full path
+Subtraction       Relative path
+``in``            Check for file in folder
+================= =============================
 
-================================================= =========================== ==================
-Property                                          Description                 Compare to Pathlib
-================================================= =========================== ==================
-`.name`                                           The file name
-`.basename`                                       DEPRACATED
-`.stem`                                           Name without extension
-`.dirname`                                        Directory name
-`.root`                                           The file tree root
-`.drive`                                          Drive letter (Windows)
-`.suffix`                                         The suffix
-`.suffixes`                                       A list of suffixes
-`.uid`                                            User ID
-`.gid`                                            Group ID
-`.parts`                                          Tuple of `split`
-`.parents`                                        The ansestors of the path
-`.parent`                                         The ansestor of the path
-================================================= =========================== ==================
+..
+    The main difference is the loss of relative files
 
-================================================= =========================== ==================
-Method                                            Description                 Compare to Pathlib
-================================================= =========================== ==================
-`.up(count = 1)`                                  Go up count directories
-`.walk(filter=*, dir_filter=*)`                   Traverse directories
-`.as_uri(scheme=None)`                            Universal Resource ID
-`.join(part, ...)`                                Put together paths (`/`)
-`.list()`                                         Files in directory
-`.iterdir()`                                      Fast iterator over dir
-`.is_dir()`                                       If path is dir
-`.isdir()`                                        DEPRACATED
-`.is_file()`                                      If is file
-`.isfile()`                                       DEPRACATED
-`.is_symlink()`                                   If is symlink
-`.islink()`                                       DEPRACATED
-`.exists()`                                       If file exists
-`.stat()`                                         Return OS stats
-`.with_name(name)`                                Replace filename
-`.with_suffix(suffix, depth=1)`                   Replace suffix
-`.preferred_suffix(suffix)`                       Replace suffix if no suffix
-`.glob(pattern)`                                  Search for pattern
-`.split()`                                        Split into directories
-`.relative_to(source)`                            Relative path (`-`)
-`.resolve(strict=False)`                          Does nothing                Added for compat
-`.access(mode = 0)`                               Check access permissions
-================================================= =========================== ==================
+=================================================== =========================== ==================
+Property                                            Description                 Compare to Pathlib
+=================================================== =========================== ==================
+``.name``                                           The file name               ✓
+``.basename``                                       DEPRECATED                  
+``.stem``                                           Name without extension      ✓
+``.dirname``                                        Directory name              ✗
+``.root``                                           The file tree root          ✓
+``.drive``                                          Drive letter (Windows)      ✓
+``.suffix``                                         The suffix                  ✓
+``.suffixes``                                       A list of suffixes          ✓
+``.uid``                                            User ID                     ✗
+``.gid``                                            Group ID                    ✗
+``.parts``                                          Tuple of ``split``          ✓
+``.parents``                                        The ancestors of the path   ✓
+``.parent``                                         The ancestor of the path    ✓
+=================================================== =========================== ==================
 
-================================================= =========================== ==================
-Method (changes files)                            Description                 Compare to Pathlib
-================================================= =========================== ==================
-`.link(dst)`                                      Make a hard link
-`.symlink(dst)`                                   Make a symlink
-`.unlink()`                                       Unlink a file (delete)
-`.delete()`                                       Delete file
-`.move(dst)`                                      Move file
-`.rename(newname)`                                Change the file name
-`.copy(dst, override=False)`                      Copy a file
-`.mkdir()`                                        Make a directory
-`.open(mode="r")`                                 Open a file for reading
-`.read(encoding=None)`                            Read a file to text
-`.write(data, encoding=None)`                     Write to a file
-`.touch()`                                        Touch a file
-`.chown(owner=None, group=None, recursive=None)`  Change owner
-`.chmod(mode)`                                    Change permissions
-================================================= =========================== ==================
+..
+    Missing:
+             .anchor
 
+    
+
+=================================================== =========================== ==================
+Method                                              Description                 Compare to Pathlib
+=================================================== =========================== ==================
+``.up(count = 1)``                                  Go up count directories     ✗
+``.walk(filter=*, dir_filter=*)``                   Traverse directories        ✗
+``.as_uri(scheme=None)``                            Universal Resource ID       ✓
+``.join(part, ...)``                                Put together paths (``/``)  ``.joinpath``
+``.list()``                                         Files in directory          ✗ (shortcut)
+``.iterdir()``                                      Fast iterator over dir      ✓
+``.is_dir()``                                       If path is dir              ✓
+``.isdir()``                                        DEPRECATED
+``.is_file()``                                      If is file                  ✓
+``.isfile()``                                       DEPRECATED
+``.is_symlink()``                                   If is symlink               ✓
+``.islink()``                                       DEPRECATED
+``.exists()``                                       If file exists              ✓
+``.stat()``                                         Return OS stats             ✓
+``.with_name(name)``                                Replace filename            ✓
+``.with_suffix(suffix, depth=1)``                   Replace suffix              ✓ (no depth)
+``.preferred_suffix(suffix)``                       Replace suffix if no suffix ✗
+``.glob(pattern)``                                  Search for pattern          ✓
+``.split()``                                        Split into directories      ``.parts``
+``.relative_to(source)``                            Relative path (``-``)       ✓
+``.resolve(strict=False)``                          Does nothing                ✓
+``.access(mode = 0)``                               Check access permissions    ✗
+=================================================== =========================== ==================
+
+..
+    Missing:
+             .match(pattern)
+             .is_reserved()
+             .is_absolute()
+             .as_posix()
+             .is_symlink()
+             .is_fifo()
+             .is_block_device()
+             .is_char_device()
+             .lchmod(mode)
+             .lstat()
+
+=================================================== =========================== ==================
+Method (changes files)                              Description                 Compare to Pathlib
+=================================================== =========================== ==================
+``.link(dst)``                                      Make a hard link            ✗
+``.symlink(dst)``                                   Make a symlink              ``.symlink_to``
+``.unlink()``                                       Unlink a file (delete)      ✓
+``.delete()``                                       Delete file                 ``.unlink``
+``.move(dst)``                                      Move file                   ✗
+``.rename(newname)``                                Change the file name        ✓
+``.copy(dst, override=False)``                      Copy a file                 ✗
+``.mkdir()``                                        Make a directory            ✓ (+ more args)
+``.open(mode="r")``                                 Open a file for reading     ✓ (+ more args)
+``.read(encoding=None)``                            Read a file to text         ``.read_text``
+``.write(data, encoding=None)``                     Write to a file             ``.write_text``
+``.touch()``                                        Touch a file                ✓ (+ more args)
+``.chown(owner=None, group=None, recursive=None)``  Change owner                ✗
+``.chmod(mode)``                                    Change permissions          ✓
+=================================================== =========================== ==================
+
+..
+    Missing:
+             .group()
+             .owner()
+             .read_bytes()
+             .write_bytes()
+             .replace(target)
+             .rglob(pattern)
+             .rmdir()
+             .samefile()
 
 Colors
 ======
 
-You pick colors from fg or bg, also can reset
 
-Main colors: black red green yellow blue magenta cyan white
+You pick colors from ``fg`` or ``bg``, also can ``reset``
 
-Default styles: warn title fatal highlight info success
+Main colors: ``black`` ``red`` ``green`` ``yellow`` ``blue`` ``magenta`` ``cyan`` ``white``
 
-Attrs: bold dim underline italics reverse strikeout hidden
+Default styles: ``warn`` ``title`` ``fatal`` ``highlight`` ``info`` ``success``
+
+Attrs: ``bold`` ``dim`` ``underline`` ``italics`` ``reverse`` ``strikeout`` ``hidden``
 
 
