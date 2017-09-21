@@ -55,26 +55,13 @@ class RemoteEnv(BaseEnv):
         self.remote._session.run("export " +
             " ".join("%s=%s" % (k, shquote(v)) for k, v in self.getdict().items()))
 
+    @_setdoc(BaseRemoteMachine, name="_expand")
     def expand(self, expr):
-        """Expands any environment variables and home shortcuts found in ``expr``
-        (like ``os.path.expanduser`` combined with ``os.path.expandvars``)
+        return self.remote._expand(expr)
 
-        :param expr: An expression containing environment variables (as ``$FOO``) or
-                     home shortcuts (as ``~/.bashrc``)
-
-        :returns: The expanded string"""
-        return self.remote._session.run("echo %s" % (expr,))[1].strip()
-
+    @_setdoc(BaseRemoteMachine, name="_expanduser")
     def expanduser(self, expr):
-        """Expand home shortcuts (e.g., ``~/foo/bar`` or ``~john/foo/bar``)
-
-        :param expr: An expression containing home shortcuts
-
-        :returns: The expanded string"""
-        if not any(part.startswith("~") for part in expr.split("/")):
-            return expr
-        # we escape all $ signs to avoid expanding env-vars
-        return self.remote._session.run("echo %s" % (expr.replace("$", "\\$"),))[1].strip()
+        return self.remote._expanduser(expr)
 
     # def clear(self):
     #    BaseEnv.clear(self, *args, **kwargs)
@@ -197,10 +184,7 @@ class BaseRemoteMachine(BaseMachine):
         for p in parts:
             if isinstance(p, LocalPath):
                 raise TypeError("Cannot construct RemotePath from %r" % (p,))
-            p = str(p)
-            if "~" in p:
-                p = self.env.expanduser(p)
-            parts2.append(p)
+            parts2.append(self._expanduser(str(p)))
         return RemotePath(self, *parts2)
 
     def which(self, progname):
@@ -390,3 +374,24 @@ class BaseRemoteMachine(BaseMachine):
 
     def _path_link(self, src, dst, symlink):
         self._session.run("ln %s %s %s" % ("-s" if symlink else "", shquote(src), shquote(dst)))
+
+    def _expand(self, expr):
+        """Expands any environment variables and home shortcuts found in ``expr``
+        (like ``os.path.expanduser`` combined with ``os.path.expandvars``)
+
+        :param expr: An expression containing environment variables (as ``$FOO``) or
+                     home shortcuts (as ``~/.bashrc``)
+
+        :returns: The expanded string"""
+        return self._session.run("echo %s" % (expr,))[1].strip()
+
+    def _expanduser(self, expr):
+        """Expand home shortcuts (e.g., ``~/foo/bar`` or ``~john/foo/bar``)
+
+        :param expr: An expression containing home shortcuts
+
+        :returns: The expanded string"""
+        if not any(part.startswith("~") for part in expr.split("/")):
+            return expr
+        # we escape all $ signs to avoid expanding env-vars
+        return self._session.run("echo %s" % (expr.replace("$", "\\$"),))[1].strip()
