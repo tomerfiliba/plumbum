@@ -1,11 +1,12 @@
 1.6.4 (in progress)
 -------------------
 
-* Support for localization, with Russian provided (`#339 <https://github.com/tomerfiliba/plumbum/pull/339>`_). Pulls with more languages welcome!
-* Fixed unicode input/output on Python 2 (`#341 <https://github.com/tomerfiliba/plumbum/pull/341>`_)
-* Fixes for globbing with spaces in filename on a remote server (`#322 <https://github.com/tomerfiliba/plumbum/issues/322>`_)
+* CLI: Support for localization, with Russian provided (`#339 <https://github.com/tomerfiliba/plumbum/pull/339>`_). Pulls with more languages welcome!
+* Commands: Fixed unicode input/output on Python 2 (`#341 <https://github.com/tomerfiliba/plumbum/pull/341>`_)
 * Paths: More updates for pathlib compatibility (`#325 <https://github.com/tomerfiliba/plumbum/pull/325>`_)
 * Terminal: Changed ``prompt()``'s default value for ``type`` parameter from ``int`` to ``str`` to match existing docs (`#327 <https://github.com/tomerfiliba/plumbum/issues/327>`_)
+* Remote: Support `~` in PATH for a remote (#293 <https://github.com/tomerfiliba/plumbum/issues/293>`_)
+* Remote: Fixes for globbing with spaces in filename on a remote server (`#322 <https://github.com/tomerfiliba/plumbum/issues/322>`_)
 
 1.6.3
 -----
