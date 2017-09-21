@@ -20,3 +20,10 @@ echo NoHostAuthenticationForLocalhost yes >> ~/.ssh/config
 echo StrictHostKeyChecking no >> ~/.ssh/config
 ssh-keygen -q -f ~/.ssh/id_rsa -N ''
 cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+
+echo '#!/usr/bin/env sh' >  ~/TravisCheck.sh
+echo '' >>  ~/TravisCheck.sh
+echo 'echo "Worked"' >>  ~/TravisCheck.sh
+echo 'export PATH=$PATH:~' >> ~/.bashrc
+chmod u+x ~/TravisCheck.sh
+cat .bashrc
