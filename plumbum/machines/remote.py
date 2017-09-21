@@ -55,11 +55,9 @@ class RemoteEnv(BaseEnv):
         self.remote._session.run("export " +
             " ".join("%s=%s" % (k, shquote(v)) for k, v in self.getdict().items()))
 
-    @_setdoc(BaseRemoteMachine, name="_expand")
     def expand(self, expr):
         return self.remote._expand(expr)
 
-    @_setdoc(BaseRemoteMachine, name="_expanduser")
     def expanduser(self, expr):
         return self.remote._expanduser(expr)
 
@@ -395,3 +393,8 @@ class BaseRemoteMachine(BaseMachine):
             return expr
         # we escape all $ signs to avoid expanding env-vars
         return self._session.run("echo %s" % (expr.replace("$", "\\$"),))[1].strip()
+
+
+# Share docstrings with the similarly named methods in RemoteEnv.
+RemoteEnv.expand.__doc__ = BaseRemoteMachine._expand.__doc__
+RemoteEnv.expanduser.__doc__ = BaseRemoteMachine._expanduser.__doc__
