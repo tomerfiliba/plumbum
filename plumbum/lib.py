@@ -6,12 +6,11 @@ import inspect
 
 IS_WIN32 = (sys.platform == "win32")
 
-def _setdoc(super, name=None):  # @ReservedAssignment
+def _setdoc(super):  # @ReservedAssignment
     """This inherits the docs on the current class. Not really needed for Python 3.5,
     due to new behavoir of inspect.getdoc, but still doesn't hurt."""
     def deco(func):
-        func_name = name or func.__name__
-        func.__doc__ = getattr(getattr(super, func_name, None), "__doc__", None)
+        func.__doc__ = getattr(getattr(super, func.__name__, None), "__doc__", None)
         return func
     return deco
 
