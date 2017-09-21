@@ -63,7 +63,7 @@ class RemoteEnv(BaseEnv):
                      home shortcuts (as ``~/.bashrc``)
 
         :returns: The expanded string"""
-        return self.remote._session.run("echo %s" % (expr,))[1].strip()
+        return self.remote.expand(expr)
 
     def expanduser(self, expr):
         """Expand home shortcuts (e.g., ``~/foo/bar`` or ``~john/foo/bar``)
@@ -71,10 +71,7 @@ class RemoteEnv(BaseEnv):
         :param expr: An expression containing home shortcuts
 
         :returns: The expanded string"""
-        if not any(part.startswith("~") for part in expr.split("/")):
-            return expr
-        # we escape all $ signs to avoid expanding env-vars
-        return self.remote._session.run("echo %s" % (expr.replace("$", "\\$"),))[1].strip()
+        return self.remote.expanduser(expr)
 
     # def clear(self):
     #    BaseEnv.clear(self, *args, **kwargs)
@@ -197,10 +194,7 @@ class BaseRemoteMachine(BaseMachine):
         for p in parts:
             if isinstance(p, LocalPath):
                 raise TypeError("Cannot construct RemotePath from %r" % (p,))
-            p = str(p)
-            if "~" in p:
-                p = self.env.expanduser(p)
-            parts2.append(p)
+            parts2.append(self.expanduser(str(p)))
         return RemotePath(self, *parts2)
 
     def which(self, progname):
@@ -390,3 +384,14 @@ class BaseRemoteMachine(BaseMachine):
 
     def _path_link(self, src, dst, symlink):
         self._session.run("ln %s %s %s" % ("-s" if symlink else "", shquote(src), shquote(dst)))
+
+    @_setdoc(BaseEnv)
+    def expand(self, expr):
+        return self._session.run("echo %s" % (expr,))[1].strip()
+
+    @_setdoc(BaseEnv)
+    def expanduser(self, expr):
+        if not any(part.startswith("~") for part in expr.split("/")):
+            return expr
+        # we escape all $ signs to avoid expanding env-vars
+        return self._session.run("echo %s" % (expr.replace("$", "\\$"),))[1].strip()
