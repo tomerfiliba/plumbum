@@ -19,6 +19,8 @@ except ImportError:
 else:
     from plumbum.machines.paramiko_machine import ParamikoMachine
 
+DIR = local.path(__file__).dirname
+
 def strassert(one, two):
     assert str(one) == str(two)
 
@@ -250,6 +252,23 @@ s.close()
             rfile.touch()
             assert rfile.exists()
             rfile.delete()
+
+    def test_expand(self):
+        from_home = DIR - local.env.home
+        print(from_home)
+
+        with self._connect() as rem:
+            with rem.env(PATH = rem.env['PATH']+':'+str(from_home)):
+                assert rem['simple.sh']() == 'Worked\n'
+
+    @pytest.mark.skipif('TRAVIS' not in local.env,
+            reason="This file only is in the path on Travis")
+    def test_travis_tilde_in_path(self):
+        with self._connect() as rem:
+            TravisCheck = rem['TravisCheck.sh']
+            assert TravisCheck() == 'Worked\n'
+
+
 
 @skip_on_windows
 class TestRemoteMachine(BaseRemoteMachineTest):
