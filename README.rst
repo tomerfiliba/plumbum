@@ -195,3 +195,8 @@ Colors and Styles
    :target: https://pypi.python.org/pypi/plumbum/
    :alt: PyPI License
 
+
+
+.. image:: https://badges.gitter.im/plumbumpy/Lobby.svg
+   :alt: Join the chat at https://gitter.im/plumbumpy/Lobby
+   :target: https://gitter.im/plumbumpy/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
