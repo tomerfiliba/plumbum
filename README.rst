@@ -1,18 +1,27 @@
-.. image:: https://coveralls.io/repos/tomerfiliba/plumbum/badge.svg?branch=master&service=github
-   :target: https://coveralls.io/github/tomerfiliba/plumbum?branch=master
-   :alt: Coverage Status
-.. image:: https://img.shields.io/pypi/v/plumbum.svg
-   :target: https://pypi.python.org/pypi/plumbum/ 
-   :alt: PyPI Status
+.. image:: https://readthedocs.org/projects/plumbum/badge/
+   :target: https://plumbum.readthedocs.io/en/latest/
+   :alt: Documentation Status
 .. image:: https://travis-ci.org/tomerfiliba/plumbum.svg?branch=master
    :target: https://travis-ci.org/tomerfiliba/plumbum
    :alt: Linux and Mac Build Status
 .. image:: https://ci.appveyor.com/api/projects/status/github/tomerfiliba/plumbum?branch=master&svg=true
    :target: https://ci.appveyor.com/project/HenrySchreiner/plumbum/branch/master
    :alt: Windows Build Status
-.. image:: https://readthedocs.org/projects/plumbum/badge/
-   :target: https://plumbum.readthedocs.io/en/latest/
-   :alt: Documentation Status
+.. image:: https://coveralls.io/repos/tomerfiliba/plumbum/badge.svg?branch=master&service=github
+   :target: https://coveralls.io/github/tomerfiliba/plumbum?branch=master
+   :alt: Coverage Status
+.. image:: https://img.shields.io/pypi/v/plumbum.svg
+   :target: https://pypi.python.org/pypi/plumbum/ 
+   :alt: PyPI Status
+.. image:: https://img.shields.io/pypi/pyversions/plumbum.svg
+   :target: https://pypi.python.org/pypi/plumbum/
+   :alt: PyPI Versions
+.. image:: https://img.shields.io/pypi/l/plumbum.svg
+   :target: https://pypi.python.org/pypi/plumbum/
+   :alt: PyPI License
+.. image:: https://badges.gitter.im/plumbumpy/Lobby.svg
+   :alt: Join the chat at https://gitter.im/plumbumpy/Lobby
+   :target: https://gitter.im/plumbumpy/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 
 Plumbum: Shell Combinators
@@ -188,15 +197,3 @@ Colors and Styles
     print("Unsafe " + colors.bg.dark_khaki + "color access" + colors.bg.reset + " is available too.")
 
 
-.. image:: https://img.shields.io/pypi/pyversions/plumbum.svg
-   :target: https://pypi.python.org/pypi/plumbum/
-   :alt: PyPI Versions
-.. image:: https://img.shields.io/pypi/l/plumbum.svg
-   :target: https://pypi.python.org/pypi/plumbum/
-   :alt: PyPI License
-
-
-
-.. image:: https://badges.gitter.im/plumbumpy/Lobby.svg
-   :alt: Join the chat at https://gitter.im/plumbumpy/Lobby
-   :target: https://gitter.im/plumbumpy/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
