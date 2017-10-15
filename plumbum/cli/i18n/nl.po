@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-13 09:34+0200\n"
+"POT-Creation-Date: 2017-10-15 15:20-0400\n"
 "PO-Revision-Date: 2017-10-14 15:04+0200\n"
 "Last-Translator: Roel Aaij <roel.aaij@gmail.com>\n"
 "Language: nl_NL\n"
@@ -39,7 +39,7 @@ msgid "Subcommand names cannot start with '-'"
 msgstr "Namen van subopdrachten mogen niet met '-' beginnen"
 
 #: plumbum/cli/application.py:186
-#, python-brace-format, fuzzy
+#, fuzzy, python-brace-format
 msgid "Switch {name} already defined and is not overridable"
 msgstr "Optie {name} is al gedefiniëerd en kan niet worden overschreven"
 
@@ -93,7 +93,7 @@ msgstr "Gegeven {0}, zijn de volgenden ongeldig {1}"
 msgid "Expected at least {0} positional argument, got {1}"
 msgid_plural "Expected at least {0} positional arguments, got {1}"
 msgstr[0] "Verwachtte ten minste {0} positioneel argument, kreeg {1}"
-msgstr[1] "Verwachtte ten minste {0} positionele argumenten, kreeg {1}\n"
+msgstr[1] "Verwachtte ten minste {0} positionele argumenten, kreeg {1}"
 
 #: plumbum/cli/application.py:416
 #, python-brace-format
@@ -150,7 +150,7 @@ msgstr "Gebruik:"
 #: plumbum/cli/application.py:638
 #, python-brace-format
 msgid "    {progname} [SWITCHES] [SUBCOMMAND [SWITCHES]] {tailargs}\n"
-msgstr "   {progname} [OPTIES] [SUBCOMMANDO [OPTIES]] {tailargs}\\n\"\n"
+msgstr "    {progname} [OPTIES] [SUBCOMMANDO [OPTIES]] {tailargs}\n"
 
 #: plumbum/cli/application.py:640
 #, python-brace-format
