@@ -1,8 +1,8 @@
-# Dutch Translations for PACKAGE package.
-# Nederlandse vertaling voor het PACKAGE pakket.
+# French Translations for PACKAGE package.
+# Traduction francaise du paquet PACKAGE.
 # Copyright (C) 2017 THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# Roel Aaij <joel.closier@cern.ch>, 2017.
+# Joel Closier <joel.closier@cern.ch>, 2017.
 #, fuzzy
 msgid ""
 msgstr ""
@@ -11,7 +11,7 @@ msgstr ""
 "POT-Creation-Date: 2017-10-15 15:20-0400\n"
 "PO-Revision-Date: 2017-10-14 15:04+0200\n"
 "Last-Translator: Joel Closier <joel.closier@cern.ch>\n"
-"Language: nl_NL\n"
+"Language: fr_FR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -86,7 +86,7 @@ msgstr "Etant donne {0}, ce qui suit est manquant {1}"
 #: plumbum/cli/application.py:400
 #, python-brace-format
 msgid "Given {0}, the following are invalid {1}"
-msgstr "Etant donne {0}, zijn de volgenden ongeldig {1}"
+msgstr "Etant donne {0}, ce qui suit est invalide {1}"
 
 #: plumbum/cli/application.py:409
 #, python-brace-format
@@ -105,7 +105,7 @@ msgstr[1] "Verwachtte hoogstens {0} positionele argumenten, kreeg {0}"
 #: plumbum/cli/application.py:494
 #, python-brace-format
 msgid "Error: {0}"
-msgstr "Fout: {0}"
+msgstr "Erreur: {0}"
 
 #: plumbum/cli/application.py:495 plumbum/cli/application.py:579
 #: plumbum/cli/application.py:584
@@ -115,91 +115,91 @@ msgstr "------"
 #: plumbum/cli/application.py:563
 #, python-brace-format
 msgid "Switch {0} must be a sequence (iterable)"
-msgstr "Optie {0} moet een reeks zijn (itereerbaar object)"
+msgstr "Option {0} doit etre une sequence (iterable)"
 
 #: plumbum/cli/application.py:567
 #, python-brace-format
 msgid "Switch {0} is a boolean flag"
-msgstr "Optie {0} geeft een waarheidswaarde weer"
+msgstr "Option {0} est un booleen"
 
 #: plumbum/cli/application.py:578
 #, python-brace-format
 msgid "Unknown sub-command '{0}'"
-msgstr "Onbekend subcommando '{0}'"
+msgstr "Sous-commande inconnue '{0}'"
 
 #: plumbum/cli/application.py:583
 msgid "No sub-command given"
-msgstr "Geen subcommando gegeven"
+msgstr "Pas de sous-commende donnee"
 
 #: plumbum/cli/application.py:588
 msgid "main() not implemented"
-msgstr "main() niet geïmplementeerd"
+msgstr "main() n'est pas implemente"
 
 #: plumbum/cli/application.py:599
 msgid "Print help messages of all subcommands and quit"
-msgstr "Druk hulpberichten van alle subcommando's af en beëindig"
+msgstr "Imprime les messages d'aide de toutes les sous-commandes et sort"
 
 #: plumbum/cli/application.py:616
 msgid "Prints this help message and quits"
-msgstr "Drukt dit hulpbericht af en beëindig"
+msgstr "Imprime ce message d'aide et sort"
 
 #: plumbum/cli/application.py:635
 msgid "Usage:"
-msgstr "Gebruik:"
+msgstr "Utilisation:"
 
 #: plumbum/cli/application.py:638
 #, python-brace-format
 msgid "    {progname} [SWITCHES] [SUBCOMMAND [SWITCHES]] {tailargs}\n"
-msgstr "    {progname} [OPTIES] [SUBCOMMANDO [OPTIES]] {tailargs}\n"
+msgstr "    {progname} [OPTIONS] [SOUS_COMMANDE [OPTIONS]] {tailargs}\n"
 
 #: plumbum/cli/application.py:640
 #, python-brace-format
 msgid "    {progname} [SWITCHES] {tailargs}\n"
-msgstr "    {progname} [OPTIES] {tailargs}\n"
+msgstr "    {progname} [OPTIONS] {tailargs}\n"
 
 #: plumbum/cli/application.py:681
 msgid "; may be given multiple times"
-msgstr "; kan meerdere keren gegeven worden"
+msgstr "; peut etre fourni plusieurs fois"
 
 #: plumbum/cli/application.py:683
 msgid "; required"
-msgstr "; vereist"
+msgstr "; necessaire"
 
 #: plumbum/cli/application.py:685
 #, python-brace-format
 msgid "; requires {0}"
-msgstr "; verseist {0}"
+msgstr "; necessite {0}"
 
 #: plumbum/cli/application.py:690
 #, python-brace-format
 msgid "; excludes {0}"
-msgstr "; sluit {0} uit"
+msgstr "; exclut {0}"
 
 #: plumbum/cli/application.py:705
 msgid "Subcommands:"
-msgstr "Subcommando's"
+msgstr "Sous-Commandes:"
 
 #: plumbum/cli/application.py:744
 msgid "Prints the program's version and quits"
-msgstr "Drukt de versie van het programma af en beëindigt"
+msgstr "Imprime la version du programme et sort"
 
 #: plumbum/cli/application.py:748
 msgid "(version not set)"
-msgstr "(versie niet opgegeven)"
+msgstr "(version non definie)"
 
 #: plumbum/cli/switches.py:145 plumbum/cli/switches.py:187
 msgid "VALUE"
-msgstr "WAARDE"
+msgstr "VALEUR"
 
 #: plumbum/cli/switches.py:190
 #, python-brace-format
 msgid "; the default is {0}"
-msgstr "; de standaard is {0}"
+msgstr "; la valeur par defaut est {0}"
 
 #: plumbum/cli/switches.py:369
 #, python-brace-format
 msgid "Not in range [{0:d}..{1:d}]"
-msgstr "Niet binnen bereik [{0:d}..{1:d}]"
+msgstr "Pas dans  [{0:d}..{1:d}]"
 
 #: plumbum/cli/switches.py:390
 #, python-brace-format
