@@ -99,8 +99,8 @@ msgstr[1] "Verwachtte ten minste {0} positionele argumenten, kreeg {1}"
 #, python-brace-format
 msgid "Expected at most {0} positional argument, got {1}"
 msgid_plural "Expected at most {0} positional arguments, got {1}"
-msgstr[0] "Verwachtte hoogstens {0} positioneel argument, kreeg {0}"
-msgstr[1] "Verwachtte hoogstens {0} positionele argumenten, kreeg {0}"
+msgstr[0] "Au moins {0} argument de position attendu, recu {0}"
+msgstr[1] "Au moins {0} arguments de position, recu {0}"
 
 #: plumbum/cli/application.py:494
 #, python-brace-format
@@ -204,24 +204,24 @@ msgstr "Pas dans  [{0:d}..{1:d}]"
 #: plumbum/cli/switches.py:390
 #, python-brace-format
 msgid "got unexpected keyword argument(s): {0}"
-msgstr "Onverwacht(e) trefwoord argument(en) gegeven: {0}"
+msgstr "mot-cle inconnu donne comme argument: {0}"
 
 #: plumbum/cli/switches.py:398
 #, python-brace-format
 msgid "Expected one of {0}"
-msgstr "Verwachtte één van {0}"
+msgstr "un des {0} attendu"
 
 #: plumbum/cli/switches.py:420
 #, python-brace-format
 msgid "{0} is not a directory"
-msgstr "{0} is geen map"
+msgstr "{0} n'est pas un repertoire"
 
 #: plumbum/cli/switches.py:438
 #, python-brace-format
 msgid "{0} is not a file"
-msgstr "{0} is geen bestand"
+msgstr "{0} n'est pas un fichier"
 
 #: plumbum/cli/switches.py:446
 #, python-brace-format
 msgid "{0} already exists"
-msgstr "{0} bestaat al"
+msgstr "{0} existe deja"
