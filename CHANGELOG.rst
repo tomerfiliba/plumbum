@@ -1,11 +1,10 @@
 1.6.4 (in progress)
 -------------------
-
 * CLI: Support for localization (`#339 <https://github.com/tomerfiliba/plumbum/pull/339>`_), with:
 
-  - Russian by Pavel Pletenev (`#339 <https://github.com/tomerfiliba/plumbum/pull/339>`_) :ru:
-  - Dutch by Roel Aaij (`#351 <https://github.com/tomerfiliba/plumbum/pull/351>`_) :de:
-  - French by Joel Closier (`#352 <https://github.com/tomerfiliba/plumbum/pull/352>`_) :fr:
+  - Russian by Pavel Pletenev (`#339 <https://github.com/tomerfiliba/plumbum/pull/339>`_) 🇷🇺
+  - Dutch by Roel Aaij (`#351 <https://github.com/tomerfiliba/plumbum/pull/351>`_)  🇩🇪
+  - French by Joel Closier (`#352 <https://github.com/tomerfiliba/plumbum/pull/352>`_) 🇫🇷
   - Pulls with more languages welcome!
 * Commands: Fixed unicode input/output on Python 2 (`#341 <https://github.com/tomerfiliba/plumbum/pull/341>`_)
 * Paths: More updates for pathlib compatibility (`#325 <https://github.com/tomerfiliba/plumbum/pull/325>`_)
