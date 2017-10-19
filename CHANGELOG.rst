@@ -1,15 +1,16 @@
 1.6.4 (in progress)
 -------------------
 
-* CLI: Support for localization (`#339 <https://github.com/tomerfiliba/plumbum/pull/339>`_), with 
-    * Russian by Pavel Pletenev (`#339 <https://github.com/tomerfiliba/plumbum/pull/339>`_)
-    * Dutch by Roel Aaij (`#351 <https://github.com/tomerfiliba/plumbum/pull/351>`_)
-    * French by Joel Closier (`#352 <https://github.com/tomerfiliba/plumbum/pull/352>`_)
-    * Pulls with more languages welcome!
+* CLI: Support for localization (`#339 <https://github.com/tomerfiliba/plumbum/pull/339>`_), with:
+
+  - Russian by Pavel Pletenev (`#339 <https://github.com/tomerfiliba/plumbum/pull/339>`_) :ru:
+  - Dutch by Roel Aaij (`#351 <https://github.com/tomerfiliba/plumbum/pull/351>`_) :de:
+  - French by Joel Closier (`#352 <https://github.com/tomerfiliba/plumbum/pull/352>`_) :fr:
+  - Pulls with more languages welcome!
 * Commands: Fixed unicode input/output on Python 2 (`#341 <https://github.com/tomerfiliba/plumbum/pull/341>`_)
 * Paths: More updates for pathlib compatibility (`#325 <https://github.com/tomerfiliba/plumbum/pull/325>`_)
 * Terminal: Changed ``prompt()``'s default value for ``type`` parameter from ``int`` to ``str`` to match existing docs (`#327 <https://github.com/tomerfiliba/plumbum/issues/327>`_)
-* Remote: Support `~` in PATH for a remote (#293 <https://github.com/tomerfiliba/plumbum/issues/293>`_)
+* Remote: Support ``~`` in PATH for a remote (`#293 <https://github.com/tomerfiliba/plumbum/issues/293>`_)
 * Remote: Fixes for globbing with spaces in filename on a remote server (`#322 <https://github.com/tomerfiliba/plumbum/issues/322>`_)
 
 1.6.3
@@ -20,7 +21,7 @@
 * Paths: Added support for Python 3.6 path protocol
 * Paths: Support Python's ``in`` syntax
 * CLI: Added Config parser (provisional) (`#304 <https://github.com/tomerfiliba/plumbum/pull/304>`_)
-* Color: image plots with `python -m plumbum.cli.image` (`#304 <https://github.com/tomerfiliba/plumbum/pull/304>`_)
+* Color: image plots with ``python -m plumbum.cli.image`` (`#304 <https://github.com/tomerfiliba/plumbum/pull/304>`_)
 * SSH: No longer hangs for ``timeout`` seconds on failure (`#306 <https://github.com/tomerfiliba/plumbum/issues/306>`_)
 * Test improvements, especially on non-linux systems
 
