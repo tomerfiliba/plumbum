@@ -10,7 +10,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-10-15 15:20-0400\n"
 "PO-Revision-Date: 2017-10-14 15:04+0200\n"
-"Last-Translator: Roel Aaij <roel.aaij@gmail.com>\n"
+"Last-Translator: Joel Closier <joel.closier@cern.ch>\n"
 "Language: nl_NL\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -19,74 +19,74 @@ msgstr ""
 #: plumbum/cli/application.py:53
 #, python-brace-format
 msgid "Subcommand({self.name}, {self.subapplication})"
-msgstr "Subopdracht({self.name}, {self.subapplication})"
+msgstr "Sous-commande({self.name}, {self.subapplication})"
 
 #: plumbum/cli/application.py:56
 msgid "Switches"
-msgstr "Opties"
+msgstr "Options"
 
 #: plumbum/cli/application.py:56
 msgid "Meta-switches"
-msgstr "Meta-opties"
+msgstr "Meta-options"
 
 #: plumbum/cli/application.py:125
 #, python-brace-format
 msgid "see '{parent} {sub} --help' for more info"
-msgstr "zie '{parent} {sub} --help' voor meer informatie"
+msgstr "voir '{parent} {sub} --help' pour plus d'information"
 
 #: plumbum/cli/application.py:173
 msgid "Subcommand names cannot start with '-'"
-msgstr "Namen van subopdrachten mogen niet met '-' beginnen"
+msgstr "le nom des Sous-commandes ne peut pas commencer avec '-' "
 
 #: plumbum/cli/application.py:186
 #, fuzzy, python-brace-format
 msgid "Switch {name} already defined and is not overridable"
-msgstr "Optie {name} is al gedefiniëerd en kan niet worden overschreven"
+msgstr "Option {name} est deja definie et ne peut pas etre sur-ecrite"
 
 #: plumbum/cli/application.py:269 plumbum/cli/application.py:290
 #: plumbum/cli/application.py:304
 #, python-brace-format
 msgid "Unknown switch {0}"
-msgstr "Onbekende optie {0}"
+msgstr "Option inconnue {0}"
 
 #: plumbum/cli/application.py:273 plumbum/cli/application.py:280
 #: plumbum/cli/application.py:297
 #, python-brace-format
 msgid "Switch {0} requires an argument"
-msgstr "Een argument is vereist bij optie {0}"
+msgstr "Option {0} necessite un argument"
 
 #: plumbum/cli/application.py:316
 #, python-brace-format
 msgid "Switch {0} already given"
-msgstr "Optie {0} is al gegeven"
+msgstr "Option {0} deja donnee"
 
 #: plumbum/cli/application.py:319
 #, python-brace-format
 msgid "Switch {0} already given ({1} is equivalent)"
-msgstr "Optie {0} is al gegeven ({1} is equivalent)"
+msgstr "Option {0} deja donnee ({1} est equivalent)"
 
 #: plumbum/cli/application.py:365
 msgid ""
 "Argument of {name} expected to be {argtype}, not {val!r}:\n"
 "    {ex!r}"
 msgstr ""
-"Argement van {name} hoort {argtype} te zijn, niet {val|1}:\n"
+"Argument de {name} doit etre {argtype} , et non {val|1}:\n"
 "    {ex!r}"
 
 #: plumbum/cli/application.py:382
 #, python-brace-format
 msgid "Switch {0} is mandatory"
-msgstr "Optie {0} is verplicht"
+msgstr "Option {0} obligatoire"
 
 #: plumbum/cli/application.py:394
 #, python-brace-format
 msgid "Given {0}, the following are missing {1}"
-msgstr "Gegeven {0}, ontbreken de volgenden {1}"
+msgstr "Etant donne {0}, ce qui suit est manquant {1}"
 
 #: plumbum/cli/application.py:400
 #, python-brace-format
 msgid "Given {0}, the following are invalid {1}"
-msgstr "Gegeven {0}, zijn de volgenden ongeldig {1}"
+msgstr "Etant donne {0}, zijn de volgenden ongeldig {1}"
 
 #: plumbum/cli/application.py:409
 #, python-brace-format
