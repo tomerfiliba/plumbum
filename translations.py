@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# If you are on macOS and using brew, you might need the following first:
+# export PATH="/usr/local/opt/gettext/bin:$PATH"
+
 from plumbum import local, FG
 from plumbum.cmd import xgettext, msgmerge, msgfmt
 
