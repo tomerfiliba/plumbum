@@ -64,7 +64,7 @@ class Image(object):
 
         size = self._init_size(im)
         size= (size[0], size[1]*2)
-        new_im = im.resize(size)
+        new_im = im.resize(size).convert("RGB")
 
         for y in range(size[1]//2):
             for x in range(size[0]-1):
