@@ -13,6 +13,7 @@
 * Remote: Support ``~`` in PATH for a remote (`#293 <https://github.com/tomerfiliba/plumbum/issues/293>`_)
 * Remote: Fixes for globbing with spaces in filename on a remote server (`#322 <https://github.com/tomerfiliba/plumbum/issues/322>`_)
 * Color: Fixes to image plots
+* Python 3.3 has been removed from Travis and Appveyor.
 
 1.6.3
 -----

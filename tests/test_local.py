@@ -753,14 +753,14 @@ class TestLocalEncoding:
     except NameError:
         richstr = chr(40960)
 
-    @pytest.mark.xfail(six.WIN32 and six.PY3 and sys.version_info[1] < 6,
+    @pytest.mark.xfail(IS_WIN32 and six.PY3 and sys.version_info[1] < 6,
             reason="Unicode output on Windows requires Python 3.6+")
     def test_inout_rich(self):
         from plumbum.cmd import echo
         out = echo(self.richstr)
         assert self.richstr in out
 
-    @pytest.mark.xfail(six.WIN32 and six.PY3 and sys.version_info[1] < 6,
+    @pytest.mark.xfail(IS_WIN32 and six.PY3 and sys.version_info[1] < 6,
             reason="Unicode output on Windows requires Python 3.6+")
     @pytest.mark.usefixtures("cleandir")
     def test_out_rich(self):
@@ -772,7 +772,7 @@ class TestLocalEncoding:
         out = cat('temp.txt')
         assert self.richstr in out
 
-    @pytest.mark.xfail(six.WIN32,
+    @pytest.mark.xfail(IS_WIN32,
             reason="Unicode path not supported on Windows for now")
     @pytest.mark.skipif(not six.PY3,
                         reason="Unicode paths only supported on Python 3")
