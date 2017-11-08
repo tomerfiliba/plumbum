@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from abc import ABCMeta
 import inspect
 
-IS_WIN32 = (sys.name == "nt")
+IS_WIN32 = (sys.platform == "win32")
 
 def _setdoc(super):  # @ReservedAssignment
     """This inherits the docs on the current class. Not really needed for Python 3.5,
