@@ -12,6 +12,7 @@
 * Terminal: Changed ``prompt()``'s default value for ``type`` parameter from ``int`` to ``str`` to match existing docs (`#327 <https://github.com/tomerfiliba/plumbum/issues/327>`_)
 * Remote: Support ``~`` in PATH for a remote (`#293 <https://github.com/tomerfiliba/plumbum/issues/293>`_)
 * Remote: Fixes for globbing with spaces in filename on a remote server (`#322 <https://github.com/tomerfiliba/plumbum/issues/322>`_)
+* Color: Fixes to image plots
 
 1.6.3
 -----
