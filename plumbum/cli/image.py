@@ -23,14 +23,11 @@ class Image(object):
             return term
 
         orig_ratio = orig[0]/orig[1]/self.char_ratio
-        print(orig_ratio)
 
         if int(term[1]/orig_ratio) <= term[0]:
             new_size = int(term[1]/orig_ratio), term[1]
-            print("First", term, new_size)
         else:
             new_size = term[0], int(term[0]*orig_ratio)
-            print("Second", term, new_size)
         return new_size
 
     def show(self, filename, double=False):
@@ -53,7 +50,7 @@ class Image(object):
     def show_pil(self, im):
         'Standard show routine'
         size = self._init_size(im)
-        new_im = im.resize(size)
+        new_im = im.resize(size).convert("RGB")
 
         for y in range(size[1]):
             for x in range(size[0]-1):
