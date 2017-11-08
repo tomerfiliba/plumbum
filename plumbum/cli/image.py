@@ -70,7 +70,7 @@ class Image(object):
             for x in range(size[0]-1):
                 pix = new_im.getpixel((x,y*2))
                 pixl = new_im.getpixel((x,y*2+1))
-                print(colors.bg.rgb(*pixl) & colors.fg.rgb(*pix), '\u2580', sep='', end='')
+                print(colors.bg.rgb(*pixl) & colors.fg.rgb(*pix), u'\u2580', sep='', end='')
             print(colors.reset, ' ', sep='')
         print(colors.reset)
 
