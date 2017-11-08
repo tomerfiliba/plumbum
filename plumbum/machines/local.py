@@ -19,8 +19,8 @@ from plumbum.machines.base import BaseMachine
 from plumbum.machines.base import PopenAddons
 from plumbum.machines.env import BaseEnv
 
-if sys.version_info >= (3, 2):
-    # python 3.2 has the new-and-improved subprocess module
+if sys.version_info[0] >= 3:
+    # python 3 has the new-and-improved subprocess module
     from subprocess import Popen, PIPE
     has_new_subprocess = True
 else:
@@ -37,6 +37,8 @@ class IterablePopen(Popen, PopenAddons):
     def __iter__(self):
         return self.iter_lines()
 
+if IS_WIN32:
+    from plumbum.machines._windows import get_pe_subsystem, IMAGE_SUBSYSTEM_WINDOWS_CUI
 
 logger = logging.getLogger("plumbum.local")
 
@@ -231,7 +233,6 @@ class LocalMachine(BaseMachine):
                 kwargs["preexec_fn"] = preexec_fn
 
         if IS_WIN32 and "startupinfo" not in kwargs and stdin not in (sys.stdin, None):
-            from plumbum.machines._windows import get_pe_subsystem, IMAGE_SUBSYSTEM_WINDOWS_CUI
             subsystem = get_pe_subsystem(str(executable))
 
             if subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI:
