@@ -69,6 +69,9 @@ class TestLocalPath:
         p = local.path("/var/log/messages")
         p.split() == ["var", "log", "messages"]
 
+    @pytest.mark.xfail(sys.platform == "win32"
+                       and (sys.version_info[0]==2 or sys.version_info[1] < 4),
+            reason="Caseless comparison (at least in pytest) fails on Windows 2.7 or 3.3")
     def test_suffix(self):
         p1 = self.longpath
         p2 = local.path("file.tar.gz")
@@ -85,6 +88,9 @@ class TestLocalPath:
         with pytest.raises(ValueError):
             p1.with_suffix('nodot')
 
+    @pytest.mark.xfail(sys.platform == "win32"
+                       and (sys.version_info[0]==2 or sys.version_info[1] < 4),
+            reason="Caseless comparison (at least in pytest) fails on Windows 2.7 or 3.3")
     def test_newname(self):
         p1 = self.longpath
         p2 = local.path("file.tar.gz")
