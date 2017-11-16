@@ -746,6 +746,12 @@ for _ in range(%s):
         print( (echo['one two three four'] | grep['two'] | grep['five'])(retcode=None))
         print( (echo['one two three four'] | grep['six'] | grep['five'])(retcode=None))
 
+    def test_pipeline_stdin(self):
+        from plumbum.cmd import cat
+        from subprocess import PIPE
+        with (cat | cat).bgrun(stdin=PIPE) as future:
+            future.stdin.write(b'foobar')
+            future.stdin.close()
 
 class TestLocalEncoding:
     try:
