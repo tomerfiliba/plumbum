@@ -281,6 +281,7 @@ class Pipeline(BaseCommand):
     def popen(self, args = (), **kwargs):
         src_kwargs = kwargs.copy()
         src_kwargs["stdout"] = PIPE
+        src_kwargs["stdin"] = kwargs.get("stdin")
 
         srcproc = self.srccmd.popen(args, **src_kwargs)
         kwargs["stdin"] = srcproc.stdout
@@ -289,7 +290,7 @@ class Pipeline(BaseCommand):
         srcproc.stdout.close()
         if srcproc.stderr is not None:
             dstproc.stderr = srcproc.stderr
-        if srcproc.stdin:
+        if srcproc.stdin and src_kwargs["stdin"] != PIPE:
             srcproc.stdin.close()
         dstproc.srcproc = srcproc
 
@@ -318,6 +319,7 @@ class Pipeline(BaseCommand):
             dstproc_verify(retcode, timeout, stdout, stderr)
         dstproc.verify = MethodType(verify, dstproc)
 
+        dstproc.stdin = srcproc.stdin
         return dstproc
 
 class BaseRedirection(BaseCommand):
