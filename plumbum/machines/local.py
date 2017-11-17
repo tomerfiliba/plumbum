@@ -32,10 +32,17 @@ else:
         from subprocess import Popen, PIPE
         has_new_subprocess = False
 
-class IterablePopen(Popen, PopenAddons):
+class PlumbumLocalPopen(PopenAddons):
     iter_lines = iter_lines
+
+    def __init__(self, *args, **kwargs):
+        self._proc = Popen(*args, **kwargs)
+
     def __iter__(self):
         return self.iter_lines()
+
+    def __getattr__(self, name):
+        return getattr(self._proc, name)
 
 if IS_WIN32:
     from plumbum.machines._windows import get_pe_subsystem, IMAGE_SUBSYSTEM_WINDOWS_CUI
@@ -264,7 +271,7 @@ class LocalMachine(BaseMachine):
             argv, executable = self._as_user_stack[-1](argv)
 
         logger.debug("Running %r", argv)
-        proc = IterablePopen(argv, executable = str(executable), stdin = stdin, stdout = stdout,
+        proc = PlumbumLocalPopen(argv, executable = str(executable), stdin = stdin, stdout = stdout,
             stderr = stderr, cwd = str(cwd), env = env, **kwargs)  # bufsize = 4096
         proc._start_time = time.time()
         proc.custom_encoding = self.custom_encoding

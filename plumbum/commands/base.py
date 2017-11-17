@@ -303,7 +303,7 @@ class Pipeline(BaseCommand):
             rc_src = srcproc.wait(*args, **kwargs)
             dstproc.returncode = rc_dst or rc_src
             return dstproc.returncode
-        dstproc.wait = wait2
+        dstproc._proc.wait = wait2
 
         dstproc_verify = dstproc.verify
         def verify(proc, retcode, timeout, stdout, stderr):
