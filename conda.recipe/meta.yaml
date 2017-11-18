@@ -12,7 +12,8 @@ requirements:
 
   run:
     - python
-    - paramiko
+    - paramiko<2.4 # [py26]
+    - paramiko # [not py26]
 
 build:
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
@@ -34,7 +35,8 @@ test:
   requires:
     # Put any additional test requirements here.  For example
     - pytest
-    - paramiko
+    - paramiko<2.4 # [py26]
+    - paramiko # [not py26]
 
 about:
   home: https://plumbum.readthedocs.io

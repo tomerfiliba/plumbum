@@ -1,3 +1,4 @@
-paramiko
 pytest
 pytest-cov
+paramiko<2.4 ; python_version < '2.7'
+paramiko ; python_version >= '2.7'
