@@ -7,13 +7,15 @@
   - French by Joel Closier (`#352 <https://github.com/tomerfiliba/plumbum/pull/352>`_) 🇫🇷
   - German by Christoph Hasse (`#353 <https://github.com/tomerfiliba/plumbum/pull/353>`_) 🇩🇪
   - Pulls with more languages welcome!
+* CLI: Support for ``MakeDirectory`` (`#339 <https://github.com/tomerfiliba/plumbum/pull/339>`_)
 * Commands: Fixed unicode input/output on Python 2 (`#341 <https://github.com/tomerfiliba/plumbum/pull/341>`_)
 * Paths: More updates for pathlib compatibility (`#325 <https://github.com/tomerfiliba/plumbum/pull/325>`_)
 * Terminal: Changed ``prompt()``'s default value for ``type`` parameter from ``int`` to ``str`` to match existing docs (`#327 <https://github.com/tomerfiliba/plumbum/issues/327>`_)
 * Remote: Support ``~`` in PATH for a remote (`#293 <https://github.com/tomerfiliba/plumbum/issues/293>`_)
 * Remote: Fixes for globbing with spaces in filename on a remote server (`#322 <https://github.com/tomerfiliba/plumbum/issues/322>`_)
-* Color: Fixes to image plots
+* Color: Fixes to image plots, better separation (`#324 <https://github.com/tomerfiliba/plumbum/pull/324>`_)
 * Python 3.3 has been removed from Travis and Appveyor.
+* Several bugs fixed
 
 1.6.3
 -----
