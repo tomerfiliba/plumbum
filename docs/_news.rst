@@ -1,3 +1,5 @@
+* **2017.11.27**: Version 1.6.4 released with new CLI localization support. Several bugfixes and better pathlib compatibility, along with better separation between Plumbum's internal packages.
+
 * **2016.12.31**: Version 1.6.3 released to provide Python 3.6 compatibility. Mostly bugfixes, several smaller improvements to paths, and a provisional config parser added.
 
 * **2016.12.3**: Version 1.6.2 is now available through `conda-forge <https://conda-forge.github.io>`_, as well.

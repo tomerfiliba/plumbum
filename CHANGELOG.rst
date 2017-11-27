@@ -1,5 +1,5 @@
-1.6.4 (in progress)
--------------------
+1.6.4
+-----
 * CLI: Support for localization (`#339 <https://github.com/tomerfiliba/plumbum/pull/339>`_), with:
 
   - Russian by Pavel Pletenev (`#339 <https://github.com/tomerfiliba/plumbum/pull/339>`_) 🇷🇺
