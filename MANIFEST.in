@@ -1,2 +1,4 @@
 include LICENSE
 include README.rst
+recursive-include plumbum *.mo
+recursive-include plumbum *.mo
