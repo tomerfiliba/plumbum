@@ -1,3 +1,8 @@
+1.6.5 (in progess)
+------------------
+
+* No changes yet
+
 1.6.4
 -----
 * CLI: Support for localization (`#339 <https://github.com/tomerfiliba/plumbum/pull/339>`_), with:

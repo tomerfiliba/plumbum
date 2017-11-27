@@ -17,15 +17,15 @@ class BuildProject(cli.Application):
         #if self.upload:
         #    local.python("setup.py", "register")
 
-        local.python("setup.py", "sdist", "--formats=zip,gztar", "bdist_wininst", "--plat-name=win32")
+        local.python("setup.py", "sdist", "--formats=gztar", "bdist_wininst", "--plat-name=win32", "bdist_wheel")
 
         delete(local.cwd // "*.egg-info", "build")
 
         if self.upload:
             if twine is None:
-                print("Twine not installed, cannot securly upload. Install twine.")
+                print("Twine not installed, cannot securely upload. Install twine.")
             else:
-                twine['upload','dist/*'] & FG
+                twine['upload','dist/*gztar' 'dist/*.exe' '*.whl'] & FG
 
 
 if __name__ == "__main__":
