@@ -16,6 +16,9 @@
 .. image:: https://img.shields.io/pypi/pyversions/plumbum.svg
    :target: https://pypi.python.org/pypi/plumbum/
    :alt: PyPI Versions
+.. image:: https://anaconda.org/conda-forge/plumbum/badges/version.svg
+   :target: https://anaconda.org/conda-forge/plumbum
+   :alt: Anaconda-Server Badge
 .. image:: https://img.shields.io/pypi/l/plumbum.svg
    :target: https://pypi.python.org/pypi/plumbum/
    :alt: PyPI License
