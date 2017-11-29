@@ -2,6 +2,7 @@ import subprocess
 import functools
 from contextlib import contextmanager
 from plumbum.commands.processes import run_proc, iter_lines
+import plumbum.commands.modifiers
 from plumbum.lib import six
 from tempfile import TemporaryFile
 from subprocess import PIPE, Popen
@@ -224,6 +225,57 @@ class BaseCommand(object):
         with self.bgrun(args, **kwargs) as p:
             return p.run()
 
+    def _use_modifier(self, modifier, args):
+        """
+        Applies a modifier to the current object (e.g. FG, NOHUP)
+        :param modifier: The modifier class to apply (e.g. FG)
+        :param args: A dictionary of arguments to pass to this modifier
+        :return:
+        """
+        modifier_instance = modifier(**args)
+        self & modifier_instance
+
+    def bg(self, **kwargs):
+        """
+        Run this command in the background. Uses all arguments from the BG construct
+        :py:class: `plumbum.commands.modifiers.BG`
+        """
+        self._use_modifier(plumbum.commands.modifiers.BG, kwargs)
+
+    def fg(self, **kwargs):
+        """
+        Run this command in the background. Uses all arguments from the FG construct
+        :py:class: `plumbum.commands.modifiers.FG`
+        """
+        self._use_modifier(plumbum.commands.modifiers.FG, kwargs)
+
+    def tee(self, **kwargs):
+        """
+        Run this command in the background. Uses all arguments from the TEE construct
+        :py:class: `plumbum.commands.modifiers.TEE`
+        """
+        self._use_modifier(plumbum.commands.modifiers.TEE, kwargs)
+
+    def tf(self, **kwargs):
+        """
+        Run this command in the background. Uses all arguments from the TF construct
+        :py:class: `plumbum.commands.modifiers.TF`
+        """
+        self._use_modifier(plumbum.commands.modifiers.TF, kwargs)
+
+    def retcode(self, **kwargs):
+        """
+        Run this command in the background. Uses all arguments from the RETCODE construct
+        :py:class: `plumbum.commands.modifiers.RETCODE`
+        """
+        self._use_modifier(plumbum.commands.modifiers.RETCODE, kwargs)
+
+    def nohup(self, **kwargs):
+        """
+        Run this command in the background. Uses all arguments from the NOHUP construct
+        :py:class: `plumbum.commands.modifiers.NOHUP`
+        """
+        self._use_modifier(plumbum.commands.modifiers.NOHUP, kwargs)
 
 class BoundCommand(BaseCommand):
     __slots__ = ("cmd", "args")
