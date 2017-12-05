@@ -77,3 +77,12 @@ def read_fd_decode_safely(fd, size=4096):
             data += os.read(fd.fileno(), 1)
 
     return data, data.decode("utf-8")
+
+def get_main_module_frame():
+    """
+    Gets the frame of the __main__ module (the one which is called with command line) of an app.
+    """
+    fr = sys._getframe(0)
+    while fr and fr.f_globals["__name__"] != "__main__":
+        fr = fr.f_back
+    return fr
