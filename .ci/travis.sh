@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+echo $TRAVIS_PYTHON_VERSION
+
 if [[ "$(uname -s)" == 'Darwin' ]]; then
     if brew ls --versions python$PY3 > /dev/null; then
         echo "Brew python is already installed"
