@@ -2,7 +2,7 @@ from __future__ import print_function, division
 
 from plumbum import colors
 from .termsize import get_terminal_size
-import . as cli
+from .. import cli
 import sys
 
 class Image(object):
