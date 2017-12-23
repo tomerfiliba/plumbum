@@ -2,6 +2,8 @@ import pytest
 from plumbum.colorlib.styles import ANSIStyle, Color, AttributeNotFound, ColorNotFound
 from plumbum.colorlib.names import color_html, FindNearest
 
+# Just check to see if this file is importable
+from plumbum.cli.image import Image
 
 class TestNearestColor:
     def test_exact(self):
