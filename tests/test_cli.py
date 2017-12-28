@@ -72,6 +72,33 @@ class LazyLoaded(cli.Application):
         print("hello world")
 
 
+class AppA(cli.Application):
+    @cli.switch(['--one'])
+    def one(self):
+        pass
+
+    two = cli.SwitchAttr(['--two'])
+
+class AppB(AppA):
+    @cli.switch(['--three'])
+    def three(self):
+        pass
+
+    four = cli.SwitchAttr(['--four'])
+
+    def main(self):
+        pass
+
+# Testing #363
+class TestInheritedApp:
+    def test_help(self, capsys):
+         _, rc = AppB.run(["AppB", "-h"], exit = False)
+         assert rc == 0
+         stdout, stderr = capsys.readouterr()
+         assert "--one" in stdout
+         assert "--two" in stdout
+         assert "--three" in stdout
+         assert "--four" in stdout
 
 class TestCLI:
     def test_meta_switches(self):
@@ -177,7 +204,7 @@ class TestCLI:
         assert inst.eggs == 'raw'
 
     def test_mandatory_env_var(self, capsys):
-        
+
         _, rc = SimpleApp.run(["arg"], exit = False)
         assert rc == 2
         stdout, stderr = capsys.readouterr()
