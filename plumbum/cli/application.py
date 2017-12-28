@@ -648,7 +648,7 @@ class Application(object):
             for grp, swinfos in sorted(by_groups.items(), key = lambda item: item[0]):
                 if show_groups:
                     lgrp = T_(grp) if grp in _switch_groups else grp
-                    print(self.COLOR_GROUPS[grp] | lgrp)
+                    print(self.COLOR_GROUPS[grp] | lgrp + ':')
 
                 for si in sorted(swinfos, key = lambda si: si.names):
                     swnames = ", ".join(("-" if len(n) == 1 else "--") + n for n in si.names
