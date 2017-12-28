@@ -4,7 +4,6 @@ from plumbum import local
 
 from abc import abstractmethod
 
-__name__.split('.')
 _translation = get_translation_for(__name__)
 _, ngettext = _translation.gettext, _translation.ngettext
 

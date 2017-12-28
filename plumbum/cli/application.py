@@ -15,8 +15,6 @@ from plumbum import colors, local
 from plumbum.cli.i18n import get_translation_for
 
 _translation = get_translation_for(__name__)
-global _
-global ngettext
 T_, ngettext = _translation.gettext, _translation.ngettext
 
 

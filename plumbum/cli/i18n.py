@@ -1,43 +1,54 @@
-import os
-import gettext
+import locale
 
-# If not installed with setuptools, this might not be available
-try:
-    import pkg_resources
-except ImportError:
-    pkg_resources = None
+# High performance method for English (no translation needed)
+if locale.getlocale()[0].startswith('en'):
+    class NullTranslation(object):
+        def gettext(self, str):
+            return str
+        def ngettext(self, str1, strN, n):
+            if n==1:
+                return str1.format(n)
+            else:
+                return strN.format(n)
 
-try:
-    from typing import Tuple, List, Callable
-except ImportError:
-    pass
+    def get_translation_for(package_name):
+        return NullTranslation()
 
-local_dir = os.path.basename(__file__)
+else:
+    import os
+    import gettext
 
-def get_translation_for(package_name): # type: (str) -> gettext.NullTranslations
-    '''Find and return gettext translation for package
-    (Try to find folder manually if setuptools does not exist)
-    '''
+    # If not installed with setuptools, this might not be available
+    try:
+        import pkg_resources
+    except ImportError:
+        pkg_resources = None
 
-    if '.' in package_name:
-        package_name = '.'.join(package_name.split('.')[:-1])
-    localedir = None
+    try:
+        from typing import Tuple, List, Callable
+    except ImportError:
+        pass
 
-    if pkg_resources is None:
-        mydir = os.path.join(local_dir, 'i18n')
-    else:
-        mydir = pkg_resources.resource_filename(package_name, 'i18n')
+    local_dir = os.path.basename(__file__)
 
-    for localedir in mydir, None:
-        localefile = gettext.find(package_name, localedir)
-        if localefile:
-            break
+    def get_translation_for(package_name): # type: (str) -> gettext.NullTranslations
+        '''Find and return gettext translation for package
+        (Try to find folder manually if setuptools does not exist)
+        '''
 
-    return gettext.translation(package_name, localedir=localedir, fallback=True)
+        if '.' in package_name:
+            package_name = '.'.join(package_name.split('.')[:-1])
+        localedir = None
 
+        if pkg_resources is None:
+            mydir = os.path.join(local_dir, 'i18n')
+        else:
+            mydir = pkg_resources.resource_filename(package_name, 'i18n')
 
-def get_translation_functions(package_name, names=('gettext',)):
-    # type: (str, Tuple[str, ...]) -> List[Callable[..., str]]
-    'finds and installs translation functions for package'
-    translation = get_translation_for(package_name)
-    return [getattr(translation, x) for x in names]
+        for localedir in mydir, None:
+            localefile = gettext.find(package_name, localedir)
+            if localefile:
+                break
+
+        return gettext.translation(package_name, localedir=localedir, fallback=True)
+
