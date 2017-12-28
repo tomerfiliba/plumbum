@@ -1,7 +1,8 @@
 import locale
 
 # High performance method for English (no translation needed)
-if locale.getlocale()[0].startswith('en'):
+loc = locale.getlocale()[0]
+if loc is None or loc.startswith('en'):
     class NullTranslation(object):
         def gettext(self, str):
             return str
