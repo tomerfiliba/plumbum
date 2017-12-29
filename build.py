@@ -25,7 +25,7 @@ class BuildProject(cli.Application):
             if twine is None:
                 print("Twine not installed, cannot securely upload. Install twine.")
             else:
-                twine['upload','dist/*gztar' 'dist/*.exe' '*.whl'] & FG
+                twine['upload', 'dist/*tar.gz', 'dist/*.exe', 'dist/*.whl'] & FG
 
 
 if __name__ == "__main__":
