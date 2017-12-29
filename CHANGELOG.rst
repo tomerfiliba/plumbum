@@ -1,10 +1,10 @@
-1.6.5 (in progess)
-------------------
+1.6.5
+-----
 
-* Critical Bugfix: Syntax error in image script could break installs (`#366 <https://github.com/tomerfiliba/plumbum/pull/366>`_)
+* Critical Bugfix: Syntax error in image script could break pip installs (`#366 <https://github.com/tomerfiliba/plumbum/pull/366>`_)
 * CLI: Regression fix: English apps now load as fast as in 1.6.3 (`#364 <https://github.com/tomerfiliba/plumbum/issues/364>`_)
 * CLI: Missing colon restored in group names
-* Restored non-setuptools installs (but really, why would you not have setuptools?) (`#367 <https://github.com/tomerfiliba/plumbum/pull/367>`_)
+* Regression fix: Restored non-setuptools installs (but really, why would you not have setuptools?) (`#367 <https://github.com/tomerfiliba/plumbum/pull/367>`_)
 
 1.6.4
 -----

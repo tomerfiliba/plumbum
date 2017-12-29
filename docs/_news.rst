@@ -1,3 +1,5 @@
+* **a2017.12.29**: Version 1.6.5 released with mostly bugfixes, including a critical one that could break pip installs on some platforms. English cli apps now load as fast as before the localization update.
+
 * **2017.11.27**: Version 1.6.4 released with new CLI localization support. Several bugfixes and better pathlib compatibility, along with better separation between Plumbum's internal packages.
 
 * **2016.12.31**: Version 1.6.3 released to provide Python 3.6 compatibility. Mostly bugfixes, several smaller improvements to paths, and a provisional config parser added.
