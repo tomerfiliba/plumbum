@@ -121,12 +121,13 @@ class SshMachine(BaseRemoteMachine):
         cmdline.append(self._fqhost)
         remote_cmdline = []
         escape = shquote if self._remote_shell else lambda x: x
-        if args and hasattr(self, "env"):
-            envdelta = self.env.getdelta()
-            remote_cmdline.extend(["cd", escape(str(self.cwd)), "&&"])
-            if envdelta:
-                remote_cmdline.append("env")
-                remote_cmdline.extend("%s=%s" % (escape(k), escape(v)) for k, v in envdelta.items())
+        if args:
+            if hasattr(self, "env"):
+                envdelta = self.env.getdelta()
+                remote_cmdline.extend(["cd", escape(str(self.cwd)), "&&"])
+                if envdelta:
+                    remote_cmdline.append("env")
+                    remote_cmdline.extend("%s=%s" % (escape(k), escape(v)) for k, v in envdelta.items())
             if isinstance(args, (tuple, list)):
                 remote_cmdline.extend(escape(i) for i in args)
             else:
