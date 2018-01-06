@@ -4,7 +4,7 @@ from plumbum.machines.session import ShellSession
 from plumbum.machines.local import local
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath
-from plumbum.commands import ProcessExecutionError, shquote
+from plumbum.commands import BaseCommand, ProcessExecutionError, shquote
 import warnings
 
 
@@ -120,23 +120,28 @@ class SshMachine(BaseRemoteMachine):
         cmdline.extend(ssh_opts)
         cmdline.append(self._fqhost)
         remote_cmdline = []
-        escape = shquote if self._remote_shell else lambda x: x
+        if shell_cmd:
+            formulate = arg.formulate() if isinstance(arg, BaseCommand) else (shquote(arg), )
+            quote = shquote
+        else:
+            formulate = quote = lambda x: x
         if args:
             if hasattr(self, "env"):
                 envdelta = self.env.getdelta()
-                remote_cmdline.extend(["cd", escape(str(self.cwd)), "&&"])
+                remote_cmdline.extend(["cd", quote(str(self.cwd)), "&&"])
                 if envdelta:
                     remote_cmdline.append("env")
-                    remote_cmdline.extend("%s=%s" % (escape(k), escape(v)) for k, v in envdelta.items())
+                    remote_cmdline.extend("%s=%s" % (quote(k), quote(v)) for k, v in envdelta.items())
             if isinstance(args, (tuple, list)):
-                remote_cmdline.extend(escape(i) for i in args)
+                for arg in args:
+                    remote_cmdline.extend(formulate(arg))
             else:
-                remote_cmdline.append(escape(args))
+                remote_cmdline.extend(formulate(args))
         if self._remote_shell:
             cmdline.append(self._remote_shell)
             if remote_cmdline:
                 cmdline.append('-c')
-                cmdline.append(' '.join(remote_cmdline))
+                cmdline.append(quote(' '.join(remote_cmdline)))
         else:
             cmdline.extend(remote_cmdline)
         return self._ssh_command[tuple(cmdline)].popen(**kwargs)
