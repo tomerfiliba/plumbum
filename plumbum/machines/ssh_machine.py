@@ -68,11 +68,14 @@ class SshMachine(BaseRemoteMachine):
     :param new_session: whether or not to start the background session as a new
                         session leader (setsid). This will prevent it from being killed on
                         Ctrl+C (SIGINT)
+
+    :param remote_shell: the ``sh'' command to use; this is the command to run on the remote
+                        machine to get a shell environment.  An array of strings is expected.
     """
 
     def __init__(self, host, user = None, port = None, keyfile = None, ssh_command = None,
             scp_command = None, ssh_opts = (), scp_opts = (), password = None, encoding = "utf8",
-            connect_timeout = 10, new_session = False):
+            connect_timeout = 10, new_session = False, remote_shell = None):
 
         if ssh_command is None:
             if password is not None:
@@ -84,6 +87,8 @@ class SshMachine(BaseRemoteMachine):
                 scp_command = local["sshpass"]["-p", password, "scp"]
             else:
                 scp_command = local["scp"]
+        if remote_shell is None:
+            remote_shell = ["/bin/sh"]
 
         scp_args = []
         ssh_args = []
@@ -102,6 +107,7 @@ class SshMachine(BaseRemoteMachine):
         scp_args.extend(scp_opts)
         self._ssh_command = ssh_command[tuple(ssh_args)]
         self._scp_command = scp_command[tuple(scp_args)]
+        self._remote_shell = remote_shell
         BaseRemoteMachine.__init__(self, encoding = encoding, connect_timeout = connect_timeout,
             new_session = new_session)
 
@@ -113,16 +119,25 @@ class SshMachine(BaseRemoteMachine):
         cmdline = []
         cmdline.extend(ssh_opts)
         cmdline.append(self._fqhost)
+        remote_cmdline = []
+        escape = shquote if self._remote_shell else lambda x: x
         if args and hasattr(self, "env"):
             envdelta = self.env.getdelta()
-            cmdline.extend(["cd", str(self.cwd), "&&"])
+            remote_cmdline.extend(["cd", escape(str(self.cwd)), "&&"])
             if envdelta:
-                cmdline.append("env")
-                cmdline.extend("%s=%s" % (k, v) for k, v in envdelta.items())
+                remote_cmdline.append("env")
+                remote_cmdline.extend("%s=%s" % (escape(k), escape(v)) for k, v in envdelta.items())
             if isinstance(args, (tuple, list)):
-                cmdline.extend(args)
+                remote_cmdline.extend(escape(i) for i in args)
             else:
-                cmdline.append(args)
+                remote_cmdline.append(escape(args))
+        if self._remote_shell:
+            cmdline.append(self._remote_shell)
+            if remote_cmdline:
+                cmdline.append('-c')
+                cmdline.append(' '.join(remote_cmdline))
+        else:
+            cmdline.extend(remote_cmdline)
         return self._ssh_command[tuple(cmdline)].popen(**kwargs)
 
     def nohup(self, command):
