@@ -276,6 +276,7 @@ class PuttyMachine(SshMachine):
             user = local.env.user
         if port is not None:
             ssh_opts.extend(["-P", str(port)])
+            scp_opts = list(scp_opts) + ["-P", str(port)]
             port = None
         SshMachine.__init__(self, host, user, port, keyfile = keyfile, ssh_command = ssh_command,
             scp_command = scp_command, ssh_opts = ssh_opts, scp_opts = scp_opts, encoding = encoding,
@@ -292,5 +293,3 @@ class PuttyMachine(SshMachine):
     def session(self, isatty = False, new_session = False):
         return ShellSession(self.popen((), (["-t"] if isatty else ["-T"]), new_session = new_session),
             self.custom_encoding, isatty, self.connect_timeout)
-
-
