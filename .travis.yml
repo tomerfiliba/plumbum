@@ -14,13 +14,13 @@ matrix:
       env: PYV=3.6
 #    - python: nightly
     - python: pypy
-    - language: generic
-      env: PY3=2 PYV=Mac2
-      os: osx
-      before_install: python2 -m ensurepip --upgrade
-    - language: generic
-      os: osx
-      env: PY3=3 PYV=Mac3
+    # - language: generic
+    #   env: PY3=2 PYV=Mac2
+    #   os: osx
+    #   before_install: python2 -m ensurepip --upgrade
+    # - language: generic
+    #   os: osx
+    #   env: PY3=3 PYV=Mac3
 
 install: .ci/travis.sh
 script: python$PY3 setup.py test -c
