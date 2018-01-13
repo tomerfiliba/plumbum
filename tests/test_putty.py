@@ -1,5 +1,6 @@
 """Test that PuttyMachine initializes its SshMachine correctly"""
 
+import platform
 import pytest
 from plumbum import PuttyMachine, SshMachine
 
@@ -10,6 +11,8 @@ def ssh_port(request):
 
 
 class TestPuttyMachine:
+    @pytest.mark.skipif(platform.python_implementation() == 'PyPy',
+                        reason='could not make work on pypy')
     def test_putty_command(self, mocker, ssh_port):
         local = mocker.patch('plumbum.machines.ssh_machine.local')
         init = mocker.spy(SshMachine, '__init__')
