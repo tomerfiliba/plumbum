@@ -63,4 +63,4 @@ class TestPuttyMachine:
         user = local.env.user
 
         machine = PuttyMachine(host)
-        assert str(machine) == 'putty-ssh://{}@{}'.format(user, host)
+        assert str(machine) == 'putty-ssh://{0}@{1}'.format(user, host)
