@@ -25,7 +25,9 @@ class SimpleApp(cli.Application):
         self.eggs = old
         self.tailargs = args
 
-
+class PositionalApp(cli.Application):
+    def main(self, one):
+        print("Got", one)
 
 class Geet(cli.Application):
     debug = cli.Flag("--debug")
@@ -122,6 +124,24 @@ class TestCLI:
 
         _, rc = SimpleApp.run(["foo", "--bacon=hello"], exit = False)
         assert rc == 2
+
+
+    # Testing #371
+    def test_extra_args(self, capsys):
+
+        _, rc = PositionalApp.run(["positionalapp"], exit = False)
+        assert rc != 0
+        stdout, stderr = capsys.readouterr()
+        assert "Expected at least" in stdout
+
+        _, rc = PositionalApp.run(["positionalapp", "one"], exit = False)
+        assert rc == 0
+        stdout, stderr = capsys.readouterr()
+
+        _, rc = PositionalApp.run(["positionalapp", "one", "two"], exit = False)
+        assert rc != 0
+        stdout, stderr = capsys.readouterr()
+        assert "Expected at most" in stdout
 
     def test_subcommands(self):
         _, rc = Geet.run(["geet", "--debug"], exit = False)

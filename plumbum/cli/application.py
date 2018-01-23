@@ -406,15 +406,13 @@ class Application(object):
                 ngettext(
                     "Expected at least {0} positional argument, got {1}",
                     "Expected at least {0} positional arguments, got {1}",
-                    min_args).format(
-                        min_args, tailargs))
+                    min_args).format(min_args, tailargs))
         elif len(tailargs) > max_args:
             raise PositionalArgumentsError(
                 ngettext(
                     "Expected at most {0} positional argument, got {1}",
                     "Expected at most {0} positional arguments, got {1}",
-                    max_args).format(
-                        max_args, tailargs))
+                    max_args).format(max_args, tailargs))
 
         # Positional arguement validataion
         if hasattr(self.main, 'positional'):
