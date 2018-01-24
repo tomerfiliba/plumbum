@@ -8,9 +8,9 @@ if loc is None or loc.startswith('en'):
             return str
         def ngettext(self, str1, strN, n):
             if n==1:
-                return str1.format(n)
+                return str1.replace("{0}", str(n))
             else:
-                return strN.format(n)
+                return strN.replace("{0}", str(n))
 
     def get_translation_for(package_name):
         return NullTranslation()
