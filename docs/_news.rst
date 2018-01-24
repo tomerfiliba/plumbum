@@ -1,4 +1,4 @@
-* **a2017.12.29**: Version 1.6.5 released with mostly bugfixes, including a critical one that could break pip installs on some platforms. English cli apps now load as fast as before the localization update.
+* **2017.12.29**: Version 1.6.5 released with mostly bugfixes, including a critical one that could break pip installs on some platforms. English cli apps now load as fast as before the localization update (Note: a bug affects the failure message of CLI when the wrong number of positional arguments are passed. This is fixed in master)
 
 * **2017.11.27**: Version 1.6.4 released with new CLI localization support. Several bugfixes and better pathlib compatibility, along with better separation between Plumbum's internal packages.
 
