@@ -1,3 +1,8 @@
+1.6.6
+-----
+* Critical Bugfix: High-speed (English) translations could break the CLI module (`#371 <https://github.com/tomerfiliba/plumbum/issues/371>`_)
+* Small improvement to wheels packaging
+
 1.6.5
 -----
 

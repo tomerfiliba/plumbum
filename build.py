@@ -17,7 +17,7 @@ class BuildProject(cli.Application):
         #if self.upload:
         #    local.python("setup.py", "register")
 
-        local.python("setup.py", "sdist", "--formats=gztar", "bdist_wininst", "--plat-name=win32", "bdist_wheel", "--universal")
+        local.python("setup.py", "sdist", "bdist_wininst", "--plat-name=win32", "bdist_wheel")
 
         delete(local.cwd // "*.egg-info", "build")
 
