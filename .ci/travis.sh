@@ -3,12 +3,6 @@
 echo $TRAVIS_PYTHON_VERSION
 
 if [[ "$(uname -s)" == 'Darwin' ]]; then
-    if brew ls --versions python$PY3 > /dev/null; then
-        echo "Brew python is already installed"
-    else
-        brew update
-        brew install python$PY3
-    fi
     python$PY3 -m pip install -r dev-requirements.txt
     python$PY3 -m pip install coveralls
     python$PY3 -m pip install -e .
