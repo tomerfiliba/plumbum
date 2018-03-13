@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-03-12 18:02-0700\n"
+"POT-Creation-Date: 2018-03-12 18:22-0700\n"
 "PO-Revision-Date: 2017-10-14 15:04+0200\n"
 "Last-Translator: Roel Aaij <roel.aaij@gmail.com>\n"
 "Language: nl_NL\n"
@@ -35,7 +35,8 @@ msgid "see '{parent} {sub} --help' for more info"
 msgstr "zie '{parent} {sub} --help' voor meer informatie"
 
 #: plumbum/cli/application.py:171
-msgid "Subcommand names cannot start with '-'"
+#, fuzzy
+msgid "Sub-command names cannot start with '-'"
 msgstr "Namen van subopdrachten mogen niet met '-' beginnen"
 
 #: plumbum/cli/application.py:184
@@ -137,7 +138,7 @@ msgstr "main() niet geïmplementeerd"
 
 #: plumbum/cli/application.py:595
 #, fuzzy
-msgid "Prints help messages of all subcommands and quits"
+msgid "Prints help messages of all sub-commands and quits"
 msgstr "Druk hulpberichten van alle subcommando's af en beëindig"
 
 #: plumbum/cli/application.py:612
@@ -177,7 +178,8 @@ msgid "; excludes {0}"
 msgstr "; sluit {0} uit"
 
 #: plumbum/cli/application.py:701
-msgid "Subcommands:"
+#, fuzzy
+msgid "Sub-commands:"
 msgstr "Subcommando's"
 
 #: plumbum/cli/application.py:740

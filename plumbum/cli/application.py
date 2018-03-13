@@ -168,8 +168,8 @@ class Application(object):
                 if isinstance(obj, Subcommand):
                     name = colors.filter(obj.name)
                     if name.startswith("-"):
-                        raise SubcommandError(T_("Subcommand names cannot start with '-'"))
-                    # it's okay for child classes to override subcommands set by their parents
+                        raise SubcommandError(T_("Sub-command names cannot start with '-'"))
+                    # it's okay for child classes to override sub-commands set by their parents
                     self._subcommands[name] = obj
                     continue
 
@@ -221,7 +221,7 @@ class Application(object):
         .. versionadded:: 1.1
 
         .. versionadded:: 1.3
-            The subcommand can also be a string, in which case it is treated as a
+            The sub-command can also be a string, in which case it is treated as a
             fully-qualified class name and is imported on demand. For examples,
 
             MyApp.subcommand("foo", "fully.qualified.package.FooApp")
@@ -592,9 +592,9 @@ class Application(object):
 
     @switch(
         ["--help-all"], overridable = True, group = "Meta-switches",
-        help=T_("""Prints help messages of all subcommands and quits"""))
+        help=T_("""Prints help messages of all sub-commands and quits"""))
     def helpall(self):
-        """Prints help messages of all subcommands and quits"""
+        """Prints help messages of all sub-commands and quits"""
         self.help()
         print("")
 
@@ -698,7 +698,7 @@ class Application(object):
 
         if self._subcommands:
             gc = self.COLOR_GROUPS["Subcommands"]
-            print(gc | T_("Subcommands:"))
+            print(gc | T_("Sub-commands:"))
             for name, subcls in sorted(self._subcommands.items()):
                 with gc:
                     subapp = subcls.get()
