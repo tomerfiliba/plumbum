@@ -159,6 +159,14 @@ class TestCLI:
         assert rc == 0
         assert Geet.cleanups == [1]
 
+    def test_help_all(self, capsys):
+        _, rc = Geet.run(["geet", "--help-all"], exit = False)
+        assert rc == 0
+        stdout, stderr = capsys.readouterr()
+        assert "--help-all" in stdout
+        assert "geet add" in stdout
+        assert "geet commit" in stdout
+
     def test_unbind(self, capsys):
         _, rc = Sample.run(["sample", "--help"], exit = False)
         assert rc == 0

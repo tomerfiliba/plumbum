@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-15 15:20-0400\n"
+"POT-Creation-Date: 2018-03-12 18:02-0700\n"
 "PO-Revision-Date: 2017-10-14 15:04+0200\n"
 "Last-Translator: Roel Aaij <roel.aaij@gmail.com>\n"
 "Language: nl_NL\n"
@@ -16,56 +16,56 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: plumbum/cli/application.py:53
+#: plumbum/cli/application.py:51
 #, python-brace-format
 msgid "Subcommand({self.name}, {self.subapplication})"
 msgstr "Subopdracht({self.name}, {self.subapplication})"
 
-#: plumbum/cli/application.py:56
+#: plumbum/cli/application.py:54
 msgid "Switches"
 msgstr "Opties"
 
-#: plumbum/cli/application.py:56
+#: plumbum/cli/application.py:54
 msgid "Meta-switches"
 msgstr "Meta-opties"
 
-#: plumbum/cli/application.py:125
+#: plumbum/cli/application.py:123
 #, python-brace-format
 msgid "see '{parent} {sub} --help' for more info"
 msgstr "zie '{parent} {sub} --help' voor meer informatie"
 
-#: plumbum/cli/application.py:173
+#: plumbum/cli/application.py:171
 msgid "Subcommand names cannot start with '-'"
 msgstr "Namen van subopdrachten mogen niet met '-' beginnen"
 
-#: plumbum/cli/application.py:186
+#: plumbum/cli/application.py:184
 #, fuzzy, python-brace-format
 msgid "Switch {name} already defined and is not overridable"
 msgstr "Optie {name} is al gedefiniëerd en kan niet worden overschreven"
 
-#: plumbum/cli/application.py:269 plumbum/cli/application.py:290
-#: plumbum/cli/application.py:304
+#: plumbum/cli/application.py:267 plumbum/cli/application.py:288
+#: plumbum/cli/application.py:302
 #, python-brace-format
 msgid "Unknown switch {0}"
 msgstr "Onbekende optie {0}"
 
-#: plumbum/cli/application.py:273 plumbum/cli/application.py:280
-#: plumbum/cli/application.py:297
+#: plumbum/cli/application.py:271 plumbum/cli/application.py:278
+#: plumbum/cli/application.py:295
 #, python-brace-format
 msgid "Switch {0} requires an argument"
 msgstr "Een argument is vereist bij optie {0}"
 
-#: plumbum/cli/application.py:316
+#: plumbum/cli/application.py:314
 #, python-brace-format
 msgid "Switch {0} already given"
 msgstr "Optie {0} is al gegeven"
 
-#: plumbum/cli/application.py:319
+#: plumbum/cli/application.py:317
 #, python-brace-format
 msgid "Switch {0} already given ({1} is equivalent)"
 msgstr "Optie {0} is al gegeven ({1} is equivalent)"
 
-#: plumbum/cli/application.py:365
+#: plumbum/cli/application.py:363
 msgid ""
 "Argument of {name} expected to be {argtype}, not {val!r}:\n"
 "    {ex!r}"
@@ -73,155 +73,156 @@ msgstr ""
 "Argement van {name} hoort {argtype} te zijn, niet {val|1}:\n"
 "    {ex!r}"
 
-#: plumbum/cli/application.py:382
+#: plumbum/cli/application.py:380
 #, python-brace-format
 msgid "Switch {0} is mandatory"
 msgstr "Optie {0} is verplicht"
 
-#: plumbum/cli/application.py:394
+#: plumbum/cli/application.py:392
 #, python-brace-format
 msgid "Given {0}, the following are missing {1}"
 msgstr "Gegeven {0}, ontbreken de volgenden {1}"
 
-#: plumbum/cli/application.py:400
+#: plumbum/cli/application.py:398
 #, python-brace-format
 msgid "Given {0}, the following are invalid {1}"
 msgstr "Gegeven {0}, zijn de volgenden ongeldig {1}"
 
-#: plumbum/cli/application.py:409
+#: plumbum/cli/application.py:407
 #, python-brace-format
 msgid "Expected at least {0} positional argument, got {1}"
 msgid_plural "Expected at least {0} positional arguments, got {1}"
 msgstr[0] "Verwachtte ten minste {0} positioneel argument, kreeg {1}"
 msgstr[1] "Verwachtte ten minste {0} positionele argumenten, kreeg {1}"
 
-#: plumbum/cli/application.py:416
+#: plumbum/cli/application.py:413
 #, python-brace-format
 msgid "Expected at most {0} positional argument, got {1}"
 msgid_plural "Expected at most {0} positional arguments, got {1}"
 msgstr[0] "Verwachtte hoogstens {0} positioneel argument, kreeg {0}"
 msgstr[1] "Verwachtte hoogstens {0} positionele argumenten, kreeg {0}"
 
-#: plumbum/cli/application.py:494
+#: plumbum/cli/application.py:490
 #, python-brace-format
 msgid "Error: {0}"
 msgstr "Fout: {0}"
 
-#: plumbum/cli/application.py:495 plumbum/cli/application.py:579
-#: plumbum/cli/application.py:584
+#: plumbum/cli/application.py:491 plumbum/cli/application.py:575
+#: plumbum/cli/application.py:580
 msgid "------"
 msgstr "------"
 
-#: plumbum/cli/application.py:563
+#: plumbum/cli/application.py:559
 #, python-brace-format
 msgid "Switch {0} must be a sequence (iterable)"
 msgstr "Optie {0} moet een reeks zijn (itereerbaar object)"
 
-#: plumbum/cli/application.py:567
+#: plumbum/cli/application.py:563
 #, python-brace-format
 msgid "Switch {0} is a boolean flag"
 msgstr "Optie {0} geeft een waarheidswaarde weer"
 
-#: plumbum/cli/application.py:578
+#: plumbum/cli/application.py:574
 #, python-brace-format
 msgid "Unknown sub-command '{0}'"
 msgstr "Onbekend subcommando '{0}'"
 
-#: plumbum/cli/application.py:583
+#: plumbum/cli/application.py:579
 msgid "No sub-command given"
 msgstr "Geen subcommando gegeven"
 
-#: plumbum/cli/application.py:588
+#: plumbum/cli/application.py:584
 msgid "main() not implemented"
 msgstr "main() niet geïmplementeerd"
 
-#: plumbum/cli/application.py:599
-msgid "Print help messages of all subcommands and quit"
+#: plumbum/cli/application.py:595
+#, fuzzy
+msgid "Prints help messages of all subcommands and quits"
 msgstr "Druk hulpberichten van alle subcommando's af en beëindig"
 
-#: plumbum/cli/application.py:616
+#: plumbum/cli/application.py:612
 msgid "Prints this help message and quits"
 msgstr "Drukt dit hulpbericht af en beëindig"
 
-#: plumbum/cli/application.py:635
+#: plumbum/cli/application.py:631
 msgid "Usage:"
 msgstr "Gebruik:"
 
-#: plumbum/cli/application.py:638
+#: plumbum/cli/application.py:634
 #, python-brace-format
 msgid "    {progname} [SWITCHES] [SUBCOMMAND [SWITCHES]] {tailargs}\n"
 msgstr "    {progname} [OPTIES] [SUBCOMMANDO [OPTIES]] {tailargs}\n"
 
-#: plumbum/cli/application.py:640
+#: plumbum/cli/application.py:636
 #, python-brace-format
 msgid "    {progname} [SWITCHES] {tailargs}\n"
 msgstr "    {progname} [OPTIES] {tailargs}\n"
 
-#: plumbum/cli/application.py:681
+#: plumbum/cli/application.py:677
 msgid "; may be given multiple times"
 msgstr "; kan meerdere keren gegeven worden"
 
-#: plumbum/cli/application.py:683
+#: plumbum/cli/application.py:679
 msgid "; required"
 msgstr "; vereist"
 
-#: plumbum/cli/application.py:685
+#: plumbum/cli/application.py:681
 #, python-brace-format
 msgid "; requires {0}"
 msgstr "; verseist {0}"
 
-#: plumbum/cli/application.py:690
+#: plumbum/cli/application.py:686
 #, python-brace-format
 msgid "; excludes {0}"
 msgstr "; sluit {0} uit"
 
-#: plumbum/cli/application.py:705
+#: plumbum/cli/application.py:701
 msgid "Subcommands:"
 msgstr "Subcommando's"
 
-#: plumbum/cli/application.py:744
+#: plumbum/cli/application.py:740
 msgid "Prints the program's version and quits"
 msgstr "Drukt de versie van het programma af en beëindigt"
 
-#: plumbum/cli/application.py:748
+#: plumbum/cli/application.py:744
 msgid "(version not set)"
 msgstr "(versie niet opgegeven)"
 
-#: plumbum/cli/switches.py:145 plumbum/cli/switches.py:187
+#: plumbum/cli/switches.py:144 plumbum/cli/switches.py:186
 msgid "VALUE"
 msgstr "WAARDE"
 
-#: plumbum/cli/switches.py:190
+#: plumbum/cli/switches.py:189
 #, python-brace-format
 msgid "; the default is {0}"
 msgstr "; de standaard is {0}"
 
-#: plumbum/cli/switches.py:369
+#: plumbum/cli/switches.py:368
 #, python-brace-format
 msgid "Not in range [{0:d}..{1:d}]"
 msgstr "Niet binnen bereik [{0:d}..{1:d}]"
 
-#: plumbum/cli/switches.py:390
+#: plumbum/cli/switches.py:389
 #, python-brace-format
 msgid "got unexpected keyword argument(s): {0}"
 msgstr "Onverwacht(e) trefwoord argument(en) gegeven: {0}"
 
-#: plumbum/cli/switches.py:398
+#: plumbum/cli/switches.py:397
 #, python-brace-format
 msgid "Expected one of {0}"
 msgstr "Verwachtte één van {0}"
 
-#: plumbum/cli/switches.py:420
+#: plumbum/cli/switches.py:419
 #, python-brace-format
 msgid "{0} is not a directory"
 msgstr "{0} is geen map"
 
-#: plumbum/cli/switches.py:438
+#: plumbum/cli/switches.py:437
 #, python-brace-format
 msgid "{0} is not a file"
 msgstr "{0} is geen bestand"
 
-#: plumbum/cli/switches.py:446
+#: plumbum/cli/switches.py:445
 #, python-brace-format
 msgid "{0} already exists"
 msgstr "{0} bestaat al"
