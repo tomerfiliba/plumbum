@@ -30,7 +30,7 @@ class WrongArgumentType(SwitchError):
     type has been given"""
     pass
 class SubcommandError(SwitchError):
-    """Raised when there's something wrong with subcommands"""
+    """Raised when there's something wrong with sub-commands"""
     pass
 
 
