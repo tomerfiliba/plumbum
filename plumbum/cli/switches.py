@@ -220,7 +220,7 @@ class SwitchAttr(object):
 
 class Flag(SwitchAttr):
     """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` for boolean flags. If the flag is not
-    given, the value of this attribute is the ``default``; if it is given, the value changes
+    given, the value of this attribute is ``default``; if it is given, the value changes
     to ``not default``. Usage::
 
         class MyApp(Application):
