@@ -61,7 +61,7 @@ class Application(object):
     The base class for CLI applications; your "entry point" class should derive from it,
     define the relevant switch functions and attributes, and the ``main()`` function.
     The class defines two overridable "meta switches" for version (``-v``, ``--version``)
-    and help (``-h``, ``--help``).
+    help (``-h``, ``--help``), and help-all (``--help-all``).
 
     The signature of the main function matters: any positional arguments (e.g., non-switch
     arguments) given on the command line are passed to the ``main()`` function; if you wish
@@ -69,7 +69,7 @@ class Application(object):
     of the arguments will be shown in the help message.
 
     The classmethod ``run`` serves as the entry point of the class. It parses the command-line
-    arguments, invokes switch functions and enter ``main``. You should **not override** this
+    arguments, invokes switch functions and enters ``main``. You should **not override** this
     method.
 
     Usage::
@@ -89,7 +89,7 @@ class Application(object):
     There are several class-level attributes you may set:
 
     * ``PROGNAME`` - the name of the program; if ``None`` (the default), it is set to the
-      name of the executable (``argv[0]``), can be in color. If only a color, will be applied to the name.
+      name of the executable (``argv[0]``); can be in color. If only a color, will be applied to the name.
 
     * ``VERSION`` - the program's version (defaults to ``1.0``, can be in color)
 
@@ -104,10 +104,10 @@ class Application(object):
       and Subcommands
 
     * ``SUBCOMMAND_HELPMSG`` - Controls the printing of extra "see subcommand -h" help message.
-      Default is a message, set to false to remove.
+      Default is a message, set to False to remove.
 
     A note on sub-commands: when an application is the root, its ``parent`` attribute is set to
-    ``None``. When it is used as a nested-command, ``parent`` will point to be its direct ancestor.
+    ``None``. When it is used as a nested-command, ``parent`` will point to its direct ancestor.
     Likewise, when an application is invoked with a sub-command, its ``nested_command`` attribute
     will hold the chosen sub-application and its command-line arguments (a tuple); otherwise, it
     will be set to ``None``
@@ -128,7 +128,7 @@ class Application(object):
 
     def __new__(cls, executable=None):
         """Allows running the class directly as a shortcut for main.
-        This is neccisary for some setup scripts that want a single function,
+        This is neccessary for some setup scripts that want a single function,
         instead of an expression with a dot in it."""
 
 
@@ -222,7 +222,7 @@ class Application(object):
 
         .. versionadded:: 1.3
             The sub-command can also be a string, in which case it is treated as a
-            fully-qualified class name and is imported on demand. For examples,
+            fully-qualified class name and is imported on demand. For example,
 
             MyApp.subcommand("foo", "fully.qualified.package.FooApp")
 
@@ -468,7 +468,7 @@ class Application(object):
 
         .. note::
            Setting ``exit`` to ``False`` is intendend for testing/debugging purposes only -- do
-           not override it other situations.
+           not override it in other situations.
         """
         if argv is None:
             argv = sys.argv
@@ -585,7 +585,7 @@ class Application(object):
             return 1
 
     def cleanup(self, retcode):
-        """Called after ``main()`` and all subapplications have executed, to perform any necessary cleanup.
+        """Called after ``main()`` and all sub-applications have executed, to perform any necessary cleanup.
 
         :param retcode: the return code of ``main()``
         """

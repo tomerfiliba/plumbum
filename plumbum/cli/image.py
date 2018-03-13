@@ -14,7 +14,7 @@ class Image(object):
         self.char_ratio = char_ratio
 
     def best_aspect(self, orig, term):
-        """Select a best possible size matching the orignal aspect ratio.
+        """Select a best possible size matching the original aspect ratio.
         Size is width, height.
         The char_ratio option gives the height of each char with respect
         to its width, zero for no effect."""
@@ -76,7 +76,7 @@ class Image(object):
 
 class ShowImageApp(cli.Application):
     'Display an image on the terminal'
-    double = cli.Flag(['-d','--double'], help="Double resolution (only looks good with some fonts)")
+    double = cli.Flag(['-d','--double'], help="Double resolution (looks good only with some fonts)")
 
     @cli.switch(['-c','--colors'], cli.Range(1,4), help="Level of color, 1-4")
     def colors_set(self, n):

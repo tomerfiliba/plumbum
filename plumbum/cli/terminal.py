@@ -49,7 +49,7 @@ def ask(question, default = None):
             sys.stdout.write("Invalid response, please try again\n")
 
 def choose(question, options, default = None):
-    """Prompts the user with a question and a set of options, from which the user need choose.
+    """Prompts the user with a question and a set of options, from which the user needs to choose.
 
     :param question: The question to ask
     :param options: A set of options. It can be a list (of strings or two-tuples, mapping text
@@ -213,8 +213,3 @@ def pager(rows, pagercmd = None): # pragma: no cover
             except Exception:
                 pass
             os.system("reset")
-
-
-
-
-
