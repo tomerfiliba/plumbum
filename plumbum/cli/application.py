@@ -592,9 +592,9 @@ class Application(object):
 
     @switch(
         ["--help-all"], overridable = True, group = "Meta-switches",
-        help=T_("""Print help messages of all subcommands and quit"""))
+        help=T_("""Prints help messages of all subcommands and quits"""))
     def helpall(self):
-        """Print help messages of all subcommands and quit"""
+        """Prints help messages of all subcommands and quits"""
         self.help()
         print("")
 
