@@ -17,17 +17,21 @@ matrix:
     - language: generic
       env: PY3=2 PYV=Mac2
       os: osx
-      before_install: python2 -m ensurepip --upgrade
+      before_install:
+        - python2 -m ensurepip --upgrade
     - language: generic
       os: osx
       env: PY3=3 PYV=Mac3
+      before_install:
+        - brew update || echo "Already updated"
+        - brew upgrade python@3 || echo "Python3 already installed"
 
 install: .ci/travis.sh
 script: python$PY3 setup.py test -c
 after_success:
-    - if [ -n "$PYV" ] ; then coveralls; fi
+  - if [ -n "$PYV" ] ; then coveralls; fi
 
 notifications:
-    email:
-        on_success: change
-        on_failure: change
+  email:
+    on_success: change
+    on_failure: change
