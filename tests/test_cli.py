@@ -2,6 +2,7 @@ import pytest
 import sys
 
 from plumbum import cli, local
+from plumbum.cli.terminal import get_terminal_size
 
 class SimpleApp(cli.Application):
     @cli.switch(["a"])
@@ -60,6 +61,36 @@ class GeetCommit(cli.Application):
         print("geet commit cleaning up with rc = %s" % (retcode,))
 
 class Sample(cli.Application):
+    DESCRIPTION = "A sample cli application"
+    DESCRIPTION_MORE = '''
+    ABC This is just a sample help text typed with a Dvorak keyboard.
+ Although this paragraph is not left or right justified
+      in source, we expect it to appear
+   formatted nicely on the output, maintaining the indentation of the first line.
+
+  DEF this one has a different indentation.
+
+Let's test that list items are not combined as paragraphs.
+
+   - Item 1
+  GHI more text for item 1, which may be very very very very very very long and even more long and long and long to
+     prove that we can actually wrap list items as well.
+   - Item 2 and this is
+     some text for item 2
+   - Item 3
+
+List items with invisible bullets should be printed without the bullet.
+
+ /XYZ Invisible 1
+ /Invisible 2
+
+  * Star 1
+  * Star 2
+
+  Last paragraph can fill more than one line on the output as well. So many features is bound to cause lots of bugs.
+  Oh well...
+    '''
+
     foo = cli.SwitchAttr("--foo")
 
 Sample.unbind_switches("--version")
@@ -173,6 +204,28 @@ class TestCLI:
         stdout, stderr = capsys.readouterr()
         assert "--foo" in stdout
         assert "--version" not in stdout
+
+    def test_description(self, capsys):
+        _, rc = Sample.run(["sample", "--help"], exit = False)
+        assert rc == 0
+        stdout, stderr = capsys.readouterr()
+        cols, _ = get_terminal_size()
+
+        if cols < 9:
+            # Terminal is too narrow to test
+            pass
+        else:
+            # Paragraph indentation should be preserved
+            assert "    ABC" in stdout
+            assert "  DEF" in stdout
+            assert "   - Item" in stdout
+            # List items should not be combined into paragraphs
+            assert "  * Star 2"
+            # Lines of the same list item should be combined. (The right-hand expression of the 'or' operator
+            # below is for when the terminal is too narrow, causing "GHI" to be wrapped to the next line.)
+            assert "  GHI" not in stdout or "     GHI" in stdout
+            # List item with invisible bullet should be indented without the bullet
+            assert " XYZ" in stdout
 
     def test_default_main(self, capsys):
         _, rc = Sample.run(["sample"], exit = False)
