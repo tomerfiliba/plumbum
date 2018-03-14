@@ -57,8 +57,7 @@ _switch_groups_l10n = [T_('Switches'), T_('Meta-switches')]
 #===================================================================================================
 
 class Application(object):
-    """
-    The base class for CLI applications; your "entry point" class should derive from it,
+    """The base class for CLI applications; your "entry point" class should derive from it,
     define the relevant switch functions and attributes, and the ``main()`` function.
     The class defines two overridable "meta switches" for version (``-v``, ``--version``)
     help (``-h``, ``--help``), and help-all (``--help-all``).
@@ -96,6 +95,12 @@ class Application(object):
     * ``DESCRIPTION`` - a short description of your program (shown in help). If not set,
       the class' ``__doc__`` will be used. Can be in color.
 
+    * ``DESCRIPTION_MORE`` - a detailed description of your program (shown in help). The text will be printed
+      by paragraphs (specified by empty lines between them). The indentation of each paragraph will be the
+      indentation of its first line. List items are identified by their first non-whitespace character being
+      one of '-', '*', and '/'; so that they are not combined with preceding paragraphs. Bullet '/' is
+      "invisible", meaning that the bullet itself will not be printed to the output.
+
     * ``USAGE`` - the usage line (shown in help)
 
     * ``COLOR_USAGE`` - The color of the usage line
@@ -111,10 +116,12 @@ class Application(object):
     Likewise, when an application is invoked with a sub-command, its ``nested_command`` attribute
     will hold the chosen sub-application and its command-line arguments (a tuple); otherwise, it
     will be set to ``None``
+
     """
 
     PROGNAME = None
     DESCRIPTION = None
+    DESCRIPTION_MORE = None
     VERSION = None
     USAGE = None
     COLOR_USAGE = None
@@ -618,6 +625,108 @@ class Application(object):
         if self.DESCRIPTION:
             print(self.DESCRIPTION.strip() + '\n')
 
+        def split_indentation(s):
+            """Identifies the initial indentation (all spaces) of the string and returns the indentation as well
+            as the remainder of the line.
+            """
+            i = 0
+            while i < len(s) and s[i] == ' ': i += 1
+            return s[:i], s[i:]
+
+        def paragraphs(text):
+            """Yields each paragraph of text along with its initial and subsequent indentations to be used by
+            textwrap.TextWrapper.
+
+            Identifies list items from their first non-space character being one of bullets '-', '*', and '/'.
+            However, bullet '/' is invisible and is removed from the list item.
+
+            :param text: The text to separate into paragraphs
+            """
+
+            paragraph = None
+            initial_indent = ""
+            subsequent_indent = ""
+
+            def current():
+                """Yields the current result if present.
+                """
+                if paragraph:
+                    yield paragraph, initial_indent, subsequent_indent
+
+            for part in text.lstrip("\n").split("\n"):
+                indent, line = split_indentation(part)
+
+                if len(line) == 0:
+                    # Starting a new paragraph
+                    yield from current()
+                    yield "", "", ""
+
+                    paragraph = None
+                    initial_indent = ""
+                    subsequent_indent = ""
+                else:
+                    # Adding to current paragraph
+                    def is_list_item(line):
+                        """Returns true if the first element of 'line' is a bullet character.
+                        """
+                        bullets = [ '-', '*', '/' ]
+                        return line[0] in bullets
+
+                    def has_invisible_bullet(line):
+                        """Returns true if the first element of 'line' is the invisible bullet ('/').
+                        """
+                        return line[0] == '/'
+
+                    if is_list_item(line):
+                        # Done with current paragraph
+                        yield from current()
+
+                        if has_invisible_bullet(line):
+                            line = line[1:]
+
+                        paragraph = line
+                        initial_indent = indent
+
+                        # Calculate extra indentation for subsequent lines of this list item
+                        i = 1
+                        while i < len(line) and line[i] == ' ': i += 1
+                        subsequent_indent = indent + " " * i
+                    else:
+                        if not paragraph:
+                            # Start a new paragraph
+                            paragraph = line
+                            initial_indent = indent
+                            subsequent_indent = indent
+                        else:
+                            # Add to current paragraph
+                            paragraph = paragraph + ' ' + line
+
+            yield from current()
+
+
+        def wrapped_paragraphs(text, width):
+            """Yields each line of each paragraph of text after wrapping them on 'width' number of columns.
+
+            :param text: The text to yield wrapped lines of
+            :param width: The width of the wrapped output
+            """
+            if not text:
+                return
+
+            width = max(width, 1)
+
+            for paragraph, initial_indent, subsequent_indent in paragraphs(text):
+                wrapper = TextWrapper(width, initial_indent=initial_indent, subsequent_indent=subsequent_indent)
+                w = wrapper.wrap(paragraph)
+                for line in w:
+                    yield line
+                if len(w) == 0:
+                    yield ""
+
+        cols, _ = get_terminal_size()
+        for line in wrapped_paragraphs(self.DESCRIPTION_MORE, cols):
+            print(line)
+
         m = six.getfullargspec(self.main)
         tailargs = m.args[1:]  # skip self
         if m.defaults:
@@ -666,7 +775,6 @@ class Application(object):
                     print("")
 
         sw_width = max(len(prefix) for si, prefix, color in switchs(by_groups, False)) + 4
-        cols, _ = get_terminal_size()
         description_indent = "    {0}{1}{2}"
         wrapper = TextWrapper(width = max(cols - min(sw_width, 60), 50) - 6)
         indentation = "\n" + " " * (cols - wrapper.width)
