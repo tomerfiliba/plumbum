@@ -6,7 +6,7 @@ import time
 from itertools import chain
 
 from plumbum.commands.processes import run_proc, ProcessExecutionError
-from plumbum.commands.base import AppendingStdoutRedirection, StdoutRedirection
+import plumbum.commands.base
 from plumbum.lib import read_fd_decode_safely
 
 
@@ -310,11 +310,11 @@ class _NOHUP(ExecutionModifier):
         self.append = append
 
     def __rand__(self, cmd):
-        if isinstance(cmd, StdoutRedirection):
+        if isinstance(cmd, plumbum.commands.base.StdoutRedirection):
             stdout = cmd.file
             append = False
             cmd = cmd.cmd
-        elif isinstance(cmd, AppendingStdoutRedirection):
+        elif isinstance(cmd, plumbum.commands.base.AppendingStdoutRedirection):
             stdout = cmd.file
             append = True
             cmd = cmd.cmd
