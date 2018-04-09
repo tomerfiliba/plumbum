@@ -135,7 +135,7 @@ class Application(object):
 
     def __new__(cls, executable=None):
         """Allows running the class directly as a shortcut for main.
-        This is neccessary for some setup scripts that want a single function,
+        This is necessary for some setup scripts that want a single function,
         instead of an expression with a dot in it."""
 
 
@@ -658,7 +658,8 @@ class Application(object):
 
                 if len(line) == 0:
                     # Starting a new paragraph
-                    yield from current()
+                    for item in current():
+                        yield item
                     yield "", "", ""
 
                     paragraph = None
@@ -679,7 +680,8 @@ class Application(object):
 
                     if is_list_item(line):
                         # Done with current paragraph
-                        yield from current()
+                        for item in current():
+                            yield item
 
                         if has_invisible_bullet(line):
                             line = line[1:]
@@ -701,7 +703,8 @@ class Application(object):
                             # Add to current paragraph
                             paragraph = paragraph + ' ' + line
 
-            yield from current()
+            for item in current():
+                yield item
 
 
         def wrapped_paragraphs(text, width):
