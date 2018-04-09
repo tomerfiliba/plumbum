@@ -7,7 +7,7 @@ name = "pypi"
 
 [packages]
 
-paramiko = "*"
+paramiko = {version = "*", markers="python_version >= '2.7'"}
 
 
 [dev-packages]
