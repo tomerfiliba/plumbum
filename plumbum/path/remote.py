@@ -1,4 +1,5 @@
 import errno
+import os.path
 from contextlib import contextmanager
 from plumbum.path.base import Path, FSUser
 from plumbum.lib import _setdoc, six
@@ -92,7 +93,7 @@ class RemotePath(Path):
     @property # type: ignore
     @_setdoc(Path)
     def suffix(self):
-        return '.' + self.name.rsplit('.',1)[1]
+        return os.path.splitext(self.name)[1]
 
     @property # type: ignore
     @_setdoc(Path)
@@ -100,7 +101,7 @@ class RemotePath(Path):
         name = self.name
         exts = []
         while '.' in name:
-            name, ext = name.rsplit('.',1)
+            name, ext = name.rsplit('.', 1)
             exts.append('.' + ext)
         return list(reversed(exts))
 
