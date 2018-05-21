@@ -8,20 +8,28 @@ class EnvPathList(list):
     def __init__(self, path_factory, pathsep):
         self._path_factory = path_factory
         self._pathsep = pathsep
+
     def append(self, path):
         list.append(self, self._path_factory(path))
+
     def extend(self, paths):
         list.extend(self, (self._path_factory(p) for p in paths))
+
     def insert(self, index, path):
         list.insert(self, index, self._path_factory(path))
+
     def index(self, path):
         list.index(self, self._path_factory(path))
+
     def __contains__(self, path):
         return list.__contains__(self, self._path_factory(path))
+
     def remove(self, path):
         list.remove(self, self._path_factory(path))
+
     def update(self, text):
         self[:] = [self._path_factory(p) for p in text.split(self._pathsep)]
+
     def join(self):
         return self._pathsep.join(str(p) for p in self)
 
@@ -60,30 +68,39 @@ class BaseEnv(object):
         """Returns an iterator over the items ``(key, value)`` of current environment
         (like dict.items)"""
         return iter(self._curr.items())
+
     def __hash__(self):
         raise TypeError("unhashable type")
+
     def __len__(self):
         """Returns the number of elements of the current environment"""
         return len(self._curr)
+
     def __contains__(self, name):
         """Tests whether an environment variable exists in the current environment"""
         return (name if self.CASE_SENSITIVE else name.upper()) in self._curr
+
     def __getitem__(self, name):
         """Returns the value of the given environment variable from current environment,
         raising a ``KeyError`` if it does not exist"""
         return self._curr[name if self.CASE_SENSITIVE else name.upper()]
+
     def keys(self):
         """Returns the keys of the current environment (like dict.keys)"""
         return self._curr.keys()
+
     def items(self):
         """Returns the items of the current environment (like dict.items)"""
         return self._curr.items()
+
     def values(self):
         """Returns the values of the current environment (like dict.values)"""
         return self._curr.values()
+
     def get(self, name, *default):
         """Returns the keys of the current environment (like dict.keys)"""
-        return self._curr.get((name if self.CASE_SENSITIVE else name.upper()), *default)
+        return self._curr.get((name if self.CASE_SENSITIVE else name.upper()),
+                              *default)
 
     def __delitem__(self, name):
         """Deletes an environment variable from the current environment"""
@@ -91,12 +108,14 @@ class BaseEnv(object):
         del self._curr[name]
         if name == "PATH":
             self._update_path()
+
     def __setitem__(self, name, value):
         """Sets/replaces an environment variable's value in the current environment"""
         name = name if self.CASE_SENSITIVE else name.upper()
         self._curr[name] = value
         if name == "PATH":
             self._update_path()
+
     def pop(self, name, *default):
         """Pops an element from the current environment (like dict.pop)"""
         name = name if self.CASE_SENSITIVE else name.upper()
@@ -104,10 +123,12 @@ class BaseEnv(object):
         if name == "PATH":
             self._update_path()
         return res
+
     def clear(self):
         """Clears the current environment (like dict.clear)"""
         self._curr.clear()
         self._update_path()
+
     def update(self, *args, **kwargs):
         """Updates the current environment (like dict.update)"""
         self._curr.update(*args, **kwargs)
@@ -129,20 +150,23 @@ class BaseEnv(object):
     def _get_home(self):
         if "HOME" in self:
             return self._path_factory(self["HOME"])
-        elif "USERPROFILE" in self: # pragma: no cover
+        elif "USERPROFILE" in self:  # pragma: no cover
             return self._path_factory(self["USERPROFILE"])
-        elif "HOMEPATH" in self: # pragma: no cover
-            return self._path_factory(self.get("HOMEDRIVE", ""), self["HOMEPATH"])
+        elif "HOMEPATH" in self:  # pragma: no cover
+            return self._path_factory(
+                self.get("HOMEDRIVE", ""), self["HOMEPATH"])
         return None
+
     def _set_home(self, p):
         if "HOME" in self:
             self["HOME"] = str(p)
-        elif "USERPROFILE" in self: # pragma: no cover
+        elif "USERPROFILE" in self:  # pragma: no cover
             self["USERPROFILE"] = str(p)
-        elif "HOMEPATH" in self: # pragma: no cover
+        elif "HOMEPATH" in self:  # pragma: no cover
             self["HOMEPATH"] = str(p)
-        else: # pragma: no cover
+        else:  # pragma: no cover
             self["HOME"] = str(p)
+
     home = property(_get_home, _set_home)
     """Get or set the home path"""
 
@@ -150,7 +174,8 @@ class BaseEnv(object):
     def user(self):
         """Return the user name, or ``None`` if it is not set"""
         # adapted from getpass.getuser()
-        for name in ('LOGNAME', 'USER', 'LNAME', 'USERNAME'): # pragma: no branch
+        for name in ('LOGNAME', 'USER', 'LNAME',
+                     'USERNAME'):  # pragma: no branch
             if name in self:
                 return self[name]
         try:
@@ -160,4 +185,3 @@ class BaseEnv(object):
             return None
         else:
             return pwd.getpwuid(os.getuid())[0]  # @UndefinedVariable
-

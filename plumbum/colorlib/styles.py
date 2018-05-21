@@ -21,16 +21,21 @@ import platform
 try:
     from abc import ABC
 except ImportError:
-    from abc import ABCMeta # type: ignore
-    ABC = ABCMeta('ABC', (object,), {'__module__':__name__, '__slots__':('__weakref__')}) # type: ignore
+    from abc import ABCMeta  # type: ignore
+    ABC = ABCMeta('ABC', (object, ), {
+        '__module__': __name__,
+        '__slots__': ('__weakref__')
+    })  # type: ignore
 
 try:
     from typing import IO, Dict, Union
 except ImportError:
     pass
 
-__all__ = ['Color', 'Style', 'ANSIStyle', 'HTMLStyle', 'ColorNotFound', 'AttributeNotFound']
-
+__all__ = [
+    'Color', 'Style', 'ANSIStyle', 'HTMLStyle', 'ColorNotFound',
+    'AttributeNotFound'
+]
 
 _lower_camel_names = [n.replace('_', '') for n in color_names]
 
@@ -40,7 +45,7 @@ def get_color_repr():
     if not sys.stdout.isatty():
         return False
 
-    term =os.environ.get("TERM", "")
+    term = os.environ.get("TERM", "")
 
     # Some terminals set TERM=xterm for compatibility
     if term.endswith("256color") or term == "xterm":
@@ -54,13 +59,16 @@ def get_color_repr():
     else:
         return 3
 
+
 class ColorNotFound(Exception):
     """Thrown when a color is not valid for a particular method."""
     pass
 
+
 class AttributeNotFound(Exception):
     """Similar to color not found, only for attributes."""
     pass
+
 
 class ResetNotSupported(Exception):
     """An exception indicating that Reset is not available
@@ -120,13 +128,14 @@ class Color(ABC):
         """This works from color values, or tries to load non-simple ones."""
 
         if isinstance(r_or_color, type(self)):
-            for item in ('fg', 'isreset', 'rgb', 'number', 'representation', 'exact'):
+            for item in ('fg', 'isreset', 'rgb', 'number', 'representation',
+                         'exact'):
                 setattr(self, item, getattr(r_or_color, item))
             return
 
         self.fg = fg
-        self.isreset = True # Starts as reset color
-        self.rgb = (0,0,0)
+        self.isreset = True  # Starts as reset color
+        self.rgb = (0, 0, 0)
 
         self.number = None
         'Number of the original color, or closest color'
@@ -137,7 +146,7 @@ class Color(ABC):
         self.exact = True
         'This is false if the named color does not match the real color'
 
-        if None in (g,b):
+        if None in (g, b):
             if not r_or_color:
                 return
             try:
@@ -149,7 +158,7 @@ class Color(ABC):
                     self._from_hex(r_or_color)
 
         elif None not in (r_or_color, g, b):
-            self.rgb = (r_or_color,g,b)
+            self.rgb = (r_or_color, g, b)
             self._init_number()
         else:
             raise ColorNotFound("Invalid parameters for a color!")
@@ -173,7 +182,6 @@ class Color(ABC):
         if not self.exact:
             self.number = number
 
-
     @classmethod
     def from_simple(cls, color, fg=True):
         """Creates a color from simple name or color number"""
@@ -184,8 +192,8 @@ class Color(ABC):
     def _from_simple(self, color):
         try:
             color = color.lower()
-            color = color.replace(' ','')
-            color = color.replace('_','')
+            color = color.replace(' ', '')
+            color = color.replace('_', '')
         except AttributeError:
             pass
 
@@ -216,8 +224,8 @@ class Color(ABC):
     def _from_full(self, color):
         try:
             color = color.lower()
-            color = color.replace(' ','')
-            color = color.replace('_','')
+            color = color.replace(' ', '')
+            color = color.replace('_', '')
         except AttributeError:
             pass
 
@@ -266,11 +274,12 @@ class Color(ABC):
     @property
     def name_camelcase(self):
         """The camelcase name of the color"""
-        return self.name.replace("_", " ").title().replace(" ","")
+        return self.name.replace("_", " ").title().replace(" ", "")
 
     def __repr__(self):
         """This class has a smart representation that shows name and color (if not unique)."""
-        name = ['Deactivated:', ' Basic:', '', ' Full:', ' True:'][self.representation]
+        name = ['Deactivated:', ' Basic:', '', ' Full:',
+                ' True:'][self.representation]
         name += '' if self.fg else ' Background'
         name += ' ' + self.name_camelcase
         name += '' if self.exact else ' ' + self.hex_code
@@ -294,13 +303,14 @@ class Color(ABC):
         ansi_addition = 30 if self.fg else 40
 
         if self.isreset:
-            return (ansi_addition+9,)
+            return (ansi_addition + 9, )
         elif self.representation < 3:
-            return (color_codes_simple[self.number]+ansi_addition,)
+            return (color_codes_simple[self.number] + ansi_addition, )
         elif self.representation == 3:
-            return (ansi_addition+8, 5, self.number)
+            return (ansi_addition + 8, 5, self.number)
         else:
-            return (ansi_addition+8, 2, self.rgb[0], self.rgb[1], self.rgb[2])
+            return (ansi_addition + 8, 2, self.rgb[0], self.rgb[1],
+                    self.rgb[2])
 
     @property
     def hex_code(self):
@@ -333,22 +343,20 @@ class Color(ABC):
             return self.to_representation(val)
 
 
-
-
 class Style(object):
     """This class allows the color changes to be called directly
     to write them to stdout, ``[]`` calls to wrap colors (or the ``.wrap`` method)
     and can be called in a with statement.
     """
 
-    __slots__ = ('attributes','fg', 'bg', 'isreset', '__weakref__')
+    __slots__ = ('attributes', 'fg', 'bg', 'isreset', '__weakref__')
 
     color_class = Color
     """The class of color to use. Never hardcode ``Color`` call when writing a Style
     method."""
 
-    attribute_names = None # type: Union[Dict[str,str], Dict[str,int]]
-    _stdout = None # type: IO
+    attribute_names = None  # type: Union[Dict[str,str], Dict[str,int]]
+    _stdout = None  # type: IO
     end = '\n'
     """The endline character. Override if needed in subclasses."""
 
@@ -363,14 +371,19 @@ class Style(object):
         Unfortunately, it only works on an instance..
         """
         return self.__class__._stdout if self.__class__._stdout is not None else sys.stdout
+
     @stdout.setter
     def stdout(self, newout):
         self.__class__._stdout = newout
 
-    def __init__(self, attributes=None, fgcolor=None, bgcolor=None, reset=False):
+    def __init__(self,
+                 attributes=None,
+                 fgcolor=None,
+                 bgcolor=None,
+                 reset=False):
         """This is usually initialized from a factory."""
         if isinstance(attributes, type(self)):
-            for item in ('attributes','fg', 'bg', 'isreset'):
+            for item in ('attributes', 'fg', 'bg', 'isreset'):
                 setattr(self, item, copy(getattr(attributes, item)))
             return
         self.attributes = attributes if attributes is not None else dict()
@@ -379,7 +392,8 @@ class Style(object):
         self.isreset = reset
         invalid_attributes = set(self.attributes) - set(self.attribute_names)
         if len(invalid_attributes) > 0:
-            raise AttributeNotFound("Attribute(s) not valid: " + ", ".join(invalid_attributes))
+            raise AttributeNotFound("Attribute(s) not valid: " +
+                                    ", ".join(invalid_attributes))
 
     @classmethod
     def from_color(cls, color):
@@ -388,7 +402,6 @@ class Style(object):
         else:
             self = cls(bgcolor=color)
         return self
-
 
     def invert(self):
         """This resets current color(s) and flips the value of all
@@ -504,10 +517,9 @@ class Style(object):
         sep = kargs.get('sep', ' ')
         file = kargs.get('file', self.stdout)
         flush = kargs.get('flush', False)
-        file.write(self.wrap(sep.join(map(str,printables))) + end)
+        file.write(self.wrap(sep.join(map(str, printables))) + end)
         if flush:
             file.flush()
-
 
     print_ = print
     """Shortcut just in case user not using __future__"""
@@ -540,8 +552,8 @@ class Style(object):
                 codes.append(attributes_ansi[attribute])
             else:
                 # Fixing bold inverse being 22 instead of 21 on some terminals:
-                codes.append(attributes_ansi[attribute]
-                        + 20 if attributes_ansi[attribute]!=1 else 22 )
+                codes.append(attributes_ansi[attribute] +
+                             20 if attributes_ansi[attribute] != 1 else 22)
 
         if self.fg:
             codes.extend(self.fg.ansi_codes)
@@ -563,10 +575,13 @@ class Style(object):
 
     def __repr__(self):
         name = self.__class__.__name__
-        attributes = ', '.join(a for a in self.attributes if self.attributes[a])
-        neg_attributes = ', '.join('-'+a for a in self.attributes if not self.attributes[a])
+        attributes = ', '.join(
+            a for a in self.attributes if self.attributes[a])
+        neg_attributes = ', '.join(
+            '-' + a for a in self.attributes if not self.attributes[a])
         colors = ', '.join(repr(c) for c in [self.fg, self.bg] if c)
-        string = '; '.join(s for s in [attributes, neg_attributes, colors] if s)
+        string = '; '.join(
+            s for s in [attributes, neg_attributes, colors] if s)
         if self.isreset:
             string = 'reset'
         return "<{0}: {1}>".format(name, string if string else 'empty')
@@ -578,8 +593,7 @@ class Style(object):
                 return other.isreset
             else:
                 return (self.attributes == other.attributes
-                        and self.fg == other.fg
-                        and self.bg == other.bg)
+                        and self.fg == other.fg and self.bg == other.bg)
         else:
             return str(self) == other
 
@@ -588,18 +602,17 @@ class Style(object):
         """Base Style does not implement a __str__ representation. This is the one
         required method of a subclass."""
 
-
     @classmethod
-    def from_ansi(cls, ansi_string, filter_resets = False):
+    def from_ansi(cls, ansi_string, filter_resets=False):
         """This generated a style from an ansi string. Will ignore resets if filter_resets is True."""
         result = cls()
         res = cls.ANSI_REG.search(ansi_string)
         for group in res.groups():
-            sequence = map(int,group.split(';'))
+            sequence = map(int, group.split(';'))
             result.add_ansi(sequence, filter_resets)
         return result
 
-    def add_ansi(self, sequence, filter_resets = False):
+    def add_ansi(self, sequence, filter_resets=False):
         """Adds a sequence of ansi numbers to the class. Will ignore resets if filter_resets is True."""
 
         values = iter(sequence)
@@ -614,7 +627,8 @@ class Style(object):
                         if fg:
                             self.fg = self.color_class.from_full(value)
                         else:
-                            self.bg = self.color_class.from_full(value, fg=False)
+                            self.bg = self.color_class.from_full(
+                                value, fg=False)
                     elif value == 2:
                         r = next(values)
                         g = next(values)
@@ -624,27 +638,30 @@ class Style(object):
                         else:
                             self.bg = self.color_class(r, g, b, fg=False)
                     else:
-                        raise ColorNotFound("the value 5 or 2 should follow a 38 or 48")
-                elif value==0:
+                        raise ColorNotFound(
+                            "the value 5 or 2 should follow a 38 or 48")
+                elif value == 0:
                     if filter_resets is False:
                         self.isreset = True
                 elif value in attributes_ansi.values():
                     for name in attributes_ansi:
                         if value == attributes_ansi[name]:
                             self.attributes[name] = True
-                elif value in (20+n for n in attributes_ansi.values()):
+                elif value in (20 + n for n in attributes_ansi.values()):
                     if filter_resets is False:
                         for name in attributes_ansi:
                             if value == attributes_ansi[name] + 20:
                                 self.attributes[name] = False
                 elif 30 <= value <= 37:
-                    self.fg = self.color_class.from_simple(value-30)
+                    self.fg = self.color_class.from_simple(value - 30)
                 elif 40 <= value <= 47:
-                    self.bg = self.color_class.from_simple(value-40, fg=False)
+                    self.bg = self.color_class.from_simple(
+                        value - 40, fg=False)
                 elif 90 <= value <= 97:
-                    self.fg = self.color_class.from_simple(value-90+8)
+                    self.fg = self.color_class.from_simple(value - 90 + 8)
                 elif 100 <= value <= 107:
-                    self.bg = self.color_class.from_simple(value-100+8, fg=False)
+                    self.bg = self.color_class.from_simple(
+                        value - 100 + 8, fg=False)
                 elif value == 39:
                     if filter_resets is False:
                         self.fg = self.color_class()
@@ -652,7 +669,8 @@ class Style(object):
                     if filter_resets is False:
                         self.bg = self.color_class(fg=False)
                 else:
-                    raise ColorNotFound("The code {0} is not recognised".format(value))
+                    raise ColorNotFound(
+                        "The code {0} is not recognised".format(value))
         except StopIteration:
             return
 
@@ -665,7 +683,6 @@ class Style(object):
     def string_contains_colors(cls, colored_string):
         """Checks to see if a string contains colors."""
         return len(cls.ANSI_REG.findall(colored_string)) > 0
-
 
     def to_representation(self, rep):
         """This converts both colors to a specific representation"""
@@ -689,7 +706,6 @@ class Style(object):
             other.bg = other.bg.limit_representation(rep)
         return other
 
-
     @property
     def basic(self):
         """The color in the 8 color representation."""
@@ -710,6 +726,7 @@ class Style(object):
         """The color in the true color representation."""
         return self.to_representation(4)
 
+
 class ANSIStyle(Style):
     """This is a subclass for ANSI styles. Use it to get
     color on sys.stdout tty terminals on posix systems.
@@ -728,12 +745,21 @@ class ANSIStyle(Style):
         else:
             return self.limit_representation(self.use_color).ansi_sequence
 
+
 class HTMLStyle(Style):
     """This was meant to be a demo of subclassing Style, but
     actually can be a handy way to quickly color html text."""
 
     __slots__ = ()
-    attribute_names = dict(bold='b', em='em', italics='i', li='li', underline='span style="text-decoration: underline;"', code='code', ol='ol start=0', strikeout='s')
+    attribute_names = dict(
+        bold='b',
+        em='em',
+        italics='i',
+        li='li',
+        underline='span style="text-decoration: underline;"',
+        code='code',
+        ol='ol start=0',
+        strikeout='s')
     end = '<br/>\n'
 
     def __str__(self):
@@ -744,7 +770,8 @@ class HTMLStyle(Style):
         result = ''
 
         if self.bg and not self.bg.isreset:
-            result += '<span style="background-color: {0}">'.format(self.bg.hex_code)
+            result += '<span style="background-color: {0}">'.format(
+                self.bg.hex_code)
         if self.fg and not self.fg.isreset:
             result += '<font color="{0}">'.format(self.fg.hex_code)
         for attr in sorted(self.attributes):

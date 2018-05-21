@@ -18,12 +18,14 @@ def delete(*paths):
         elif hasattr(p, "__iter__"):
             delete(*p)
         else:
-            raise TypeError("Cannot delete %r" % (p,))
+            raise TypeError("Cannot delete %r" % (p, ))
+
 
 def _move(src, dst):
     ret = copy(src, dst)
     delete(src)
     return ret
+
 
 def move(src, dst):
     """Moves the source path onto the destination path; ``src`` and ``dst`` can be either
@@ -40,7 +42,9 @@ def move(src, dst):
         if not dst.exists():
             dst.mkdir()
         elif not dst.is_dir():
-            raise ValueError("When using multiple sources, dst %r must be a directory" % (dst,))
+            raise ValueError(
+                "When using multiple sources, dst %r must be a directory" %
+                (dst, ))
         for src2 in src:
             move(src2, dst)
         return dst
@@ -59,6 +63,7 @@ def move(src, dst):
     else:
         return _move(src, dst)
 
+
 def copy(src, dst):
     """
     Copy (recursively) the source path onto the destination path; ``src`` and ``dst`` can be
@@ -75,7 +80,9 @@ def copy(src, dst):
         if not dst.exists():
             dst.mkdir()
         elif not dst.is_dir():
-            raise ValueError("When using multiple sources, dst %r must be a directory" % (dst,))
+            raise ValueError(
+                "When using multiple sources, dst %r must be a directory" %
+                (dst, ))
         for src2 in src:
             copy(src2, dst)
         return dst
@@ -103,7 +110,7 @@ def copy(src, dst):
 def gui_open(filename):
     """This selects the proper gui open function. This can
        also be achieved with webbrowser, but that is not supported."""
-    if(hasattr(os, "startfile")):
+    if (hasattr(os, "startfile")):
         os.startfile(filename)
     else:
         local.get('xdg-open', 'open')(filename)

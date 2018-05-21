@@ -15,10 +15,12 @@ class FSUser(int):
     just like a number (``uid``/``gid``), but also have a ``.name`` attribute that holds the
     string-name of the user, if given (otherwise ``None``)
     """
-    def __new__(cls, val, name = None):
+
+    def __new__(cls, val, name=None):
         self = int.__new__(cls, val)
         self.name = name
         return self
+
 
 class Path(str, six.ABC):
     """An abstraction over file system paths. This class is abstract, and the two implementations
@@ -30,16 +32,21 @@ class Path(str, six.ABC):
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, str(self))
+
     def __div__(self, other):
         """Joins two paths"""
         return self.join(other)
+
     __truediv__ = __div__
+
     def __floordiv__(self, expr):
         """Returns a (possibly empty) list of paths that matched the glob-pattern under this path"""
         return self.glob(expr)
+
     def __iter__(self):
         """Iterate over the files in this directory"""
         return iter(self.list())
+
     def __eq__(self, other):
         if isinstance(other, Path):
             return self._get_info() == other._get_info()
@@ -50,23 +57,31 @@ class Path(str, six.ABC):
                 return str(self).lower() == other.lower()
         else:
             return NotImplemented
+
     def __ne__(self, other):
         return not (self == other)
+
     def __gt__(self, other):
         return str(self) > str(other)
+
     def __ge__(self, other):
         return str(self) >= str(other)
+
     def __lt__(self, other):
         return str(self) < str(other)
+
     def __le__(self, other):
         return str(self) <= str(other)
+
     def __hash__(self):
         if self.CASE_SENSITIVE:
             return hash(str(self))
         else:
             return hash(str(self).lower())
+
     def __nonzero__(self):
         return bool(str(self))
+
     __bool__ = __nonzero__
 
     def __fpath__(self):
@@ -84,10 +99,12 @@ class Path(str, six.ABC):
     def _form(self, *parts):
         pass
 
-    def up(self, count = 1):
+    def up(self, count=1):
         """Go up in ``count`` directories (the default is 1)"""
         return self.join("../" * count)
-    def walk(self, filter = lambda p: True, dir_filter = lambda p: True):  # @ReservedAssignment
+
+    def walk(self, filter=lambda p: True,
+             dir_filter=lambda p: True):  # @ReservedAssignment
         """traverse all (recursive) sub-elements under this directory, that match the given filter.
         By default, the filter accepts everything; you can provide a custom filter function that
         takes a path as an argument and returns a boolean
@@ -133,6 +150,7 @@ class Path(str, six.ABC):
     @abstractproperty
     def suffix(self):
         """The suffix of this file"""
+
     @abstractproperty
     def suffixes(self):
         """This is a list of all suffixes"""
@@ -156,46 +174,59 @@ class Path(str, six.ABC):
     @abstractmethod
     def _get_info(self):
         pass
+
     @abstractmethod
     def join(self, *parts):
         """Joins this path with any number of paths"""
+
     @abstractmethod
     def list(self):
         """Returns the files in this directory"""
+
     @abstractmethod
     def iterdir(self):
         """Returns an iterator over the directory. Might be slightly faster on Python 3.5 than .list()"""
+
     @abstractmethod
     def is_dir(self):
         """Returns ``True`` if this path is a directory, ``False`` otherwise"""
+
     def isdir(self):
         """Included for compatibility with older Plumbum code"""
         warnings.warn("Use .is_dir() instead", DeprecationWarning)
         return self.is_dir()
+
     @abstractmethod
     def is_file(self):
         """Returns ``True`` if this path is a regular file, ``False`` otherwise"""
+
     def isfile(self):
         """Included for compatibility with older Plumbum code"""
         warnings.warn("Use .is_file() instead", DeprecationWarning)
         return self.is_file()
+
     def islink(self):
         """Included for compatibility with older Plumbum code"""
         warnings.warn("Use is_symlink instead", DeprecationWarning)
         return self.is_symlink()
+
     @abstractmethod
     def is_symlink(self):
         """Returns ``True`` if this path is a symbolic link, ``False`` otherwise"""
+
     @abstractmethod
     def exists(self):
         """Returns ``True`` if this path exists, ``False`` otherwise"""
+
     @abstractmethod
     def stat(self):
         """Returns the os.stats for a file"""
         pass
+
     @abstractmethod
     def with_name(self, name):
         """Returns a path with the name replaced"""
+
     @abstractmethod
     def with_suffix(self, suffix, depth=1):
         """Returns a path with the suffix replaced. Up to last ``depth`` suffixes will be
@@ -210,41 +241,52 @@ class Path(str, six.ABC):
             return self
         else:
             return self.with_suffix(suffix)
+
     @abstractmethod
     def glob(self, pattern):
         """Returns a (possibly empty) list of paths that matched the glob-pattern under this path"""
+
     @abstractmethod
     def delete(self):
         """Deletes this path (recursively, if a directory)"""
+
     @abstractmethod
     def move(self, dst):
         """Moves this path to a different location"""
+
     def rename(self, newname):
         """Renames this path to the ``new name`` (only the basename is changed)"""
         return self.move(self.up() / newname)
+
     @abstractmethod
-    def copy(self, dst, override = False):
+    def copy(self, dst, override=False):
         """Copies this path (recursively, if a directory) to the destination path. Raises TypeError if
         dst exists and override is False."""
+
     @abstractmethod
     def mkdir(self):
         """Creates a directory at this path; if the directory already exists, silently ignore"""
+
     @abstractmethod
-    def open(self, mode = "r"):
+    def open(self, mode="r"):
         """opens this path as a file"""
+
     @abstractmethod
     def read(self, encoding=None):
         """returns the contents of this file. By default the data is binary (``bytes``), but you can
         specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
+
     @abstractmethod
     def write(self, data, encoding=None):
         """writes the given data to this file. By default the data is expected to be binary (``bytes``),
         but you can specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
+
     @abstractmethod
     def touch(self):
         """Update the access time. Creates an empty file if none exists."""
+
     @abstractmethod
-    def chown(self, owner = None, group = None, recursive = None):
+    def chown(self, owner=None, group=None, recursive=None):
         """Change ownership of this path.
 
         :param owner: The owner to set (either ``uid`` or ``username``), optional
@@ -253,6 +295,7 @@ class Path(str, six.ABC):
                           Only meaningful when ``self`` is a directory. If ``None``, the value
                           will default to ``True`` if ``self`` is a directory, ``False`` otherwise.
         """
+
     @abstractmethod
     def chmod(self, mode):
         """Change the mode of path to the numeric mode.
@@ -261,13 +304,19 @@ class Path(str, six.ABC):
         """
 
     @staticmethod
-    def _access_mode_to_flags(mode, flags = {"f" : os.F_OK, "w" : os.W_OK, "r" : os.R_OK, "x" : os.X_OK}):
+    def _access_mode_to_flags(mode,
+                              flags={
+                                  "f": os.F_OK,
+                                  "w": os.W_OK,
+                                  "r": os.R_OK,
+                                  "x": os.X_OK
+                              }):
         if isinstance(mode, str):
             mode = reduce(operator.or_, [flags[m] for m in mode.lower()], 0)
         return mode
 
     @abstractmethod
-    def access(self, mode = 0):
+    def access(self, mode=0):
         """Test file existence or permission bits
 
         :param mode: a bitwise-or of access bits, or a string-representation thereof:
@@ -324,8 +373,12 @@ class Path(str, six.ABC):
             source = self._form(source)
         parts = self.split()
         baseparts = source.split()
-        ancestors = len(list(itertools.takewhile(lambda p: p[0] == p[1], zip(parts, baseparts))))
-        return RelativePath([".."] * (len(baseparts) - ancestors) + parts[ancestors:])
+        ancestors = len(
+            list(
+                itertools.takewhile(lambda p: p[0] == p[1],
+                                    zip(parts, baseparts))))
+        return RelativePath([".."] * (len(baseparts) - ancestors) +
+                            parts[ancestors:])
 
     def __sub__(self, other):
         """Same as ``self.relative_to(other)``"""
@@ -351,8 +404,9 @@ class Path(str, six.ABC):
     @property
     def parents(self):
         """Pathlib like sequence of ancestors"""
-        join = lambda x,y: self.__class__(x) / y
-        as_list = (reduce(join,self.parts[:i],self.parts[0]) for i in range(len(self.parts)-1,0,-1))
+        join = lambda x, y: self.__class__(x) / y
+        as_list = (reduce(join, self.parts[:i], self.parts[0])
+                   for i in range(len(self.parts) - 1, 0, -1))
         return tuple(as_list)
 
     @property
@@ -373,40 +427,50 @@ class RelativePath(object):
 
     def __init__(self, parts):
         self.parts = parts
+
     def __str__(self):
         return "/".join(self.parts)
+
     def __iter__(self):
         return iter(self.parts)
+
     def __len__(self):
         return len(self.parts)
+
     def __getitem__(self, index):
         return self.parts[index]
+
     def __repr__(self):
-        return "RelativePath(%r)" % (self.parts,)
+        return "RelativePath(%r)" % (self.parts, )
 
     def __eq__(self, other):
         return str(self) == str(other)
+
     def __ne__(self, other):
         return not (self == other)
+
     def __gt__(self, other):
         return str(self) > str(other)
+
     def __ge__(self, other):
         return str(self) >= str(other)
+
     def __lt__(self, other):
         return str(self) < str(other)
+
     def __le__(self, other):
         return str(self) <= str(other)
+
     def __hash__(self):
         return hash(str(self))
+
     def __nonzero__(self):
         return bool(str(self))
+
     __bool__ = __nonzero__
 
-    def up(self, count = 1):
+    def up(self, count=1):
         return RelativePath(self.parts[:-count])
 
     def __radd__(self, path):
         return path.join(*self.parts)
-
-
-

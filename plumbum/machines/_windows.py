@@ -7,6 +7,7 @@ SUBSYSTEM_OFFSET = 17 * 4
 IMAGE_SUBSYSTEM_WINDOWS_GUI = 2
 IMAGE_SUBSYSTEM_WINDOWS_CUI = 3
 
+
 def get_pe_subsystem(filename):
     with open(filename, "rb") as f:
         if f.read(2) != six.b("MZ"):
@@ -20,9 +21,7 @@ def get_pe_subsystem(filename):
         subsystem = struct.unpack("H", f.read(2))[0]
         return subsystem
 
+
 # print(get_pe_subsystem("c:\\windows\\notepad.exe")) == 2
 # print(get_pe_subsystem("c:\\python32\\python.exe")) == 3
 # print(get_pe_subsystem("c:\\python32\\pythonw.exe")) == 2
-
-
-

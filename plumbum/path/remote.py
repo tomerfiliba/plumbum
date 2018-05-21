@@ -4,17 +4,21 @@ from plumbum.path.base import Path, FSUser
 from plumbum.lib import _setdoc, six
 from plumbum.commands import shquote
 
-try: # Py3
+try:  # Py3
     import urllib.request as urllib
 except ImportError:
-    import urllib # type: ignore
+    import urllib  # type: ignore
+
 
 class StatRes(object):
     """POSIX-like stat result"""
+
     def __init__(self, tup):
         self._tup = tuple(tup)
+
     def __getitem__(self, index):
         return self._tup[index]
+
     st_mode = mode = property(lambda self: self[0])
     st_ino = ino = property(lambda self: self[1])
     st_dev = dev = property(lambda self: self[2])
@@ -30,7 +34,6 @@ class StatRes(object):
 class RemotePath(Path):
     """The class implementing remote-machine paths"""
 
-
     def __new__(cls, remote, *parts):
         if not parts:
             raise TypeError("At least one path part is required (none given)")
@@ -38,9 +41,10 @@ class RemotePath(Path):
         normed = []
 
         # Simple skip if path is absolute
-        if parts[0] and parts[0][0] not in ("/","\\"):
-            cwd = (remote._cwd if hasattr(remote, '_cwd') else remote._session.run("pwd")[1].strip())
-            parts = (cwd,) + parts
+        if parts[0] and parts[0][0] not in ("/", "\\"):
+            cwd = (remote._cwd if hasattr(remote, '_cwd') else
+                   remote._session.run("pwd")[1].strip())
+            parts = (cwd, ) + parts
 
         for p in parts:
             if windows:
@@ -60,7 +64,7 @@ class RemotePath(Path):
                     normed.append(item)
         if windows:
             self = super(RemotePath, cls).__new__(cls, "\\".join(normed))
-            self.CASE_SENSITIVE = False # On this object only
+            self.CASE_SENSITIVE = False  # On this object only
         else:
             self = super(RemotePath, cls).__new__(cls, "/" + "/".join(normed))
             self.CASE_SENSITIVE = True
@@ -75,42 +79,42 @@ class RemotePath(Path):
     def _path(self):
         return str(self)
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def name(self):
         if not "/" in str(self):
             return str(self)
         return str(self).rsplit("/", 1)[1]
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def dirname(self):
         if not "/" in str(self):
             return str(self)
         return self.__class__(self.remote, str(self).rsplit("/", 1)[0])
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def suffix(self):
-        return '.' + self.name.rsplit('.',1)[1]
+        return '.' + self.name.rsplit('.', 1)[1]
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def suffixes(self):
         name = self.name
         exts = []
         while '.' in name:
-            name, ext = name.rsplit('.',1)
+            name, ext = name.rsplit('.', 1)
             exts.append('.' + ext)
         return list(reversed(exts))
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def uid(self):
         uid, name = self.remote._path_getuid(self)
         return FSUser(int(uid), name)
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def gid(self):
         gid, name = self.remote._path_getgid(self)
@@ -176,9 +180,10 @@ class RemotePath(Path):
         if (suffix and not suffix.startswith('.') or suffix == '.'):
             raise ValueError("Invalid suffix %r" % (suffix))
         name = self.name
-        depth = len(self.suffixes) if depth is None else min(depth, len(self.suffixes))
+        depth = len(self.suffixes) if depth is None else min(
+            depth, len(self.suffixes))
         for i in range(depth):
-            name, ext = name.rsplit('.',1)
+            name, ext = name.rsplit('.', 1)
         return self.__class__(self.remote, self.dirname) / (name + suffix)
 
     @_setdoc(Path)
@@ -200,18 +205,20 @@ class RemotePath(Path):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
         elif not isinstance(dst, six.string_types):
-            raise TypeError("dst must be a string or a RemotePath (to the same remote machine), "
-                "got %r" % (dst,))
+            raise TypeError(
+                "dst must be a string or a RemotePath (to the same remote machine), "
+                "got %r" % (dst, ))
         self.remote._path_move(self, dst)
 
     @_setdoc(Path)
-    def copy(self, dst, override = False):
+    def copy(self, dst, override=False):
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
         elif not isinstance(dst, six.string_types):
-            raise TypeError("dst must be a string or a RemotePath (to the same remote machine), "
-                "got %r" % (dst,))
+            raise TypeError(
+                "dst must be a string or a RemotePath (to the same remote machine), "
+                "got %r" % (dst, ))
         if override:
             if isinstance(dst, six.string_types):
                 dst = RemotePath(self.remote, dst)
@@ -234,6 +241,7 @@ class RemotePath(Path):
         if encoding:
             data = data.decode(encoding)
         return data
+
     @_setdoc(Path)
     def write(self, data, encoding=None):
         if encoding:
@@ -245,14 +253,17 @@ class RemotePath(Path):
         self.remote._path_touch(str(self))
 
     @_setdoc(Path)
-    def chown(self, owner = None, group = None, recursive = None):
-        self.remote._path_chown(self, owner, group, self.is_dir() if recursive is None else recursive)
+    def chown(self, owner=None, group=None, recursive=None):
+        self.remote._path_chown(
+            self, owner, group,
+            self.is_dir() if recursive is None else recursive)
+
     @_setdoc(Path)
     def chmod(self, mode):
         self.remote._path_chmod(mode, self)
 
     @_setdoc(Path)
-    def access(self, mode = 0):
+    def access(self, mode=0):
         mode = self._access_mode_to_flags(mode)
         res = self.remote._path_stat(self)
         if res is None:
@@ -266,8 +277,9 @@ class RemotePath(Path):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
         elif not isinstance(dst, six.string_types):
-            raise TypeError("dst must be a string or a RemotePath (to the same remote machine), "
-                "got %r" % (dst,))
+            raise TypeError(
+                "dst must be a string or a RemotePath (to the same remote machine), "
+                "got %r" % (dst, ))
         self.remote._path_link(self, dst, False)
 
     @_setdoc(Path)
@@ -276,43 +288,50 @@ class RemotePath(Path):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
         elif not isinstance(dst, six.string_types):
-            raise TypeError("dst must be a string or a RemotePath (to the same remote machine), "
-                "got %r" % (dst,))
+            raise TypeError(
+                "dst must be a string or a RemotePath (to the same remote machine), "
+                "got %r" % (dst, ))
         self.remote._path_link(self, dst, True)
+
     def open(self):
         pass
 
     @_setdoc(Path)
-    def as_uri(self, scheme = 'ssh'):
-        return '{0}://{1}{2}'.format(scheme, self.remote._fqhost, urllib.pathname2url(str(self)))
+    def as_uri(self, scheme='ssh'):
+        return '{0}://{1}{2}'.format(scheme, self.remote._fqhost,
+                                     urllib.pathname2url(str(self)))
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def stem(self):
         return self.name.rsplit('.')[0]
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def root(self):
         return '/'
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def drive(self):
         return ''
+
 
 class RemoteWorkdir(RemotePath):
     """Remote working directory manipulator"""
 
     def __new__(cls, remote):
-        self = super(RemoteWorkdir, cls).__new__(cls, remote, remote._session.run("pwd")[1].strip())
+        self = super(RemoteWorkdir, cls).__new__(
+            cls, remote,
+            remote._session.run("pwd")[1].strip())
         return self
+
     def __hash__(self):
         raise TypeError("unhashable type")
 
     def chdir(self, newdir):
         """Changes the current working directory to the given one"""
-        self.remote._session.run("cd %s" % (shquote(newdir),))
+        self.remote._session.run("cd %s" % (shquote(newdir), ))
         if hasattr(self.remote, '_cwd'):
             del self.remote._cwd
         return self.__class__(self.remote)
@@ -336,6 +355,3 @@ class RemoteWorkdir(RemotePath):
             yield changed_dir
         finally:
             self.chdir(prev)
-
-
-

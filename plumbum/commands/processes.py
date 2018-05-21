@@ -8,12 +8,12 @@ from plumbum.lib import IS_WIN32, six
 try:
     from queue import Queue, Empty as QueueEmpty
 except ImportError:
-    from Queue import Queue, Empty as QueueEmpty # type: ignore
+    from Queue import Queue, Empty as QueueEmpty  # type: ignore
 
 try:
     from io import StringIO
 except ImportError:
-    from cStringIO import StringIO # type: ignore
+    from cStringIO import StringIO  # type: ignore
 
 
 #===================================================================================================
@@ -23,17 +23,20 @@ def _check_process(proc, retcode, timeout, stdout, stderr):
     proc.verify(retcode, timeout, stdout, stderr)
     return proc.returncode, stdout, stderr
 
+
 def _iter_lines(proc, decode, linesize):
     try:
         from selectors import DefaultSelector, EVENT_READ
     except ImportError:
         # Pre Python 3.4 implementation
         from select import select
+
         def selector():
             while True:
                 rlist, _, _ = select([proc.stdout, proc.stderr], [], [])
                 for stream in rlist:
-                    yield (stream is proc.stderr), decode(stream.readline(linesize))
+                    yield (stream is proc.stderr), decode(
+                        stream.readline(linesize))
     else:
         # Python 3.4 implementation
         def selector():
@@ -63,6 +66,7 @@ class ProcessExecutionError(EnvironmentError):
     <plumbum.commands.run_proc>`. It contains the process' return code, stdout, and stderr, as
     well as the command line used to create the process (``argv``)
     """
+
     def __init__(self, argv, retcode, stdout, stderr):
         Exception.__init__(self, argv, retcode, stdout, stderr)
         self.argv = argv
@@ -73,50 +77,65 @@ class ProcessExecutionError(EnvironmentError):
             stderr = six.ascii(stderr)
         self.stdout = stdout
         self.stderr = stderr
+
     def __str__(self):
         stdout = "\n         | ".join(str(self.stdout).splitlines())
         stderr = "\n         | ".join(str(self.stderr).splitlines())
-        lines = ["Command line: %r" % (self.argv,), "Exit code: %s" % (self.retcode)]
+        lines = [
+            "Command line: %r" % (self.argv, ),
+            "Exit code: %s" % (self.retcode)
+        ]
         if stdout:
-            lines.append("Stdout:  | %s" % (stdout,))
+            lines.append("Stdout:  | %s" % (stdout, ))
         if stderr:
-            lines.append("Stderr:  | %s" % (stderr,))
+            lines.append("Stderr:  | %s" % (stderr, ))
         return "\n".join(lines)
+
 
 class ProcessTimedOut(Exception):
     """Raises by :func:`run_proc <plumbum.commands.run_proc>` when a ``timeout`` has been
     specified and it has elapsed before the process terminated"""
+
     def __init__(self, msg, argv):
         Exception.__init__(self, msg, argv)
         self.argv = argv
+
 
 class CommandNotFound(AttributeError):
     """Raised by :func:`local.which <plumbum.machines.local.LocalMachine.which>` and
     :func:`RemoteMachine.which <plumbum.machines.remote.RemoteMachine.which>` when a
     command was not found in the system's ``PATH``"""
+
     def __init__(self, program, path):
         Exception.__init__(self, program, path)
         self.program = program
         self.path = path
 
+
 #===================================================================================================
 # Timeout thread
 #===================================================================================================
 class MinHeap(object):
-    def __init__(self, items = ()):
+    def __init__(self, items=()):
         self._items = list(items)
         heapq.heapify(self._items)
+
     def __len__(self):
         return len(self._items)
+
     def push(self, item):
         heapq.heappush(self._items, item)
+
     def pop(self):
         heapq.heappop(self._items)
+
     def peek(self):
         return self._items[0]
 
+
 _timeout_queue = Queue()
 _shutting_down = False
+
 
 def _timeout_thread_func():
     waiting = MinHeap()
@@ -128,7 +147,7 @@ def _timeout_thread_func():
             else:
                 timeout = None
             try:
-                proc, time_to_kill = _timeout_queue.get(timeout = timeout)
+                proc, time_to_kill = _timeout_queue.get(timeout=timeout)
                 if proc is SystemExit:
                     # terminate
                     return
@@ -154,13 +173,16 @@ def _timeout_thread_func():
         else:
             raise
 
-bgthd = Thread(target = _timeout_thread_func, name = "PlumbumTimeoutThread")
+
+bgthd = Thread(target=_timeout_thread_func, name="PlumbumTimeoutThread")
 bgthd.setDaemon(True)
 bgthd.start()
+
 
 def _register_proc_timeout(proc, timeout):
     if timeout is not None:
         _timeout_queue.put((proc, time.time() + timeout))
+
 
 def _shutdown_bg_threads():
     global _shutting_down
@@ -169,12 +191,14 @@ def _shutdown_bg_threads():
     # grace period
     bgthd.join(0.1)
 
+
 atexit.register(_shutdown_bg_threads)
+
 
 #===================================================================================================
 # run_proc
 #===================================================================================================
-def run_proc(proc, retcode, timeout = None):
+def run_proc(proc, retcode, timeout=None):
     """Waits for the given process to terminate, with the expected exit code
 
     :param proc: a running Popen-like object, with all the expected methods.
@@ -209,7 +233,11 @@ def run_proc(proc, retcode, timeout = None):
 #===================================================================================================
 # iter_lines
 #===================================================================================================
-def iter_lines(proc, retcode = 0, timeout = None, linesize = -1, _iter_lines = _iter_lines):
+def iter_lines(proc,
+               retcode=0,
+               timeout=None,
+               linesize=-1,
+               _iter_lines=_iter_lines):
     """Runs the given process (equivalent to run_proc()) and yields a tuples of (out, err) line pairs.
     If the exit code of the process does not match the expected one, :class:`ProcessExecutionError
     <plumbum.commands.ProcessExecutionError>` is raised.

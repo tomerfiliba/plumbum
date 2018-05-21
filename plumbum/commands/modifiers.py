@@ -15,44 +15,56 @@ class Future(object):
     object and the expected exit code, and provides poll(), wait(), returncode, stdout,
     and stderr.
     """
-    def __init__(self, proc, expected_retcode, timeout = None):
+
+    def __init__(self, proc, expected_retcode, timeout=None):
         self.proc = proc
         self._expected_retcode = expected_retcode
         self._timeout = timeout
         self._returncode = None
         self._stdout = None
         self._stderr = None
+
     def __repr__(self):
-        return "<Future %r (%s)>" % (self.proc.argv, self._returncode if self.ready() else "running",)
+        return "<Future %r (%s)>" % (
+            self.proc.argv,
+            self._returncode if self.ready() else "running",
+        )
+
     def poll(self):
         """Polls the underlying process for termination; returns ``False`` if still running,
         or ``True`` if terminated"""
         if self.proc.poll() is not None:
             self.wait()
         return self._returncode is not None
+
     ready = poll
+
     def wait(self):
         """Waits for the process to terminate; will raise a
         :class:`plumbum.commands.ProcessExecutionError` in case of failure"""
         if self._returncode is not None:
             return
-        self._returncode, self._stdout, self._stderr = run_proc(self.proc,
-            self._expected_retcode, self._timeout)
+        self._returncode, self._stdout, self._stderr = run_proc(
+            self.proc, self._expected_retcode, self._timeout)
+
     @property
     def stdout(self):
         """The process' stdout; accessing this property will wait for the process to finish"""
         self.wait()
         return self._stdout
+
     @property
     def stderr(self):
         """The process' stderr; accessing this property will wait for the process to finish"""
         self.wait()
         return self._stderr
+
     @property
     def returncode(self):
         """The process' returncode; accessing this property will wait for the process to finish"""
         self.wait()
         return self._returncode
+
 
 #===================================================================================================
 # execution modifiers
@@ -60,7 +72,7 @@ class Future(object):
 
 
 class ExecutionModifier(object):
-    __slots__ = ("__weakref__",)
+    __slots__ = ("__weakref__", )
 
     def __repr__(self):
         """Automatically creates a representation for given subclass with slots.
@@ -69,7 +81,7 @@ class ExecutionModifier(object):
         for cls in self.__class__.__mro__:
             slots_list = getattr(cls, "__slots__", ())
             if isinstance(slots_list, str):
-                slots_list = (slots_list,)
+                slots_list = (slots_list, )
             for prop in slots_list:
                 if prop[0] != '_':
                     slots[prop] = getattr(self, prop)
@@ -79,6 +91,7 @@ class ExecutionModifier(object):
     @classmethod
     def __call__(cls, *args, **kwargs):
         return cls(*args, **kwargs)
+
 
 class _BG(ExecutionModifier):
     """
@@ -106,9 +119,12 @@ class _BG(ExecutionModifier):
         self.timeout = timeout
 
     def __rand__(self, cmd):
-        return Future(cmd.popen(**self.kargs), self.retcode, timeout=self.timeout)
+        return Future(
+            cmd.popen(**self.kargs), self.retcode, timeout=self.timeout)
+
 
 BG = _BG()
+
 
 class _FG(ExecutionModifier):
     """
@@ -130,8 +146,12 @@ class _FG(ExecutionModifier):
         self.timeout = timeout
 
     def __rand__(self, cmd):
-        cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None,
-            timeout = self.timeout)
+        cmd(retcode=self.retcode,
+            stdin=None,
+            stdout=None,
+            stderr=None,
+            timeout=self.timeout)
+
 
 FG = _FG()
 
@@ -159,10 +179,13 @@ class _TEE(ExecutionModifier):
         self.buffered = buffered
         self.timeout = timeout
 
-
     def __rand__(self, cmd):
-        with cmd.bgrun(retcode=self.retcode, stdin=None, stdout=PIPE, stderr=PIPE,
-                       timeout=self.timeout) as p:
+        with cmd.bgrun(
+                retcode=self.retcode,
+                stdin=None,
+                stdout=PIPE,
+                stderr=PIPE,
+                timeout=self.timeout) as p:
             outbuf = []
             errbuf = []
             out = p.stdout
@@ -193,7 +216,9 @@ class _TEE(ExecutionModifier):
             stderr = ''.join([x.decode('utf-8') for x in errbuf])
             return p.returncode, stdout, stderr
 
+
 TEE = _TEE()
+
 
 class _TF(ExecutionModifier):
     """
@@ -229,13 +254,17 @@ class _TF(ExecutionModifier):
     def __rand__(self, cmd):
         try:
             if self.FG:
-                cmd(retcode = self.retcode, stdin = None, stdout = None, stderr = None,
-                    timeout = self.timeout)
+                cmd(retcode=self.retcode,
+                    stdin=None,
+                    stdout=None,
+                    stderr=None,
+                    timeout=self.timeout)
             else:
-                cmd(retcode = self.retcode, timeout = self.timeout)
+                cmd(retcode=self.retcode, timeout=self.timeout)
             return True
         except ProcessExecutionError:
             return False
+
 
 TF = _TF()
 
@@ -256,7 +285,7 @@ class _RETCODE(ExecutionModifier):
 
     __slots__ = ("foreground", "timeout")
 
-    def __init__(self,  FG=False, timeout=None):
+    def __init__(self, FG=False, timeout=None):
         """`FG` to True to run in the foreground.
         """
         self.foreground = FG
@@ -267,11 +296,16 @@ class _RETCODE(ExecutionModifier):
         return cls(*args, **kwargs)
 
     def __rand__(self, cmd):
-            if self.foreground:
-                return cmd.run(retcode = None, stdin = None, stdout = None, stderr = None,
-                               timeout = self.timeout)[0]
-            else:
-                return cmd.run(retcode = None, timeout = self.timeout)[0]
+        if self.foreground:
+            return cmd.run(
+                retcode=None,
+                stdin=None,
+                stdout=None,
+                stderr=None,
+                timeout=self.timeout)[0]
+        else:
+            return cmd.run(retcode=None, timeout=self.timeout)[0]
+
 
 RETCODE = _RETCODE()
 
@@ -322,5 +356,6 @@ class _NOHUP(ExecutionModifier):
             stdout = self.stdout
             append = self.append
         return cmd.nohup(cmd, self.cwd, stdout, self.stderr, append)
+
 
 NOHUP = _NOHUP()

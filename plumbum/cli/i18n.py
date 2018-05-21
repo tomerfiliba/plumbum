@@ -3,11 +3,13 @@ import locale
 # High performance method for English (no translation needed)
 loc = locale.getlocale()[0]
 if loc is None or loc.startswith('en'):
+
     class NullTranslation(object):
         def gettext(self, str):
             return str
+
         def ngettext(self, str1, strN, n):
-            if n==1:
+            if n == 1:
                 return str1.replace("{0}", str(n))
             else:
                 return strN.replace("{0}", str(n))
@@ -32,7 +34,8 @@ else:
 
     local_dir = os.path.basename(__file__)
 
-    def get_translation_for(package_name): # type: (str) -> gettext.NullTranslations
+    def get_translation_for(
+            package_name):  # type: (str) -> gettext.NullTranslations
         '''Find and return gettext translation for package
         (Try to find folder manually if setuptools does not exist)
         '''
@@ -51,5 +54,5 @@ else:
             if localefile:
                 break
 
-        return gettext.translation(package_name, localedir=localedir, fallback=True)
-
+        return gettext.translation(
+            package_name, localedir=localedir, fallback=True)
