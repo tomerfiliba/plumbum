@@ -10,7 +10,6 @@ from contextlib import contextmanager
 from plumbum.machines.local import local
 from plumbum.lib import six
 
-
 if not hasattr(threading, "get_ident"):
     try:
         import thread
@@ -18,7 +17,6 @@ if not hasattr(threading, "get_ident"):
         import _thread as thread
     threading.get_ident = thread.get_ident
     del thread
-
 
 try:
     import fcntl
@@ -29,14 +27,17 @@ except ImportError:
         from win32file import LockFileEx, UnlockFile, OVERLAPPED
         from win32con import LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY
     except ImportError:
-        raise ImportError("On Windows, we require Python for Windows Extensions (pywin32)")
+        raise ImportError(
+            "On Windows, we require Python for Windows Extensions (pywin32)")
 
     @contextmanager
-    def locked_file(fileno, blocking = True):
+    def locked_file(fileno, blocking=True):
         hndl = msvcrt.get_osfhandle(fileno)
         try:
-            LockFileEx(hndl, LOCKFILE_EXCLUSIVE_LOCK | (0 if blocking else LOCKFILE_FAIL_IMMEDIATELY),
-                0xffffffff, 0xffffffff, OVERLAPPED())
+            LockFileEx(
+                hndl, LOCKFILE_EXCLUSIVE_LOCK |
+                (0 if blocking else LOCKFILE_FAIL_IMMEDIATELY), 0xffffffff,
+                0xffffffff, OVERLAPPED())
         except WinError:
             _, ex, _ = sys.exc_info()
             raise WindowsError(*ex.args)
@@ -46,17 +47,21 @@ except ImportError:
             UnlockFile(hndl, 0, 0, 0xffffffff, 0xffffffff)
 else:
     if hasattr(fcntl, "lockf"):
+
         @contextmanager
-        def locked_file(fileno, blocking = True):
-            fcntl.lockf(fileno, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
+        def locked_file(fileno, blocking=True):
+            fcntl.lockf(fileno,
+                        fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
             try:
                 yield
             finally:
                 fcntl.lockf(fileno, fcntl.LOCK_UN)
     else:
+
         @contextmanager
-        def locked_file(fileno, blocking = True):
-            fcntl.flock(fileno, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
+        def locked_file(fileno, blocking=True):
+            fcntl.flock(fileno,
+                        fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
             try:
                 yield
             finally:
@@ -77,7 +82,7 @@ class AtomicFile(object):
 
     CHUNK_SIZE = 32 * 1024
 
-    def __init__(self, filename, ignore_deletion = False):
+    def __init__(self, filename, ignore_deletion=False):
         self.path = local.path(filename)
         self._ignore_deletion = ignore_deletion
         self._thdlock = threading.Lock()
@@ -86,12 +91,15 @@ class AtomicFile(object):
         self.reopen()
 
     def __repr__(self):
-        return "<AtomicFile: %s>" % (self.path,) if self._fileobj else "<AtomicFile: closed>"
+        return "<AtomicFile: %s>" % (
+            self.path, ) if self._fileobj else "<AtomicFile: closed>"
 
     def __del__(self):
         self.close()
+
     def __enter__(self):
         return self
+
     def __exit__(self, t, v, tb):
         self.close()
 
@@ -106,10 +114,11 @@ class AtomicFile(object):
         by a different process
         """
         self.close()
-        self._fileobj = os.fdopen(os.open(str(self.path), os.O_CREAT | os.O_RDWR, 384), "r+b", 0)
+        self._fileobj = os.fdopen(
+            os.open(str(self.path), os.O_CREAT | os.O_RDWR, 384), "r+b", 0)
 
     @contextmanager
-    def locked(self, blocking = True):
+    def locked(self, blocking=True):
         """
         A context manager that locks the file; this function is reentrant by the thread currently
         holding the lock.
@@ -186,7 +195,7 @@ class AtomicCounterFile(object):
     .. versionadded:: 1.3
     """
 
-    def __init__(self, atomicfile, initial = 0):
+    def __init__(self, atomicfile, initial=0):
         """
         :param atomicfile: an :class:`AtomicFile <plumbum.atomic.AtomicFile>` instance
         :param initial: the initial value (used when the first time the file is created)
@@ -196,8 +205,10 @@ class AtomicCounterFile(object):
 
     def __enter__(self):
         return self
+
     def __exit__(self, t, v, tb):
         self.close()
+
     def close(self):
         self.atomicfile.close()
 
@@ -208,7 +219,7 @@ class AtomicCounterFile(object):
         """
         return cls(AtomicFile(filename))
 
-    def reset(self, value = None):
+    def reset(self, value=None):
         """
         Reset the counter's value to the one given. If ``None``, it will default to the
         initial value provided to the constructor
@@ -216,7 +227,8 @@ class AtomicCounterFile(object):
         if value is None:
             value = self.initial
         if not isinstance(value, six.integer_types):
-            raise TypeError("value must be an integer, not %r" % (type(value),))
+            raise TypeError(
+                "value must be an integer, not %r" % (type(value), ))
         self.atomicfile.write_atomic(str(value).encode("utf8"))
 
     def next(self):
@@ -239,9 +251,11 @@ class PidFileTaken(SystemExit):
     derives from ``SystemExit``, so unless explicitly handled, it will terminate the process
     cleanly
     """
+
     def __init__(self, msg, pid):
         SystemExit.__init__(self, msg)
         self.pid = pid
+
 
 class PidFile(object):
     """
@@ -256,15 +270,19 @@ class PidFile(object):
     def __init__(self, filename):
         self.atomicfile = AtomicFile(filename)
         self._ctx = None
+
     def __enter__(self):
         self.acquire()
+
     def __exit__(self, t, v, tb):
         self.release()
+
     def __del__(self):
         try:
             self.release()
         except Exception:
             pass
+
     def close(self):
         self.atomicfile.close()
 
@@ -276,7 +294,7 @@ class PidFile(object):
         """
         if self._ctx is not None:
             return
-        self._ctx = self.atomicfile.locked(blocking = False)
+        self._ctx = self.atomicfile.locked(blocking=False)
         try:
             self._ctx.__enter__()
         except (IOError, OSError):
@@ -285,7 +303,9 @@ class PidFile(object):
                 pid = self.atomicfile.read_shared().strip().decode("utf8")
             except (IOError, OSError):
                 pid = "Unknown"
-            raise PidFileTaken("PID file %r taken by process %s" % (self.atomicfile.path, pid), pid)
+            raise PidFileTaken(
+                "PID file %r taken by process %s" % (self.atomicfile.path,
+                                                     pid), pid)
         else:
             self.atomicfile.write_atomic(str(os.getpid()).encode("utf8"))
             atexit.register(self.release)
@@ -301,7 +321,3 @@ class PidFile(object):
             self._ctx.__exit__(None, None, None)
         finally:
             self._ctx = None
-
-
-
-

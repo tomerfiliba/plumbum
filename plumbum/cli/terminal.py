@@ -10,13 +10,15 @@ from plumbum import local
 from .termsize import get_terminal_size
 from .progress import Progress
 
-def readline(message = ""):
+
+def readline(message=""):
     """Gets a line of input from the user (stdin)"""
     sys.stdout.write(message)
     sys.stdout.flush()
     return sys.stdin.readline()
 
-def ask(question, default = None):
+
+def ask(question, default=None):
     """
     Presents the user with a yes/no question.
 
@@ -48,7 +50,8 @@ def ask(question, default = None):
         else:
             sys.stdout.write("Invalid response, please try again\n")
 
-def choose(question, options, default = None):
+
+def choose(question, options, default=None):
     """Prompts the user with a question and a set of options, from which the user needs to choose.
 
     :param question: The question to ask
@@ -74,7 +77,7 @@ def choose(question, options, default = None):
     choices = {}
     defindex = None
     for i, item in enumerate(options):
-        i = i + 1 # python2.5
+        i = i + 1  # python2.5
         if isinstance(item, (tuple, list)) and len(item) == 2:
             text = item[0]
             val = item[1]
@@ -87,9 +90,9 @@ def choose(question, options, default = None):
         sys.stdout.write("(%d) %s\n" % (i, text))
     if default is not None:
         if defindex is None:
-            msg = "Choice [%s]: " % (default,)
+            msg = "Choice [%s]: " % (default, )
         else:
-            msg = "Choice [%d]: " % (defindex,)
+            msg = "Choice [%d]: " % (defindex, )
     else:
         msg = "Choice: "
     while True:
@@ -108,8 +111,11 @@ def choose(question, options, default = None):
             continue
         return choices[choice]
 
-def prompt(question, type = str, default = NotImplemented, validator = lambda val: True):
 
+def prompt(question,
+           type=str,
+           default=NotImplemented,
+           validator=lambda val: True):
     """
     Presents the user with a validated question, keeps asking if validation does not pass.
 
@@ -122,7 +128,7 @@ def prompt(question, type = str, default = NotImplemented, validator = lambda va
     """
     question = question.rstrip(" \t:")
     if default is not NotImplemented:
-        question += " [%s]" % (default,)
+        question += " [%s]" % (default, )
     question += ": "
     while True:
         try:
@@ -138,23 +144,26 @@ def prompt(question, type = str, default = NotImplemented, validator = lambda va
         try:
             ans = type(ans)
         except (TypeError, ValueError) as ex:
-            sys.stdout.write("Invalid value (%s), please try again\n" % (ex,))
+            sys.stdout.write("Invalid value (%s), please try again\n" % (ex, ))
             continue
         try:
             valid = validator(ans)
         except ValueError as ex:
-            sys.stdout.write("%s, please try again\n" % (ex,))
+            sys.stdout.write("%s, please try again\n" % (ex, ))
             continue
         if not valid:
-            sys.stdout.write("Value not in specified range, please try again\n")
+            sys.stdout.write(
+                "Value not in specified range, please try again\n")
             continue
         return ans
 
-def hexdump(data_or_stream, bytes_per_line = 16, aggregate = True):
+
+def hexdump(data_or_stream, bytes_per_line=16, aggregate=True):
     """Convert the given bytes (or a stream with a buffering ``read()`` method) to hexdump-formatted lines,
     with possible aggregation of identical lines. Returns a generator of formatted lines.
     """
     if hasattr(data_or_stream, "read"):
+
         def read_chunk():
             while True:
                 buf = data_or_stream.read(bytes_per_line)
@@ -162,13 +171,15 @@ def hexdump(data_or_stream, bytes_per_line = 16, aggregate = True):
                     break
                 yield buf
     else:
+
         def read_chunk():
             for i in range(0, len(data_or_stream), bytes_per_line):
                 yield data_or_stream[i:i + bytes_per_line]
+
     prev = None
     skipped = False
     for i, chunk in enumerate(read_chunk()):
-        hexd = " ".join("%02x" % (ord(ch),) for ch in chunk)
+        hexd = " ".join("%02x" % (ord(ch), ) for ch in chunk)
         text = "".join(ch if 32 <= ord(ch) < 127 else "." for ch in chunk)
         if aggregate and prev == chunk:
             skipped = True
@@ -176,11 +187,12 @@ def hexdump(data_or_stream, bytes_per_line = 16, aggregate = True):
         prev = chunk
         if skipped:
             yield "*"
-        yield "%06x | %s| %s" % (i * bytes_per_line, hexd.ljust(bytes_per_line * 3, " "), text)
+        yield "%06x | %s| %s" % (i * bytes_per_line,
+                                 hexd.ljust(bytes_per_line * 3, " "), text)
         skipped = False
 
 
-def pager(rows, pagercmd = None): # pragma: no cover
+def pager(rows, pagercmd=None):  # pragma: no cover
     """Opens a pager (e.g., ``less``) to display the given text. Requires a terminal.
 
     :param rows: a ``bytes`` or a list/iterator of "rows" (``bytes``)
@@ -191,10 +203,10 @@ def pager(rows, pagercmd = None): # pragma: no cover
     if hasattr(rows, "splitlines"):
         rows = rows.splitlines()
 
-    pg = pagercmd.popen(stdout = None, stderr = None)
+    pg = pagercmd.popen(stdout=None, stderr=None)
     try:
         for row in rows:
-            line = "%s\n" % (row,)
+            line = "%s\n" % (row, )
             try:
                 pg.stdin.write(line)
                 pg.stdin.flush()

@@ -12,22 +12,26 @@ try:
     from pwd import getpwuid, getpwnam
     from grp import getgrgid, getgrnam
 except ImportError:
-    def getpwuid(x): # type: ignore
-        return (None,)
-    def getgrgid(x): # type: ignore
-        return (None,)
-    def getpwnam(x): # type: ignore
+
+    def getpwuid(x):  # type: ignore
+        return (None, )
+
+    def getgrgid(x):  # type: ignore
+        return (None, )
+
+    def getpwnam(x):  # type: ignore
         raise OSError("`getpwnam` not supported")
-    def getgrnam(x): # type: ignore
+
+    def getgrnam(x):  # type: ignore
         raise OSError("`getgrnam` not supported")
 
-try: # Py3
+
+try:  # Py3
     import urllib.parse as urlparse
     import urllib.request as urllib
 except ImportError:
-    import urlparse # type: ignore
-    import urllib # type: ignore
-
+    import urlparse  # type: ignore
+    import urllib  # type: ignore
 
 logger = logging.getLogger("plumbum.local")
 
@@ -48,9 +52,12 @@ class LocalPath(Path):
         if not parts:
             raise TypeError("At least one path part is required (none given)")
         if any(isinstance(path, RemotePath) for path in parts):
-            raise TypeError("LocalPath cannot be constructed from %r" % (parts,))
-        self = super(LocalPath, cls).__new__(cls, os.path.normpath(os.path.join(*(str(p) for p in parts))))
+            raise TypeError(
+                "LocalPath cannot be constructed from %r" % (parts, ))
+        self = super(LocalPath, cls).__new__(
+            cls, os.path.normpath(os.path.join(*(str(p) for p in parts))))
         return self
+
     @property
     def _path(self):
         return str(self)
@@ -61,17 +68,17 @@ class LocalPath(Path):
     def _form(self, *parts):
         return LocalPath(*parts)
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def name(self):
         return os.path.basename(str(self))
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def dirname(self):
         return LocalPath(os.path.dirname(str(self)))
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def suffix(self):
         return os.path.splitext(str(self))[1]
@@ -87,14 +94,14 @@ class LocalPath(Path):
             else:
                 return list(reversed(exts))
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def uid(self):
         uid = self.stat().st_uid
         name = getpwuid(uid)[0]
         return FSUser(uid, name)
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def gid(self):
         gid = self.stat().st_gid
@@ -140,17 +147,19 @@ class LocalPath(Path):
     def with_name(self, name):
         return LocalPath(self.dirname) / name
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def stem(self):
         return self.name.rsplit(os.path.extsep)[0]
 
     @_setdoc(Path)
     def with_suffix(self, suffix, depth=1):
-        if (suffix and not suffix.startswith(os.path.extsep) or suffix == os.path.extsep):
+        if (suffix and not suffix.startswith(os.path.extsep)
+                or suffix == os.path.extsep):
             raise ValueError("Invalid suffix %r" % (suffix))
         name = self.name
-        depth = len(self.suffixes) if depth is None else min(depth, len(self.suffixes))
+        depth = len(self.suffixes) if depth is None else min(
+            depth, len(self.suffixes))
         for i in range(depth):
             name, ext = os.path.splitext(name)
         return LocalPath(self.dirname) / (name + suffix)
@@ -169,7 +178,7 @@ class LocalPath(Path):
         else:
             try:
                 os.remove(str(self))
-            except OSError: # pragma: no cover
+            except OSError:  # pragma: no cover
                 # file might already been removed (a race with other threads/processes)
                 _, ex, _ = sys.exc_info()
                 if ex.errno != errno.ENOENT:
@@ -183,7 +192,7 @@ class LocalPath(Path):
         return LocalPath(dst)
 
     @_setdoc(Path)
-    def copy(self, dst, override = False, overwrite = True):
+    def copy(self, dst, override=False, overwrite=True):
         if isinstance(dst, RemotePath):
             raise TypeError("Cannot copy local path %s to %r" % (self, dst))
         dst = LocalPath(dst)
@@ -205,18 +214,18 @@ class LocalPath(Path):
         if not self.exists():
             try:
                 os.makedirs(str(self))
-            except OSError: # pragma: no cover
+            except OSError:  # pragma: no cover
                 # directory might already exist (a race with other threads/processes)
                 _, ex, _ = sys.exc_info()
                 if ex.errno != errno.EEXIST:
                     raise
 
     @_setdoc(Path)
-    def open(self, mode = "r"):
+    def open(self, mode="r"):
         return open(str(self), mode)
 
     @_setdoc(Path)
-    def read(self, encoding=None, mode = 'r'):
+    def read(self, encoding=None, mode='r'):
         if encoding and 'b' not in mode:
             mode = mode + 'b'
         with self.open(mode) as f:
@@ -226,7 +235,7 @@ class LocalPath(Path):
             return data
 
     @_setdoc(Path)
-    def write(self, data, encoding=None, mode = None):
+    def write(self, data, encoding=None, mode=None):
         if encoding:
             data = data.encode(encoding)
         if mode is None:
@@ -243,11 +252,13 @@ class LocalPath(Path):
             os.utime(str(self), None)
 
     @_setdoc(Path)
-    def chown(self, owner = None, group = None, recursive = None):
+    def chown(self, owner=None, group=None, recursive=None):
         if not hasattr(os, "chown"):
             raise OSError("os.chown() not supported")
-        uid = self.uid if owner is None else (owner if isinstance(owner, int) else getpwnam(owner)[2])
-        gid = self.gid if group is None else (group if isinstance(group, int) else getgrnam(group)[2])
+        uid = self.uid if owner is None else (owner if isinstance(owner, int)
+                                              else getpwnam(owner)[2])
+        gid = self.gid if group is None else (group if isinstance(group, int)
+                                              else getgrnam(group)[2])
         os.chown(str(self), uid, gid)
         if recursive or (recursive is None and self.is_dir()):
             for subpath in self.walk():
@@ -260,13 +271,14 @@ class LocalPath(Path):
         os.chmod(str(self), mode)
 
     @_setdoc(Path)
-    def access(self, mode = 0):
+    def access(self, mode=0):
         return os.access(str(self), self._access_mode_to_flags(mode))
 
     @_setdoc(Path)
     def link(self, dst):
         if isinstance(dst, RemotePath):
-            raise TypeError("Cannot create a hardlink from local path %s to %r" % (self, dst))
+            raise TypeError("Cannot create a hardlink from local path %s to %r"
+                            % (self, dst))
         if hasattr(os, "link"):
             os.link(str(self), str(dst))
         else:
@@ -280,7 +292,8 @@ class LocalPath(Path):
     @_setdoc(Path)
     def symlink(self, dst):
         if isinstance(dst, RemotePath):
-            raise TypeError("Cannot create a symlink from local path %s to %r" % (self, dst))
+            raise TypeError("Cannot create a symlink from local path %s to %r"
+                            % (self, dst))
         if hasattr(os, "symlink"):
             os.symlink(str(self), str(dst))
         else:
@@ -299,7 +312,7 @@ class LocalPath(Path):
             else:
                 # windows: use rmdir for directories and directory symlinks
                 os.rmdir(str(self))
-        except OSError: # pragma: no cover
+        except OSError:  # pragma: no cover
             # file might already been removed (a race with other threads/processes)
             _, ex, _ = sys.exc_info()
             if ex.errno != errno.ENOENT:
@@ -307,26 +320,26 @@ class LocalPath(Path):
 
     @_setdoc(Path)
     def as_uri(self, scheme='file'):
-        return urlparse.urljoin(str(scheme)+':', urllib.pathname2url(str(self)))
+        return urlparse.urljoin(
+            str(scheme) + ':', urllib.pathname2url(str(self)))
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def drive(self):
         return os.path.splitdrive(str(self))[0]
 
-    @property # type: ignore
+    @property  # type: ignore
     @_setdoc(Path)
     def root(self):
         return os.path.sep
 
 
-
 class LocalWorkdir(LocalPath):
     """Working directory manipulator"""
 
-
     def __hash__(self):
         raise TypeError("unhashable type")
+
     def __new__(cls):
         return super(LocalWorkdir, cls).__new__(cls, os.getcwd())
 
@@ -336,13 +349,15 @@ class LocalWorkdir(LocalPath):
         :param newdir: The destination director (a string or a ``LocalPath``)
         """
         if isinstance(newdir, RemotePath):
-            raise TypeError("newdir cannot be %r" % (newdir,))
+            raise TypeError("newdir cannot be %r" % (newdir, ))
         logger.debug("Chdir to %s", newdir)
         os.chdir(str(newdir))
         return self.__class__()
+
     def getpath(self):
         """Returns the current working directory as a ``LocalPath`` object"""
         return LocalPath(self._path)
+
     @contextmanager
     def __call__(self, newdir):
         """A context manager used to ``chdir`` into a directory and then ``chdir`` back to
@@ -356,4 +371,3 @@ class LocalWorkdir(LocalPath):
             yield newdir
         finally:
             self.chdir(prev)
-

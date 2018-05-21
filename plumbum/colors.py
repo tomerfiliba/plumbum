@@ -13,11 +13,10 @@ from plumbum.colorlib import ansicolors, main
 _reset = ansicolors.reset.now
 if __name__ == '__main__':
     main()
-else: # Don't register an exit if this is called using -m!
+else:  # Don't register an exit if this is called using -m!
     atexit.register(_reset)
 
 # Oddly, the order here matters for Python2, but not Python3
 sys.modules[__name__ + '.fg'] = ansicolors.fg
 sys.modules[__name__ + '.bg'] = ansicolors.bg
 sys.modules[__name__] = ansicolors
-

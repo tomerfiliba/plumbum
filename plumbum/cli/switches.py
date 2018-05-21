@@ -7,28 +7,43 @@ from abc import abstractmethod
 _translation = get_translation_for(__name__)
 _, ngettext = _translation.gettext, _translation.ngettext
 
+
 class SwitchError(Exception):
     """A general switch related-error (base class of all other switch errors)"""
     pass
+
+
 class PositionalArgumentsError(SwitchError):
     """Raised when an invalid number of positional arguments has been given"""
     pass
+
+
 class SwitchCombinationError(SwitchError):
     """Raised when an invalid combination of switches has been given"""
     pass
+
+
 class UnknownSwitch(SwitchError):
     """Raised when an unrecognized switch has been given"""
     pass
+
+
 class MissingArgument(SwitchError):
     """Raised when a switch requires an argument, but one was not provided"""
     pass
+
+
 class MissingMandatorySwitch(SwitchError):
     """Raised when a mandatory switch has not been given"""
     pass
+
+
 class WrongArgumentType(SwitchError):
     """Raised when a switch expected an argument of some type, but an argument of a wrong
     type has been given"""
     pass
+
+
 class SubcommandError(SwitchError):
     """Raised when there's something wrong with sub-commands"""
     pass
@@ -42,8 +57,18 @@ class SwitchInfo(object):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-def switch(names, argtype = None, argname = None, list = False, mandatory = False, requires = (),
-        excludes = (), help = None, overridable = False, group = "Switches", envname=None):
+
+def switch(names,
+           argtype=None,
+           argname=None,
+           list=False,
+           mandatory=False,
+           requires=(),
+           excludes=(),
+           help=None,
+           overridable=False,
+           group="Switches",
+           envname=None):
     """
     A decorator that exposes functions as command-line switches. Usage::
 
@@ -147,19 +172,34 @@ def switch(names, argtype = None, argname = None, list = False, mandatory = Fals
         help2 = getdoc(func) if help is None else help
         if not help2:
             help2 = str(func)
-        func._switch_info = SwitchInfo(names = names, envname=envname, argtype = argtype, list = list, func = func,
-            mandatory = mandatory, overridable = overridable, group = group,
-            requires = requires, excludes = excludes, argname = argname2, help = help2)
+        func._switch_info = SwitchInfo(
+            names=names,
+            envname=envname,
+            argtype=argtype,
+            list=list,
+            func=func,
+            mandatory=mandatory,
+            overridable=overridable,
+            group=group,
+            requires=requires,
+            excludes=excludes,
+            argname=argname2,
+            help=help2)
         return func
+
     return deco
+
 
 def autoswitch(*args, **kwargs):
     """A decorator that exposes a function as a switch, "inferring" the name of the switch
     from the function's name (converting to lower-case, and replacing underscores with hyphens).
     The arguments are the same as for :func:`switch <plumbum.cli.switch>`."""
+
     def deco(func):
         return switch(func.__name__.replace("_", "-"), *args, **kwargs)(func)
+
     return deco
+
 
 #===================================================================================================
 # Switch Attributes
@@ -183,12 +223,19 @@ class SwitchAttr(object):
     """
     ATTR_NAME = '__plumbum_switchattr_dict__'
 
-    def __init__(self, names, argtype = str, default = None, list = False, argname = _("VALUE"), **kwargs):
+    def __init__(self,
+                 names,
+                 argtype=str,
+                 default=None,
+                 list=False,
+                 argname=_("VALUE"),
+                 **kwargs):
         self.__doc__ = "Sets an attribute"  # to prevent the help message from showing SwitchAttr's docstring
         if "help" in kwargs and default and argtype is not None:
             kwargs["help"] += _("; the default is {0}").format(default)
 
-        switch(names, argtype = argtype, argname = argname, list = list, **kwargs)(self)
+        switch(
+            names, argtype=argtype, argname=argname, list=list, **kwargs)(self)
         listtype = type([])
         if list:
             if default is None:
@@ -207,16 +254,18 @@ class SwitchAttr(object):
         if inst is None:
             return self
         else:
-            return getattr(inst, self.ATTR_NAME, {}).get(self, self._default_value)
+            return getattr(inst, self.ATTR_NAME, {}).get(
+                self, self._default_value)
 
     def __set__(self, inst, val):
         if inst is None:
             raise AttributeError("cannot set an unbound SwitchAttr")
         else:
             if not hasattr(inst, self.ATTR_NAME):
-                setattr(inst, self.ATTR_NAME, {self : val})
+                setattr(inst, self.ATTR_NAME, {self: val})
             else:
                 getattr(inst, self.ATTR_NAME)[self] = val
+
 
 class Flag(SwitchAttr):
     """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` for boolean flags. If the flag is not
@@ -231,10 +280,14 @@ class Flag(SwitchAttr):
     :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switch>`,
                    except for ``list`` and ``argtype``.
     """
-    def __init__(self, names, default = False, **kwargs):
-        SwitchAttr.__init__(self, names, argtype = None, default = default, list = False, **kwargs)
+
+    def __init__(self, names, default=False, **kwargs):
+        SwitchAttr.__init__(
+            self, names, argtype=None, default=default, list=False, **kwargs)
+
     def __call__(self, inst):
         self.__set__(inst, not self._default_value)
+
 
 class CountOf(SwitchAttr):
     """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` that counts the number of
@@ -250,16 +303,19 @@ class CountOf(SwitchAttr):
     :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switch>`,
                    except for ``list`` and ``argtype``.
     """
-    def __init__(self, names, default = 0, **kwargs):
-        SwitchAttr.__init__(self, names, argtype = None, default = default, list = True, **kwargs)
+
+    def __init__(self, names, default=0, **kwargs):
+        SwitchAttr.__init__(
+            self, names, argtype=None, default=default, list=True, **kwargs)
         self._default_value = default  # issue #118
+
     def __call__(self, inst, v):
         self.__set__(inst, len(v))
+
 
 #===================================================================================================
 # Decorator for function that adds argument checking
 #===================================================================================================
-
 
 
 class positional(object):
@@ -299,16 +355,16 @@ class positional(object):
         m = six.getfullargspec(function)
         args_names = list(m.args[1:])
 
-        positional = [None]*len(args_names)
+        positional = [None] * len(args_names)
         varargs = None
 
-        for i in range(min(len(positional),len(self.args))):
+        for i in range(min(len(positional), len(self.args))):
             positional[i] = self.args[i]
 
         if len(args_names) + 1 == len(self.args):
             varargs = self.args[-1]
 
-         # All args are positional, so convert kargs to positional
+        # All args are positional, so convert kargs to positional
         for item in self.kargs:
             if item == m.varargs:
                 varargs = self.kargs[item]
@@ -318,6 +374,7 @@ class positional(object):
         function.positional = positional
         function.positional_varargs = varargs
         return function
+
 
 class Validator(six.ABC):
     __slots__ = ()
@@ -341,6 +398,7 @@ class Validator(six.ABC):
         mystrs = ("{0} = {1}".format(name, slots[name]) for name in slots)
         return "{0}({1})".format(self.__class__.__name__, ", ".join(mystrs))
 
+
 #===================================================================================================
 # Switch type validators
 #===================================================================================================
@@ -360,16 +418,21 @@ class Range(Validator):
     def __init__(self, start, end):
         self.start = start
         self.end = end
+
     def __repr__(self):
         return "[{0:d}..{1:d}]".format(self.start, self.end)
+
     def __call__(self, obj):
         obj = int(obj)
         if obj < self.start or obj > self.end:
-            raise ValueError(_("Not in range [{0:d}..{1:d}]").format(self.start, self.end))
+            raise ValueError(
+                _("Not in range [{0:d}..{1:d}]").format(self.start, self.end))
         return obj
+
     def choices(self, partial=""):
         # TODO: Add partial handling
-        return set(range(self.start, self.end+1))
+        return set(range(self.start, self.end + 1))
+
 
 class Set(Validator):
     """
@@ -383,33 +446,48 @@ class Set(Validator):
     :param case_sensitive: A keyword argument that indicates whether to use case-sensitive
                              comparison or not. The default is ``False``
     """
+
     def __init__(self, *values, **kwargs):
         self.case_sensitive = kwargs.pop("case_sensitive", False)
         if kwargs:
-            raise TypeError(_("got unexpected keyword argument(s): {0}").format(kwargs.keys()))
-        self.values = dict(((v if self.case_sensitive else v.lower()), v) for v in values)
+            raise TypeError(
+                _("got unexpected keyword argument(s): {0}").format(
+                    kwargs.keys()))
+        self.values = dict(
+            ((v if self.case_sensitive else v.lower()), v) for v in values)
+
     def __repr__(self):
-        return "{{{0}}}".format(", ".join(repr(v) for v in self.values.values()))
+        return "{{{0}}}".format(", ".join(
+            repr(v) for v in self.values.values()))
+
     def __call__(self, obj):
         if not self.case_sensitive:
             obj = obj.lower()
         if obj not in self.values:
-            raise ValueError(_("Expected one of {0}").format(list(self.values.values())))
+            raise ValueError(
+                _("Expected one of {0}").format(list(self.values.values())))
         return self.values[obj]
+
     def choices(self, partial=""):
         # TODO: Add case sensitive/insensitive parital completion
         return set(self.values)
 
+
 class Predicate(object):
     """A wrapper for a single-argument function with pretty printing"""
+
     def __init__(self, func):
         self.func = func
+
     def __str__(self):
         return self.func.__name__
+
     def __call__(self, val):
         return self.func(val)
+
     def choices(self, partial=""):
         return set()
+
 
 @Predicate
 def ExistingDirectory(val):
@@ -424,10 +502,12 @@ def ExistingDirectory(val):
 def MakeDirectory(val):
     p = local.path(val)
     if p.is_file():
-        raise ValueError('{0} is a file, should be nonexistent, or a directory'.format(val))
+        raise ValueError(
+            '{0} is a file, should be nonexistent, or a directory'.format(val))
     elif not p.exists():
         p.mkdir()
     return p
+
 
 @Predicate
 def ExistingFile(val):
@@ -436,6 +516,7 @@ def ExistingFile(val):
     if not p.is_file():
         raise ValueError(_("{0} is not a file").format(val))
     return p
+
 
 @Predicate
 def NonexistentPath(val):

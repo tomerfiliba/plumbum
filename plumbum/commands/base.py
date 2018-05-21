@@ -8,6 +8,7 @@ from tempfile import TemporaryFile
 from subprocess import PIPE, Popen
 from types import MethodType
 
+
 class RedirectionError(Exception):
     """Raised when an attempt is made to redirect an process' standard handle,
     which was already redirected to/from a file"""
@@ -19,6 +20,8 @@ class RedirectionError(Exception):
 # modified from the stdlib pipes module for windows
 _safechars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@%_-+=:,./'
 _funnychars = '"`$\\'
+
+
 def shquote(text):
     """Quotes the given text with shell escaping (assumes as syntax similar to ``sh``)"""
     if not text:
@@ -33,8 +36,10 @@ def shquote(text):
         return text
     if "'" not in text:
         return "'" + text + "'"
-    res = six.str("").join((six.str('\\' + c) if c in _funnychars else c) for c in text)
+    res = six.str("").join(
+        (six.str('\\' + c) if c in _funnychars else c) for c in text)
     return six.str('"') + res + six.str('"')
+
 
 def shquote_list(seq):
     return [shquote(item) for item in seq]
@@ -70,6 +75,7 @@ class BaseCommand(object):
     def __lt__(self, file):
         """Redirects the given file into the process' stdin"""
         return StdinRedirection(self, file)
+
     def __lshift__(self, data):
         """Redirects the given data into the process' stdin"""
         return StdinDataRedirection(self, data)
@@ -78,7 +84,9 @@ class BaseCommand(object):
         """Creates a bound-command with the given arguments. Shortcut for
         bound_command."""
         if not isinstance(args, (tuple, list)):
-            args = [args, ]
+            args = [
+                args,
+            ]
         return self.bound_command(*args)
 
     def bound_command(self, *args):
@@ -89,7 +97,6 @@ class BaseCommand(object):
             return BoundCommand(self.cmd, self.args + list(args))
         else:
             return BoundCommand(self, args)
-
 
     def __call__(self, *args, **kwargs):
         """A shortcut for `run(args)`, returning only the process' stdout"""
@@ -110,7 +117,7 @@ class BaseCommand(object):
     def machine(self):
         raise NotImplementedError()
 
-    def formulate(self, level = 0, args = ()):
+    def formulate(self, level=0, args=()):
         """Formulates the command into a command-line, i.e., a list of shell-quoted strings
         that can be executed by ``Popen`` or shells.
 
@@ -123,7 +130,7 @@ class BaseCommand(object):
         """
         raise NotImplementedError()
 
-    def popen(self, args = (), **kwargs):
+    def popen(self, args=(), **kwargs):
         """Spawns the given command, returning a ``Popen``-like object.
 
         .. note::
@@ -142,12 +149,17 @@ class BaseCommand(object):
         """
         raise NotImplementedError()
 
-    def nohup(self, command, cwd='.', stdout='nohup.out', stderr=None, append=True):
+    def nohup(self,
+              command,
+              cwd='.',
+              stdout='nohup.out',
+              stderr=None,
+              append=True):
         """Runs a command detached."""
         return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)
 
     @contextmanager
-    def bgrun(self, args = (), **kwargs):
+    def bgrun(self, args=(), **kwargs):
         """Runs the given command as a context manager, allowing you to create a
         `pipeline <http://en.wikipedia.org/wiki/Pipeline_(computing)>`_ (not in the UNIX sense)
         of programs, parallelizing their work. In other words, instead of running programs
@@ -180,6 +192,7 @@ class BaseCommand(object):
         timeout = kwargs.pop("timeout", None)
         p = self.popen(args, **kwargs)
         was_run = [False]
+
         def runner():
             if was_run[0]:
                 return  # already done
@@ -193,11 +206,12 @@ class BaseCommand(object):
                         f.close()
                     except Exception:
                         pass
+
         p.run = runner
         yield p
         runner()
 
-    def run(self, args = (), **kwargs):
+    def run(self, args=(), **kwargs):
         """Runs the given command (equivalent to popen() followed by
         :func:`run_proc <plumbum.commands.run_proc>`). If the exit code of the process does
         not match the expected one, :class:`ProcessExecutionError
@@ -277,60 +291,83 @@ class BaseCommand(object):
         """
         return self._use_modifier(plumbum.commands.modifiers.NOHUP, kwargs)
 
+
 class BoundCommand(BaseCommand):
     __slots__ = ("cmd", "args")
+
     def __init__(self, cmd, args):
         self.cmd = cmd
         self.args = list(args)
+
     def __repr__(self):
         return "BoundCommand(%r, %r)" % (self.cmd, self.args)
+
     def _get_encoding(self):
         return self.cmd._get_encoding()
-    def formulate(self, level = 0, args = ()):
+
+    def formulate(self, level=0, args=()):
         return self.cmd.formulate(level + 1, self.args + list(args))
+
     @property
     def machine(self):
         return self.cmd.machine
-    def popen(self, args = (), **kwargs):
+
+    def popen(self, args=(), **kwargs):
         if isinstance(args, six.string_types):
-            args = [args, ]
+            args = [
+                args,
+            ]
         return self.cmd.popen(self.args + list(args), **kwargs)
+
 
 class BoundEnvCommand(BaseCommand):
     __slots__ = ("cmd", "envvars")
+
     def __init__(self, cmd, envvars):
         self.cmd = cmd
         self.envvars = envvars
+
     def __repr__(self):
         return "BoundEnvCommand(%r, %r)" % (self.cmd, self.envvars)
+
     def _get_encoding(self):
         return self.cmd._get_encoding()
-    def formulate(self, level = 0, args = ()):
+
+    def formulate(self, level=0, args=()):
         return self.cmd.formulate(level, args)
+
     @property
     def machine(self):
         return self.cmd.machine
-    def popen(self, args = (), **kwargs):
+
+    def popen(self, args=(), **kwargs):
         with self.machine.env(**self.envvars):
             return self.cmd.popen(args, **kwargs)
 
+
 class Pipeline(BaseCommand):
     __slots__ = ("srccmd", "dstcmd")
+
     def __init__(self, srccmd, dstcmd):
         self.srccmd = srccmd
         self.dstcmd = dstcmd
+
     def __repr__(self):
         return "Pipeline(%r, %r)" % (self.srccmd, self.dstcmd)
+
     def _get_encoding(self):
         return self.srccmd._get_encoding() or self.dstcmd._get_encoding()
-    def formulate(self, level = 0, args = ()):
-        return self.srccmd.formulate(level + 1) + ["|"] + self.dstcmd.formulate(level + 1, args)
+
+    def formulate(self, level=0, args=()):
+        return self.srccmd.formulate(level + 1) + ["|"
+                                                   ] + self.dstcmd.formulate(
+                                                       level + 1, args)
 
     @property
     def machine(self):
         return self.srccmd.machine
 
-    def popen(self, args = (), **kwargs):
+    def popen(self, args=(), **kwargs):
         src_kwargs = kwargs.copy()
         src_kwargs["stdout"] = PIPE
         if "stdin" in kwargs:
@@ -349,15 +386,18 @@ class Pipeline(BaseCommand):
 
         # monkey-patch .wait() to wait on srcproc as well (it's expected to die when dstproc dies)
         dstproc_wait = dstproc.wait
+
         @functools.wraps(Popen.wait)
         def wait2(*args, **kwargs):
             rc_dst = dstproc_wait(*args, **kwargs)
             rc_src = srcproc.wait(*args, **kwargs)
             dstproc.returncode = rc_dst or rc_src
             return dstproc.returncode
+
         dstproc._proc.wait = wait2
 
         dstproc_verify = dstproc.verify
+
         def verify(proc, retcode, timeout, stdout, stderr):
             #TODO: right now it's impossible to specify different expected
             # return codes for different stages of the pipeline
@@ -365,41 +405,50 @@ class Pipeline(BaseCommand):
                 or_retcode = [0] + list(retcode)
             except TypeError:
                 if (retcode is None):
-                    or_retcode = None # no-retcode-verification acts "greedily"
+                    or_retcode = None  # no-retcode-verification acts "greedily"
                 else:
                     or_retcode = [0, retcode]
             proc.srcproc.verify(or_retcode, timeout, stdout, stderr)
             dstproc_verify(retcode, timeout, stdout, stderr)
+
         dstproc.verify = MethodType(verify, dstproc)
 
         dstproc.stdin = srcproc.stdin
         return dstproc
 
+
 class BaseRedirection(BaseCommand):
     __slots__ = ("cmd", "file")
-    SYM = None # type: str
-    KWARG = None # type: str
-    MODE = None # type: str
+    SYM = None  # type: str
+    KWARG = None  # type: str
+    MODE = None  # type: str
 
     def __init__(self, cmd, file):
         self.cmd = cmd
         self.file = file
+
     def _get_encoding(self):
         return self.cmd._get_encoding()
+
     def __repr__(self):
         return "%s(%r, %r)" % (self.__class__.__name__, self.cmd, self.file)
-    def formulate(self, level = 0, args = ()):
-        return self.cmd.formulate(level + 1, args) + [self.SYM, shquote(getattr(self.file, "name", self.file))]
+
+    def formulate(self, level=0, args=()):
+        return self.cmd.formulate(level + 1, args) + [
+            self.SYM, shquote(getattr(self.file, "name", self.file))
+        ]
+
     @property
     def machine(self):
         return self.cmd.machine
-    def popen(self, args = (), **kwargs):
+
+    def popen(self, args=(), **kwargs):
         from plumbum.machines.local import LocalPath
         from plumbum.machines.remote import RemotePath
 
         if self.KWARG in kwargs and kwargs[self.KWARG] not in (PIPE, None):
-            raise RedirectionError("%s is already redirected" % (self.KWARG,))
-        if isinstance(self.file, six.string_types + (LocalPath,)):
+            raise RedirectionError("%s is already redirected" % (self.KWARG, ))
+        if isinstance(self.file, six.string_types + (LocalPath, )):
             f = kwargs[self.KWARG] = open(str(self.file), self.MODE)
         elif isinstance(self.file, RemotePath):
             raise TypeError("Cannot redirect to/from remote paths")
@@ -412,11 +461,13 @@ class BaseRedirection(BaseCommand):
             if f:
                 f.close()
 
+
 class StdinRedirection(BaseRedirection):
     __slots__ = ()
     SYM = "<"
     KWARG = "stdin"
     MODE = "r"
+
 
 class StdoutRedirection(BaseRedirection):
     __slots__ = ()
@@ -424,11 +475,13 @@ class StdoutRedirection(BaseRedirection):
     KWARG = "stdout"
     MODE = "w"
 
+
 class AppendingStdoutRedirection(BaseRedirection):
     __slots__ = ()
     SYM = ">>"
     KWARG = "stdout"
     MODE = "a"
+
 
 class StderrRedirection(BaseRedirection):
     __slots__ = ()
@@ -436,12 +489,17 @@ class StderrRedirection(BaseRedirection):
     KWARG = "stderr"
     MODE = "w"
 
+
 class _ERROUT(int):
     def __repr__(self):
         return "ERROUT"
+
     def __str__(self):
         return "&1"
+
+
 ERROUT = _ERROUT(subprocess.STDOUT)
+
 
 class StdinDataRedirection(BaseCommand):
     __slots__ = ("cmd", "data")
@@ -450,19 +508,26 @@ class StdinDataRedirection(BaseCommand):
     def __init__(self, cmd, data):
         self.cmd = cmd
         self.data = data
+
     def _get_encoding(self):
         return self.cmd._get_encoding()
 
-    def formulate(self, level = 0, args = ()):
-        return ["echo %s" % (shquote(self.data),), "|", self.cmd.formulate(level + 1, args)]
+    def formulate(self, level=0, args=()):
+        return [
+            "echo %s" % (shquote(self.data), ), "|",
+            self.cmd.formulate(level + 1, args)
+        ]
+
     @property
     def machine(self):
         return self.cmd.machine
-    def popen(self, args = (), **kwargs):
+
+    def popen(self, args=(), **kwargs):
         if "stdin" in kwargs and kwargs["stdin"] != PIPE:
             raise RedirectionError("stdin is already redirected")
         data = self.data
-        if isinstance(data, six.unicode_type) and self._get_encoding() is not None:
+        if isinstance(data,
+                      six.unicode_type) and self._get_encoding() is not None:
             data = data.encode(self._get_encoding())
         f = TemporaryFile()
         while data:
@@ -471,13 +536,15 @@ class StdinDataRedirection(BaseCommand):
             data = data[self.CHUNK_SIZE:]
         f.seek(0)
         # try:
-        return self.cmd.popen(args, stdin = f, **kwargs)
+        return self.cmd.popen(args, stdin=f, **kwargs)
         # finally:
         #    f.close()
 
+
 class ConcreteCommand(BaseCommand):
-    QUOTE_LEVEL = None # type: int
+    QUOTE_LEVEL = None  # type: int
     __slots__ = ("executable", "custom_encoding")
+
     def __init__(self, executable, encoding):
         self.executable = executable
         self.custom_encoding = encoding
@@ -493,7 +560,7 @@ class ConcreteCommand(BaseCommand):
     def _get_encoding(self):
         return self.custom_encoding
 
-    def formulate(self, level = 0, args = ()):
+    def formulate(self, level=0, args=()):
         argv = [six.str(self.executable)]
         for a in args:
             if a is None:
@@ -504,10 +571,12 @@ class ConcreteCommand(BaseCommand):
                 else:
                     argv.extend(a.formulate(level + 1))
             elif isinstance(a, (list, tuple)):
-                argv.extend(shquote(b) if level >= self.QUOTE_LEVEL else six.str(b) for b in a)
+                argv.extend(
+                    shquote(b) if level >= self.QUOTE_LEVEL else six.str(b)
+                    for b in a)
             else:
-                argv.append(shquote(a) if level >= self.QUOTE_LEVEL else six.str(a))
+                argv.append(
+                    shquote(a) if level >= self.QUOTE_LEVEL else six.str(a))
         # if self.custom_encoding:
         #    argv = [a.encode(self.custom_encoding) for a in argv if isinstance(a, six.string_types)]
         return argv
-

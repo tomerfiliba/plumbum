@@ -43,7 +43,6 @@ from plumbum.version import version
 __author__ = "Tomer Filiba (tomerfiliba@gmail.com)"
 __version__ = version
 
-
 #===================================================================================================
 # Module hack: ``from plumbum.cmd import ls``
 #===================================================================================================
@@ -55,17 +54,21 @@ try:
 except ImportError:
     pass
 
+
 class LocalModule(ModuleType):
     """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
     __all__ = ()  # to make help() happy
     __package__ = __name__
+
     def __getattr__(self, name):
         try:
             return local[name]
         except CommandNotFound:
             raise AttributeError(name)
-    __path__ = [] # type: List[str]
+
+    __path__ = []  # type: List[str]
     __file__ = __file__
+
 
 cmd = LocalModule(__name__ + ".cmd", LocalModule.__doc__)
 sys.modules[cmd.__name__] = cmd

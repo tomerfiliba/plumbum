@@ -32,6 +32,7 @@ else:
         from subprocess import Popen, PIPE
         has_new_subprocess = False
 
+
 class PlumbumLocalPopen(PopenAddons):
     iter_lines = iter_lines
 
@@ -43,6 +44,7 @@ class PlumbumLocalPopen(PopenAddons):
 
     def __getattr__(self, name):
         return getattr(self._proc, name)
+
 
 if IS_WIN32:
     from plumbum.machines._windows import get_pe_subsystem, IMAGE_SUBSYSTEM_WINDOWS_CUI
@@ -95,6 +97,7 @@ class LocalEnv(BaseEnv):
             os.environ = prev
         return output
 
+
 #===================================================================================================
 # Local Commands
 #===================================================================================================
@@ -102,20 +105,25 @@ class LocalCommand(ConcreteCommand):
     __slots__ = ()
     QUOTE_LEVEL = 2
 
-    def __init__(self, executable, encoding = "auto"):
-        ConcreteCommand.__init__(self, executable,
-            local.custom_encoding if encoding == "auto" else encoding)
+    def __init__(self, executable, encoding="auto"):
+        ConcreteCommand.__init__(
+            self, executable, local.custom_encoding
+            if encoding == "auto" else encoding)
 
     @property
     def machine(self):
         return local
 
-    def popen(self, args = (), cwd = None, env = None, **kwargs):
+    def popen(self, args=(), cwd=None, env=None, **kwargs):
         if isinstance(args, six.string_types):
-            args = (args,)
-        return self.machine._popen(self.executable, self.formulate(0, args),
-            cwd = self.cwd if cwd is None else cwd, env = self.env if env is None else env,
+            args = (args, )
+        return self.machine._popen(
+            self.executable,
+            self.formulate(0, args),
+            cwd=self.cwd if cwd is None else cwd,
+            env=self.env if env is None else env,
             **kwargs)
+
 
 #===================================================================================================
 # Local Machine
@@ -144,7 +152,8 @@ class LocalMachine(BaseMachine):
         self._as_user_stack = []
 
     if IS_WIN32:
-        _EXTENSIONS = [""] + env.get("PATHEXT", ":.exe:.bat").lower().split(os.path.pathsep)
+        _EXTENSIONS = [""] + env.get("PATHEXT", ":.exe:.bat").lower().split(
+            os.path.pathsep)
 
         @classmethod
         def _which(cls, progname):
@@ -156,6 +165,7 @@ class LocalMachine(BaseMachine):
                         return fn
             return None
     else:
+
         @classmethod
         def _which(cls, progname):
             for p in cls.env.path:
@@ -193,7 +203,7 @@ class LocalMachine(BaseMachine):
         parts2 = [str(self.cwd)]
         for p in parts:
             if isinstance(p, RemotePath):
-                raise TypeError("Cannot construct LocalPath from %r" % (p,))
+                raise TypeError("Cannot construct LocalPath from %r" % (p, ))
             parts2.append(self.env.expanduser(str(p)))
         return LocalPath(os.path.join(*parts2))
 
@@ -224,22 +234,34 @@ class LocalMachine(BaseMachine):
                 # search for command
                 return LocalCommand(self.which(cmd))
         else:
-            raise TypeError("cmd must not be a RemotePath: %r" % (cmd,))
+            raise TypeError("cmd must not be a RemotePath: %r" % (cmd, ))
 
-    def _popen(self, executable, argv, stdin = PIPE, stdout = PIPE, stderr = PIPE,
-            cwd = None, env = None, new_session = False, **kwargs):
+    def _popen(self,
+               executable,
+               argv,
+               stdin=PIPE,
+               stdout=PIPE,
+               stderr=PIPE,
+               cwd=None,
+               env=None,
+               new_session=False,
+               **kwargs):
         if new_session:
             if has_new_subprocess:
                 kwargs["start_new_session"] = True
             elif IS_WIN32:
-                kwargs["creationflags"] = kwargs.get("creationflags", 0) | subprocess.CREATE_NEW_PROCESS_GROUP
+                kwargs["creationflags"] = kwargs.get(
+                    "creationflags", 0) | subprocess.CREATE_NEW_PROCESS_GROUP
             else:
-                def preexec_fn(prev_fn = kwargs.get("preexec_fn", lambda: None)):
+
+                def preexec_fn(prev_fn=kwargs.get("preexec_fn", lambda: None)):
                     os.setsid()
                     prev_fn()
+
                 kwargs["preexec_fn"] = preexec_fn
 
-        if IS_WIN32 and "startupinfo" not in kwargs and stdin not in (sys.stdin, None):
+        if IS_WIN32 and "startupinfo" not in kwargs and stdin not in (
+                sys.stdin, None):
             subsystem = get_pe_subsystem(str(executable))
 
             if subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI:
@@ -254,7 +276,8 @@ class LocalMachine(BaseMachine):
                     sui.wShowWindow = subprocess.SW_HIDE  # @UndefinedVariable
 
         if not has_new_subprocess and "close_fds" not in kwargs:
-            if IS_WIN32 and (stdin is not None or stdout is not None or stderr is not None):
+            if IS_WIN32 and (stdin is not None or stdout is not None
+                             or stderr is not None):
                 # we can't close fds if we're on windows and we want to redirect any std handle
                 kwargs["close_fds"] = False
             else:
@@ -271,15 +294,26 @@ class LocalMachine(BaseMachine):
             argv, executable = self._as_user_stack[-1](argv)
 
         logger.debug("Running %r", argv)
-        proc = PlumbumLocalPopen(argv, executable = str(executable), stdin = stdin, stdout = stdout,
-            stderr = stderr, cwd = str(cwd), env = env, **kwargs)  # bufsize = 4096
+        proc = PlumbumLocalPopen(
+            argv,
+            executable=str(executable),
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+            cwd=str(cwd),
+            env=env,
+            **kwargs)  # bufsize = 4096
         proc._start_time = time.time()
         proc.custom_encoding = self.custom_encoding
         proc.argv = argv
         return proc
 
-
-    def daemonic_popen(self, command, cwd = "/", stdout=None, stderr=None, append=True):
+    def daemonic_popen(self,
+                       command,
+                       cwd="/",
+                       stdout=None,
+                       stderr=None,
+                       append=True):
         """
         On POSIX systems:
 
@@ -303,6 +337,7 @@ class LocalMachine(BaseMachine):
             return posix_daemonize(command, cwd, stdout, stderr, append)
 
     if IS_WIN32:
+
         def list_processes(self):
             """
             Returns information about all running processes (on Windows: using ``tasklist``)
@@ -323,9 +358,10 @@ class LocalMachine(BaseMachine):
             statidx = header.index('Status')
             useridx = header.index('User Name')
             for row in rows:
-                yield ProcInfo(int(row[pididx]), row[useridx],
-                    row[statidx], row[imgidx])
+                yield ProcInfo(
+                    int(row[pididx]), row[useridx], row[statidx], row[imgidx])
     else:
+
         def list_processes(self):
             """
             Returns information about all running processes (on POSIX systems: using ``ps``)
@@ -334,10 +370,12 @@ class LocalMachine(BaseMachine):
             """
             ps = self["ps"]
             lines = ps("-e", "-o", "pid,uid,stat,args").splitlines()
-            lines.pop(0) # header
+            lines.pop(0)  # header
             for line in lines:
                 parts = line.strip().split()
-                yield ProcInfo(int(parts[0]), int(parts[1]), parts[2], " ".join(parts[3:]))
+                yield ProcInfo(
+                    int(parts[0]), int(parts[1]), parts[2],
+                    " ".join(parts[3:]))
 
     def pgrep(self, pattern):
         """
@@ -348,10 +386,10 @@ class LocalMachine(BaseMachine):
             if pat.search(procinfo.args):
                 yield procinfo
 
-    def session(self, new_session = False):
+    def session(self, new_session=False):
         """Creates a new :class:`ShellSession <plumbum.session.ShellSession>` object; this
         invokes ``/bin/sh`` and executes commands on it over stdin/stdout/stderr"""
-        return ShellSession(self["sh"].popen(new_session = new_session))
+        return ShellSession(self["sh"].popen(new_session=new_session))
 
     @contextmanager
     def tempdir(self):
@@ -364,7 +402,7 @@ class LocalMachine(BaseMachine):
             dir.delete()
 
     @contextmanager
-    def as_user(self, username = None):
+    def as_user(self, username=None):
         """Run nested commands as the given user. For example::
 
             head = local["head"]
@@ -381,7 +419,8 @@ class LocalMachine(BaseMachine):
                 '"' + " ".join(str(a) for a in argv) + '"'], self.which("runas")))
         else:
             if username is None:
-                self._as_user_stack.append(lambda argv: (["sudo"] + list(argv), self.which("sudo")))
+                self._as_user_stack.append(
+                    lambda argv: (["sudo"] + list(argv), self.which("sudo")))
             else:
                 self._as_user_stack.append(lambda argv: (["sudo", "-u", username] + list(argv), self.which("sudo")))
         try:
@@ -395,6 +434,7 @@ class LocalMachine(BaseMachine):
 
     python = LocalCommand(sys.executable, custom_encoding)
     """A command that represents the current python interpreter (``sys.executable``)"""
+
 
 local = LocalMachine()
 """The *local machine* (a singleton object). It serves as an entry point to everything

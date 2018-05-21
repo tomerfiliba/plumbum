@@ -2,6 +2,7 @@ from plumbum.commands.processes import CommandNotFound
 from plumbum.commands.processes import ProcessExecutionError
 from plumbum.commands.processes import ProcessTimedOut
 
+
 class PopenAddons(object):
     """This adds a verify to popen objects to that the correct command is attributed when
     an error is thrown."""
@@ -9,23 +10,25 @@ class PopenAddons(object):
     def verify(self, retcode, timeout, stdout, stderr):
         """This verifies that the correct command is attributed."""
         if getattr(self, "_timed_out", False):
-            raise ProcessTimedOut("Process did not terminate within %s seconds" % (timeout,),
+            raise ProcessTimedOut(
+                "Process did not terminate within %s seconds" % (timeout, ),
                 getattr(self, "argv", None))
 
         if retcode is not None:
             if hasattr(retcode, "__contains__"):
                 if self.returncode not in retcode:
-                    raise ProcessExecutionError(getattr(self, "argv", None), self.returncode,
-                        stdout, stderr)
+                    raise ProcessExecutionError(
+                        getattr(self, "argv", None), self.returncode, stdout,
+                        stderr)
             elif self.returncode != retcode:
-                raise ProcessExecutionError(getattr(self, "argv", None), self.returncode,
-                    stdout, stderr)
+                raise ProcessExecutionError(
+                    getattr(self, "argv", None), self.returncode, stdout,
+                    stderr)
 
 
 class BaseMachine(object):
     """This is a base class for other machines. It contains common code to
     all machines in Plumbum."""
-
 
     def get(self, cmd, *othercommands):
         """This works a little like the ``.get`` method with dict's, only
@@ -42,12 +45,12 @@ class BaseMachine(object):
         try:
             command = self[cmd]
             if not command.executable.exists():
-                raise CommandNotFound(cmd,command.executable)
+                raise CommandNotFound(cmd, command.executable)
             else:
                 return command
         except CommandNotFound:
             if othercommands:
-                return self.get(othercommands[0],*othercommands[1:])
+                return self.get(othercommands[0], *othercommands[1:])
             else:
                 raise
 
@@ -66,11 +69,15 @@ class BaseMachine(object):
     def encoding(self):
         'This is a wrapper for custom_encoding'
         return self.custom_encoding
+
     @encoding.setter
     def encoding(self, value):
         self.custom_encoding = value
-            
-    def daemonic_popen(self, command, cwd = "/", stdout=None, stderr=None, append=True):
+
+    def daemonic_popen(self,
+                       command,
+                       cwd="/",
+                       stdout=None,
+                       stderr=None,
+                       append=True):
         raise NotImplementedError("This is not implemented on this machine!")
-
-

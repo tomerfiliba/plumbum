@@ -6,9 +6,10 @@ from plumbum import local
 import os
 
 try:
-    from configparser import ConfigParser, NoOptionError, NoSectionError # Py3
+    from configparser import ConfigParser, NoOptionError, NoSectionError  # Py3
 except ImportError:
-    from ConfigParser import ConfigParser, NoOptionError, NoSectionError # type: ignore
+    from ConfigParser import ConfigParser, NoOptionError, NoSectionError  # type: ignore
+
 
 class ConfigBase(six.ABC):
     """Base class for Config parsers.
@@ -81,6 +82,7 @@ class ConfigBase(six.ABC):
     def __setitem__(self, option, value):
         return self.set(option, value)
 
+
 class ConfigINI(ConfigBase):
     DEFAULT_SECTION = 'DEFAULT'
     slots = "parser".split()
@@ -105,7 +107,7 @@ class ConfigINI(ConfigBase):
         if '.' not in option:
             sec = cls.DEFAULT_SECTION
         else:
-            sec, option = option.split('.',1)
+            sec, option = option.split('.', 1)
         return sec, option
 
     @_setdoc(ConfigBase)
@@ -116,7 +118,6 @@ class ConfigINI(ConfigBase):
             return self.parser.get(sec, option)
         except (NoSectionError, NoOptionError):
             raise KeyError("{sec}:{option}".format(sec=sec, option=option))
-
 
     @_setdoc(ConfigBase)
     def _set(self, option, value):

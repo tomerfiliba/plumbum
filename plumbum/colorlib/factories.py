@@ -13,7 +13,6 @@ __all__ = ['ColorFactory', 'StyleFactory']
 
 
 class ColorFactory(object):
-
     """This creates color names given fg = True/False. It usually will
     be called as part of a StyleFactory."""
 
@@ -24,35 +23,41 @@ class ColorFactory(object):
 
         # Adding the color name shortcuts for foreground colors
         for item in color_names[:16]:
-            setattr(self, item, style.from_color(style.color_class.from_simple(item, fg=fg)))
-
+            setattr(
+                self, item,
+                style.from_color(style.color_class.from_simple(item, fg=fg)))
 
     def __getattr__(self, item):
         """Full color names work, but do not populate __dir__."""
         try:
-            return self._style.from_color(self._style.color_class(item, fg=self._fg))
+            return self._style.from_color(
+                self._style.color_class(item, fg=self._fg))
         except ColorNotFound:
             raise AttributeError(item)
 
     def full(self, name):
         """Gets the style for a color, using standard name procedure: either full
         color name, html code, or number."""
-        return self._style.from_color(self._style.color_class.from_full(name, fg=self._fg))
+        return self._style.from_color(
+            self._style.color_class.from_full(name, fg=self._fg))
 
     def simple(self, name):
         """Return the extended color scheme color for a value or name."""
-        return self._style.from_color(self._style.color_class.from_simple(name, fg=self._fg))
+        return self._style.from_color(
+            self._style.color_class.from_simple(name, fg=self._fg))
 
     def rgb(self, r, g=None, b=None):
         """Return the extended color scheme color for a value."""
         if g is None and b is None:
             return self.hex(r)
         else:
-            return self._style.from_color(self._style.color_class(r, g, b, fg=self._fg))
+            return self._style.from_color(
+                self._style.color_class(r, g, b, fg=self._fg))
 
     def hex(self, hexcode):
         """Return the extended color scheme color for a value."""
-        return self._style.from_color(self._style.color_class.from_hex(hexcode, fg=self._fg))
+        return self._style.from_color(
+            self._style.color_class.from_hex(hexcode, fg=self._fg))
 
     def ansi(self, ansiseq):
         """Make a style from an ansi text sequence"""
@@ -76,7 +81,7 @@ class ColorFactory(object):
         except ColorNotFound:
             return self.hex(val)
 
-    def __call__(self, val_or_r=None, g = None, b = None):
+    def __call__(self, val_or_r=None, g=None, b=None):
         """Shortcut to provide way to access colors."""
         if val_or_r is None or (isinstance(val_or_r, str) and val_or_r == ''):
             return self._style()
@@ -84,7 +89,8 @@ class ColorFactory(object):
             return self._style(val_or_r)
         if isinstance(val_or_r, str) and '\033' in val_or_r:
             return self.ansi(val_or_r)
-        return self._style.from_color(self._style.color_class(val_or_r, g, b, fg=self._fg))
+        return self._style.from_color(
+            self._style.color_class(val_or_r, g, b, fg=self._fg))
 
     def __iter__(self):
         """Iterates through all colors in extended colorset."""
@@ -110,13 +116,13 @@ class ColorFactory(object):
         """Simple representation of the class by name."""
         return "<{0}>".format(self.__class__.__name__)
 
-class StyleFactory(ColorFactory):
 
+class StyleFactory(ColorFactory):
     """Factory for styles. Holds font styles, FG and BG objects representing colors, and
     imitates the FG ColorFactory to a large degree."""
 
     def __init__(self, style):
-        super(StyleFactory,self).__init__(True, style)
+        super(StyleFactory, self).__init__(True, style)
 
         self.fg = ColorFactory(True, style)
         self.bg = ColorFactory(False, style)
@@ -125,7 +131,7 @@ class StyleFactory(ColorFactory):
         self.reset = style(reset=True)
 
         for item in style.attribute_names:
-            setattr(self, item, style(attributes={item:True}))
+            setattr(self, item, style(attributes={item: True}))
 
         self.load_stylesheet(default_styles)
 
@@ -146,6 +152,7 @@ class StyleFactory(ColorFactory):
     def stdout(self):
         """This is a shortcut for getting stdout from a class without an instance."""
         return self._style._stdout if self._style._stdout is not None else sys.stdout
+
     @stdout.setter
     def stdout(self, newout):
         self._style._stdout = newout
@@ -172,10 +179,9 @@ class StyleFactory(ColorFactory):
                 prev = self
 
         if styleslist:
-            prev = reduce(lambda a,b: a & b, styleslist)
+            prev = reduce(lambda a, b: a & b, styleslist)
 
         return prev if isinstance(prev, self._style) else prev.reset
-
 
     def filter(self, colored_string):
         """Filters out colors in a string, returning only the name."""

@@ -7,12 +7,16 @@ import signal
 import traceback
 from plumbum.commands.processes import ProcessExecutionError
 
+
 class _fake_lock(object):
     """Needed to allow normal os.exit() to work without error"""
+
     def acquire(self, val):
         return True
+
     def release(self):
         pass
+
 
 def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
     if stdout is None:
@@ -35,12 +39,17 @@ def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
             stdout = open(stdout, "a" if append else "w")
             stderr = open(stderr, "a" if append else "w")
             signal.signal(signal.SIGHUP, signal.SIG_IGN)
-            proc = command.popen(cwd = cwd, close_fds = True, stdin = stdin.fileno(), 
-                stdout = stdout.fileno(), stderr = stderr.fileno())
+            proc = command.popen(
+                cwd=cwd,
+                close_fds=True,
+                stdin=stdin.fileno(),
+                stdout=stdout.fileno(),
+                stderr=stderr.fileno())
             os.write(wfd, str(proc.pid).encode("utf8"))
         except:
             rc = 1
-            tbtext = "".join(traceback.format_exception(*sys.exc_info()))[-MAX_SIZE:]
+            tbtext = "".join(
+                traceback.format_exception(*sys.exc_info()))[-MAX_SIZE:]
             os.write(wfd, tbtext.encode("utf8"))
         finally:
             os.close(wfd)
@@ -71,8 +80,8 @@ def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
         proc._communication_started = False
         proc.args = argv
         proc.argv = argv
-        
-        def poll(self = proc):
+
+        def poll(self=proc):
             if self.returncode is None:
                 try:
                     os.kill(self.pid, 0)
@@ -84,13 +93,13 @@ def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
                     else:
                         raise
             return self.returncode
-        
-        def wait(self = proc):
+
+        def wait(self=proc):
             while self.returncode is None:
                 if self.poll() is None:
                     time.sleep(0.5)
-            return proc.returncode                
-        
+            return proc.returncode
+
         proc.poll = poll
         proc.wait = wait
         return proc
@@ -105,11 +114,9 @@ def win32_daemonize(command, cwd, stdout=None, stderr=None, append=True):
     stdin = open(os.devnull, "r")
     stdout = open(stdout, "a" if append else "w")
     stderr = open(stderr, "a" if append else "w")
-    return command.popen(cwd = cwd, stdin = stdin.fileno(), stdout = stdout.fileno(), stderr = stderr.fileno(), 
-        creationflags = subprocess.CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS)
-
-
-
-
-
-
+    return command.popen(
+        cwd=cwd,
+        stdin=stdin.fileno(),
+        stdout=stdout.fileno(),
+        stderr=stderr.fileno(),
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS)
