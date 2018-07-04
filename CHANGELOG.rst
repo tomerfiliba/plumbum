@@ -1,3 +1,7 @@
+1.6.7
+-----
+* Started testing Python 3.7 as well.
+
 1.6.6
 -----
 * Critical Bugfix: High-speed (English) translations could break the CLI module (`#371 <https://github.com/tomerfiliba/plumbum/issues/371>`_)

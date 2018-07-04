@@ -1,5 +1,6 @@
 sudo: required
 language: python
+dist: trusty
 matrix:
   include:
     - python: 2.6
@@ -12,6 +13,9 @@ matrix:
       env: PYV=3.5
     - python: 3.6
       env: PYV=3.6
+    - python: 3.7
+      env: PYV=3.7
+      dist: xenial
 #    - python: nightly
     - python: pypy
     - language: generic
