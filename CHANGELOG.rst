@@ -1,6 +1,7 @@
 1.6.7
 -----
 * Started testing Python 3.7 as well.
+* Avoid throwing error in atexit in special cases (like pytest)
 
 1.6.6
 -----
