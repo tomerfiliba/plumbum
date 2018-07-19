@@ -370,6 +370,8 @@ class Style(object):
         It will use current sys.stdout if set to None (default).
         Unfortunately, it only works on an instance..
         """
+        # Import sys repeated here to make calling this stable in atexit function
+        import sys
         return self.__class__._stdout if self.__class__._stdout is not None else sys.stdout
 
     @stdout.setter

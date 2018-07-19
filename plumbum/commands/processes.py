@@ -187,9 +187,11 @@ def _register_proc_timeout(proc, timeout):
 def _shutdown_bg_threads():
     global _shutting_down
     _shutting_down = True
-    _timeout_queue.put((SystemExit, 0))
-    # grace period
-    bgthd.join(0.1)
+    # Make sure this still exists (don't throw error in atexit!)
+    if _timeout_queue:
+        _timeout_queue.put((SystemExit, 0))
+        # grace period
+        bgthd.join(0.1)
 
 
 atexit.register(_shutdown_bg_threads)
