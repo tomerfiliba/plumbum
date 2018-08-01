@@ -84,7 +84,7 @@ class Path(str, six.ABC):
 
     __bool__ = __nonzero__
 
-    def __fpath__(self):
+    def __fspath__(self):
         """Added for Python 3.6 support"""
         return str(self)
 
