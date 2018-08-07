@@ -124,6 +124,10 @@ class Application(object):
     * ``SUBCOMMAND_HELPMSG`` - Controls the printing of extra "see subcommand -h" help message.
       Default is a message, set to False to remove.
 
+    * ``ALLOW_ABBREV`` - Controls whether partial switch names are supported, for example '--ver' will match
+      '--verbose'. Default is False for backward consistency with previous plumbum releases. Note that ambiguous
+      abbreviations will not match, for example if --foothis and --foothat are defined, then --foo will not match.
+
     A note on sub-commands: when an application is the root, its ``parent`` attribute is set to
     ``None``. When it is used as a nested-command, ``parent`` will point to its direct ancestor.
     Likewise, when an application is invoked with a sub-command, its ``nested_command`` attribute
@@ -141,6 +145,7 @@ class Application(object):
     COLOR_GROUPS = None
     CALL_MAIN_IF_NESTED_COMMAND = True
     SUBCOMMAND_HELPMSG = T_("see '{parent} {sub} --help' for more info")
+    ALLOW_ABBREV = False
 
     parent = None
     nested_command = None
@@ -259,6 +264,13 @@ class Application(object):
 
         return wrapper(subapp) if subapp else wrapper
 
+    def _get_partial_matches(self, partialname):
+        matches = []
+        for switch in self._switches_by_name:
+            if switch.startswith(partialname):
+                matches += [switch, ]
+        return matches
+
     def _parse_args(self, argv):
         tailargs = []
         swfuncs = {}
@@ -289,6 +301,15 @@ class Application(object):
                     argv.insert(0, a[eqsign:])
                 else:
                     name = a[2:]
+
+                if self.ALLOW_ABBREV:
+                    partials = self._get_partial_matches(name)
+                    if len(partials) == 1:
+                        name = partials[0]
+                    elif len(partials) > 1:
+                        raise UnknownSwitch(
+                            T_("Ambiguous partial switch {0}").format("--" + name))
+
                 swname = "--" + name
                 if name not in self._switches_by_name:
                     raise UnknownSwitch(
