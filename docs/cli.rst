@@ -424,6 +424,27 @@ specify the validators. For example::
 
 Annotations are ignored if the positional decorator is present.
     
+Switch Abbreviations
+^^^^^^^^^^^^^^^^^^^^
+
+The cli supports switches which have been abbreviated by the user, for example, "--h", "--he", or
+"--hel" would all match an actual switch name of"--help", as long as no ambiguity arises from
+multiple switches that might match the same abbreviation. This behavior is disabled by default but
+can be enabled by defining the class-level attribute ``ALLOW_ABBREV`` to True. For example::
+
+    class MyApp(cli.Application):
+        ALLOW_ABBREV = True
+        cheese = cli.Flag(["cheese"], help = "cheese, please")
+        chives = cli.Flag(["chives"], help = "chives, instead")
+
+With the above definition, running the following will raise an error due to ambiguity::
+
+    $ python example.py --ch   # error! matches --cheese and --chives
+
+However, the following two lines are equivalent::
+
+    $ python example.py --che
+    $ python example.py --cheese
 
 
 .. _guide-subcommands:

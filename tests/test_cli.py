@@ -15,6 +15,8 @@ class SimpleApp(cli.Application):
         print ("!!b", param)
 
     eggs = cli.SwitchAttr(["e"], str, help = "sets the eggs attribute", envname="PLUMBUM_TEST_EGGS")
+    cheese = cli.Flag(["--cheese"], help = "cheese, please")
+    chives = cli.Flag(["--chives"], help = "chives, instead")
     verbose = cli.CountOf(["v"], help = "increases the verbosity level")
     benedict = cli.CountOf(["--benedict"], help = """a very long help message with lots of
         useless information that nobody would ever want to read, but heck, we need to test
@@ -291,5 +293,15 @@ class TestCLI:
         stdout, stderr = capsys.readouterr()
         assert "bacon is mandatory" in stdout
 
+    def test_partial_switches(self, capsys):
+        app = SimpleApp
+        app.ALLOW_ABBREV = True
+        inst, rc = app.run(["foo", "--bacon=2", "--ch"], exit=False)
+        stdout, stderr = capsys.readouterr()
+        assert 'Ambiguous partial switch' in stdout
+        assert rc == 2
 
-
+        inst, rc = app.run(["foo", "--bacon=2", "--chee"], exit=False)
+        assert rc == 0
+        assert inst.cheese is True
+        assert inst.chives is False
