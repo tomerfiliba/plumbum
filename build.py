@@ -14,10 +14,7 @@ class BuildProject(cli.Application):
     def main(self):
         delete(local.cwd // "*.egg-info", "build", "dist")
 
-        #if self.upload:
-        #    local.python("setup.py", "register")
-
-        local.python("setup.py", "sdist", "bdist_wininst", "--plat-name=win32", "bdist_wheel")
+        local.python("setup.py", "sdist", "bdist_wheel")
 
         delete(local.cwd // "*.egg-info", "build")
 
@@ -25,7 +22,7 @@ class BuildProject(cli.Application):
             if twine is None:
                 print("Twine not installed, cannot securely upload. Install twine.")
             else:
-                twine['upload', 'dist/*tar.gz', 'dist/*.exe', 'dist/*.whl'] & FG
+                twine['upload', 'dist/*tar.gz', 'dist/*.whl'] & FG
 
 
 if __name__ == "__main__":
