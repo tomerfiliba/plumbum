@@ -61,15 +61,17 @@ docstring          ``switch``, ``Application``  The help message
 Special member variables
 ************************
 
-================= =====================================
-Utility           Usage
-================= =====================================
-``PROGNAME=``     Custom program name and/or color
-``VERSION=``      Custom version
-``DESCRIPTION=``  Custom description (or use docstring)
-``COLOR_USAGE=``  Custom color for usage statement
-``COLOR_GROUPS=`` Colors of groups (dictionary)
-================= =====================================
+====================== =====================================
+Utility                Usage
+====================== =====================================
+``PROGNAME=``          Custom program name and/or color
+``VERSION=``           Custom version
+``DESCRIPTION=``       Custom description (or use docstring)
+``DESCRIPTION_MORE=``  Custom description with whitespace
+``ALLOW_ABREV=True``   Allow argparse style abbreviations
+``COLOR_USAGE=``       Custom color for usage statement
+``COLOR_GROUPS=``      Colors of groups (dictionary)
+====================== =====================================
 
 Paths
 =====

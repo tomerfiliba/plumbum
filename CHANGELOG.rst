@@ -1,7 +1,11 @@
 1.6.7
 -----
-* Started testing Python 3.7 as well.
-* Avoid throwing error in atexit in special cases (like pytest)
+* Commands: Added ``run_*`` methods as an alternative to modifiers (`#386 <https://github.com/tomerfiliba/plumbum/pull/386>`_)
+* CLI: Added support for ``ALLOW_ABREV`` (`#401 <https://github.com/tomerfiliba/plumbum/pull/401>`_)
+* CLI: Added ``DESCRIPTION_MORE``, preserves spacing (`#378 <https://github.com/tomerfiliba/plumbum/pull/378>`_)
+* Color: Avoid throwing error in atexit in special cases (like pytest) (`#393 <https://github.com/tomerfiliba/plumbum/pull/393>`_)
+* Including Python 3.7 in testing matrix.
+* Smaller bugfixes and other testing improvements.
 
 1.6.6
 -----
