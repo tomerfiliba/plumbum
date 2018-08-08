@@ -1142,11 +1142,11 @@ for _ in range(%s):
         assert 'test_local.py' in stdout
 
     def test_run_tee(self, capfd):
-        from plumbum.cmd import ls
-        f = ls["-l"].run_tee()
-        stdout = capfd.readouterr()[0]
-        assert 'test_local.py' in stdout
-        assert 'test_local.py' in f[1]
+        from plumbum.cmd import echo
+
+        result = echo['This is fun'].run_tee()
+        assert result[1] == 'This is fun\n'
+        assert 'This is fun\n' == capfd.readouterr()[0]
 
     def test_run_tf(self):
         from plumbum.cmd import ls
