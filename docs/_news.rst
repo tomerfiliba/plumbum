@@ -1,3 +1,5 @@
+* **2018.08.10**: Version 1.6.7 released with several minor additions, mostly to CLI apps, and ``run_*`` modifiers added.
+
 * **2018.02.12**: Version 1.6.6 released with one more critical bugfix for a error message regression in 1.6.5.
 
 * **2017.12.29**: Version 1.6.5 released with mostly bugfixes, including a critical one that could break pip installs on some platforms. English cli apps now load as fast as before the localization update.

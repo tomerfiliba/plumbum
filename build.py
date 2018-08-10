@@ -23,6 +23,9 @@ class BuildProject(cli.Application):
                 print("Twine not installed, cannot securely upload. Install twine.")
             else:
                 twine['upload', 'dist/*tar.gz', 'dist/*.whl'] & FG
+        else:
+            print("Built. To upload, run:")
+            print("  twine upload dist/*tar.gz dist/*.whl")
 
 
 if __name__ == "__main__":
