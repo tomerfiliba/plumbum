@@ -125,7 +125,7 @@ class RemotePath(Path):
 
     @_setdoc(Path)
     def join(self, *parts):
-        return RemotePath(self.remote, self, *parts)
+        return self.__class__(self.remote, self, *parts)
 
     @_setdoc(Path)
     def list(self):
