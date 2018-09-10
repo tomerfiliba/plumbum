@@ -210,14 +210,17 @@ class LocalPath(Path):
         return dst
 
     @_setdoc(Path)
-    def mkdir(self):
-        if not self.exists():
+    def mkdir(self, mode=0o777, parents=True, exist_ok=True):
+        if not self.exists() or not exist_ok:
             try:
-                os.makedirs(str(self))
+                if parents:
+                    os.makedirs(str(self))
+                else:
+                    os.mkdir(str(self))
             except OSError:  # pragma: no cover
                 # directory might already exist (a race with other threads/processes)
                 _, ex, _ = sys.exc_info()
-                if ex.errno != errno.EEXIST:
+                if ex.errno != errno.EEXIST or not exist_ok:
                     raise
 
     @_setdoc(Path)
