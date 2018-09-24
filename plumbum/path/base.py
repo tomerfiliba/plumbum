@@ -404,7 +404,7 @@ class Path(str, six.ABC):
     @property
     def parents(self):
         """Pathlib like sequence of ancestors"""
-        join = lambda x, y: self.__class__(x) / y
+        join = lambda x, y: self._form(x) / y
         as_list = (reduce(join, self.parts[:i], self.parts[0])
                    for i in range(len(self.parts) - 1, 0, -1))
         return tuple(as_list)

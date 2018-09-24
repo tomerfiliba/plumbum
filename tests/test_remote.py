@@ -115,6 +115,11 @@ class TestRemotePath:
                 p.chown(p.uid.name)
                 assert p.uid == os.getuid()
 
+    def test_parent(self):
+        p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
+        p2 = p1.parent
+        assert str(p2) == "/some/long/path/to"
+
 class BaseRemoteMachineTest(object):
     TUNNEL_PROG = r"""import sys, socket
 s = socket.socket()
