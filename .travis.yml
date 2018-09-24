@@ -5,6 +5,8 @@ matrix:
   include:
     - python: 2.6
       env: PYV=2.6
+      before_install:
+        -  pip install pycparser==2.17
     - python: 2.7
       env: PYV=2.7
     - python: 3.4
