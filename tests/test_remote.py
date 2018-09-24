@@ -379,3 +379,42 @@ class TestParamikoMachine(BaseRemoteMachineTest):
 
             ret = list(rem['bash']["-c", 'echo -e "\xC2\xBD"'].popen())
             assert ret == [["%s\n" % unicode_half, None]]
+
+    def test_path_open_remote_write_local_read(self):
+        with self._connect() as rem:
+            # TODO: once Python 2.6 support is dropped, the nested
+            # with-statements below can be combined using "with x as a, y as b"
+            with rem.tempdir() as remote_tmpdir:
+                with local.tempdir() as tmpdir:
+                    assert remote_tmpdir.is_dir()
+                    assert tmpdir.is_dir()
+                    data = six.b("hello world")
+                    with (remote_tmpdir / "bar.txt").open("wb") as f:
+                        f.write(data)
+                    rem.download(
+                        (remote_tmpdir / "bar.txt"),
+                        (tmpdir / "bar.txt")
+                    )
+                    assert (tmpdir / "bar.txt").open("rb").read() == data
+
+            assert not remote_tmpdir.exists()
+            assert not tmpdir.exists()
+
+    def test_path_open_local_write_remote_read(self):
+        with self._connect() as rem:
+            # TODO: cf. note on Python 2.6 support above
+            with rem.tempdir() as remote_tmpdir:
+                with local.tempdir() as tmpdir:
+                    assert remote_tmpdir.is_dir()
+                    assert tmpdir.is_dir()
+                    data = six.b("hello world")
+                    with (tmpdir / "bar.txt").open("wb") as f:
+                        f.write(data)
+                    rem.upload(
+                        (tmpdir / "bar.txt"),
+                        (remote_tmpdir / "bar.txt")
+                    )
+                    assert (remote_tmpdir / "bar.txt").open("rb").read() == data
+
+            assert not remote_tmpdir.exists()
+            assert not tmpdir.exists()

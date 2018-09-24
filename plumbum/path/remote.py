@@ -293,8 +293,18 @@ class RemotePath(Path):
                 "got %r" % (dst, ))
         self.remote._path_link(self, dst, True)
 
-    def open(self):
-        pass
+    def open(self, mode="r", bufsize=-1):
+        """
+        Opens this path as a file.
+
+        Only works for ParamikoMachine-associated paths for now.
+        """
+        if hasattr(self.remote, "sftp") and hasattr(self.remote.sftp, "open"):
+            return self.remote.sftp.open(self, mode, bufsize)
+        else:
+            raise NotImplementedError(
+                "RemotePath.open only works for ParamikoMachine-associated "
+                "paths for now")
 
     @_setdoc(Path)
     def as_uri(self, scheme='ssh'):
