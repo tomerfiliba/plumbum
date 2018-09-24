@@ -139,8 +139,12 @@ class Progress(ProgressBase):
             print()
 
     def __str__(self):
-        percent = max(self.value, 0) / self.length
         width = get_terminal_size(default=(0, 0))[0]
+        if self.length == 0:
+            self.width = 0
+            return "0/0 complete"
+
+        percent = max(self.value, 0) / self.length
         ending = ' ' + (self.str_time_remaining()
                         if self.timer else '{0} of {1} complete'.format(
                             self.value, self.length))

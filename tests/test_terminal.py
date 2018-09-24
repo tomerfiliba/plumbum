@@ -44,7 +44,7 @@ class TestPrompt:
     def test_default(self, capsys):
         with send_stdin(""):
             assert prompt("Enter nothing", default='hi') == 'hi'
-        assert capsys.readouterr()[0] == "Enter nothing [hi]: " 
+        assert capsys.readouterr()[0] == "Enter nothing [hi]: "
 
     def test_typefail(self, capsys):
         with send_stdin("1.2\n13"):
@@ -78,7 +78,7 @@ class TestTerminal:
         with send_stdin("foo\n\n"):
             assert choose("What is your favorite color?", ["blue", "yellow", "green"], default = "yellow") == "yellow"
         assert capsys.readouterr()[0] == "What is your favorite color?\n(1) blue\n(2) yellow\n(3) green\nChoice [2]: Invalid choice, please try again\nChoice [2]: "
-        
+
     def test_choose_dict(self):
         with send_stdin("23\n1"):
             value = choose("Pick", dict(one="a",two="b"))
@@ -104,7 +104,7 @@ class TestTerminal:
         with send_stdin():
             assert choose("Pick", dic, default="a") == "a"
         assert "[1]" in capsys.readouterr()[0]
-        
+
 
     def test_hexdump(self):
         data = "hello world my name is queen marry" + "A" * 66 + "foo bar"
@@ -137,3 +137,10 @@ hi
 
 """
         assert stdout ==  output
+
+    def test_progress_empty(self, capsys):
+        for i in Progress.range(0, has_output=True, timer=False):
+            print('hi')
+        stdout, stderr = capsys.readouterr()
+        output = '0/0 complete'
+        assert output in stdout
