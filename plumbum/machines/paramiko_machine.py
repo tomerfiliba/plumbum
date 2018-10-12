@@ -180,6 +180,8 @@ class ParamikoMachine(BaseRemoteMachine):
     :param str gss_host: The targets name in the kerberos database. default: hostname
 
     :param bool get_pty: Execute remote commands with allocated pseudo-tty. default: False
+
+    :param bool load_system_ssh_config: read system SSH config for ProxyCommand configuration. default: False
     """
 
     class RemoteCommand(BaseRemoteMachine.RemoteCommand):
