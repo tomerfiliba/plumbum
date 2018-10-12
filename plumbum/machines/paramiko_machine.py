@@ -176,6 +176,8 @@ class ParamikoMachine(BaseRemoteMachine):
     :param bool gss_deleg_creds: Delegate GSS-API client credentials or not
 
     :param str gss_host: The targets name in the kerberos database. default: hostname
+
+    :param bool get_pty: Execute remote commands with allocated pseudo-tty. default: False
     """
 
     class RemoteCommand(BaseRemoteMachine.RemoteCommand):
@@ -212,7 +214,8 @@ class ParamikoMachine(BaseRemoteMachine):
                  gss_auth=False,
                  gss_kex=None,
                  gss_deleg_creds=None,
-                 gss_host=None):
+                 gss_host=None,
+                 get_pty=False):
         self.host = host
         kwargs = {}
         if user:
@@ -245,6 +248,7 @@ class ParamikoMachine(BaseRemoteMachine):
         self._client.connect(host, **kwargs)
         self._keep_alive = keep_alive
         self._sftp = None
+        self._get_pty = get_pty
         BaseRemoteMachine.__init__(self, encoding, connect_timeout)
 
     def __str__(self):
@@ -304,7 +308,7 @@ class ParamikoMachine(BaseRemoteMachine):
         argv.extend(args.formulate())
         cmdline = " ".join(argv)
         logger.debug(cmdline)
-        si, so, se = streams = self._client.exec_command(cmdline, 1)
+        si, so, se = self._client.exec_command(cmdline, 1, get_pty=self._get_pty)
         return ParamikoPopen(
             argv,
             si,
