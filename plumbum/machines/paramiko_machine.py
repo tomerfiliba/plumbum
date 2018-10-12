@@ -248,7 +248,7 @@ class ParamikoMachine(BaseRemoteMachine):
         self._client.connect(host, **kwargs)
         self._keep_alive = keep_alive
         self._sftp = None
-        self._get_pty = False
+        self._get_pty = get_pty
         BaseRemoteMachine.__init__(self, encoding, connect_timeout)
 
     def __str__(self):
