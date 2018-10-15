@@ -3,7 +3,6 @@ import errno
 import os
 import stat
 import socket
-from contextlib import suppress
 from plumbum.machines.base import PopenAddons
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
@@ -254,9 +253,11 @@ class ParamikoMachine(BaseRemoteMachine):
             ssh_config = paramiko.SSHConfig()
             with open(os.path.expanduser('~/.ssh/config')) as f:
                 ssh_config.parse(f)
-            with suppress(KeyError):
+            try:
                 hostConfig = ssh_config.lookup(host)
                 kwargs['sock'] = paramiko.ProxyCommand(hostConfig['proxycommand'])
+            except KeyError:
+                pass
         self._client.connect(host, **kwargs)
         self._keep_alive = keep_alive
         self._sftp = None
