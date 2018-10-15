@@ -2,6 +2,7 @@ import pytest
 import os
 import sys
 import time
+import psutil
 from plumbum import local, NOHUP
 try:
     from plumbum.cmd import bash, echo
@@ -62,3 +63,10 @@ class TestNohupLocal:
         assert self.read_file('nohup.out') == 'This is output\n'
         delete('nohup.out')
 
+    def test_closed_filehandles(self):
+        proc = psutil.Process()
+        file_handles_prior = (proc.num_fds())
+        sleep_proc = (local['sleep']['1'] & NOHUP)
+        sleep_proc.wait()
+        file_handles_after = proc.num_fds()
+        assert file_handles_prior == file_handles_after

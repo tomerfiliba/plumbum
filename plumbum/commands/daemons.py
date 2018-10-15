@@ -59,6 +59,7 @@ def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
         os.close(wfd)
         _, rc = os.waitpid(firstpid, 0)
         output = os.read(rfd, MAX_SIZE)
+        os.close(rfd)
         try:
             output = output.decode("utf8")
         except UnicodeError:
