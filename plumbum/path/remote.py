@@ -2,7 +2,8 @@ import errno
 from contextlib import contextmanager
 from plumbum.path.base import Path, FSUser
 from plumbum.lib import _setdoc, six
-from plumbum.commands import shquote
+from plumbum.commands import shquote, ProcessExecutionError
+import sys
 
 try:  # Py3
     import urllib.request as urllib
@@ -232,8 +233,23 @@ class RemotePath(Path):
         self.remote._path_copy(self, dst)
 
     @_setdoc(Path)
-    def mkdir(self):
-        self.remote._path_mkdir(self)
+    def mkdir(self, mode=None, parents=True, exist_ok=True):
+        if parents and exist_ok:
+            self.remote._path_mkdir(self, mode=mode, minus_p=True)
+        else:
+            if parents and len(self.parts) > 1:
+                self.remote._path_mkdir(self.parent, mode=mode, minus_p=True)
+            try:
+                self.remote._path_mkdir(self, mode=mode, minus_p=False)
+            except ProcessExecutionError:
+                _, ex, _ = sys.exc_info()
+                if "File exists" in ex.stderr:
+                    if not exist_ok:
+                        raise OSError(
+                            errno.EEXIST, "File exists (on remote end)",
+                            str(self))
+                else:
+                    raise
 
     @_setdoc(Path)
     def read(self, encoding=None):

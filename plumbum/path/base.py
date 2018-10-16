@@ -264,8 +264,21 @@ class Path(str, six.ABC):
         dst exists and override is False."""
 
     @abstractmethod
-    def mkdir(self):
-        """Creates a directory at this path; if the directory already exists, silently ignore"""
+    def mkdir(self, mode=0o777, parents=True, exist_ok=True):
+        """
+        Creates a directory at this path.
+
+        :param mode: **Not implemented yet,** just here to keep the order of arguments
+        backwards-compatible once it is.
+        :param parents: If this is true (the default), the directory's parents will also be created if
+        necessary.
+        :param exist_ok: If this is true (the default), no exception will be raised if the directory
+        already exists (otherwise ``OSError``).
+
+        Note that the defaults for ``parents`` and ``exist_ok`` are the opposite of what they are in
+        Python's own ``pathlib`` - this is to maintain backwards-compatibility with Plumbum's behaviour
+        from before they were implemented.
+        """
 
     @abstractmethod
     def open(self, mode="r"):

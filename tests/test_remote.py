@@ -120,6 +120,24 @@ class TestRemotePath:
         p2 = p1.parent
         assert str(p2) == "/some/long/path/to"
 
+    def test_mkdir(self):
+        # (identical to test_local.TestLocalPath.test_mkdir)
+        with self._connect() as rem:
+            with rem.tempdir() as tmp:
+                (tmp / "a").mkdir(exist_ok=False, parents=False)
+                assert (tmp / "a").exists()
+                assert (tmp / "a").is_dir()
+                (tmp / "a").mkdir(exist_ok=True, parents=False)
+                (tmp / "a").mkdir(exist_ok=True, parents=True)
+                with pytest.raises(OSError):
+                    (tmp / "a").mkdir(exist_ok=False, parents=False)
+                with pytest.raises(OSError):
+                    (tmp / "a").mkdir(exist_ok=False, parents=True)
+                (tmp / "b" / "bb").mkdir(exist_ok=False, parents=True)
+                assert (tmp / "b" / "bb").exists()
+                assert (tmp / "b" / "bb").is_dir()
+            assert not tmp.exists()
+
 class BaseRemoteMachineTest(object):
     TUNNEL_PROG = r"""import sys, socket
 s = socket.socket()

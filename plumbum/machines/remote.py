@@ -380,8 +380,10 @@ class BaseRemoteMachine(BaseMachine):
     def _path_copy(self, src, dst):
         self._session.run("cp -r %s %s" % (shquote(src), shquote(dst)))
 
-    def _path_mkdir(self, fn):
-        self._session.run("mkdir -p %s" % (shquote(fn), ))
+    def _path_mkdir(self, fn, mode=None, minus_p=True):
+        p_str = "-p " if minus_p else ""
+        cmd = "mkdir %s%s" % (p_str, shquote(fn))
+        self._session.run(cmd)
 
     def _path_chmod(self, mode, fn):
         self._session.run("chmod %o %s" % (mode, shquote(fn)))

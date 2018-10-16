@@ -225,6 +225,23 @@ class TestLocalPath:
     def test_path_dir(self):
         assert local.path(__file__).dirname == SDIR
 
+    def test_mkdir(self):
+        # (identical to test_remote.TestRemotePath.test_mkdir)
+        with local.tempdir() as tmp:
+            (tmp / "a").mkdir(exist_ok=False, parents=False)
+            assert (tmp / "a").exists()
+            assert (tmp / "a").is_dir()
+            (tmp / "a").mkdir(exist_ok=True, parents=False)
+            (tmp / "a").mkdir(exist_ok=True, parents=True)
+            with pytest.raises(OSError):
+                (tmp / "a").mkdir(exist_ok=False, parents=False)
+            with pytest.raises(OSError):
+                (tmp / "a").mkdir(exist_ok=False, parents=True)
+            (tmp / "b" / "bb").mkdir(exist_ok=False, parents=True)
+            assert (tmp / "b" / "bb").exists()
+            assert (tmp / "b" / "bb").is_dir()
+        assert not tmp.exists()
+
 
 @pytest.mark.usefixtures("testdir")
 class TestLocalMachine:
