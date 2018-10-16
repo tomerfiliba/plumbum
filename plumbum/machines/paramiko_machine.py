@@ -1,5 +1,6 @@
 import logging
 import errno
+import os
 import stat
 import socket
 from plumbum.machines.base import PopenAddons
@@ -178,6 +179,8 @@ class ParamikoMachine(BaseRemoteMachine):
     :param str gss_host: The targets name in the kerberos database. default: hostname
 
     :param bool get_pty: Execute remote commands with allocated pseudo-tty. default: False
+
+    :param bool load_system_ssh_config: read system SSH config for ProxyCommand configuration. default: False
     """
 
     class RemoteCommand(BaseRemoteMachine.RemoteCommand):
@@ -215,7 +218,8 @@ class ParamikoMachine(BaseRemoteMachine):
                  gss_kex=None,
                  gss_deleg_creds=None,
                  gss_host=None,
-                 get_pty=False):
+                 get_pty=False,
+                 load_system_ssh_config=False):
         self.host = host
         kwargs = {}
         if user:
@@ -245,6 +249,15 @@ class ParamikoMachine(BaseRemoteMachine):
             if not gss_host:
                 gss_host = host
             kwargs['gss_host'] = gss_host
+        if load_system_ssh_config:
+            ssh_config = paramiko.SSHConfig()
+            with open(os.path.expanduser('~/.ssh/config')) as f:
+                ssh_config.parse(f)
+            try:
+                hostConfig = ssh_config.lookup(host)
+                kwargs['sock'] = paramiko.ProxyCommand(hostConfig['proxycommand'])
+            except KeyError:
+                pass
         self._client.connect(host, **kwargs)
         self._keep_alive = keep_alive
         self._sftp = None
