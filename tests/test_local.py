@@ -242,6 +242,29 @@ class TestLocalPath:
             assert (tmp / "b" / "bb").is_dir()
         assert not tmp.exists()
 
+    def test_mkdir_mode(self):
+        # (identical to test_remote.TestRemotePath.test_mkdir_mode)
+        with local.tempdir() as tmp:
+            # just verify that mode argument works the same way it does for
+            # Python's own os.mkdir, which takes into account the umask
+            # (different from shell mkdir mode argument!); umask on my
+            # system is 022 by default, so 033 is ok for testing this
+            try:
+                (tmp / "pb_333").mkdir(exist_ok=False, parents=False,
+                    mode=0o333)
+                local.python('-c', 'import os; os.mkdir("{0}", 0o333)'.format(
+                    (tmp / "py_333")))
+                pb_final_mode = oct((tmp / "pb_333").stat().st_mode)
+                py_final_mode = oct((tmp / "py_333").stat().st_mode)
+                assert pb_final_mode == py_final_mode
+            finally:
+                # we have to revert this so the tempdir deletion works
+                if (tmp / "pb_333").exists():
+                    (tmp / "pb_333").chmod(0o777)
+                if (tmp / "py_333").exists():
+                    (tmp / "py_333").chmod(0o777)
+        assert not tmp.exists()
+
 
 @pytest.mark.usefixtures("testdir")
 class TestLocalMachine:
