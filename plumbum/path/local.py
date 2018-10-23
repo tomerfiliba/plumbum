@@ -214,9 +214,9 @@ class LocalPath(Path):
         if not self.exists() or not exist_ok:
             try:
                 if parents:
-                    os.makedirs(str(self))
+                    os.makedirs(str(self), mode)
                 else:
-                    os.mkdir(str(self))
+                    os.mkdir(str(self), mode)
             except OSError:  # pragma: no cover
                 # directory might already exist (a race with other threads/processes)
                 _, ex, _ = sys.exc_info()

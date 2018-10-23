@@ -268,12 +268,15 @@ class Path(str, six.ABC):
         """
         Creates a directory at this path.
 
-        :param mode: **Not implemented yet,** just here to keep the order of arguments
-        backwards-compatible once it is.
+        :param mode: **Currently only implemented for local paths!** Numeric mode to use for directory
+                     creation, which may be ignored on some systems. The current implementation
+                     reproduces the behavior of ``os.mkdir`` (i.e., the current umask is first masked
+                     out), but this may change for remote paths. As with ``os.mkdir``, it is recommended
+                     to call :func:`chmod` explicitly if you need to be sure.
         :param parents: If this is true (the default), the directory's parents will also be created if
-        necessary.
+                        necessary.
         :param exist_ok: If this is true (the default), no exception will be raised if the directory
-        already exists (otherwise ``OSError``).
+                         already exists (otherwise ``OSError``).
 
         Note that the defaults for ``parents`` and ``exist_ok`` are the opposite of what they are in
         Python's own ``pathlib`` - this is to maintain backwards-compatibility with Plumbum's behaviour
