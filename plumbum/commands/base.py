@@ -448,10 +448,10 @@ class BaseRedirection(BaseCommand):
 
         if self.KWARG in kwargs and kwargs[self.KWARG] not in (PIPE, None):
             raise RedirectionError("%s is already redirected" % (self.KWARG, ))
+        if isinstance(self.file, RemotePath):
+            raise TypeError("Cannot redirect to/from remote paths")
         if isinstance(self.file, six.string_types + (LocalPath, )):
             f = kwargs[self.KWARG] = open(str(self.file), self.MODE)
-        elif isinstance(self.file, RemotePath):
-            raise TypeError("Cannot redirect to/from remote paths")
         else:
             kwargs[self.KWARG] = self.file
             f = None
