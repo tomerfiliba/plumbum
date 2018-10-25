@@ -151,6 +151,15 @@ Which is even more efficient (no need to send data back and forth over SSH).
 
 .. _guide-paramiko-machine:
 
+Redirection
+^^^^^^^^^^^
+
+Redirection to and from remote paths is not currently supported, but you can redirect to and from
+local paths, with the familiar syntax explained in
+:ref:`the corresponding section for local commands <guide-local-commands-redir>`.
+Note that if the redirection target/source is given as a string, it is automatically interpreted
+as a path on the local machine.
+
 Paramiko Machine
 ----------------
 .. versionadded:: 1.1
