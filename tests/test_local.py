@@ -252,8 +252,8 @@ class TestLocalPath:
             try:
                 (tmp / "pb_333").mkdir(exist_ok=False, parents=False,
                     mode=0o333)
-                local.python('-c', 'import os; os.mkdir("{0}", 0o333)'.format(
-                    (tmp / "py_333")))
+                local.python('-c', 'import os; os.mkdir({0}, 0o333)'.format(
+                    repr(str(tmp / "py_333"))))
                 pb_final_mode = oct((tmp / "pb_333").stat().st_mode)
                 py_final_mode = oct((tmp / "py_333").stat().st_mode)
                 assert pb_final_mode == py_final_mode
