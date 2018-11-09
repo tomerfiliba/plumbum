@@ -187,8 +187,9 @@ objects that can be applied to your command to run it and get or test the retcod
 Run and Popen
 -------------
 Notice that calling commands (or chained-commands) only returns their ``stdout``. In order to
-get hold of the exit code or ``stderr``, you'll need to use the ``run()`` method, which returns 
-a 3-tuple of the exit code, ``stdout``, and ``stderr``::
+get hold of the exit code or ``stderr``, you'll need to use the
+:func:`run <plumbum.commands.base.BaseCommand.run>` method, which returns a 3-tuple of the exit
+code, ``stdout``, and ``stderr``::
 
     >>> ls.run("-a")
     (0, '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\nplumbum\[...]', '')
@@ -196,7 +197,8 @@ a 3-tuple of the exit code, ``stdout``, and ``stderr``::
 You can also pass ``retcode`` as a keyword argument to ``run`` in the same way discussed above. 
 
 And, if you want to want to execute commands "in the background" (i.e., not wait for them to 
-finish), you can use the ``popen`` method, which returns a normal ``subprocess.Popen`` object::
+finish), you can use the :func:`popen <plumbum.commands.base.BaseCommand.popen>` method, which
+returns a normal ``subprocess.Popen`` object::
 
     >>> p = ls.popen("-a")
     >>> p.communicate()
@@ -211,9 +213,9 @@ Background and Foreground
 In order to make programming easier, there are two special objects called ``FG`` and ``BG``,
 which are there to help you. ``FG`` runs programs in the foreground (they receive the parent's 
 ``stdin``, ``stdout`` and ``stderr``), and ``BG`` runs programs in the background (much like 
-``popen`` above, but it returns a ``Future`` object, instead of a ``subprocess.Popen`` one). 
-``FG`` is especially useful for interactive programs like editors, etc., that require a ``TTY``
-or input from the user. :: 
+``popen`` above, but it returns a :class:`Future <plumbum.commands.modifiers.Future>` object,
+instead of a ``subprocess.Popen`` one).  ``FG`` is especially useful for interactive programs
+like editors, etc., that require a ``TTY`` or input from the user. ::
 
     >>> from plumbum import FG, BG
     >>> ls["-l"] & FG
