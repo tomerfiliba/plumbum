@@ -530,7 +530,7 @@ class TestLocalMachine:
         assert 'This is fun\n' == capfd.readouterr()[0]
 
     @skip_on_windows
-    def test_tee_race(sef, capfd):
+    def test_tee_race(self, capfd):
         from plumbum.cmd import seq
         EXPECT = "".join("{}\n".format(i) for i in range(1, 5001))
         for _ in range(5):
