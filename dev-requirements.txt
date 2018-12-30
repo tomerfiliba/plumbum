@@ -1,6 +1,7 @@
 pytest
 pytest-cov
 pytest-mock
+idna<2.8 ; python_version < '2.7'
 pycparser<2.18 ; python_version < '2.7'
 paramiko<2.4 ; python_version < '2.7'
 paramiko ; python_version >= '2.7'
