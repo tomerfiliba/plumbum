@@ -192,25 +192,43 @@ class _TEE(ExecutionModifier):
             err = p.stderr
             buffers = {out: outbuf, err: errbuf}
             tee_to = {out: sys.stdout, err: sys.stderr}
-            while p.poll() is None:
-                ready, _, _ = select((out, err), (), ())
-                for fd in ready:
-                    buf = buffers[fd]
-                    data, text = read_fd_decode_safely(fd, 4096)
-                    if not data:  # eof
-                        continue
+            done = False
+            while not done:
+                # After the process exits, we have to do one more
+                # round of reading in order to drain any data in the
+                # pipe buffer. Thus, we check poll() here,
+                # unconditionally enter the read loop, and only then
+                # break out of the outer loop if the process has
+                # exited.
+                done = (p.poll() is not None)
 
-                    # Python conveniently line-buffers stdout and stderr for
-                    # us, so all we need to do is write to them
+                # We continue this loop until we've done a full
+                # `select()` call without collecting any input. This
+                # ensures that our final pass -- after process exit --
+                # actually drains the pipe buffers, even if it takes
+                # multiple calls to read().
+                progress = True
+                while progress:
+                    progress = False
+                    ready, _, _ = select((out, err), (), ())
+                    for fd in ready:
+                        buf = buffers[fd]
+                        data, text = read_fd_decode_safely(fd, 4096)
+                        if not data:  # eof
+                            continue
+                        progress = True
 
-                    # This will automatically add up to three bytes if it cannot be decoded
-                    tee_to[fd].write(text)
+                        # Python conveniently line-buffers stdout and stderr for
+                        # us, so all we need to do is write to them
 
-                    # And then "unbuffered" is just flushing after each write
-                    if not self.buffered:
-                        tee_to[fd].flush()
+                        # This will automatically add up to three bytes if it cannot be decoded
+                        tee_to[fd].write(text)
 
-                    buf.append(data)
+                        # And then "unbuffered" is just flushing after each write
+                        if not self.buffered:
+                            tee_to[fd].flush()
+
+                        buf.append(data)
 
             stdout = ''.join([x.decode('utf-8') for x in outbuf])
             stderr = ''.join([x.decode('utf-8') for x in errbuf])
