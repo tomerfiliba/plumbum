@@ -179,7 +179,7 @@ class Progress(ProgressBase):
 
 
 class ProgressIPy(ProgressBase):  # pragma: no cover
-    HTMLBOX = '<div class="widget-hbox widget-progress"><div class="widget-label" style="display:block;">{}</div></div>'
+    HTMLBOX = '<div class="widget-hbox widget-progress"><div class="widget-label" style="display:block;">{0}</div></div>'
 
     def __init__(self, *args, **kargs):
 

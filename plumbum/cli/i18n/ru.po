@@ -67,7 +67,7 @@ msgstr "Опция {0} уже была передана"
 #: plumbum/cli/application.py:317
 #, python-brace-format
 msgid "Switch {0} already given ({1} is equivalent)"
-msgstr "Опция {0} уже была передана (эквивалентна {})"
+msgstr "Опция {0} уже была передана (эквивалентна {1})"
 
 #: plumbum/cli/application.py:363
 msgid ""
