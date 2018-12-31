@@ -520,8 +520,6 @@ class TestLocalMachine:
         assert command_false & RETCODE == 1
 
     @skip_on_windows
-    @pytest.mark.xfail(reason=
-        'This test randomly fails on Mac and PyPy on Travis, not sure why')
     def test_tee_modifier(self, capfd):
         from plumbum.cmd import echo
 
