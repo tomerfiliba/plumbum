@@ -67,8 +67,6 @@ setup(name = "plumbum",
     keywords = "path, local, remote, ssh, shell, pipe, popen, process, execution, color, cli",
     cmdclass = {'test':PyTest,
                 'docs':PyDocs},
-    # use_2to3 = False,
-    # zip_safe = True,
     long_description = open(os.path.join(HERE, "README.rst"), "r").read(),
     classifiers = [
         "Development Status :: 5 - Production/Stable",
