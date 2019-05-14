@@ -290,7 +290,7 @@ s.close()
                 for i, lines in enumerate(rem["ls"]["--bla"].popen()):
                     pass
                 assert i == 1
-            assert ex.value.stderr.startswith("/bin/ls: ")
+            assert "/bin/ls: " in ex.value.stderr
 
     def test_touch(self):
         with self._connect() as rem:
