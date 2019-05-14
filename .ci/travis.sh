@@ -3,10 +3,14 @@
 echo $TRAVIS_PYTHON_VERSION
 
 if [[ "$(uname -s)" == 'Darwin' ]]; then
+    python$PY3 -m pip install --upgrade pip
+    python$PY3 -m pip install --upgrade pytest setuptools wheel
     python$PY3 -m pip install -r dev-requirements.txt
     python$PY3 -m pip install coveralls
     python$PY3 -m pip install -e .
 else
+    pip install --upgrade pip
+    pip install --upgrade pytest setuptools wheel
     pip install -r dev-requirements.txt
     pip install coveralls
     pip install -e .
