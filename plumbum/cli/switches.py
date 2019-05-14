@@ -231,8 +231,12 @@ class SwitchAttr(object):
                  argname=_("VALUE"),
                  **kwargs):
         self.__doc__ = "Sets an attribute"  # to prevent the help message from showing SwitchAttr's docstring
-        if "help" in kwargs and default and argtype is not None:
-            kwargs["help"] += _("; the default is {0}").format(default)
+        if default and argtype is not None:
+            defaultmsg = _("; the default is {0}").format(default)
+            if "help" in kwargs:
+                kwargs["help"] += defaultmsg
+            else:
+                kwargs["help"] = defaultmsg.lstrip('; ')
 
         switch(
             names, argtype=argtype, argname=argname, list=list, **kwargs)(self)
