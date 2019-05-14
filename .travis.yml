@@ -1,9 +1,10 @@
 sudo: required
 language: python
-dist: trusty
+dist: xenial
 matrix:
   include:
     - python: 2.6
+      dist: trusty
       env: PYV=2.6
       before_install:
         -  pip install pycparser==2.17
@@ -17,7 +18,6 @@ matrix:
       env: PYV=3.6
     - python: 3.7
       env: PYV=3.7
-      dist: xenial
 #    - python: nightly
     - python: pypy
     - language: generic
@@ -28,9 +28,10 @@ matrix:
     - language: generic
       os: osx
       env: PY3=3 PYV=Mac3
-      before_install:
-        - brew update || echo "Already updated"
-        - brew upgrade python || echo "Python3 already installed"
+      addons:
+        homebrew:
+          packages:
+            - python
 
 install: .ci/travis.sh
 script: python$PY3 setup.py test -c
