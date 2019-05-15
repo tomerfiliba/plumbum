@@ -3,42 +3,46 @@ language: python
 dist: xenial
 matrix:
   include:
-    - python: 2.6
-      dist: trusty
-      env: PYV=2.6
-      before_install:
-        -  pip install pycparser==2.17
-    - python: 2.7
-      env: PYV=2.7
-    - python: 3.4
-      env: PYV=3.4
-    - python: 3.5
-      env: PYV=3.5
-    - python: 3.6
-      env: PYV=3.6
-    - python: 3.7
-      env: PYV=3.7
-#    - python: nightly
-    - python: pypy
-    - language: generic
-      env: PY3=2 PYV=Mac2
-      os: osx
-      before_install:
-        - python2 -m ensurepip
-    - language: generic
-      os: osx
-      env: PY3=3 PYV=Mac3
-      addons:
-        homebrew:
-          packages:
-            - python
-
-install: .ci/travis.sh
+  - python: 2.7
+    env: PYV=2.7
+  - python: 3.4
+    env: PYV=3.4
+  - python: 3.5
+    env: PYV=3.5
+  - python: 3.6
+    env: PYV=3.6
+  - python: 3.7
+    env: PYV=3.7
+  - python: 2.6
+    dist: trusty
+    env: PYV=2.6
+  - python: pypy
+  - language: generic
+    env: PY3=2 PYV=Mac2
+    os: osx
+    before_install:
+    - python2 -m ensurepip
+  - language: generic
+    os: osx
+    env: PY3=3 PYV=Mac3
+    addons:
+      homebrew:
+        packages:
+        - python
+install: ".ci/travis.sh"
 script: python$PY3 setup.py test -c
 after_success:
-  - if [ -n "$PYV" ] ; then coveralls; fi
-
+- if [ -n "$PYV" ] ; then coveralls; fi
 notifications:
   email:
     on_success: change
     on_failure: change
+deploy:
+  provider: pypi
+  user: henryiii
+  distributions: sdist bdist_wheel
+  skip_existing: true
+  on:
+    tags: true
+  password:
+    secure: qPcFTJirTGTaTFok6oHz3HEFKiIWIQolBCm2nxsluJ4RVGE0AIH6OoBsN5JYr9nbb0t7KA2cqhJEupD6KQDpDD5b9gEwjnXnyG1Nx22cqAJGw9hKBY3UT5qGjX+6ov8iwWDalUe62rWym0I7kWYSGfn8QJiHX0Nj7ikSi6kmGCg=
