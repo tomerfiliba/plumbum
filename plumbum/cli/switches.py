@@ -445,36 +445,57 @@ class Set(Validator):
 
         class MyApp(Application):
             mode = SwitchAttr(["--mode"], Set("TCP", "UDP", case_sensitive = False))
+            num = SwitchAttr(["--num"], Set("MIN", "MAX", int, csv = True))
 
-    :param values: The set of values (strings)
+    :param values: The set of values (strings), or other callable validators, or types,
+                   or any other object that can be compared to a string.
     :param case_sensitive: A keyword argument that indicates whether to use case-sensitive
                              comparison or not. The default is ``False``
+    :param csv: splits the input as a comma-separated-value before validating and returning
+                a list. Accepts ``True``, ``False``, or a string for the separator
     """
 
     def __init__(self, *values, **kwargs):
         self.case_sensitive = kwargs.pop("case_sensitive", False)
+        self.csv = kwargs.pop("csv", False)
+        if self.csv is True:
+            self.csv = ','
         if kwargs:
             raise TypeError(
                 _("got unexpected keyword argument(s): {0}").format(
                     kwargs.keys()))
-        self.values = dict(
-            ((v if self.case_sensitive else v.lower()), v) for v in values)
+        self.values = values
 
     def __repr__(self):
         return "{{{0}}}".format(", ".join(
-            repr(v) for v in self.values.values()))
+            v if isinstance(v, str) else v.__name__ for v in self.values.values()))
 
-    def __call__(self, obj):
+    def __call__(self, value, check_csv=True):
+        if self.csv and check_csv:
+            return [self(v.strip(), check_csv=False) for v in value.split(",")]
         if not self.case_sensitive:
-            obj = obj.lower()
-        if obj not in self.values:
-            raise ValueError(
-                _("Expected one of {0}").format(list(self.values.values())))
-        return self.values[obj]
+            value = value.lower()
+        for opt in self.values:
+            if isinstance(opt, str):
+                if not self.case_sensitive:
+                    opt = opt.lower()
+                if opt == value:
+                    return opt  # always return original value
+                continue
+            try:
+                return opt(value)
+            except ValueError:
+                pass
+        raise ValueError("Invalid value: %s (Expected one of %s)" % (value, self.values))
 
     def choices(self, partial=""):
-        # TODO: Add case sensitive/insensitive parital completion
-        return set(self.values)
+        choices = set(opt if isinstance(opt, str) else "({})".format(opt) for opt in self.values)
+        if partial:
+            choices = set(opt for opt in choices if opt.lower().startswith(partial))
+        return choices
+
+
+CSV = Set(str, csv=True)
 
 
 class Predicate(object):
