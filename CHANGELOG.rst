@@ -1,3 +1,8 @@
+Unreleased
+-----
+* CLI: Improved 'Set' validator to allow non-string types, and CSV params ((`#452 <https://github.com/tomerfiliba/plumbum/pull/452>`_)
+* Commands: execute local/remote commands via a magic `.cmd` attribute ((`#450 <https://github.com/tomerfiliba/plumbum/pull/450>`_)
+
 1.6.7
 -----
 * Commands: Added ``run_*`` methods as an alternative to modifiers (`#386 <https://github.com/tomerfiliba/plumbum/pull/386>`_)
