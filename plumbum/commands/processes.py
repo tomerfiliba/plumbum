@@ -249,12 +249,20 @@ def run_proc(proc, retcode, timeout=None):
 #===================================================================================================
 # iter_lines
 #===================================================================================================
+
+BY_POSITION = object()
+BY_TYPE = object()
+DEFAULT_ITER_LINES_MODE = BY_POSITION
+
+
 def iter_lines(proc,
                retcode=0,
                timeout=None,
                linesize=-1,
+               line_timeout=None,
+               mode=None,
                _iter_lines=_iter_lines,
-               line_timeout=None):
+               ):
     """Runs the given process (equivalent to run_proc()) and yields a tuples of (out, err) line pairs.
     If the exit code of the process does not match the expected one, :class:`ProcessExecutionError
     <plumbum.commands.ProcessExecutionError>` is raised.
@@ -271,8 +279,16 @@ def iter_lines(proc,
     :param linesize: Maximum number of characters to read from stdout/stderr at each iteration.
                     ``-1`` (default) reads until a b'\\n' is encountered.
 
+    :param line_timeout: The maximal amount of time (in seconds) to allow between consecutive lines in either stream.
+                    Raise an :class:`ProcessLineTimedOut <plumbum.commands.ProcessLineTimedOut>` if the timeout has
+                    been reached. ``None`` means no timeout is imposed.
+
     :returns: An iterator of (out, err) line tuples.
     """
+    if mode is None:
+        mode = DEFAULT_ITER_LINES_MODE
+
+    assert mode in (BY_POSITION, BY_TYPE)
 
     encoding = getattr(proc, "custom_encoding", None)
     if encoding:
@@ -284,10 +300,14 @@ def iter_lines(proc,
 
     buffers = [StringIO(), StringIO()]
     for t, line in _iter_lines(proc, decode, linesize, line_timeout):
-        ret = [None, None]
-        ret[t] = line
         buffers[t].write(line + "\n")
-        yield ret
+
+        if mode is BY_POSITION:
+            ret = [None, None]
+            ret[t] = line
+            yield tuple(ret)
+        elif mode is BY_TYPE:
+            yield (t + 1), line  # 1=stdout, 2=stderr
 
     # this will take care of checking return code and timeouts
     _check_process(proc, retcode, timeout, *(s.getvalue() for s in buffers))

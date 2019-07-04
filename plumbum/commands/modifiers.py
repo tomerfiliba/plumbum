@@ -6,6 +6,7 @@ import time
 from itertools import chain
 
 from plumbum.commands.processes import run_proc, ProcessExecutionError
+from plumbum.commands.processes import BY_TYPE
 import plumbum.commands.base
 from plumbum.lib import read_fd_decode_safely
 
@@ -395,7 +396,7 @@ class PipeToLoggerMixin():
 
         local['./install.sh'] & logger
 
-    You can choose the log-level for each stream::
+    We can choose the log-level for each stream::
 
         local['./install.sh'] & logger.pipe(out_level=logging.DEBUG, err_level=logging.DEBUG)
 
@@ -408,6 +409,7 @@ class PipeToLoggerMixin():
         local['./install.sh'] & logger.pipe(prefix="install.sh: ")
 
     If the command fails, an exception is raised as usual. This can be modified::
+
         local['install.sh'] & logger.pipe_debug(retcode=None)
 
     An exception is also raised if too much time (``DEFAULT_LINE_TIMEOUT``) passed between lines in the stream,
@@ -434,42 +436,44 @@ class PipeToLoggerMixin():
 
             def __rand__(_, cmd):
                 popen = cmd if hasattr(cmd, "iter_lines") else cmd.popen()
-                for out, err in popen.iter_lines(line_timeout=line_timeout, **kw):
-                    for level, lines in [(out_level, out), (err_level, err)]:
-                        if not lines:
-                            continue
-                        for line in lines.splitlines():
-                            if prefix:
-                                line = "%s: %s" % (prefix, line)
-                            self.log(level, line)
+                for typ, lines in popen.iter_lines(line_timeout=line_timeout, mode=BY_TYPE, **kw):
+                    if not lines:
+                        continue
+                    level = levels[typ]
+                    for line in lines.splitlines():
+                        if prefix:
+                            line = "%s: %s" % (prefix, line)
+                        self.log(level, line)
                 return popen.returncode
+
+        levels = {1: self.DEFAULT_STDOUT, 2: self.DEFAULT_STDERR}
 
         if line_timeout is None:
             line_timeout = self.DEFAULT_LINE_TIMEOUT
-        if err_level is None:
-            err_level = self.DEFAULT_STDERR
-        if out_level is None:
-            out_level = self.DEFAULT_STDOUT
+
+        if out_level is not None:
+            levels[1] = out_level
+
+        if err_level is not None:
+            levels[2] = err_level
 
         return LogPipe()
 
     def pipe_info(self, prefix=None, **kw):
         """
         Pipe a command's stdout and stderr lines into this logger (both at level INFO)
-
         """
         return self.pipe(self.INFO, self.INFO, prefix=prefix, **kw)
 
     def pipe_debug(self, prefix=None, **kw):
         """
         Pipe a command's stdout and stderr lines into this logger (both at level DEBUG)
-
         """
         return self.pipe(self.DEBUG, self.DEBUG, prefix=prefix, **kw)
 
     def __rand__(self, cmd):
         """
-        Pipe a command's stdout and stderr lines into this logger (both at level INFO)
-
+        Pipe a command's stdout and stderr lines into this logger.
+        Log levels for each stream are determined by ``DEFAULT_STDOUT`` and ``DEFAULT_STDERR``.
         """
-        return cmd | self.pipe(self.INFO, self.INFO)
+        return cmd & self.pipe(self.DEFAULT_STDOUT, self.DEFAULT_STDERR)
