@@ -496,10 +496,10 @@ class TestLocalMachine:
     def test_iter_lines_timeout_by_type(self):
         from plumbum.commands.processes import BY_TYPE
         from plumbum.cmd import bash
-        from collections import Counter
+
         cmd = bash["-ce", "for ((i=0;1==1;i++)); do echo $i; sleep .3; echo $i 1>&2; done"]
         types = {1: "out:", 2: "err:"}
-        counts = Counter()
+        counts = {1: 0, 2: 0}
         with pytest.raises(ProcessTimedOut):
             # Order is important on mac
             for typ, line in cmd.popen().iter_lines(timeout=1, mode=BY_TYPE):

@@ -300,6 +300,10 @@ def iter_lines(proc,
 
     buffers = [StringIO(), StringIO()]
     for t, line in _iter_lines(proc, decode, linesize, line_timeout):
+
+        # verify that the proc hasn't timed out yet
+        proc.verify(timeout=timeout, retcode=None, stdout=None, stderr=None)
+
         buffers[t].write(line + "\n")
 
         if mode is BY_POSITION:
