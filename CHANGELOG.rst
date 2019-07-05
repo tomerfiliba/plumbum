@@ -1,5 +1,7 @@
 Unreleased
 -----
+* Commands: support for per-line timeout with iter_lines (`#454 <https://github.com/tomerfiliba/plumbum/pull/454>`_)
+* Commands: support for piping stdout/stderr to a logger (`#454 <https://github.com/tomerfiliba/plumbum/pull/454>`_)
 * CLI: Improved 'Set' validator to allow non-string types, and CSV params (`#452 <https://github.com/tomerfiliba/plumbum/pull/452>`_)
 * TypedEnv: Facility for modeling environment-variables into python data types (`#451 <https://github.com/tomerfiliba/plumbum/pull/450>`_)
 * Commands: execute local/remote commands via a magic `.cmd` attribute (`#450 <https://github.com/tomerfiliba/plumbum/pull/450>`_)
