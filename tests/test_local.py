@@ -578,11 +578,11 @@ class TestLocalMachine:
         logger = Logger()
 
         ret = bash["-ce", "echo aaa"] & logger
-        assert logs[-1] == (PipeToLoggerMixin.DEFAULT_STDOUT, "aaa")
+        assert logs[-1] == (PipeToLoggerMixin.INFO, "aaa")
         assert ret == 0
 
         bash["-ce", "echo bbb 1>&2"] & logger
-        assert logs[-1] == (PipeToLoggerMixin.DEFAULT_STDERR, "bbb")
+        assert logs[-1] == (PipeToLoggerMixin.DEBUG, "bbb")
 
         ret = bash["-ce", "echo ccc 1>&2; false"] & logger.pipe(prefix="echo", retcode=1, err_level=0)
         assert logs[-1] == (0, "echo: ccc")

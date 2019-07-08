@@ -416,12 +416,18 @@ class PipeToLoggerMixin():
     This can also be modified::
 
         local['install.sh'] & logger.pipe(line_timeout=10)
+
+    If we happen to use logbook::
+
+        class MyLogger(logbook.Logger, PipeToLoggerMixin):
+            from logbook import DEBUG, INFO  # hook up with logbook's levels
+
     """
 
     from logging import DEBUG, INFO
     DEFAULT_LINE_TIMEOUT = 10 * 60
-    DEFAULT_STDOUT = INFO
-    DEFAULT_STDERR = DEBUG
+    DEFAULT_STDOUT = "INFO"
+    DEFAULT_STDERR = "DEBUG"
 
     def pipe(self, out_level=None, err_level=None, prefix=None, line_timeout=None, **kw):
         """
@@ -446,7 +452,7 @@ class PipeToLoggerMixin():
                         self.log(level, line)
                 return popen.returncode
 
-        levels = {1: self.DEFAULT_STDOUT, 2: self.DEFAULT_STDERR}
+        levels = {1: getattr(self, self.DEFAULT_STDOUT), 2: getattr(self, self.DEFAULT_STDERR)}
 
         if line_timeout is None:
             line_timeout = self.DEFAULT_LINE_TIMEOUT
@@ -476,4 +482,4 @@ class PipeToLoggerMixin():
         Pipe a command's stdout and stderr lines into this logger.
         Log levels for each stream are determined by ``DEFAULT_STDOUT`` and ``DEFAULT_STDERR``.
         """
-        return cmd & self.pipe(self.DEFAULT_STDOUT, self.DEFAULT_STDERR)
+        return cmd & self.pipe(getattr(self, self.DEFAULT_STDOUT), getattr(self, self.DEFAULT_STDERR))
