@@ -130,6 +130,8 @@ class TestLocalPath:
         files = list(cwd.iterdir())
         assert cwd / 'test_local.py' in files
         assert cwd / 'test_remote.py' in files
+        assert cwd['test_local.py'] in files
+        assert cwd['test_remote.py'] in files
 
     def test_stem(self):
         assert self.longpath.stem == "file"
@@ -228,18 +230,18 @@ class TestLocalPath:
     def test_mkdir(self):
         # (identical to test_remote.TestRemotePath.test_mkdir)
         with local.tempdir() as tmp:
-            (tmp / "a").mkdir(exist_ok=False, parents=False)
-            assert (tmp / "a").exists()
-            assert (tmp / "a").is_dir()
-            (tmp / "a").mkdir(exist_ok=True, parents=False)
-            (tmp / "a").mkdir(exist_ok=True, parents=True)
+            tmp["a"].mkdir(exist_ok=False, parents=False)
+            assert tmp["a"].exists()
+            assert tmp["a"].is_dir()
+            tmp["a"].mkdir(exist_ok=True, parents=False)
+            tmp["a"].mkdir(exist_ok=True, parents=True)
             with pytest.raises(OSError):
-                (tmp / "a").mkdir(exist_ok=False, parents=False)
+                tmp["a"].mkdir(exist_ok=False, parents=False)
             with pytest.raises(OSError):
-                (tmp / "a").mkdir(exist_ok=False, parents=True)
-            (tmp / "b" / "bb").mkdir(exist_ok=False, parents=True)
-            assert (tmp / "b" / "bb").exists()
-            assert (tmp / "b" / "bb").is_dir()
+                tmp["a"].mkdir(exist_ok=False, parents=True)
+            tmp["b"]["bb"].mkdir(exist_ok=False, parents=True)
+            assert tmp["b"]["bb"].exists()
+            assert tmp["b"]["bb"].is_dir()
         assert not tmp.exists()
 
     def test_mkdir_mode(self):

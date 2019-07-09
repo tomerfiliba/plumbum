@@ -16,7 +16,7 @@ with a few improvements and extra features.
     Paths now support more pathlib like syntax, several old names have been depreciated, like ``.basename``
 
 The primary ways to create paths are from ``.cwd``, ``.env.home``, or ``.path(...)`` on a local
-or remote machine, with ``/`` or ``//`` for composition.
+or remote machine, with ``/``, ``//`` or ``[]`` for composition.
 
 .. note::
 
@@ -43,13 +43,17 @@ Note that a name like ``file.name.10.15.tar.gz`` will have "5" suffixes.
 Also available is ``.with_name(name)``, which will will replace the entire name.
 ``preferred_suffix(suffix)`` will add a suffix if one does not exist (for default suffix situations). 
 
-Paths can be composed using ``/``::
+Paths can be composed using ``/`` or ``[]``::
 
     >>> p / "notepad.exe"
     <LocalPath c:\windows\notepad.exe>
     >>> (p / "notepad.exe").is_file()
     True
     >>> (p / "notepad.exe").with_suffix(".dll")
+    <LocalPath c:\windows\notepad.dll>
+    >>> p["notepad.exe"].is_file()
+    True
+    >>> p["../some/path"]["notepad.exe"].with_suffix(".dll")
     <LocalPath c:\windows\notepad.dll>
 
 
