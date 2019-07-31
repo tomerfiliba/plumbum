@@ -257,6 +257,18 @@ s.close()
                 p = rem.which("dummy-executable")
                 assert p == rem.cwd / "not-in-path" / "dummy-executable"
 
+    @pytest.mark.parametrize(
+        "env",
+        ["lala", "-Wl,-O2 -Wl,--sort-common", "{{}}", "''", "!@%_-+=:", "'",
+         "`", "$", "\\"])
+    def test_env_special_characters(self, env):
+        with self._connect() as rem:
+            with pytest.raises(ProcessExecutionError):
+                rem.python("-c", "import os;print(os.environ['FOOBAR72'])")
+            rem.env["FOOBAR72"] = env
+            out = rem.python("-c", "import os;print(os.environ['FOOBAR72'])")
+            assert out.strip() == env
+
     def test_read_write(self):
         with self._connect() as rem:
             with rem.tempdir() as dir:
