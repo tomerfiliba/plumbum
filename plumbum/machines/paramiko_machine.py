@@ -3,6 +3,7 @@ import errno
 import os
 import stat
 import socket
+from plumbum.commands.base import shquote
 from plumbum.machines.base import PopenAddons
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
@@ -317,7 +318,7 @@ class ParamikoMachine(BaseRemoteMachine):
         argv.extend(["cd", str(cwd or self.cwd), "&&"])
         if envdelta:
             argv.append("env")
-            argv.extend("%s=%s" % (k, v) for k, v in envdelta.items())
+            argv.extend("%s=%s" % (k, shquote(v)) for k, v in envdelta.items())
         argv.extend(args.formulate())
         cmdline = " ".join(argv)
         logger.debug(cmdline)
