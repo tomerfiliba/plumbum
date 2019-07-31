@@ -132,9 +132,9 @@ If the command we're running fails (returns a non-zero exit code), we'll get an 
     >>> cat("non/existing.file")
     Traceback (most recent call last):
       [...]
-    ProcessExecutionError: Command line: ['C:\\Program Files\\Git\\bin\\cat.exe', 'non/existing.file']
-    Exit code: 1
-    Stderr:  | "C:/Program Files/Git/bin/cat.exe": non/existing.file: No such file or directory
+    ProcessExecutionError: Unexpected exit code: 1
+    Command line: | /bin/cat non/existing.file
+    Stderr:       | /bin/cat: non/existing.file: No such file or directory
 
 In order to avoid such exceptions, or when a different exit code is expected, just pass  
 ``retcode = xxx`` as a keyword argument. If ``retcode`` is ``None``, no exception checking 
@@ -146,9 +146,9 @@ one you passed::
     >>> cat("non/existing.file", retcode = 17)
     Traceback (most recent call last):
       [...]
-    ProcessExecutionError: Command line: ['C:\\Program Files\\Git\\bin\\cat.exe', 'non/existing.file']
-    Exit code: 1
-    Stderr:  | "C:/Program Files/Git/bin/cat.exe": non/existing.file: No such file or directory
+    ProcessExecutionError: Unexpected exit code: 1
+    Command line: | /bin/cat non/existing.file
+    Stderr:       | /bin/cat: non/existing.file: No such file or directory
 
 .. note::
    If you wish to accept several valid exit codes, ``retcode`` may be a tuple or a list. 
