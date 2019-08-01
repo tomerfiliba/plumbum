@@ -1,4 +1,6 @@
+import shlex
 import subprocess
+import sys
 import functools
 from contextlib import contextmanager
 from plumbum.commands.processes import run_proc, iter_lines
@@ -24,21 +26,12 @@ _funnychars = '"`$\\'
 
 def shquote(text):
     """Quotes the given text with shell escaping (assumes as syntax similar to ``sh``)"""
-    if not text:
-        return "''"
     text = six.str(text)
-    if not text:
-        return "''"
-    for c in text:
-        if c not in _safechars:
-            break
+    if sys.version_info >= (3, 3):
+        return shlex.quote(text)
     else:
-        return text
-    if "'" not in text:
-        return "'" + text + "'"
-    res = six.str("").join(
-        (six.str('\\' + c) if c in _funnychars else c) for c in text)
-    return six.str('"') + res + six.str('"')
+        import pipes
+        return pipes.quote(text)
 
 
 def shquote_list(seq):
