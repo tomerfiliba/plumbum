@@ -84,17 +84,18 @@ class ProcessExecutionError(EnvironmentError):
         self.stderr = stderr
 
     def __str__(self):
-        stdout = "\n         | ".join(str(self.stdout).splitlines())
-        stderr = "\n         | ".join(str(self.stderr).splitlines())
-        lines = [
-            "Command line: %r" % (self.argv, ),
-            "Exit code: %s" % (self.retcode)
-        ]
+        from plumbum.commands.base import shquote_list
+        stdout =      "\n              | ".join(str(self.stdout).splitlines())
+        stderr =      "\n              | ".join(str(self.stderr).splitlines())
+        cmd = " ".join(shquote_list(self.argv))
+        lines = ["Unexpected exit code: ", str(self.retcode)]
+        cmd =         "\n              | ".join(cmd.splitlines())
+        lines +=     ["\nCommand line: | ", cmd]
         if stdout:
-            lines.append("Stdout:  | %s" % (stdout, ))
+            lines += ["\nStdout:       | ", stdout]
         if stderr:
-            lines.append("Stderr:  | %s" % (stderr, ))
-        return "\n".join(lines)
+            lines += ["\nStderr:       | ", stderr]
+        return "".join(lines)
 
 
 class ProcessTimedOut(Exception):
