@@ -5,7 +5,7 @@ import sys
 import signal
 import time
 from plumbum import (local, LocalPath, FG, BG, TF, RETCODE, ERROUT, TEE,
-                    CommandNotFound, ProcessExecutionError, ProcessTimedOut)
+                    CommandNotFound, ProcessExecutionError, ProcessTimedOut, ProcessLineTimedOut)
 from plumbum.lib import six, IS_WIN32
 from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
 from plumbum.machines.local import LocalCommand
@@ -483,18 +483,32 @@ class TestLocalMachine:
             (false | true) & FG
         assert e.value.argv == ['false']
 
-
     @skip_on_windows
     def test_iter_lines_timeout(self):
-        from plumbum.cmd import ping
+        from plumbum.cmd import bash
+        cmd = bash["-ce", "for ((i=0;1==1;i++)); do echo $i; sleep .3; done"]
+        with pytest.raises(ProcessTimedOut):
+            for i, (out, err) in enumerate(cmd.popen().iter_lines(timeout=1)):
+                assert not err
+                assert out
+                print(i, "out:", out)
+        assert i in (2, 3)  # Mac is a bit flakey
 
+    @skip_on_windows
+    def test_iter_lines_timeout_by_type(self):
+        from plumbum.commands.processes import BY_TYPE
+        from plumbum.cmd import bash
+
+        cmd = bash["-ce", "for ((i=0;1==1;i++)); do echo $i; sleep .3; echo $i 1>&2; done"]
+        types = {1: "out:", 2: "err:"}
+        counts = {1: 0, 2: 0}
         with pytest.raises(ProcessTimedOut):
             # Order is important on mac
-            for i, (out, err) in enumerate(ping["-i", 0.5, "127.0.0.1"].popen().iter_lines(timeout=2)):
-                print("out:", out)
-                print("err:", err)
-        assert i > 3
-
+            for typ, line in cmd.popen().iter_lines(timeout=1, mode=BY_TYPE):
+                counts[typ] += 1
+                print(types[typ], line)
+        assert counts[1] in (3, 4)  # Mac is a bit flakey
+        assert counts[2] in (2, 3)  # Mac is a bit flakey
 
     @skip_on_windows
     def test_iter_lines_error(self):
@@ -505,6 +519,20 @@ class TestLocalMachine:
             assert i == 1
         assert (err.value.stderr.startswith("/bin/ls: unrecognized option '--bla'")
                 or err.value.stderr.startswith("/bin/ls: illegal option -- -"))
+
+
+    @skip_on_windows
+    def test_iter_lines_line_timeout(self):
+        from plumbum.cmd import bash
+        cmd = bash["-ce", "for ((i=0;1==1;i++)); do echo $i; sleep $i; done"]
+
+        with pytest.raises(ProcessLineTimedOut):
+            # Order is important on mac
+            for i, (out, err) in enumerate(cmd.popen().iter_lines(line_timeout=.2)):
+                print(i, "out:", out)
+                print(i, "err:", err)
+        assert i == 1
+
 
     @skip_on_windows
     def test_modifiers(self):
@@ -537,6 +565,48 @@ class TestLocalMachine:
             result = seq['1', '5000'] & TEE
             assert result[1] == EXPECT
             assert EXPECT == capfd.readouterr()[0]
+
+    @skip_on_windows
+    def test_logger_pipe(self):
+        from plumbum.commands.modifiers import PipeToLoggerMixin
+        from plumbum.cmd import bash
+        logs = []
+
+        class Logger(PipeToLoggerMixin):
+            def log(self, level, line):
+                print(level, line)
+                logs.append((level, line))
+
+        logger = Logger()
+
+        ret = bash["-ce", "echo aaa"] & logger
+        assert logs[-1] == (PipeToLoggerMixin.INFO, "aaa")
+        assert ret == 0
+
+        bash["-ce", "echo bbb 1>&2"] & logger
+        assert logs[-1] == (PipeToLoggerMixin.DEBUG, "bbb")
+
+        ret = bash["-ce", "echo ccc 1>&2; false"] & logger.pipe(prefix="echo", retcode=1, err_level=0)
+        assert logs[-1] == (0, "echo: ccc")
+        assert ret == 1
+
+    @skip_on_windows
+    def test_logger_pipe_line_timeout(self):
+        from plumbum.commands.modifiers import PipeToLoggerMixin
+        from plumbum.cmd import bash
+        cmd = bash["-ce", "for ((i=0;i<10;i++)); do echo .$i; sleep .$i; done"]
+
+        class Logger(PipeToLoggerMixin):
+            def log(self, level, line):
+                print(level, line)
+                assert level == 20
+                assert float(line) <= 0.6
+
+        logger = Logger()
+
+        with pytest.raises(ProcessLineTimedOut):
+            # Order is important on mac
+            cmd & logger.pipe(line_timeout=0.45)
 
     def test_arg_expansion(self):
         from plumbum.cmd import ls
