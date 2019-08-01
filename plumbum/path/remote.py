@@ -41,6 +41,7 @@ class RemotePath(Path):
         windows = (remote.uname.lower() == "windows")
         normed = []
 
+        parts = tuple(map(str, parts))  # force the paths into string, so subscription works properly
         # Simple skip if path is absolute
         if parts[0] and parts[0][0] not in ("/", "\\"):
             cwd = (remote._cwd if hasattr(remote, '_cwd') else
