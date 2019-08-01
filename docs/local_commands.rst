@@ -23,6 +23,16 @@ Once you have a ``Command`` object, you can execute it like a normal function::
     >>> ls("-a")
     '.\n..\n.git\n.gitignore\n.project\n.pydevproject\nREADME.rst\n[...]'
 
+For convenience with the common case, you can use the ``.cmd`` magic property instead of the subscription syntax:
+
+    >>> ls = local.cmd.ls
+    >>> ls
+    <LocalCommand C:\Program Files\Git\bin\ls.exe>
+
+.. versionadded:: 1.7
+
+    The ``.cmd`` commands provider object
+
 .. _fallbacks:
 
 If you use the ``.get()`` method instead of ``[]``, you can include fallbacks to try if the
