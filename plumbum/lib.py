@@ -132,7 +132,7 @@ class StaticProperty(object):
 
 def getdoc(object):
     """
-    This gets a docstring if avaiable, and cleans it, but does not look up docs in
+    This gets a docstring if available, and cleans it, but does not look up docs in
     inheritance tree (Pre 3.5 behavior of ``inspect.getdoc``).
     """
     try:
