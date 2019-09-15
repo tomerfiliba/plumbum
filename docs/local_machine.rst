@@ -67,16 +67,16 @@ it's own private copy of the environment::
     'BAR\r\n'
     'SPAM\r\n'
     'BAR\r\n'
-    >>> local.python("-c", "import os;print os.environ['FOO']")
+    >>> local.python("-c", "import os;print(os.environ['FOO'])")
     Traceback (most recent call last):
        [...]
-    ProcessExecutionError: Command line: ['c:\\python27\\python.exe', '-c', "import os;print os.environ['FOO']"]
-    Exit code: 1
-    Stderr:  | Traceback (most recent call last):
-             |   File "<string>", line 1, in <module>
-             |   File "c:\python27\lib\os.py", line 423, in __getitem__
-             |     return self.data[key.upper()]
-             | KeyError: 'FOO'
+    ProcessExecutionError: Unexpected exit code: 1
+    Command line: | /usr/bin/python -c "import os;print(os.environ['FOO'])"
+    Stderr:       | Traceback (most recent call last):
+                  |   File "<string>", line 1, in <module>
+                  |   File "/usr/lib/python3.5/os.py", line 725, in __getitem__
+                  |     raise KeyError(key) from None
+                  | KeyError: 'FOO'
 
 In order to make cross-platform-ness easier, the ``local.env`` object provides some convenience 
 properties for getting the username (``.user``), the home path (``.home``), and the executable path

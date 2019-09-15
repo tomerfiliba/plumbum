@@ -1,3 +1,13 @@
+Unreleased
+-----
+* Exceptions: Changed ProcessExecutionError's formatting to be more user-friendly (`#456 <https://github.com/tomerfiliba/plumbum/pull/456>`_)
+* Commands: support for per-line timeout with iter_lines (`#454 <https://github.com/tomerfiliba/plumbum/pull/454>`_)
+* Commands: support for piping stdout/stderr to a logger (`#454 <https://github.com/tomerfiliba/plumbum/pull/454>`_)
+* Paths: support composing paths using subscription operations (`#455 <https://github.com/tomerfiliba/plumbum/pull/455>`_)
+* CLI: Improved 'Set' validator to allow non-string types, and CSV params (`#452 <https://github.com/tomerfiliba/plumbum/pull/452>`_)
+* TypedEnv: Facility for modeling environment-variables into python data types (`#451 <https://github.com/tomerfiliba/plumbum/pull/450>`_)
+* Commands: execute local/remote commands via a magic `.cmd` attribute (`#450 <https://github.com/tomerfiliba/plumbum/pull/450>`_)
+
 1.6.7
 -----
 * Commands: Added ``run_*`` methods as an alternative to modifiers (`#386 <https://github.com/tomerfiliba/plumbum/pull/386>`_)

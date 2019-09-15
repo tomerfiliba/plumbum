@@ -3,13 +3,16 @@ import errno
 import os
 import stat
 import socket
+from plumbum.commands.base import shquote
 from plumbum.machines.base import PopenAddons
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
 from plumbum.lib import _setdoc, six
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath, StatRes
-from plumbum.commands.processes import iter_lines
+from plumbum.commands.processes import iter_lines, ProcessLineTimedOut
+
+
 try:
     # Sigh... we need to gracefully-import paramiko for Sphinx builds, etc
     import paramiko
@@ -317,7 +320,7 @@ class ParamikoMachine(BaseRemoteMachine):
         argv.extend(["cd", str(cwd or self.cwd), "&&"])
         if envdelta:
             argv.append("env")
-            argv.extend("%s=%s" % (k, v) for k, v in envdelta.items())
+            argv.extend("%s=%s" % (k, shquote(v)) for k, v in envdelta.items())
         argv.extend(args.formulate())
         cmdline = " ".join(argv)
         logger.debug(cmdline)
@@ -460,7 +463,7 @@ class SocketCompatibleChannel(object):
 ###################################################################################################
 # Custom iter_lines for paramiko.Channel
 ###################################################################################################
-def _iter_lines(proc, decode, linesize):
+def _iter_lines(proc, decode, linesize, line_timeout=None):
 
     try:
         from selectors import DefaultSelector, EVENT_READ
@@ -470,7 +473,9 @@ def _iter_lines(proc, decode, linesize):
 
         def selector():
             while True:
-                rlist, _, _ = select([proc.stdout.channel], [], [])
+                rlist, _, _ = select([proc.stdout.channel], [], [], line_timeout)
+                if not rlist and line_timeout:
+                    raise ProcessLineTimedOut("popen line timeout expired", getattr(proc, "argv", None), getattr(proc, "machine", None))
                 for _ in rlist:
                     yield
     else:
@@ -479,7 +484,10 @@ def _iter_lines(proc, decode, linesize):
             sel = DefaultSelector()
             sel.register(proc.stdout.channel, EVENT_READ)
             while True:
-                for key, mask in sel.select():
+                ready = sel.select(line_timeout)
+                if not ready and line_timeout:
+                    raise ProcessLineTimedOut("popen line timeout expired", getattr(proc, "argv", None), getattr(proc, "machine", None))
+                for key, mask in ready:
                     yield
 
     for _ in selector():

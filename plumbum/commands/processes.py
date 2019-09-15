@@ -24,7 +24,7 @@ def _check_process(proc, retcode, timeout, stdout, stderr):
     return proc.returncode, stdout, stderr
 
 
-def _iter_lines(proc, decode, linesize):
+def _iter_lines(proc, decode, linesize, line_timeout=None):
     try:
         from selectors import DefaultSelector, EVENT_READ
     except ImportError:
@@ -33,7 +33,9 @@ def _iter_lines(proc, decode, linesize):
 
         def selector():
             while True:
-                rlist, _, _ = select([proc.stdout, proc.stderr], [], [])
+                rlist, _, _ = select([proc.stdout, proc.stderr], [], [], line_timeout)
+                if not rlist and line_timeout:
+                    raise ProcessLineTimedOut("popen line timeout expired", getattr(proc, "argv", None), getattr(proc, "machine", None))
                 for stream in rlist:
                     yield (stream is proc.stderr), decode(
                         stream.readline(linesize))
@@ -44,7 +46,10 @@ def _iter_lines(proc, decode, linesize):
             sel.register(proc.stdout, EVENT_READ, 0)
             sel.register(proc.stderr, EVENT_READ, 1)
             while True:
-                for key, mask in sel.select():
+                ready = sel.select(line_timeout)
+                if not ready and line_timeout:
+                    raise ProcessLineTimedOut("popen line timeout expired", getattr(proc, "argv", None), getattr(proc, "machine", None))
+                for key, mask in ready:
                     yield key.data, decode(key.fileobj.readline(linesize))
 
     for ret in selector():
@@ -79,17 +84,18 @@ class ProcessExecutionError(EnvironmentError):
         self.stderr = stderr
 
     def __str__(self):
-        stdout = "\n         | ".join(str(self.stdout).splitlines())
-        stderr = "\n         | ".join(str(self.stderr).splitlines())
-        lines = [
-            "Command line: %r" % (self.argv, ),
-            "Exit code: %s" % (self.retcode)
-        ]
+        from plumbum.commands.base import shquote_list
+        stdout =      "\n              | ".join(str(self.stdout).splitlines())
+        stderr =      "\n              | ".join(str(self.stderr).splitlines())
+        cmd = " ".join(shquote_list(self.argv))
+        lines = ["Unexpected exit code: ", str(self.retcode)]
+        cmd =         "\n              | ".join(cmd.splitlines())
+        lines +=     ["\nCommand line: | ", cmd]
         if stdout:
-            lines.append("Stdout:  | %s" % (stdout, ))
+            lines += ["\nStdout:       | ", stdout]
         if stderr:
-            lines.append("Stderr:  | %s" % (stderr, ))
-        return "\n".join(lines)
+            lines += ["\nStderr:       | ", stderr]
+        return "".join(lines)
 
 
 class ProcessTimedOut(Exception):
@@ -99,6 +105,15 @@ class ProcessTimedOut(Exception):
     def __init__(self, msg, argv):
         Exception.__init__(self, msg, argv)
         self.argv = argv
+
+
+class ProcessLineTimedOut(Exception):
+    """Raises by :func:`iter_lines <plumbum.commands.iter_lines>` when a ``line_timeout`` has been
+    specified and it has elapsed before the process yielded another line"""
+    def __init__(self, msg, argv, machine):
+        Exception.__init__(self, msg, argv, machine)
+        self.argv = argv
+        self.machine = machine
 
 
 class CommandNotFound(AttributeError):
@@ -235,11 +250,20 @@ def run_proc(proc, retcode, timeout=None):
 #===================================================================================================
 # iter_lines
 #===================================================================================================
+
+BY_POSITION = object()
+BY_TYPE = object()
+DEFAULT_ITER_LINES_MODE = BY_POSITION
+
+
 def iter_lines(proc,
                retcode=0,
                timeout=None,
                linesize=-1,
-               _iter_lines=_iter_lines):
+               line_timeout=None,
+               mode=None,
+               _iter_lines=_iter_lines,
+               ):
     """Runs the given process (equivalent to run_proc()) and yields a tuples of (out, err) line pairs.
     If the exit code of the process does not match the expected one, :class:`ProcessExecutionError
     <plumbum.commands.ProcessExecutionError>` is raised.
@@ -256,8 +280,16 @@ def iter_lines(proc,
     :param linesize: Maximum number of characters to read from stdout/stderr at each iteration.
                     ``-1`` (default) reads until a b'\\n' is encountered.
 
+    :param line_timeout: The maximal amount of time (in seconds) to allow between consecutive lines in either stream.
+                    Raise an :class:`ProcessLineTimedOut <plumbum.commands.ProcessLineTimedOut>` if the timeout has
+                    been reached. ``None`` means no timeout is imposed.
+
     :returns: An iterator of (out, err) line tuples.
     """
+    if mode is None:
+        mode = DEFAULT_ITER_LINES_MODE
+
+    assert mode in (BY_POSITION, BY_TYPE)
 
     encoding = getattr(proc, "custom_encoding", None)
     if encoding:
@@ -268,11 +300,19 @@ def iter_lines(proc,
     _register_proc_timeout(proc, timeout)
 
     buffers = [StringIO(), StringIO()]
-    for t, line in _iter_lines(proc, decode, linesize):
-        ret = [None, None]
-        ret[t] = line
+    for t, line in _iter_lines(proc, decode, linesize, line_timeout):
+
+        # verify that the proc hasn't timed out yet
+        proc.verify(timeout=timeout, retcode=None, stdout=None, stderr=None)
+
         buffers[t].write(line + "\n")
-        yield ret
+
+        if mode is BY_POSITION:
+            ret = [None, None]
+            ret[t] = line
+            yield tuple(ret)
+        elif mode is BY_TYPE:
+            yield (t + 1), line  # 1=stdout, 2=stderr
 
     # this will take care of checking return code and timeouts
     _check_process(proc, retcode, timeout, *(s.getvalue() for s in buffers))

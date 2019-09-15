@@ -216,6 +216,10 @@ s.close()
                 filenames = [f.name for f in rem.cwd // ("*with space.txt")]
                 assert "file with space.txt" in filenames
 
+    def test_cmd(self):
+        with self._connect() as rem:
+            rem.cmd.ls("/tmp")
+
     @pytest.mark.usefixtures("testdir")
     def test_download_upload(self):
         with self._connect() as rem:
@@ -252,6 +256,18 @@ s.close()
                 rem.env.path.insert(0, rem.cwd / "not-in-path")
                 p = rem.which("dummy-executable")
                 assert p == rem.cwd / "not-in-path" / "dummy-executable"
+
+    @pytest.mark.parametrize(
+        "env",
+        ["lala", "-Wl,-O2 -Wl,--sort-common", "{{}}", "''", "!@%_-+=:", "'",
+         "`", "$", "\\"])
+    def test_env_special_characters(self, env):
+        with self._connect() as rem:
+            with pytest.raises(ProcessExecutionError):
+                rem.python("-c", "import os;print(os.environ['FOOBAR72'])")
+            rem.env["FOOBAR72"] = env
+            out = rem.python("-c", "import os;print(os.environ['FOOBAR72'])")
+            assert out.strip() == env
 
     def test_read_write(self):
         with self._connect() as rem:
