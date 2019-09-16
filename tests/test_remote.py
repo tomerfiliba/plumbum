@@ -291,7 +291,7 @@ s.close()
                     print("err:", err)
             except NotImplementedError:
                 try:
-                    pytest.skip(sys.exc_info()[1])
+                    pytest.skip(str(sys.exc_info()[1]))
                 except AttributeError:
                     return
             except ProcessTimedOut:
