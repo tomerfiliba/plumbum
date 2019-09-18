@@ -260,9 +260,11 @@ class Path(str, six.ABC):
         return self.move(self.up() / newname)
 
     @abstractmethod
-    def copy(self, dst, override=False):
-        """Copies this path (recursively, if a directory) to the destination path. Raises TypeError if
-        dst exists and override is False."""
+    def copy(self, dst, override=None):
+        """Copies this path (recursively, if a directory) to the destination path "dst".
+        Raises TypeError if dst exists and override is False.
+        Will overwrite if override is True.
+        Will silently fail to copy if override is None (the default)."""
 
     @abstractmethod
     def mkdir(self, mode=0o777, parents=True, exist_ok=True):
