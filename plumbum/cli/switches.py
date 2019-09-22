@@ -468,7 +468,7 @@ class Set(Validator):
 
     def __repr__(self):
         return "{{{0}}}".format(", ".join(
-            v if isinstance(v, str) else v.__name__ for v in self.values.values()))
+            v if isinstance(v, str) else v.__name__ for v in self.values))
 
     def __call__(self, value, check_csv=True):
         if self.csv and check_csv:
