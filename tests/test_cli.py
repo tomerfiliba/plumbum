@@ -21,7 +21,9 @@ class SimpleApp(cli.Application):
     benedict = cli.CountOf(["--benedict"], help = """a very long help message with lots of
         useless information that nobody would ever want to read, but heck, we need to test
         text wrapping in help messages as well""")
-    num = cli.SwitchAttr(["--num"], cli.Set("MIN", "MAX", int, csv=True))
+
+    csv = cli.SwitchAttr(["--csv"], cli.Set("MIN", "MAX", int, csv=True))
+    num = cli.SwitchAttr(["--num"], cli.Set("MIN", "MAX", int))
 
     def main(self, *args):
         old = self.eggs
@@ -153,20 +155,38 @@ class TestCLI:
         assert rc == 0
         assert inst.eggs == "7"
 
+        _, rc = SimpleApp.run(["foo", "--bacon=81", "--csv=100"], exit = False)
+        assert rc == 0
+
+        _, rc = SimpleApp.run(["foo", "--bacon=81", "--csv=MAX,MIN,100"], exit = False)
+        assert rc == 0
+
         _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=100"], exit = False)
         assert rc == 0
 
-        _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=MAX,MIN,100"], exit = False)
+        _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=MAX"], exit = False)
+        assert rc == 0
+
+        _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=MIN"], exit = False)
         assert rc == 0
 
     def test_failures(self):
         _, rc = SimpleApp.run(["foo"], exit = False)
         assert rc == 2
 
-        _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=xx"], exit = False)
+        _, rc = SimpleApp.run(["foo", "--bacon=81", "--csv=xx"], exit = False)
         assert rc == 2
 
-        _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=xx"], exit = False)
+        _, rc = SimpleApp.run(["foo", "--bacon=81", "--csv=xx"], exit = False)
+        assert rc == 2
+
+        _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=MOO"], exit = False)
+        assert rc == 2
+
+        _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=MIN,MAX"], exit = False)
+        assert rc == 2
+
+        _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=10.5"], exit = False)
         assert rc == 2
 
         _, rc = SimpleApp.run(["foo", "--bacon=hello"], exit = False)
