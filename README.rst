@@ -53,24 +53,18 @@ Basics
 
 .. code-block:: python
 
-    >>> from plumbum import local
-    >>> ls = local["ls"]
+    >>> from plumbum.cmd import ls
     >>> ls
     LocalCommand(<LocalPath /bin/ls>)
     >>> ls()
     u'build.py\ndist\ndocs\nLICENSE\nplumbum\nREADME.rst\nsetup.py\ntests\ntodo.txt\n'
+    >>> from plumbum import local
     >>> notepad = local["c:\\windows\\notepad.exe"]
     >>> notepad()                                   # Notepad window pops up
     u''                                             # Notepad window is closed by user, command returns
 
-Instead of writing ``xxx = local["xxx"]`` for every program you wish to use, you can 
-also ``import`` commands
-
-.. code-block:: python
-    
-    >>> from plumbum.cmd import grep, wc, cat, head
-    >>> grep
-    LocalCommand(<LocalPath /bin/grep>)
+In the example above, `ls = local["ls"]` is also valid and looks in your PATH; the `local` object represents your local machine.
+The `plumbum.cmd` is a useful shortcut for accessing programs in the PATH.
 
 Piping
 ******
