@@ -63,8 +63,8 @@ Basics
     >>> notepad()                                   # Notepad window pops up
     u''                                             # Notepad window is closed by user, command returns
 
-In the example above, `ls = local["ls"]` is also valid and looks in your PATH; the `local` object represents your local machine.
-The `plumbum.cmd` is a useful shortcut for accessing programs in the PATH.
+In the example above, you can use `local.cmd.ls` as well, or `ls = local["ls"]` if you have an unusually named executable or a full path to an executable. The `local` object represents your local machine.
+The `plumbum.cmd` import is a useful shortcut for accessing programs in the PATH.
 
 Piping
 ******
