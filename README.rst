@@ -22,6 +22,9 @@
 .. image:: https://badges.gitter.im/plumbumpy/Lobby.svg
    :alt: Join the chat at https://gitter.im/plumbumpy/Lobby
    :target: https://gitter.im/plumbumpy/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :alt: Code styled with Black
+   :target: https://github.com/psf/black
 
 
 Plumbum: Shell Combinators
