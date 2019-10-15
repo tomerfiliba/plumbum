@@ -11,7 +11,7 @@
    :target: https://coveralls.io/github/tomerfiliba/plumbum?branch=master
    :alt: Coverage Status
 .. image:: https://img.shields.io/pypi/v/plumbum.svg
-   :target: https://pypi.python.org/pypi/plumbum/ 
+   :target: https://pypi.python.org/pypi/plumbum/
    :alt: PyPI Status
 .. image:: https://img.shields.io/pypi/pyversions/plumbum.svg
    :target: https://pypi.python.org/pypi/plumbum/
@@ -30,16 +30,16 @@
 Plumbum: Shell Combinators
 ==========================
 
-Ever wished the compactness of shell scripts be put into a **real** programming language? 
-Say hello to *Plumbum Shell Combinators*. Plumbum (Latin for *lead*, which was used to create 
-pipes back in the day) is a small yet feature-rich library for shell script-like programs in Python. 
-The motto of the library is **"Never write shell scripts again"**, and thus it attempts to mimic 
-the **shell syntax** ("shell combinators") where it makes sense, while keeping it all **Pythonic 
+Ever wished the compactness of shell scripts be put into a **real** programming language?
+Say hello to *Plumbum Shell Combinators*. Plumbum (Latin for *lead*, which was used to create
+pipes back in the day) is a small yet feature-rich library for shell script-like programs in Python.
+The motto of the library is **"Never write shell scripts again"**, and thus it attempts to mimic
+the **shell syntax** ("shell combinators") where it makes sense, while keeping it all **Pythonic
 and cross-platform**.
 
-Apart from shell-like syntax and handy shortcuts, the library provides local and remote command 
-execution (over SSH), local and remote file-system paths, easy working-directory and environment 
-manipulation, and a programmatic Command-Line Interface (CLI) application toolkit. 
+Apart from shell-like syntax and handy shortcuts, the library provides local and remote command
+execution (over SSH), local and remote file-system paths, easy working-directory and environment
+manipulation, and a programmatic Command-Line Interface (CLI) application toolkit.
 Now let's see some code!
 
 *This is only a teaser; the full documentation can be found at*
@@ -55,50 +55,52 @@ Basics
 
     >>> from plumbum import local
     >>> local.cmd.ls
-    LocalCommand(<LocalPath /bin/ls>)
+    LocalCommand(/bin/ls)
     >>> local.cmd.ls()
-    u'build.py\ndist\ndocs\nLICENSE\nplumbum\nREADME.rst\nsetup.py\ntests\ntodo.txt\n'
+    'build.py\nCHANGELOG.rst\nconda.recipe\nCONTRIBUTING.rst\ndev-requirements.txt\ndocs\nexamples\nexperiments\nLICENSE\nMANIFEST.in\nPipfile\nplumbum\nplumbum.egg-info\npytest.ini\nREADME.rst\nsetup.cfg\nsetup.py\ntests\ntranslations.py\n'
     >>> notepad = local["c:\\windows\\notepad.exe"]
     >>> notepad()                                   # Notepad window pops up
-    u''                                             # Notepad window is closed by user, command returns
+    ''                                              # Notepad window is closed by user, command returns
 
-In the example above, you can use ``local["ls"]`` if you have an unusually named executable or a full path to an executable. The `local` object represents your local machine. As you'll see, Plumbum also provides remote machines that use the same API!
+In the example above, you can use ``local["ls"]`` if you have an unusually named executable or a full path to an executable. The ``local`` object represents your local machine. As you'll see, Plumbum also provides remote machines that use the same API!
 You can also use ``from plumbum.cmd import ls`` as well for accessing programs in the ``PATH``.
 
 Piping
 ******
 
 .. code-block:: python
-    
-    >>> chain = ls["-a"] | grep["-v", "\\.py"] | wc["-l"]
-    >>> print chain
+
+    >>> from plumbum.cmd import ls, grep, wc
+    >>> chain = ls["-a"] | grep["-v", r"\.py"] | wc["-l"]
+    >>> print(chain)
     /bin/ls -a | /bin/grep -v '\.py' | /usr/bin/wc -l
     >>> chain()
-    u'13\n'
+    '27\n'
 
 Redirection
 ***********
 
 .. code-block:: python
 
+    >>> from plumbum.cmd import cat, head
     >>> ((cat < "setup.py") | head["-n", 4])()
-    u'#!/usr/bin/env python\nimport os\n\ntry:\n'
+    '#!/usr/bin/env python\nimport os\n\ntry:\n'
     >>> (ls["-a"] > "file.list")()
-    u''
+    ''
     >>> (cat["file.list"] | wc["-l"])()
-    u'17\n'
+    '31\n'
 
 Working-directory manipulation
 ******************************
 
 .. code-block:: python
-    
+
     >>> local.cwd
-    <Workdir /home/tomer/workspace/plumbum>
+    <LocalWorkdir /home/tomer/workspace/plumbum>
     >>> with local.cwd(local.cwd / "docs"):
     ...     chain()
     ...
-    u'15\n'
+    '22\n'
 
 Foreground and background execution
 ***********************************
@@ -106,20 +108,20 @@ Foreground and background execution
 .. code-block:: python
 
     >>> from plumbum import FG, BG
-    >>> (ls["-a"] | grep["\\.py"]) & FG         # The output is printed to stdout directly
+    >>> (ls["-a"] | grep[r"\.py"]) & FG         # The output is printed to stdout directly
     build.py
-    .pydevproject
     setup.py
-    >>> (ls["-a"] | grep["\\.py"]) & BG         # The process runs "in the background"
+    translations.py
+    >>> (ls["-a"] | grep[r"\.py"]) & BG         # The process runs "in the background"
     <Future ['/bin/grep', '\\.py'] (running)>
 
 Command nesting
 ***************
 
 .. code-block:: python
-    
-    >>> from plumbum.cmd import sudo
-    >>> print sudo[ifconfig["-a"]]
+
+    >>> from plumbum.cmd import sudo, ifconfig
+    >>> print(sudo[ifconfig["-a"]])
     /usr/bin/sudo /sbin/ifconfig -a
     >>> (sudo[ifconfig["-a"]] | grep["-i", "loop"]) & FG
     lo        Link encap:Local Loopback
@@ -128,7 +130,7 @@ Command nesting
 Remote commands (over SSH)
 **************************
 
-Supports `openSSH <http://www.openssh.org/>`_-compatible clients, 
+Supports `openSSH <http://www.openssh.org/>`_-compatible clients,
 `PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/>`_ (on Windows)
 and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implementation of SSH2)
 
@@ -140,7 +142,7 @@ and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implement
     >>> with remote.cwd("/lib"):
     ...     (r_ls | grep["0.so.0"])()
     ...
-    u'libusb-1.0.so.0\nlibusb-1.0.so.0.0.0\n'
+    'libusb-1.0.so.0\nlibusb-1.0.so.0.0.0\n'
 
 CLI applications
 ****************
@@ -160,9 +162,9 @@ CLI applications
             logging.root.setLevel(level)
 
         def main(self, *srcfiles):
-            print "Verbose:", self.verbose
-            print "Include dirs:", self.include_dirs
-            print "Compiling:", srcfiles
+            print("Verbose:", self.verbose)
+            print("Include dirs:", self.include_dirs)
+            print("Compiling:", srcfiles)
 
     if __name__ == "__main__":
         MyCompiler.run()
