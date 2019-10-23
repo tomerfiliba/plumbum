@@ -292,13 +292,14 @@ class Path(str, six.ABC):
 
     @abstractmethod
     def read(self, encoding=None):
-        """returns the contents of this file. By default the data is binary (``bytes``), but you can
-        specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
+        """returns the contents of this file as a ``str``. By default the data is read
+        as text, but you can specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
 
     @abstractmethod
     def write(self, data, encoding=None):
-        """writes the given data to this file. By default the data is expected to be binary (``bytes``),
-        but you can specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
+        """writes the given data to this file. By default the data is written as-is
+        (either text or binary), but you can specify the encoding, e.g., ``'latin1'``
+        or ``'utf8'``"""
 
     @abstractmethod
     def touch(self):
