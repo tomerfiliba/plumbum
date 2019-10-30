@@ -1,3 +1,5 @@
+* **2019.10.30**: Version 1.6.8 released with ``local.cmd``, a few command updates, ``Set`` improvements, and ``TypedEnv``.
+
 * **2018.08.10**: Version 1.6.7 released with several minor additions, mostly to CLI apps, and ``run_*`` modifiers added.
 
 * **2018.02.12**: Version 1.6.6 released with one more critical bugfix for a error message regression in 1.6.5.

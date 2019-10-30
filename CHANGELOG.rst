@@ -1,5 +1,5 @@
-Unreleased
-----------
+1.6.8
+-----
 * Exceptions: Changed ProcessExecutionError's formatting to be more user-friendly (`#456 <https://github.com/tomerfiliba/plumbum/pull/456>`_)
 * Commands: support for per-line timeout with iter_lines (`#454 <https://github.com/tomerfiliba/plumbum/pull/454>`_)
 * Commands: support for piping stdout/stderr to a logger (`#454 <https://github.com/tomerfiliba/plumbum/pull/454>`_)
