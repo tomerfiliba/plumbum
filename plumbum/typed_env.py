@@ -6,6 +6,11 @@ from collections import MutableMapping
 NO_DEFAULT = object()
 
 
+# must not inherit from AttributeError, so not to mess with python's attribute-lookup flow
+class EnvironmentVariableError(KeyError):
+    pass
+
+
 class TypedEnv(MutableMapping):
     """
     This object can be used in 'exploratory' mode:
@@ -29,7 +34,7 @@ class TypedEnv(MutableMapping):
 
     try:
         print(p.tmp)
-    except KeyError:
+    except EnvironmentVariableError:
         print("TMP/TEMP is not defined")
     else:
         assert False
@@ -52,7 +57,7 @@ class TypedEnv(MutableMapping):
                 return self
             try:
                 return self.convert(instance._raw_get(*self.names))
-            except KeyError:
+            except EnvironmentVariableError:
                 if self.default is NO_DEFAULT:
                     raise
                 return self.default
@@ -64,6 +69,10 @@ class TypedEnv(MutableMapping):
         pass
 
     class Bool(_BaseVar):
+        """
+        Converts 'yes|true|1|no|false|0' to the appropriate boolean value.
+        Case-insensitive. Throws a ``ValueError`` for any other value.
+        """
 
         def convert(self, s):
             s = s.lower()
@@ -81,6 +90,10 @@ class TypedEnv(MutableMapping):
         convert = staticmethod(float)
 
     class CSV(_BaseVar):
+        """
+        Comma-separated-strings get split using the ``separator`` (',' by default) into
+        a list of objects of type ``type`` (``str`` by default).
+        """
 
         def __init__(self, name, default=NO_DEFAULT, type=str, separator=","):
             super(TypedEnv.CSV, self).__init__(name, default=default)
@@ -117,12 +130,12 @@ class TypedEnv(MutableMapping):
             if value is not NO_DEFAULT:
                 return value
         else:
-            raise KeyError(key_names[0])
+            raise EnvironmentVariableError(key_names[0])
 
     def __contains__(self, key):
         try:
             self._raw_get(key)
-        except KeyError:
+        except EnvironmentVariableError:
             return False
         else:
             return True
@@ -131,7 +144,7 @@ class TypedEnv(MutableMapping):
         # if we're here then there was no descriptor defined
         try:
             return self._raw_get(name)
-        except KeyError:
+        except EnvironmentVariableError:
             raise AttributeError("%s has no attribute %r" % (self.__class__, name))
 
     def __getitem__(self, key):
@@ -140,7 +153,7 @@ class TypedEnv(MutableMapping):
     def get(self, key, default=None):
         try:
             return self[key]
-        except KeyError:
+        except EnvironmentVariableError:
             return default
 
     def __dir__(self):
