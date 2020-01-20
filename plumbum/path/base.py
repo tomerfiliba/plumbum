@@ -414,7 +414,7 @@ class Path(str, six.ABC):
                 results.extend(fn(single_pattern))
             return sorted(list(set(results)))
 
-    def resolve(strict=False):
+    def resolve(self, strict=False):
         """Added to allow pathlib like syntax. Does nothing since
         Plumbum paths are always absolute. Does not (currently) resolve
         symlinks."""
