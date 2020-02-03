@@ -143,7 +143,6 @@ class BaseCommand(object):
         raise NotImplementedError()
 
     def nohup(self,
-              command,
               cwd='.',
               stdout='nohup.out',
               stderr=None,

@@ -374,7 +374,7 @@ class _NOHUP(ExecutionModifier):
         else:
             stdout = self.stdout
             append = self.append
-        return cmd.nohup(cmd, self.cwd, stdout, self.stderr, append)
+        return cmd.nohup(self.cwd, stdout, self.stderr, append)
 
 
 NOHUP = _NOHUP()
