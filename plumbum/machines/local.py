@@ -42,6 +42,12 @@ class PlumbumLocalPopen(PopenAddons):
     def __iter__(self):
         return self.iter_lines()
 
+    def __enter__(self):
+        return self._proc.__enter__()
+
+    def __exit__(self, *args, **kwargs):
+        return self._proc.__exit__(*args, **kwargs)
+
     def __getattr__(self, name):
         return getattr(self._proc, name)
 
