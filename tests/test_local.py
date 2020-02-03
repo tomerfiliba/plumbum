@@ -24,6 +24,8 @@ SDIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestLocalPopen:
+    @pytest.mark.skipif(sys.version_info < (3, 2),
+                        reason="Context Manager was introduced in Python 3.2")
     def test_contextmanager(self):
         if IS_WIN32:
             command = ['dir']
