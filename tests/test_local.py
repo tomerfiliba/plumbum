@@ -8,7 +8,7 @@ from plumbum import (local, LocalPath, FG, BG, TF, RETCODE, ERROUT, TEE,
                     CommandNotFound, ProcessExecutionError, ProcessTimedOut, ProcessLineTimedOut)
 from plumbum.lib import six, IS_WIN32
 from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
-from plumbum.machines.local import LocalCommand
+from plumbum.machines.local import LocalCommand, PlumbumLocalPopen
 from plumbum.path import RelativePath
 import plumbum
 
@@ -21,6 +21,16 @@ from plumbum._testtools import (
 
 # This is a string since we are testing local paths
 SDIR = os.path.dirname(os.path.abspath(__file__))
+
+
+class TestLocalPopen:
+    def test_contextmanager(self):
+        if IS_WIN32:
+            command = ['dir']
+        else:
+            command = ['ls']
+        with PlumbumLocalPopen(command):
+            pass
 
 
 class TestLocalPath:
