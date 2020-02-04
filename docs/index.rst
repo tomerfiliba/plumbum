@@ -118,6 +118,7 @@ you read it in order. A quick :ref:`reference guide is available <guide-quickref
    remote
    utils
    cli
+   typed_env
    colors
    changelog
    quickref
