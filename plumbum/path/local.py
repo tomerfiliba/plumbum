@@ -58,6 +58,9 @@ class LocalPath(Path):
             cls, os.path.normpath(os.path.join(*(str(p) for p in parts))))
         return self
 
+    def __fspath__(self):
+        return self._path()
+
     @property
     def _path(self):
         return str(self)
