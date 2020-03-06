@@ -11,7 +11,7 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
 else
     pip install --upgrade pip
     pip install -r dev-requirements.txt
-    pip install coveralls
+    pip install 'coveralls;python_version>="2.7"'
     pip install -e .
 fi
 
