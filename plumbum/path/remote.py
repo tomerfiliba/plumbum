@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from plumbum.path.base import Path, FSUser
 from plumbum.lib import _setdoc, six
 from plumbum.commands import shquote, ProcessExecutionError
+import os
 import sys
 
 try:  # Py3
@@ -170,7 +171,7 @@ class RemotePath(Path):
     def stat(self):
         res = self.remote._path_stat(self)
         if res is None:
-            raise OSError(errno.ENOENT)
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), '')
         return res
 
     @_setdoc(Path)
