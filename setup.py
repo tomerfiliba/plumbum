@@ -84,5 +84,6 @@ setup(name = "plumbum",
         "Topic :: Software Development :: Build Tools",
         "Topic :: System :: Systems Administration",
     ],
+    python_requires='>=2.6,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
 )
 
