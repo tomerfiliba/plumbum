@@ -279,6 +279,11 @@ class TestLocalPath:
                     (tmp / "py_333").chmod(0o777)
         assert not tmp.exists()
 
+    def test_str_getitem(self):
+        with local.tempdir() as tmp:
+            assert str(tmp) == str(tmp[:])
+            assert str(tmp)[0] == str(tmp[0])
+
 
 @pytest.mark.usefixtures("testdir")
 class TestLocalMachine:
