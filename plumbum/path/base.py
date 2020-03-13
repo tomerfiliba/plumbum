@@ -38,7 +38,11 @@ class Path(str, six.ABC):
         return self.join(other)
 
     __truediv__ = __div__
-    __getitem__ = __div__
+
+    def __getitem__(self, key):
+        if type(key) == str or isinstance(key, Path):
+            return self / key
+        return str(self)[key]
 
     def __floordiv__(self, expr):
         """Returns a (possibly empty) list of paths that matched the glob-pattern under this path"""
