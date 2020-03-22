@@ -1,3 +1,14 @@
+1.6.9
+-----
+
+* Last version to support Python 2.6; added python_requires (`#507 <https://github.com/tomerfiliba/plumbum/pull/507>`_)
+* Paths: Fix bug with subscription operations (`#498 <https://github.com/tomerfiliba/plumbum/pull/498>`_), (`#506 <https://github.com/tomerfiliba/plumbum/pull/506>`_)
+* Paths: Fix resolve (`#492 <https://github.com/tomerfiliba/plumbum/pull/492>`_)
+* Commands: Fix resolve (`#491 <https://github.com/tomerfiliba/plumbum/pull/491>`_)
+* Commands: Add context manager on popen (`#495 <https://github.com/tomerfiliba/plumbum/pull/495>`_)
+* Several smaller fixes (`#500 <https://github.com/tomerfiliba/plumbum/pull/500>`_), (`#505 <https://github.com/tomerfiliba/plumbum/pull/505>`_)
+
+
 1.6.8
 -----
 * Exceptions: Changed ProcessExecutionError's formatting to be more user-friendly (`#456 <https://github.com/tomerfiliba/plumbum/pull/456>`_)
