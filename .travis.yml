@@ -41,10 +41,10 @@ notifications:
     on_failure: change
 deploy:
   provider: pypi
-  user: henryiii
+  user: "__token__"
   distributions: sdist bdist_wheel
   skip_existing: true
   on:
     tags: true
-  password:
-    secure: qPcFTJirTGTaTFok6oHz3HEFKiIWIQolBCm2nxsluJ4RVGE0AIH6OoBsN5JYr9nbb0t7KA2cqhJEupD6KQDpDD5b9gEwjnXnyG1Nx22cqAJGw9hKBY3UT5qGjX+6ov8iwWDalUe62rWym0I7kWYSGfn8QJiHX0Nj7ikSi6kmGCg=
+    condition: $PVV = 3.8
+  password: $PYPI_TOKEN
