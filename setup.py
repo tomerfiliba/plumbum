@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 import os
-
-try:
-    from setuptools import setup, Command
-except ImportError:
-    from distutils.core import setup, Command
+from setuptools import setup, Command
+from datetime import date
 
 # Fix for building on non-Windows systems
 import codecs
@@ -14,9 +11,6 @@ except LookupError:
     ascii = codecs.lookup('ascii')
     func = lambda name, enc=ascii: {True: enc}.get(name=='mbcs')
     codecs.register(func)
-
-HERE = os.path.dirname(__file__)
-exec(open(os.path.join(HERE, "plumbum", "version.py")).read())
 
 class PyDocs(Command):
     user_options = []
@@ -50,40 +44,4 @@ class PyTest(Command):
         errno = subprocess.call(proc)
         raise SystemExit(errno)
 
-
-setup(name = "plumbum",
-    version = version_string,  # @UndefinedVariable
-    description = "Plumbum: shell combinators library",
-    author = "Tomer Filiba",
-    author_email = "tomerfiliba@gmail.com",
-    license = "MIT",
-    url = "https://plumbum.readthedocs.io",
-    packages = ["plumbum", "plumbum.cli", "plumbum.commands", "plumbum.machines", "plumbum.path", "plumbum.fs", "plumbum.colorlib"],
-    package_data={
-        "plumbum.cli":["i18n/*/LC_MESSAGES/*.mo"]
-    },
-    platforms = ["POSIX", "Windows"],
-    provides = ["plumbum"],
-    keywords = "path, local, remote, ssh, shell, pipe, popen, process, execution, color, cli",
-    cmdclass = {'test':PyTest,
-                'docs':PyDocs},
-    long_description = open(os.path.join(HERE, "README.rst"), "r").read(),
-    classifiers = [
-        "Development Status :: 5 - Production/Stable",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: Microsoft :: Windows",
-        "Operating System :: POSIX",
-        "Programming Language :: Python :: 2.6",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Topic :: Software Development :: Build Tools",
-        "Topic :: System :: Systems Administration",
-    ],
-    python_requires='>=2.6,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
-)
-
+setup(cmdclass = {'test':PyTest, 'docs':PyDocs})

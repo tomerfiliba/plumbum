@@ -6,6 +6,7 @@ __pycache__
 .settings/
 /dist
 /plumbum.egg-info
+/plumbum/version.py
 /build
 *.class
 *.ropeproject
