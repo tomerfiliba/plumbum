@@ -1,3 +1,5 @@
+* **2020.03.23**: Version 1.6.9 released with several Path fixes, final version to support Python 2.6.
+
 * **2019.10.30**: Version 1.6.8 released with ``local.cmd``, a few command updates, ``Set`` improvements, and ``TypedEnv``.
 
 * **2018.08.10**: Version 1.6.7 released with several minor additions, mostly to CLI apps, and ``run_*`` modifiers added.
