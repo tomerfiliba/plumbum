@@ -15,9 +15,6 @@ matrix:
     env: PYV=3.7
   - python: 3.8
     env: PYV=3.8
-  - python: 2.6
-    dist: trusty
-    env: PYV=2.6
   - python: pypy3
   - language: generic
     env: PY3=2 PYV=Mac2
@@ -34,7 +31,7 @@ matrix:
 install: ".ci/travis.sh"
 script: python$PY3 setup.py test -c
 after_success:
-- if [ -n "$PYV" ] && [ "$PYV" -ne "2.6" ] ; then coveralls; fi
+- if [ -n "$PYV" ]; then coveralls; fi
 notifications:
   email:
     on_success: change
