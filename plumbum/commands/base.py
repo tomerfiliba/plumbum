@@ -98,11 +98,20 @@ class BaseCommand(object):
     def _get_encoding(self):
         raise NotImplementedError()
 
-    def with_env(self, **envvars):
+    def with_env(self, **env):
         """Returns a BoundEnvCommand with the given environment variables"""
-        if not envvars:
+        if not env:
             return self
-        return BoundEnvCommand(self, envvars)
+        return BoundEnvCommand(self, env=env)
+
+    def with_cwd(self, path):
+        """
+        Returns a BoundEnvCommand with the specified working directory.
+        This overrides a cwd specified in a wrapping `machine.cwd()` context manager.
+        """
+        if not path:
+            return self
+        return BoundEnvCommand(self, cwd=path)
 
     setenv = with_env
 
@@ -313,14 +322,15 @@ class BoundCommand(BaseCommand):
 
 
 class BoundEnvCommand(BaseCommand):
-    __slots__ = ("cmd", "envvars")
+    __slots__ = ("cmd", "env", "cwd")
 
-    def __init__(self, cmd, envvars):
+    def __init__(self, cmd, env={}, cwd=None):
         self.cmd = cmd
-        self.envvars = envvars
+        self.env = env
+        self.cwd = cwd
 
     def __repr__(self):
-        return "BoundEnvCommand(%r, %r)" % (self.cmd, self.envvars)
+        return "BoundEnvCommand(%r, %r)" % (self.cmd, self.env)
 
     def _get_encoding(self):
         return self.cmd._get_encoding()
@@ -332,9 +342,12 @@ class BoundEnvCommand(BaseCommand):
     def machine(self):
         return self.cmd.machine
 
-    def popen(self, args=(), **kwargs):
-        with self.machine.env(**self.envvars):
-            return self.cmd.popen(args, **kwargs)
+    def popen(self, args=(), cwd=None, env={}, **kwargs):
+        return self.cmd.popen(
+            args,
+            cwd=self.cwd if cwd is None else cwd,
+            env=dict(self.env, **env),
+            **kwargs)
 
 
 class Pipeline(BaseCommand):

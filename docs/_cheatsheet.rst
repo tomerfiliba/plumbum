@@ -21,6 +21,15 @@ also :ref:`import commands <import-hack>`:
     >>> grep
     LocalCommand(<LocalPath /bin/grep>)
 
+Or, use the ``local.cmd`` syntactic-sugar:
+
+.. code-block:: python
+
+    >>> local.cmd.ls
+    LocalCommand(<LocalPath /bin/ls>)
+    >>> local.cmd.ls()
+    u'build.py\ndist\ndocs\nLICENSE\nplumbum\nREADME.rst\nsetup.py\ntests\ntodo.txt\n'
+
 See :ref:`guide-local-commands`.
 
 Piping
@@ -61,6 +70,14 @@ Working-directory manipulation
     ...     chain()
     ...
     u'15\n'
+
+A more explicit, and thread-safe way of running a command in a differet directory is using the ``.with_cwd()`` method:
+
+.. code-block:: python
+    
+    >>> ls_in_docs = local.cmd.ls.with_cwd("docs")
+    >>> ls_in_docs()
+    'api\nchangelog.rst\n_cheatsheet.rst\ncli.rst\ncolorlib.rst\n_color_list.html\ncolors.rst\nconf.py\nindex.rst\nlocal_commands.rst\nlocal_machine.rst\nmake.bat\nMakefile\n_news.rst\npaths.rst\nquickref.rst\nremote.rst\n_static\n_templates\ntyped_env.rst\nutils.rst\n'
 
 See :ref:`guide-paths` and :ref:`guide-local-machine`.
 

@@ -353,10 +353,18 @@ class TestLocalMachine:
     def test_cwd(self):
         from plumbum.cmd import ls
         assert local.cwd == os.getcwd()
-        assert "__init__.py" not in ls().splitlines()
+        assert "machines" not in ls().splitlines()
+
         with local.cwd("../plumbum"):
-            assert "__init__.py" in ls().splitlines()
-        assert "__init__.py" not in ls().splitlines()
+            assert "machines" in ls().splitlines()
+        assert "machines" not in ls().splitlines()
+
+        assert "machines" in ls.with_cwd("../plumbum")().splitlines()
+        path = local.cmd.pwd.with_cwd("../plumbum")().strip()
+        with local.cwd("/"):
+            assert "machines" not in ls().splitlines()
+            assert "machines" in ls.with_cwd(path)().splitlines()
+
         with pytest.raises(OSError):
             local.cwd.chdir("../non_exist1N9")
 
@@ -869,6 +877,9 @@ for _ in range(%s):
             assert printenv.with_env(BAR = "world")("BAR") == "world\n"
             assert printenv.with_env(FOO = "sea", BAR = "world")("FOO") == "sea\n"
             assert printenv("FOO") == "hello\n"
+
+        assert local.cmd.pwd.with_cwd("/")() == "/\n"
+        assert local.cmd.pwd['-L'].with_env(A='X').with_cwd("/")() == "/\n"
 
     def test_nesting_lists_as_argv(self):
         from plumbum.cmd import ls
