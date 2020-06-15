@@ -858,6 +858,9 @@ for _ in range(%s):
             assert printenv.with_env(FOO = "sea", BAR = "world")("FOO") == "sea\n"
             assert printenv("FOO") == "hello\n"
 
+        assert local.cmd.pwd.with_cwd("/")() == "/\n"
+        assert local.cmd.pwd['-L'].with_env(A='X').with_cwd("/")() == "/\n"
+
     def test_nesting_lists_as_argv(self):
         from plumbum.cmd import ls
         c = ls["-l", ["-a", "*.py"]]
