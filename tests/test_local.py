@@ -487,7 +487,7 @@ class TestLocalMachine:
     def test_timeout(self):
         from plumbum.cmd import sleep
         with pytest.raises(ProcessTimedOut):
-            sleep(10, timeout = 5)
+            sleep(3, timeout=1)
 
     @skip_on_windows
     def test_pipe_stderr(self, capfd):
