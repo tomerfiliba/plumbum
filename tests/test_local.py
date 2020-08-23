@@ -966,7 +966,7 @@ class TestLocalEncoding:
 
         name = self.richstr + six.str("_program")
         with open(name, 'w') as f:
-            f.write("#!/usr/bin/env python\nprint('yes')")
+            f.write("#!{}\nprint('yes')".format(sys.executable))
 
         st = os.stat(name)
         os.chmod(name, st.st_mode | stat.S_IEXEC)
