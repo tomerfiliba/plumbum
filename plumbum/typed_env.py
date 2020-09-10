@@ -1,8 +1,12 @@
 import os
 import inspect
-from collections.abc import MutableMapping
 
+try:
+    from collections.abc import MutableMapping
+except ImportError:
+    from collections import MutableMapping
 
+    
 NO_DEFAULT = object()
 
 
