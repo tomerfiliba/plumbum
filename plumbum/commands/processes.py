@@ -127,8 +127,9 @@ class ProcessExecutionError(EnvironmentError):
     well as the command line used to create the process (``argv``)
     """
 
-    def __init__(self, argv, retcode, stdout, stderr):
+    def __init__(self, argv, retcode, stdout, stderr, message=None):
         Exception.__init__(self, argv, retcode, stdout, stderr)
+        self.message = message
         self.argv = argv
         self.retcode = retcode
         if six.PY3 and isinstance(stdout, six.bytes):
@@ -139,11 +140,18 @@ class ProcessExecutionError(EnvironmentError):
         self.stderr = stderr
 
     def __str__(self):
+        # avoid an import cycle
         from plumbum.commands.base import shquote_list
         stdout =      "\n              | ".join(str(self.stdout).splitlines())
         stderr =      "\n              | ".join(str(self.stderr).splitlines())
         cmd = " ".join(shquote_list(self.argv))
-        lines = ["Unexpected exit code: ", str(self.retcode)]
+        lines = []
+        if self.message:
+            lines = [
+                self.message,
+                      "\nReturn code:  | ", str(self.retcode)]
+        else:
+            lines = ["Unexpected exit code: ", str(self.retcode)]
         cmd =         "\n              | ".join(cmd.splitlines())
         lines +=     ["\nCommand line: | ", cmd]
         if stdout:
