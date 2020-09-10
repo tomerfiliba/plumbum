@@ -190,6 +190,7 @@ class ShellSession(object):
         self.proc = proc
         self.custom_encoding = proc.custom_encoding if encoding == "auto" else encoding
         self.isatty = isatty
+        self._lock = threading.RLock()
         self._current = None
         if connect_timeout:
 
@@ -289,4 +290,5 @@ class ShellSession(object):
                         ignore erroneous return codes
         :returns: A tuple of (return code, stdout, stderr)
         """
-        return run_proc(self.popen(cmd), retcode)
+        with self._lock:
+            return run_proc(self.popen(cmd), retcode)
