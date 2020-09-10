@@ -96,3 +96,12 @@ class BaseMachine(object):
     @property
     def cmd(self):
         return self.Cmd(self)
+
+    def clear_program_cache(self):
+        """
+        Clear the program cache, which is populated via ``machine.which(progname)`` calls.
+
+        This cache speeds up the lookup of a program in the machines PATH, and is particularly
+        effective for RemoteMachines.
+        """
+        self._program_cache.clear()
