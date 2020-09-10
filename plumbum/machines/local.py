@@ -153,6 +153,7 @@ class LocalMachine(BaseMachine):
 
     custom_encoding = sys.getfilesystemencoding()
     uname = platform.uname()[0]
+    _program_cache = {}
 
     def __init__(self):
         self._as_user_stack = []
@@ -192,6 +193,14 @@ class LocalMachine(BaseMachine):
 
         :returns: A :class:`LocalPath <plumbum.machines.local.LocalPath>`
         """
+
+        key = (progname, cls.env.get("PATH", ""))
+
+        try:
+            return cls._program_cache[key]
+        except KeyError:
+            pass
+
         alternatives = [progname]
         if "_" in progname:
             alternatives.append(progname.replace("_", "-"))
@@ -199,6 +208,7 @@ class LocalMachine(BaseMachine):
         for pn in alternatives:
             path = cls._which(pn)
             if path:
+                cls._program_cache[key] = path
                 return path
         raise CommandNotFound(progname, list(cls.env.path))
 

@@ -173,6 +173,7 @@ class BaseRemoteMachine(BaseMachine):
         self.uname = self._get_uname()
         self.env = RemoteEnv(self)
         self._python = None
+        self._program_cache = {}
 
     def _get_uname(self):
         rc, out, _ = self._session.run("uname", retcode=None)
@@ -225,6 +226,13 @@ class BaseRemoteMachine(BaseMachine):
 
         :returns: A :class:`RemotePath <plumbum.path.local.RemotePath>`
         """
+        key = (progname, self.env.get("PATH", ""))
+
+        try:
+            return self._program_cache[key]
+        except KeyError:
+            pass
+
         alternatives = [progname]
         if "_" in progname:
             alternatives.append(progname.replace("_", "-"))
@@ -233,6 +241,7 @@ class BaseRemoteMachine(BaseMachine):
             for p in self.env.path:
                 fn = p / name
                 if fn.access("x") and not fn.is_dir():
+                    self._program_cache[key] = fn
                     return fn
 
         raise CommandNotFound(progname, self.env.path)
