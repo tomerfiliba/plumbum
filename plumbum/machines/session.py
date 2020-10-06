@@ -3,6 +3,7 @@ import random
 import logging
 import threading
 from plumbum.commands import BaseCommand, run_proc
+from plumbum.commands.processes import ProcessExecutionError
 from plumbum.lib import six
 from plumbum.machines.base import PopenAddons
 
@@ -13,7 +14,7 @@ class ShellSessionError(Exception):
     pass
 
 
-class SSHCommsError(EOFError):
+class SSHCommsError(ProcessExecutionError, EOFError):
     """Raises when the communication channel can't be created on the
     remote host or it times out."""
 
@@ -124,16 +125,30 @@ class SessionPopen(PopenAddons):
 
                 self.proc.poll()
                 returncode = self.proc.returncode
+                stdout = six.b("").join(stdout).decode(self.custom_encoding, "ignore")
+                stderr = six.b("").join(stderr).decode(self.custom_encoding, "ignore")
+                argv = self.argv.decode(self.custom_encoding, "ignore").split(";")[:1]
+
                 if returncode == 5:
                     raise IncorrectLogin(
-                        "Incorrect username or password provided")
+                        argv, returncode, stdout, stderr,
+                        message="Incorrect username or password provided")
                 elif returncode == 6:
                     raise HostPublicKeyUnknown(
-                        "The authenticity of the host can't be established")
-                msg = "No communication channel detected. Does the remote exist?"
-                msgerr = "No stderr result detected. Does the remote have Bash as the default shell?"
-                raise SSHCommsChannel2Error(
-                    msgerr) if name == "2" else SSHCommsError(msg)
+                        argv, returncode, stdout, stderr,
+                        message="The authenticity of the host can't be established")
+                elif returncode != 0:
+                    raise SSHCommsError(
+                        argv, returncode, stdout, stderr,
+                        message="SSH communication failed")
+                elif name == "2":
+                    raise SSHCommsChannel2Error(
+                        argv, returncode, stdout, stderr,
+                        message="No stderr result detected. Does the remote have Bash as the default shell?")
+                else:
+                    raise SSHCommsError(
+                        argv, returncode, stdout, stderr,
+                        message="No communication channel detected. Does the remote exist?")
             if not line:
                 del sources[i]
             else:
