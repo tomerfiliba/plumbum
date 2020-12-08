@@ -2,7 +2,6 @@
 
 echo $TRAVIS_PYTHON_VERSION
 
-sudo apt-get install libssl1.1
 pip$PY3 install --upgrade pip
 pip$PY3 install --upgrade -r dev-requirements.txt
 pip$PY3 install coveralls
