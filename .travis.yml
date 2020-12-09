@@ -16,8 +16,7 @@ matrix:
   - python: 3.8
     env: PYV=3.8
   - python: pypy3
-    before_install:
-    - sudo apt-get install libssl1.1
+    env: CRYPTOGRAPHY_ALLOW_OPENSSL_102=1
   - language: generic
     env: PY3=2 PYV=Mac2
     os: osx
