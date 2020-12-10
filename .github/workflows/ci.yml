@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - master
+    - main
+  pull_request:
+    branches:
+    - master
+    - main
+
+jobs:
+  build:
+    name: Build
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [2.7, 3.5, 3.7, 3.9]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install
+      run: python -m pip install .[dev]
+
+    - name: Setup SSH tests
+      if: runner.os != 'Windows'
+      run: |
+        mkdir -p ~/.ssh
+        echo NoHostAuthenticationForLocalhost yes >> ~/.ssh/config
+        echo StrictHostKeyChecking no >> ~/.ssh/config
+        ssh-keygen -q -f ~/.ssh/id_rsa -N ''
+        cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+
+    - name: Test with pytest
+      run: pytest
+
+  dist:
+    name: Dist
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - name: Install dependencies
+      run: python -m pip install build
+    - name: Build SDist and wheel
+      run: python -m build
+    - uses: actions/upload-artifact@v2
+      with:
+        path: dist/*
