@@ -16,6 +16,9 @@ matrix:
   - python: 3.8
     env: PYV=3.8
   - python: pypy3
+    dist: bionic
+    before_install:
+    - sudo apt-get update && sudo apt-get install libssl1.1
   - language: generic
     env: PY3=2 PYV=Mac2
     os: osx
