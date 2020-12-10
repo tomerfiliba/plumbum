@@ -354,11 +354,8 @@ def iter_lines(proc,
 
     assert mode in (BY_POSITION, BY_TYPE)
 
-    encoding = getattr(proc, "custom_encoding", None)
-    if encoding:
-        decode = lambda s: s.decode(encoding).rstrip()
-    else:
-        decode = lambda s: s
+    encoding = getattr(proc, "custom_encoding", None) or 'utf-8'
+    decode = lambda s: s.decode(encoding, errors='replace').rstrip()
 
     _register_proc_timeout(proc, timeout)
 
