@@ -284,6 +284,10 @@ class TestLocalPath:
             assert str(tmp) == str(tmp[:])
             assert str(tmp)[0] == str(tmp[0])
 
+    def test_fspath(self):
+        with local.tempdir() as tmp:
+            assert tmp.__fspath__() == str(tmp)
+
 
 @pytest.mark.usefixtures("testdir")
 class TestLocalMachine:
