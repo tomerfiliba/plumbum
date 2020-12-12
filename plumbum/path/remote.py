@@ -225,7 +225,7 @@ class RemotePath(Path):
         if override:
             if isinstance(dst, six.string_types):
                 dst = RemotePath(self.remote, dst)
-            dst.remove()
+            dst.delete()
         else:
             if isinstance(dst, six.string_types):
                 dst = RemotePath(self.remote, dst)
