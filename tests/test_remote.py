@@ -164,6 +164,63 @@ class TestRemotePath:
                         (tmp / "py_333").chmod(0o777)
             assert not tmp.exists()
 
+    def test_copy(self):
+        """
+        tests `RemotePath.copy` for the following scenarios:
+
+            * copying a simple file from `file_a` to `copy_of_a` succeeds
+
+            * copying file `file_a` into a directory `a_dir/copy_of_a` succeeds
+
+            * copying a directory `a_dir` over an existing directory path with
+              `override=False` fails
+
+            * copying a directory `a_dir` over an existing directory path with
+              `override=True` succeeds
+        """
+
+        with self._connect() as rem:
+            with rem.tempdir() as tmp:
+
+                # setup a file and make sure it exists...
+                (tmp / "file_a").touch()
+                assert (tmp / "file_a").exists()
+                assert (tmp / "file_a").is_file()
+
+                # setup a directory for copying into...
+                (tmp / "a_dir").mkdir(exist_ok=False, parents=False)
+                assert (tmp / "a_dir").exists()
+                assert (tmp / "a_dir").is_dir()
+
+                # setup a 2nd directory for testing `override=False`
+                (tmp / "b_dir").mkdir(exist_ok=False, parents=False)
+                assert (tmp / "b_dir").exists()
+                assert (tmp / "b_dir").is_dir()
+
+                # copying a simple file
+                (tmp / "file_a").copy(tmp / "copy_of_a")
+                assert (tmp / "copy_of_a").exists()
+                assert (tmp / "copy_of_a").is_file()
+
+                # copying into a directory
+                (tmp / "file_a").copy(tmp / "a_dir/copy_of_a")
+                assert (tmp / "a_dir/copy_of_a").exists()
+                assert (tmp / "a_dir/copy_of_a").is_file()
+
+                # copying a directory on top of an existing directory using
+                # `override=False` (should fail with TypeError)
+                with pytest.raises(TypeError):
+                    (tmp / "a_dir").copy(tmp / "b_dir", override=False)
+
+                # copying a directory on top of an existing directory using
+                # `override=True` (should copy transparently)
+                (tmp / "a_dir").copy(tmp / "b_dir", override=True)
+                assert "copy_of_a" in (tmp / "b_dir")
+
+            assert not tmp.exists()
+
+
+
 class BaseRemoteMachineTest(object):
     TUNNEL_PROG = r"""import sys, socket
 s = socket.socket()
