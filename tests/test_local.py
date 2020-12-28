@@ -46,11 +46,13 @@ class TestLocalPath:
     def test_dirname(self):
         name = self.longpath.dirname
         assert isinstance(name, LocalPath)
-        assert "/some/long/path/to" == str(name).replace("\\", "/").lstrip("C:")
+        assert "/some/long/path/to" == str(name).replace("\\", "/").lstrip("C:").lstrip("D:")
 
     def test_uri(self):
         if IS_WIN32:
-            assert "file:///C:/some/long/path/to/file.txt" == self.longpath.as_uri()
+            pth = self.longpath.as_uri()
+            assert pth.startswith("file:///")
+            assert pth.endswith(":/some/long/path/to/file.txt")
         else:
             assert "file:///some/long/path/to/file.txt" == self.longpath.as_uri()
 
@@ -132,7 +134,8 @@ class TestLocalPath:
     def test_parts(self):
         parts = self.longpath.parts
         if IS_WIN32:
-            assert parts == ('C:\\', 'some', 'long', 'path', 'to', 'file.txt')
+            assert parts[1:] == ('some', 'long', 'path', 'to', 'file.txt')
+            assert ":" in parts[0]
         else:
             assert parts == ('/', 'some', 'long', 'path', 'to', 'file.txt')
 
