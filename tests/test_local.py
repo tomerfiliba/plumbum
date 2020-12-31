@@ -84,10 +84,11 @@ class TestLocalPath:
         p.split() == ["var", "log", "messages"]
 
     @pytest.mark.xfail(sys.platform == "win32"
-                       and (sys.version_info[0]==2 or sys.version_info[1] < 4),
-            reason="Caseless comparison (at least in pytest) fails on Windows 2.7 or 3.3")
+                       and (sys.version_info[0]==2),
+            reason="Caseless comparison (at least in pytest) fails on Windows 2.7")
     def test_suffix(self):
-        p1 = self.longpath
+        # This picks up the drive letter differently if not constructed here
+        p1 = local.path("/some/long/path/to/file.txt")
         p2 = local.path("file.tar.gz")
         assert p1.suffix == ".txt"
         assert p1.suffixes == [".txt"]
@@ -103,8 +104,8 @@ class TestLocalPath:
             p1.with_suffix('nodot')
 
     @pytest.mark.xfail(sys.platform == "win32"
-                       and (sys.version_info[0]==2 or sys.version_info[1] < 4),
-            reason="Caseless comparison (at least in pytest) fails on Windows 2.7 or 3.3")
+                       and (sys.version_info[0]==2),
+            reason="Caseless comparison (at least in pytest) fails on Windows 2.7")
     def test_newname(self):
         # This picks up the drive letter differently if not constructed here
         p1 = local.path("/some/long/path/to/file.txt")
