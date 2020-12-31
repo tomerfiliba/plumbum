@@ -106,7 +106,8 @@ class TestLocalPath:
                        and (sys.version_info[0]==2 or sys.version_info[1] < 4),
             reason="Caseless comparison (at least in pytest) fails on Windows 2.7 or 3.3")
     def test_newname(self):
-        p1 = self.longpath
+        # This picks up the drive letter differently if not constructed here
+        p1 = local.path("/some/long/path/to/file.txt")
         p2 = local.path("file.tar.gz")
         assert p1.with_name("something.tar") == local.path("/some/long/path/to/something.tar")
         assert p2.with_name("something.tar") == local.path("something.tar")

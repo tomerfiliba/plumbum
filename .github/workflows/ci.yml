@@ -39,6 +39,7 @@ jobs:
         echo StrictHostKeyChecking no >> ~/.ssh/config
         ssh-keygen -q -f ~/.ssh/id_rsa -N ''
         cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+        ssh localhost "echo 'Worked!'"
 
     - name: Test with pytest
       run: pytest

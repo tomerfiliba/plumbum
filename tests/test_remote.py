@@ -387,7 +387,7 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                     (local["passwd"] << "123456")("--stdin", "testuser")
                 except ProcessExecutionError:
                     # some versions of passwd don't support --stdin, nothing to do in this case
-                    logging.warn("passwd failed")
+                    logging.warning("passwd failed")
                     return
 
             with SshMachine("localhost", user = "testuser", password = "123456") as rem:
