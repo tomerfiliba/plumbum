@@ -34,12 +34,16 @@ jobs:
     - name: Setup SSH tests
       if: runner.os != 'Windows'
       run: |
+        chmod 755 ~
         mkdir -p ~/.ssh
+        chmod 755 ~/.ssh
         echo "NoHostAuthenticationForLocalhost yes" >> ~/.ssh/config
         echo "StrictHostKeyChecking no" >> ~/.ssh/config
         ssh-keygen -q -f ~/.ssh/id_rsa -N ''
         cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
-        ssh localhost "echo 'Worked!'"
+        chmod 644 ~/.ssh/authorized_keys
+        ls -la ~
+        ssh localhost -vvv "echo 'Worked!'"
 
     - name: Test with pytest
       run: pytest
