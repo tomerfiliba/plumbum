@@ -1,7 +1,7 @@
 .. image:: https://readthedocs.org/projects/plumbum/badge/
    :target: https://plumbum.readthedocs.io/en/latest/
    :alt: Documentation Status
-.. image:: https://img.shields.io/github/workflow/status/tomerfiliba/plumbum/CI/main?label=tests
+.. image:: https://github.com/tomerfiliba/plumbum/workflows/CI/badge.svg
    :target: https://github.com/tomerfiliba/plumbum/actions
    :alt: Build Status
 .. image:: https://coveralls.io/repos/tomerfiliba/plumbum/badge.svg?branch=master&service=github
