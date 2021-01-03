@@ -755,6 +755,9 @@ class TestLocalMachine:
         assert p.poll() is None
         p.terminate()
 
+    # Hangs sometimes on Windows
+    @skip_on_windows
+    @pytest.mark.timeout(20)
     def test_local_daemon(self):
         from plumbum.cmd import sleep
         proc = local.daemonic_popen(sleep[5])
