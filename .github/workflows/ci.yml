@@ -33,8 +33,18 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - uses: actions/cache@v2
+      if: runner.os == 'Linux' && startsWith(matrix.python-version, 'pypy')
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('setup.cfg') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.python-version }}-pip-
+
     - name: Install
-      run: python -m pip install .[dev] coveralls
+      run: |
+        pip install wheel coveralls
+        pip install -e .[dev]
 
     - name: Setup SSH tests
       if: runner.os != 'Windows'
