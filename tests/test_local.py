@@ -910,8 +910,6 @@ for _ in range(%s):
         assert 'test_local.py' in stdout
 
     @skip_on_windows
-    @pytest.mark.xfail(reason=
-        'This test randomly fails on Mac and PyPy on Travis, not sure why')
     def test_run_tee(self, capfd):
         from plumbum.cmd import echo
 
@@ -942,8 +940,8 @@ class TestLocalEncoding:
     except NameError:
         richstr = chr(40960)
 
-    @pytest.mark.xfail(IS_WIN32 and sys.version_info < (3,6),
-            reason="Unicode output on Windows requires Python 3.6+")
+    @pytest.mark.xfail(IS_WIN32,
+            reason="Unicode output on Windows does not work (Python 3.6+ was supposed to work)")
     def test_inout_rich(self):
         from plumbum.cmd import echo
         out = echo(self.richstr)

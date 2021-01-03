@@ -69,4 +69,4 @@ class TestNohupLocal:
         sleep_proc = (local['sleep']['1'] & NOHUP)
         sleep_proc.wait()
         file_handles_after = proc.num_fds()
-        assert file_handles_prior == file_handles_after
+        assert file_handles_prior >= file_handles_after
