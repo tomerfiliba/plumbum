@@ -1,8 +1,0 @@
-pytest
-pytest-cov
-pytest-mock
-paramiko ; python_version >= '2.7'
-setuptools>=42
-setuptools_scm[toml]>=3.4.3
-wheel
-psutil

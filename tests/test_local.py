@@ -46,11 +46,13 @@ class TestLocalPath:
     def test_dirname(self):
         name = self.longpath.dirname
         assert isinstance(name, LocalPath)
-        assert "/some/long/path/to" == str(name).replace("\\", "/").lstrip("C:")
+        assert "/some/long/path/to" == str(name).replace("\\", "/").lstrip("C:").lstrip("D:")
 
     def test_uri(self):
         if IS_WIN32:
-            assert "file:///C:/some/long/path/to/file.txt" == self.longpath.as_uri()
+            pth = self.longpath.as_uri()
+            assert pth.startswith("file:///")
+            assert pth.endswith(":/some/long/path/to/file.txt")
         else:
             assert "file:///some/long/path/to/file.txt" == self.longpath.as_uri()
 
@@ -82,10 +84,11 @@ class TestLocalPath:
         p.split() == ["var", "log", "messages"]
 
     @pytest.mark.xfail(sys.platform == "win32"
-                       and (sys.version_info[0]==2 or sys.version_info[1] < 4),
-            reason="Caseless comparison (at least in pytest) fails on Windows 2.7 or 3.3")
+                       and (sys.version_info[0]==2),
+            reason="Caseless comparison (at least in pytest) fails on Windows 2.7")
     def test_suffix(self):
-        p1 = self.longpath
+        # This picks up the drive letter differently if not constructed here
+        p1 = local.path("/some/long/path/to/file.txt")
         p2 = local.path("file.tar.gz")
         assert p1.suffix == ".txt"
         assert p1.suffixes == [".txt"]
@@ -101,10 +104,11 @@ class TestLocalPath:
             p1.with_suffix('nodot')
 
     @pytest.mark.xfail(sys.platform == "win32"
-                       and (sys.version_info[0]==2 or sys.version_info[1] < 4),
-            reason="Caseless comparison (at least in pytest) fails on Windows 2.7 or 3.3")
+                       and (sys.version_info[0]==2),
+            reason="Caseless comparison (at least in pytest) fails on Windows 2.7")
     def test_newname(self):
-        p1 = self.longpath
+        # This picks up the drive letter differently if not constructed here
+        p1 = local.path("/some/long/path/to/file.txt")
         p2 = local.path("file.tar.gz")
         assert p1.with_name("something.tar") == local.path("/some/long/path/to/something.tar")
         assert p2.with_name("something.tar") == local.path("something.tar")
@@ -132,7 +136,8 @@ class TestLocalPath:
     def test_parts(self):
         parts = self.longpath.parts
         if IS_WIN32:
-            assert parts == ('C:\\', 'some', 'long', 'path', 'to', 'file.txt')
+            assert parts[1:] == ('some', 'long', 'path', 'to', 'file.txt')
+            assert ":" in parts[0]
         else:
             assert parts == ('/', 'some', 'long', 'path', 'to', 'file.txt')
 
@@ -909,8 +914,6 @@ for _ in range(%s):
         assert 'test_local.py' in stdout
 
     @skip_on_windows
-    @pytest.mark.xfail(reason=
-        'This test randomly fails on Mac and PyPy on Travis, not sure why')
     def test_run_tee(self, capfd):
         from plumbum.cmd import echo
 
@@ -941,8 +944,8 @@ class TestLocalEncoding:
     except NameError:
         richstr = chr(40960)
 
-    @pytest.mark.xfail(IS_WIN32 and sys.version_info < (3,6),
-            reason="Unicode output on Windows requires Python 3.6+")
+    @pytest.mark.xfail(IS_WIN32,
+            reason="Unicode output on Windows does not work (Python 3.6+ was supposed to work)")
     def test_inout_rich(self):
         from plumbum.cmd import echo
         out = echo(self.richstr)

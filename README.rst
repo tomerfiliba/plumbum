@@ -1,12 +1,9 @@
 .. image:: https://readthedocs.org/projects/plumbum/badge/
    :target: https://plumbum.readthedocs.io/en/latest/
    :alt: Documentation Status
-.. image:: https://travis-ci.org/tomerfiliba/plumbum.svg?branch=master
-   :target: https://travis-ci.org/tomerfiliba/plumbum
-   :alt: Linux and Mac Build Status
-.. image:: https://ci.appveyor.com/api/projects/status/github/tomerfiliba/plumbum?branch=master&svg=true
-   :target: https://ci.appveyor.com/project/HenrySchreiner/plumbum/branch/master
-   :alt: Windows Build Status
+.. image:: https://img.shields.io/github/workflow/status/tomerfiliba/plumbum/CI/main?label=tests
+   :target: https://github.com/tomerfiliba/plumbum/actions
+   :alt: Build Status
 .. image:: https://coveralls.io/repos/tomerfiliba/plumbum/badge.svg?branch=master&service=github
    :target: https://coveralls.io/github/tomerfiliba/plumbum?branch=master
    :alt: Coverage Status
@@ -57,7 +54,7 @@ Basics
     >>> local.cmd.ls
     LocalCommand(/bin/ls)
     >>> local.cmd.ls()
-    'build.py\nCHANGELOG.rst\nconda.recipe\nCONTRIBUTING.rst\ndev-requirements.txt\ndocs\nexamples\nexperiments\nLICENSE\nMANIFEST.in\nPipfile\nplumbum\nplumbum.egg-info\npytest.ini\nREADME.rst\nsetup.cfg\nsetup.py\ntests\ntranslations.py\n'
+    'build.py\nCHANGELOG.rst\nconda.recipe\nCONTRIBUTING.rst\ndocs\nexamples\nexperiments\nLICENSE\nMANIFEST.in\nPipfile\nplumbum\nplumbum.egg-info\npytest.ini\nREADME.rst\nsetup.cfg\nsetup.py\ntests\ntranslations.py\n'
     >>> notepad = local["c:\\windows\\notepad.exe"]
     >>> notepad()                                   # Notepad window pops up
     ''                                              # Notepad window is closed by user, command returns
