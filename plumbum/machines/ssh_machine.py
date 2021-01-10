@@ -102,6 +102,7 @@ class SshMachine(BaseRemoteMachine):
 
         scp_args = []
         ssh_args = []
+        self.host = host
         if user:
             self._fqhost = "%s@%s" % (user, host)
         else:
@@ -208,7 +209,8 @@ class SshMachine(BaseRemoteMachine):
             self.popen(
                 ["/bin/sh"], (["-tt"] if isatty else ["-T"]),
                 new_session=new_session), self.custom_encoding, isatty,
-            self.connect_timeout)
+            self.connect_timeout,
+            host=self.host)
 
     def tunnel(self,
                lport,

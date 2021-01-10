@@ -73,7 +73,8 @@ class SessionPopen(PopenAddons):
     """A shell-session-based ``Popen``-like object (has the following attributes: ``stdin``,
     ``stdout``, ``stderr``, ``returncode``)"""
 
-    def __init__(self, proc, argv, isatty, stdin, stdout, stderr, encoding):
+    def __init__(self, host, proc, argv, isatty, stdin, stdout, stderr, encoding):
+        self.host = host
         self.proc = proc
         self.argv = argv
         self.isatty = isatty
@@ -132,23 +133,28 @@ class SessionPopen(PopenAddons):
                 if returncode == 5:
                     raise IncorrectLogin(
                         argv, returncode, stdout, stderr,
-                        message="Incorrect username or password provided")
+                        message="Incorrect username or password provided",
+                        host=self.host)
                 elif returncode == 6:
                     raise HostPublicKeyUnknown(
                         argv, returncode, stdout, stderr,
-                        message="The authenticity of the host can't be established")
+                        message="The authenticity of the host can't be established",
+                        host=self.host)
                 elif returncode != 0:
                     raise SSHCommsError(
                         argv, returncode, stdout, stderr,
-                        message="SSH communication failed")
+                        message="SSH communication failed",
+                        host=self.host)
                 elif name == "2":
                     raise SSHCommsChannel2Error(
                         argv, returncode, stdout, stderr,
-                        message="No stderr result detected. Does the remote have Bash as the default shell?")
+                        message="No stderr result detected. Does the remote have Bash as the default shell?",
+                        host=self.host)
                 else:
                     raise SSHCommsError(
                         argv, returncode, stdout, stderr,
-                        message="No communication channel detected. Does the remote exist?")
+                        message="No communication channel detected. Does the remote exist?",
+                        host=self.host)
             if not line:
                 del sources[i]
             else:
@@ -186,7 +192,8 @@ class ShellSession(object):
                             is seen, the shell process is killed
     """
 
-    def __init__(self, proc, encoding="auto", isatty=False, connect_timeout=5):
+    def __init__(self, proc, encoding="auto", isatty=False, connect_timeout=5, host=None):
+        self.host = host
         self.proc = proc
         self.custom_encoding = proc.custom_encoding if encoding == "auto" else encoding
         self.isatty = isatty
@@ -276,7 +283,7 @@ class ShellSession(object):
         self.proc.stdin.write(full_cmd + six.b("\n"))
         self.proc.stdin.flush()
         self._current = SessionPopen(
-            self.proc, full_cmd, self.isatty, self.proc.stdin,
+            self.host, self.proc, full_cmd, self.isatty, self.proc.stdin,
             MarkedPipe(self.proc.stdout, marker),
             MarkedPipe(self.proc.stderr, marker), self.custom_encoding)
         return self._current
