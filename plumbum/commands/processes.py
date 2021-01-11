@@ -127,9 +127,10 @@ class ProcessExecutionError(EnvironmentError):
     well as the command line used to create the process (``argv``)
     """
 
-    def __init__(self, argv, retcode, stdout, stderr, message=None):
+    def __init__(self, argv, retcode, stdout, stderr, message=None, host=None):
         Exception.__init__(self, argv, retcode, stdout, stderr)
         self.message = message
+        self.host = host
         self.argv = argv
         self.retcode = retcode
         if six.PY3 and isinstance(stdout, six.bytes):
@@ -154,6 +155,8 @@ class ProcessExecutionError(EnvironmentError):
             lines = ["Unexpected exit code: ", str(self.retcode)]
         cmd =         "\n              | ".join(cmd.splitlines())
         lines +=     ["\nCommand line: | ", cmd]
+        if self.host:
+            lines += ["\nHost:         | ", self.host]
         if stdout:
             lines += ["\nStdout:       | ", stdout]
         if stderr:
