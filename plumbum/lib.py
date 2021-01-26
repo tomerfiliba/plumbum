@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from abc import ABCMeta
 import inspect
 
-IS_WIN32 = (sys.platform == "win32")
+IS_WIN32 = sys.platform == "win32"
 
 
 def _setdoc(super):  # @ReservedAssignment
@@ -13,8 +13,7 @@ def _setdoc(super):  # @ReservedAssignment
     due to new behavoir of inspect.getdoc, but still doesn't hurt."""
 
     def deco(func):
-        func.__doc__ = getattr(
-            getattr(super, func.__name__, None), "__doc__", None)
+        func.__doc__ = getattr(getattr(super, func.__name__, None), "__doc__", None)
         return func
 
     return deco
@@ -28,34 +27,35 @@ class ProcInfo(object):
         self.args = args
 
     def __repr__(self):
-        return "ProcInfo(%r, %r, %r, %r)" % (self.pid, self.uid, self.stat,
-                                             self.args)
+        return "ProcInfo(%r, %r, %r, %r)" % (self.pid, self.uid, self.stat, self.args)
 
 
 class six(object):
     """
     A light-weight version of six (which works on IronPython)
     """
+
     PY3 = sys.version_info[0] >= 3
     try:
         from abc import ABC
     except ImportError:
         from abc import ABCMeta  # type: ignore
-        ABC = ABCMeta('ABC', (object, ), {
-            '__module__': __name__,
-            '__slots__': ()
-        })  # type: ignore
+
+        ABC = ABCMeta(
+            "ABC", (object,), {"__module__": __name__, "__slots__": ()}
+        )  # type: ignore
 
     # Be sure to use named-tuple access, so that usage is not affected
     try:
         getfullargspec = staticmethod(inspect.getfullargspec)
     except AttributeError:
         getfullargspec = staticmethod(
-            inspect.getargspec)  # extra fields will not be available
+            inspect.getargspec
+        )  # extra fields will not be available
 
     if PY3:
-        integer_types = (int, )
-        string_types = (str, )
+        integer_types = (int,)
+        string_types = (str,)
         MAXSIZE = sys.maxsize
         ascii = ascii  # @UndefinedVariable
         bytes = bytes  # @ReservedAssignment
@@ -72,6 +72,7 @@ class six(object):
         @staticmethod
         def get_method_function(m):
             return m.__func__
+
     else:
         integer_types = (int, long)
         string_types = (str, unicode)
@@ -157,7 +158,7 @@ def read_fd_decode_safely(fd, size=4096):
         try:
             return data, data.decode("utf-8")
         except UnicodeDecodeError as e:
-            if e.reason != 'unexpected end of data':
+            if e.reason != "unexpected end of data":
                 raise
             if i == 3:
                 raise

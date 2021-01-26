@@ -8,7 +8,15 @@ import logging
 import plumbum
 import env
 from copy import deepcopy
-from plumbum import RemotePath, SshMachine, CommandNotFound, ProcessExecutionError, local, ProcessTimedOut, NOHUP
+from plumbum import (
+    RemotePath,
+    SshMachine,
+    CommandNotFound,
+    ProcessExecutionError,
+    local,
+    ProcessTimedOut,
+    NOHUP,
+)
 from plumbum import CommandNotFound
 from plumbum.lib import six
 from plumbum.machines.session import IncorrectLogin, HostPublicKeyUnknown
@@ -21,21 +29,23 @@ except ImportError:
 else:
     from plumbum.machines.paramiko_machine import ParamikoMachine
 
+
 def strassert(one, two):
     assert str(one) == str(two)
 
-#TEST_HOST = "192.168.1.143"
+
+# TEST_HOST = "192.168.1.143"
 TEST_HOST = "127.0.0.1"
 if TEST_HOST not in ("::1", "127.0.0.1", "localhost"):
     plumbum.local.env.path.append("c:\\Program Files\\Git\\bin")
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def sshpass():
     try:
-        return plumbum.local['sshpass']
+        return plumbum.local["sshpass"]
     except CommandNotFound:
-        pytest.skip('Test requires sshpass')
+        pytest.skip("Test requires sshpass")
 
 
 @skip_on_windows
@@ -43,20 +53,31 @@ def test_connection():
     SshMachine(TEST_HOST)
 
 
-@pytest.mark.skip(env.LINUX and env.PY[:2] == (3, 5), reason="Doesn't work on 3.5 on Linux on GHA")
+@pytest.mark.skip(
+    env.LINUX and env.PY[:2] == (3, 5), reason="Doesn't work on 3.5 on Linux on GHA"
+)
 def test_incorrect_login(sshpass):
     with pytest.raises(IncorrectLogin):
-        SshMachine(TEST_HOST, password='swordfish',
-                   ssh_opts=['-o', 'PubkeyAuthentication=no',
-                             '-o', 'PreferredAuthentications=password'])
+        SshMachine(
+            TEST_HOST,
+            password="swordfish",
+            ssh_opts=[
+                "-o",
+                "PubkeyAuthentication=no",
+                "-o",
+                "PreferredAuthentications=password",
+            ],
+        )
 
 
 @pytest.mark.xfail(env.LINUX, reason="TODO: no idea why this fails on linux")
 def test_hostpubkey_unknown(sshpass):
     with pytest.raises(HostPublicKeyUnknown):
-        SshMachine(TEST_HOST, password='swordfish',
-                   ssh_opts=['-o', 'UserKnownHostsFile=/dev/null',
-                             '-o', 'UpdateHostKeys=no'])
+        SshMachine(
+            TEST_HOST,
+            password="swordfish",
+            ssh_opts=["-o", "UserKnownHostsFile=/dev/null", "-o", "UpdateHostKeys=no"],
+        )
 
 
 @skip_on_windows
@@ -76,8 +97,8 @@ class TestRemotePath:
 
     def test_uri(self):
         p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
-        assert "ftp://" == p1.as_uri('ftp')[:6]
-        assert "ssh://" == p1.as_uri('ssh')[:6]
+        assert "ftp://" == p1.as_uri("ftp")[:6]
+        assert "ssh://" == p1.as_uri("ssh")[:6]
         assert "/some/long/path/to/file.txt" == p1.as_uri()[-27:]
 
     def test_stem(self):
@@ -92,18 +113,35 @@ class TestRemotePath:
         assert p1.suffix == ".txt"
         assert p1.suffixes == [".txt"]
         assert p2.suffix == ".gz"
-        assert p2.suffixes == [".tar",".gz"]
-        strassert(p1.with_suffix(".tar.gz"), RemotePath(self._connect(), "/some/long/path/to/file.tar.gz"))
-        strassert(p2.with_suffix(".other"), RemotePath(self._connect(), "file.tar.other"))
-        strassert(p2.with_suffix(".other", 2), RemotePath(self._connect(), "file.other"))
-        strassert(p2.with_suffix(".other", 0), RemotePath(self._connect(), "file.tar.gz.other"))
-        strassert(p2.with_suffix(".other", None), RemotePath(self._connect(), "file.other"))
+        assert p2.suffixes == [".tar", ".gz"]
+        strassert(
+            p1.with_suffix(".tar.gz"),
+            RemotePath(self._connect(), "/some/long/path/to/file.tar.gz"),
+        )
+        strassert(
+            p2.with_suffix(".other"), RemotePath(self._connect(), "file.tar.other")
+        )
+        strassert(
+            p2.with_suffix(".other", 2), RemotePath(self._connect(), "file.other")
+        )
+        strassert(
+            p2.with_suffix(".other", 0),
+            RemotePath(self._connect(), "file.tar.gz.other"),
+        )
+        strassert(
+            p2.with_suffix(".other", None), RemotePath(self._connect(), "file.other")
+        )
 
     def test_newname(self):
         p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
         p2 = RemotePath(self._connect(), "file.tar.gz")
-        strassert(p1.with_name("something.tar"), RemotePath(self._connect(), "/some/long/path/to/something.tar"))
-        strassert(p2.with_name("something.tar"), RemotePath(self._connect(), "something.tar"))
+        strassert(
+            p1.with_name("something.tar"),
+            RemotePath(self._connect(), "/some/long/path/to/something.tar"),
+        )
+        strassert(
+            p2.with_name("something.tar"), RemotePath(self._connect(), "something.tar")
+        )
 
     @skip_without_chown
     def test_chown(self):
@@ -140,8 +178,10 @@ class TestRemotePath:
                 assert (tmp / "b" / "bb").is_dir()
             assert not tmp.exists()
 
-    @pytest.mark.xfail(reason="mkdir's mode argument is not yet implemented "\
-        "for remote paths", strict=True)
+    @pytest.mark.xfail(
+        reason="mkdir's mode argument is not yet implemented " "for remote paths",
+        strict=True,
+    )
     def test_mkdir_mode(self):
         # (identical to test_local.TestLocalPath.test_mkdir_mode)
         with self._connect() as rem:
@@ -151,10 +191,13 @@ class TestRemotePath:
                 # (different from shell mkdir mode argument!); umask on my
                 # system is 022 by default, so 033 is ok for testing this
                 try:
-                    (tmp / "pb_333").mkdir(exist_ok=False, parents=False,
-                        mode=0o333)
-                    rem.python('-c', 'import os; os.mkdir({0}, 0o333)'.format(
-                        repr(str(tmp / "py_333"))))
+                    (tmp / "pb_333").mkdir(exist_ok=False, parents=False, mode=0o333)
+                    rem.python(
+                        "-c",
+                        "import os; os.mkdir({0}, 0o333)".format(
+                            repr(str(tmp / "py_333"))
+                        ),
+                    )
                     pb_final_mode = oct((tmp / "pb_333").stat().st_mode)
                     py_final_mode = oct((tmp / "py_333").stat().st_mode)
                     assert pb_final_mode == py_final_mode
@@ -222,7 +265,6 @@ class TestRemotePath:
             assert not tmp.exists()
 
 
-
 class BaseRemoteMachineTest(object):
     TUNNEL_PROG = r"""import sys, socket
 s = socket.socket()
@@ -246,7 +288,9 @@ s.close()
             lines = r_ls("-a").splitlines()
             assert ".bashrc" in lines or ".bash_profile" in lines
             with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
-                cmd = r_ssh["localhost", "cd", rem.cwd, "&&", r_ls, "|", r_grep["\\.py"]]
+                cmd = r_ssh[
+                    "localhost", "cd", rem.cwd, "&&", r_ls, "|", r_grep["\\.py"]
+                ]
                 assert "'|'" in str(cmd)
                 assert "test_remote.py" in cmd()
                 assert "test_remote.py" in [f.name for f in rem.cwd // "*.py"]
@@ -255,9 +299,9 @@ s.close()
     def test_double_chdir(self):
         with self._connect() as rem:
             with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
-                 rem["ls"]()
+                rem["ls"]()
             with rem.cwd("/tmp"):
-                 rem["pwd"]()
+                rem["pwd"]()
 
     def test_glob(self):
         with self._connect() as rem:
@@ -300,9 +344,9 @@ s.close()
     def test_env(self):
         with self._connect() as rem:
             with pytest.raises(ProcessExecutionError):
-              rem.python("-c", "import os;os.environ['FOOBAR72']")
-            with rem.env(FOOBAR72 = "lala"):
-                with rem.env(FOOBAR72 = "baba"):
+                rem.python("-c", "import os;os.environ['FOOBAR72']")
+            with rem.env(FOOBAR72="lala"):
+                with rem.env(FOOBAR72="baba"):
                     out = rem.python("-c", "import os;print(os.environ['FOOBAR72'])")
                     assert out.strip() == "baba"
                 out = rem.python("-c", "import os;print(os.environ['FOOBAR72'])")
@@ -318,8 +362,18 @@ s.close()
 
     @pytest.mark.parametrize(
         "env",
-        ["lala", "-Wl,-O2 -Wl,--sort-common", "{{}}", "''", "!@%_-+=:", "'",
-         "`", "$", "\\"])
+        [
+            "lala",
+            "-Wl,-O2 -Wl,--sort-common",
+            "{{}}",
+            "''",
+            "!@%_-+=:",
+            "'",
+            "`",
+            "$",
+            "\\",
+        ],
+    )
     def test_env_special_characters(self, env):
         with self._connect() as rem:
             with pytest.raises(ProcessExecutionError):
@@ -345,7 +399,9 @@ s.close()
     def test_iter_lines_timeout(self):
         with self._connect() as rem:
             try:
-                for i, (out, err) in enumerate(rem["ping"]["-i", 0.5, "127.0.0.1"].popen().iter_lines(timeout=4)):
+                for i, (out, err) in enumerate(
+                    rem["ping"]["-i", 0.5, "127.0.0.1"].popen().iter_lines(timeout=4)
+                ):
                     print("out:", out)
                     print("err:", err)
             except NotImplementedError:
@@ -358,7 +414,6 @@ s.close()
             else:
                 pytest.fail("Expected a timeout")
 
-
     def test_iter_lines_error(self):
         with self._connect() as rem:
             with pytest.raises(ProcessExecutionError) as ex:
@@ -369,11 +424,12 @@ s.close()
 
     def test_touch(self):
         with self._connect() as rem:
-            rfile = rem.cwd / 'sillyfile'
+            rfile = rem.cwd / "sillyfile"
             assert not rfile.exists()
             rfile.touch()
             assert rfile.exists()
             rfile.delete()
+
 
 @skip_on_windows
 class TestRemoteMachine(BaseRemoteMachineTest):
@@ -401,10 +457,10 @@ class TestRemoteMachine(BaseRemoteMachineTest):
 
     def test_get(self):
         with self._connect() as rem:
-            assert str(rem['ls']) == str(rem.get('ls'))
-            assert str(rem['ls']) == str(rem.get('not_a_valid_process_234','ls'))
-            assert 'ls' in rem
-            assert 'not_a_valid_process_234' not in rem
+            assert str(rem["ls"]) == str(rem.get("ls"))
+            assert str(rem["ls"]) == str(rem.get("not_a_valid_process_234", "ls"))
+            assert "ls" in rem
+            assert "not_a_valid_process_234" not in rem
 
     def test_list_processes(self):
         with self._connect() as rem:
@@ -417,8 +473,8 @@ class TestRemoteMachine(BaseRemoteMachineTest):
     def test_nohup(self):
         with self._connect() as rem:
             sleep = rem["sleep"]
-            sleep["5.793817"] & NOHUP(stdout = None, append=False)
-            time.sleep(.5)
+            sleep["5.793817"] & NOHUP(stdout=None, append=False)
+            time.sleep(0.5)
             print(rem["ps"]("aux"))
             assert list(rem.pgrep("5.793817"))
             time.sleep(6)
@@ -427,17 +483,18 @@ class TestRemoteMachine(BaseRemoteMachineTest):
     def test_bound_env(self):
         with self._connect() as rem:
             printenv = rem["printenv"]
-            with rem.env(FOO = "hello"):
-                assert printenv.with_env(BAR = "world")("FOO") == "hello\n"
-                assert printenv.with_env(BAR = "world")("BAR") == "world\n"
-                assert printenv.with_env(FOO = "sea", BAR = "world")("FOO") == "sea\n"
-                assert printenv.with_env(FOO = "sea", BAR = "world")("BAR") == "world\n"
+            with rem.env(FOO="hello"):
+                assert printenv.with_env(BAR="world")("FOO") == "hello\n"
+                assert printenv.with_env(BAR="world")("BAR") == "world\n"
+                assert printenv.with_env(FOO="sea", BAR="world")("FOO") == "sea\n"
+                assert printenv.with_env(FOO="sea", BAR="world")("BAR") == "world\n"
 
             assert rem.cmd.pwd.with_cwd("/")() == "/\n"
-            assert rem.cmd.pwd['-L'].with_env(A='X').with_cwd("/")() == "/\n"
+            assert rem.cmd.pwd["-L"].with_env(A="X").with_cwd("/")() == "/\n"
 
-    @pytest.mark.skipif('useradd' not in local,
-            reason = "System does not have useradd (Mac?)")
+    @pytest.mark.skipif(
+        "useradd" not in local, reason="System does not have useradd (Mac?)"
+    )
     def test_sshpass(self):
         with local.as_root():
             local["useradd"]("-m", "-b", "/tmp", "testuser")
@@ -451,18 +508,19 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                     logging.warning("passwd failed")
                     return
 
-            with SshMachine("localhost", user = "testuser", password = "123456") as rem:
+            with SshMachine("localhost", user="testuser", password="123456") as rem:
                 assert rem["pwd"]().strip() == "/tmp/testuser"
         finally:
             with local.as_root():
                 local["userdel"]("-r", "testuser")
+
 
 @skip_on_windows
 class TestParamikoMachine(BaseRemoteMachineTest):
     def _connect(self):
         if paramiko is None:
             pytest.skip("System does not have paramiko installed")
-        return ParamikoMachine(TEST_HOST, missing_host_policy = paramiko.AutoAddPolicy())
+        return ParamikoMachine(TEST_HOST, missing_host_policy=paramiko.AutoAddPolicy())
 
     def test_tunnel(self):
         with self._connect() as rem:
@@ -495,10 +553,10 @@ class TestParamikoMachine(BaseRemoteMachineTest):
         with self._connect() as rem:
             unicode_half = b"\xc2\xbd".decode("utf8")
 
-            ret = rem['bash']("-c", 'echo -e "\xC2\xBD"')
+            ret = rem["bash"]("-c", 'echo -e "\xC2\xBD"')
             assert ret == "%s\n" % unicode_half
 
-            ret = list(rem['bash']["-c", 'echo -e "\xC2\xBD"'].popen())
+            ret = list(rem["bash"]["-c", 'echo -e "\xC2\xBD"'].popen())
             assert ret == [["%s\n" % unicode_half, None]]
 
     def test_path_open_remote_write_local_read(self):
@@ -512,10 +570,7 @@ class TestParamikoMachine(BaseRemoteMachineTest):
                     data = six.b("hello world")
                     with (remote_tmpdir / "bar.txt").open("wb") as f:
                         f.write(data)
-                    rem.download(
-                        (remote_tmpdir / "bar.txt"),
-                        (tmpdir / "bar.txt")
-                    )
+                    rem.download((remote_tmpdir / "bar.txt"), (tmpdir / "bar.txt"))
                     assert (tmpdir / "bar.txt").open("rb").read() == data
 
             assert not remote_tmpdir.exists()
@@ -531,10 +586,7 @@ class TestParamikoMachine(BaseRemoteMachineTest):
                     data = six.b("hello world")
                     with (tmpdir / "bar.txt").open("wb") as f:
                         f.write(data)
-                    rem.upload(
-                        (tmpdir / "bar.txt"),
-                        (remote_tmpdir / "bar.txt")
-                    )
+                    rem.upload((tmpdir / "bar.txt"), (remote_tmpdir / "bar.txt"))
                     assert (remote_tmpdir / "bar.txt").open("rb").read() == data
 
             assert not remote_tmpdir.exists()

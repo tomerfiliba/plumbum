@@ -17,11 +17,11 @@ class RedirectionError(Exception):
     which was already redirected to/from a file"""
 
 
-#===================================================================================================
+# ===================================================================================================
 # Utilities
-#===================================================================================================
+# ===================================================================================================
 # modified from the stdlib pipes module for windows
-_safechars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@%_-+=:,./'
+_safechars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@%_-+=:,./"
 _funnychars = '"`$\\'
 
 
@@ -32,6 +32,7 @@ def shquote(text):
         return shlex.quote(text)
     else:
         import pipes
+
         return pipes.quote(text)
 
 
@@ -39,9 +40,9 @@ def shquote_list(seq):
     return [shquote(item) for item in seq]
 
 
-#===================================================================================================
+# ===================================================================================================
 # Commands
-#===================================================================================================
+# ===================================================================================================
 class BaseCommand(object):
     """Base of all command objects"""
 
@@ -152,11 +153,7 @@ class BaseCommand(object):
         """
         raise NotImplementedError()
 
-    def nohup(self,
-              cwd='.',
-              stdout='nohup.out',
-              stderr=None,
-              append=True):
+    def nohup(self, cwd=".", stdout="nohup.out", stderr=None, append=True):
         """Runs a command detached."""
         return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)
 
@@ -348,7 +345,8 @@ class BoundEnvCommand(BaseCommand):
             args,
             cwd=self.cwd if cwd is None else cwd,
             env=dict(self.env, **env),
-            **kwargs)
+            **kwargs
+        )
 
 
 class Pipeline(BaseCommand):
@@ -365,9 +363,11 @@ class Pipeline(BaseCommand):
         return self.srccmd._get_encoding() or self.dstcmd._get_encoding()
 
     def formulate(self, level=0, args=()):
-        return self.srccmd.formulate(level + 1) + ["|"
-                                                   ] + self.dstcmd.formulate(
-                                                       level + 1, args)
+        return (
+            self.srccmd.formulate(level + 1)
+            + ["|"]
+            + self.dstcmd.formulate(level + 1, args)
+        )
 
     @property
     def machine(self):
@@ -386,7 +386,7 @@ class Pipeline(BaseCommand):
         srcproc.stdout.close()
         if srcproc.stderr is not None:
             dstproc.stderr = srcproc.stderr
-        if srcproc.stdin and src_kwargs.get('stdin') != PIPE:
+        if srcproc.stdin and src_kwargs.get("stdin") != PIPE:
             srcproc.stdin.close()
         dstproc.srcproc = srcproc
 
@@ -405,12 +405,12 @@ class Pipeline(BaseCommand):
         dstproc_verify = dstproc.verify
 
         def verify(proc, retcode, timeout, stdout, stderr):
-            #TODO: right now it's impossible to specify different expected
+            # TODO: right now it's impossible to specify different expected
             # return codes for different stages of the pipeline
             try:
                 or_retcode = [0] + list(retcode)
             except TypeError:
-                if (retcode is None):
+                if retcode is None:
                     or_retcode = None  # no-retcode-verification acts "greedily"
                 else:
                     or_retcode = [0, retcode]
@@ -441,7 +441,8 @@ class BaseRedirection(BaseCommand):
 
     def formulate(self, level=0, args=()):
         return self.cmd.formulate(level + 1, args) + [
-            self.SYM, shquote(getattr(self.file, "name", self.file))
+            self.SYM,
+            shquote(getattr(self.file, "name", self.file)),
         ]
 
     @property
@@ -453,10 +454,10 @@ class BaseRedirection(BaseCommand):
         from plumbum.machines.remote import RemotePath
 
         if self.KWARG in kwargs and kwargs[self.KWARG] not in (PIPE, None):
-            raise RedirectionError("%s is already redirected" % (self.KWARG, ))
+            raise RedirectionError("%s is already redirected" % (self.KWARG,))
         if isinstance(self.file, RemotePath):
             raise TypeError("Cannot redirect to/from remote paths")
-        if isinstance(self.file, six.string_types + (LocalPath, )):
+        if isinstance(self.file, six.string_types + (LocalPath,)):
             f = kwargs[self.KWARG] = open(str(self.file), self.MODE)
         else:
             kwargs[self.KWARG] = self.file
@@ -520,8 +521,9 @@ class StdinDataRedirection(BaseCommand):
 
     def formulate(self, level=0, args=()):
         return [
-            "echo %s" % (shquote(self.data), ), "|",
-            self.cmd.formulate(level + 1, args)
+            "echo %s" % (shquote(self.data),),
+            "|",
+            self.cmd.formulate(level + 1, args),
         ]
 
     @property
@@ -532,14 +534,13 @@ class StdinDataRedirection(BaseCommand):
         if "stdin" in kwargs and kwargs["stdin"] != PIPE:
             raise RedirectionError("stdin is already redirected")
         data = self.data
-        if isinstance(data,
-                      six.unicode_type) and self._get_encoding() is not None:
+        if isinstance(data, six.unicode_type) and self._get_encoding() is not None:
             data = data.encode(self._get_encoding())
         f = TemporaryFile()
         while data:
-            chunk = data[:self.CHUNK_SIZE]
+            chunk = data[: self.CHUNK_SIZE]
             f.write(chunk)
-            data = data[self.CHUNK_SIZE:]
+            data = data[self.CHUNK_SIZE :]
         f.seek(0)
         # try:
         return self.cmd.popen(args, stdin=f, **kwargs)
@@ -578,11 +579,10 @@ class ConcreteCommand(BaseCommand):
                     argv.extend(a.formulate(level + 1))
             elif isinstance(a, (list, tuple)):
                 argv.extend(
-                    shquote(b) if level >= self.QUOTE_LEVEL else six.str(b)
-                    for b in a)
+                    shquote(b) if level >= self.QUOTE_LEVEL else six.str(b) for b in a
+                )
             else:
-                argv.append(
-                    shquote(a) if level >= self.QUOTE_LEVEL else six.str(a))
+                argv.append(shquote(a) if level >= self.QUOTE_LEVEL else six.str(a))
         # if self.custom_encoding:
         #    argv = [a.encode(self.custom_encoding) for a in argv if isinstance(a, six.string_types)]
         return argv

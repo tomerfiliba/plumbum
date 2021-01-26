@@ -12,19 +12,20 @@ class PopenAddons(object):
         """This verifies that the correct command is attributed."""
         if getattr(self, "_timed_out", False):
             raise ProcessTimedOut(
-                "Process did not terminate within %s seconds" % (timeout, ),
-                getattr(self, "argv", None))
+                "Process did not terminate within %s seconds" % (timeout,),
+                getattr(self, "argv", None),
+            )
 
         if retcode is not None:
             if hasattr(retcode, "__contains__"):
                 if self.returncode not in retcode:
                     raise ProcessExecutionError(
-                        getattr(self, "argv", None), self.returncode, stdout,
-                        stderr)
+                        getattr(self, "argv", None), self.returncode, stdout, stderr
+                    )
             elif self.returncode != retcode:
                 raise ProcessExecutionError(
-                    getattr(self, "argv", None), self.returncode, stdout,
-                    stderr)
+                    getattr(self, "argv", None), self.returncode, stdout, stderr
+                )
 
 
 class BaseMachine(object):
@@ -68,23 +69,17 @@ class BaseMachine(object):
 
     @property
     def encoding(self):
-        'This is a wrapper for custom_encoding'
+        "This is a wrapper for custom_encoding"
         return self.custom_encoding
 
     @encoding.setter
     def encoding(self, value):
         self.custom_encoding = value
 
-    def daemonic_popen(self,
-                       command,
-                       cwd="/",
-                       stdout=None,
-                       stderr=None,
-                       append=True):
+    def daemonic_popen(self, command, cwd="/", stdout=None, stderr=None, append=True):
         raise NotImplementedError("This is not implemented on this machine!")
 
     class Cmd(object):
-
         def __init__(self, machine):
             self._machine = machine
 

@@ -12,6 +12,7 @@ from plumbum.machines.base import PopenAddons
 class ShellSessionError(Exception):
     """Raises when something goes wrong when calling
     :func:`ShellSession.popen <plumbum.session.ShellSession.popen>`"""
+
     pass
 
 
@@ -35,12 +36,13 @@ class HostPublicKeyUnknown(SSHCommsError):
 shell_logger = logging.getLogger("plumbum.shell")
 
 
-#===================================================================================================
+# ===================================================================================================
 # Shell Session Popen
-#===================================================================================================
+# ===================================================================================================
 class MarkedPipe(object):
     """A pipe-like object from which you can read lines; the pipe will return report EOF (the
     empty string) when a special marker is detected"""
+
     __slots__ = ["pipe", "marker", "__weakref__"]
 
     def __init__(self, pipe, marker):
@@ -132,24 +134,44 @@ class SessionPopen(PopenAddons):
 
                 if returncode == 5:
                     raise IncorrectLogin(
-                        argv, returncode, stdout, stderr,
-                        message="Incorrect username or password provided")
+                        argv,
+                        returncode,
+                        stdout,
+                        stderr,
+                        message="Incorrect username or password provided",
+                    )
                 elif returncode == 6:
                     raise HostPublicKeyUnknown(
-                        argv, returncode, stdout, stderr,
-                        message="The authenticity of the host can't be established")
+                        argv,
+                        returncode,
+                        stdout,
+                        stderr,
+                        message="The authenticity of the host can't be established",
+                    )
                 elif returncode != 0:
                     raise SSHCommsError(
-                        argv, returncode, stdout, stderr,
-                        message="SSH communication failed")
+                        argv,
+                        returncode,
+                        stdout,
+                        stderr,
+                        message="SSH communication failed",
+                    )
                 elif name == "2":
                     raise SSHCommsChannel2Error(
-                        argv, returncode, stdout, stderr,
-                        message="No stderr result detected. Does the remote have Bash as the default shell?")
+                        argv,
+                        returncode,
+                        stdout,
+                        stderr,
+                        message="No stderr result detected. Does the remote have Bash as the default shell?",
+                    )
                 else:
                     raise SSHCommsError(
-                        argv, returncode, stdout, stderr,
-                        message="No communication channel detected. Does the remote exist?")
+                        argv,
+                        returncode,
+                        stdout,
+                        stderr,
+                        message="No communication channel detected. Does the remote exist?",
+                    )
             if not line:
                 del sources[i]
             else:
@@ -196,8 +218,9 @@ class ShellSession(object):
         if connect_timeout:
 
             def closer():
-                shell_logger.error("Connection to %s timed out (%d sec)", proc,
-                                   connect_timeout)
+                shell_logger.error(
+                    "Connection to %s timed out (%d sec)", proc, connect_timeout
+                )
                 self.close()
 
             timer = threading.Timer(connect_timeout, self.close)
@@ -256,30 +279,34 @@ class ShellSession(object):
         if self.proc is None:
             raise ShellSessionError("Shell session has already been closed")
         if self._current and not self._current._done:
-            raise ShellSessionError(
-                "Each shell may start only one process at a time")
+            raise ShellSessionError("Each shell may start only one process at a time")
 
         if isinstance(cmd, BaseCommand):
             full_cmd = cmd.formulate(1)
         else:
             full_cmd = cmd
-        marker = "--.END%s.--" % (time.time() * random.random(), )
+        marker = "--.END%s.--" % (time.time() * random.random(),)
         if full_cmd.strip():
             full_cmd += " ; "
         else:
             full_cmd = "true ; "
-        full_cmd += "echo $? ; echo '%s'" % (marker, )
+        full_cmd += "echo $? ; echo '%s'" % (marker,)
         if not self.isatty:
-            full_cmd += " ; echo '%s' 1>&2" % (marker, )
+            full_cmd += " ; echo '%s' 1>&2" % (marker,)
         if self.custom_encoding:
             full_cmd = full_cmd.encode(self.custom_encoding)
         shell_logger.debug("Running %r", full_cmd)
         self.proc.stdin.write(full_cmd + six.b("\n"))
         self.proc.stdin.flush()
         self._current = SessionPopen(
-            self.proc, full_cmd, self.isatty, self.proc.stdin,
+            self.proc,
+            full_cmd,
+            self.isatty,
+            self.proc.stdin,
             MarkedPipe(self.proc.stdout, marker),
-            MarkedPipe(self.proc.stderr, marker), self.custom_encoding)
+            MarkedPipe(self.proc.stderr, marker),
+            self.custom_encoding,
+        )
         return self._current
 
     def run(self, cmd, retcode=0):

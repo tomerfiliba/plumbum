@@ -45,12 +45,12 @@ def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
                 close_fds=True,
                 stdin=stdin.fileno(),
                 stdout=stdout.fileno(),
-                stderr=stderr.fileno())
+                stderr=stderr.fileno(),
+            )
             os.write(wfd, str(proc.pid).encode("utf8"))
         except:
             rc = 1
-            tbtext = "".join(
-                traceback.format_exception(*sys.exc_info()))[-MAX_SIZE:]
+            tbtext = "".join(traceback.format_exception(*sys.exc_info()))[-MAX_SIZE:]
             os.write(wfd, tbtext.encode("utf8"))
         finally:
             os.close(wfd)
@@ -121,4 +121,5 @@ def win32_daemonize(command, cwd, stdout=None, stderr=None, append=True):
         stdin=stdin.fileno(),
         stdout=stdout.fileno(),
         stderr=stderr.fileno(),
-        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS)
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS,
+    )

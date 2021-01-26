@@ -109,8 +109,9 @@ class Path(str, six.ABC):
         """Go up in ``count`` directories (the default is 1)"""
         return self.join("../" * count)
 
-    def walk(self, filter=lambda p: True,
-             dir_filter=lambda p: True):  # @ReservedAssignment
+    def walk(
+        self, filter=lambda p: True, dir_filter=lambda p: True
+    ):  # @ReservedAssignment
         """traverse all (recursive) sub-elements under this directory, that match the given filter.
         By default, the filter accepts everything; you can provide a custom filter function that
         takes a path as an argument and returns a boolean
@@ -329,13 +330,9 @@ class Path(str, six.ABC):
         """
 
     @staticmethod
-    def _access_mode_to_flags(mode,
-                              flags={
-                                  "f": os.F_OK,
-                                  "w": os.W_OK,
-                                  "r": os.R_OK,
-                                  "x": os.X_OK
-                              }):
+    def _access_mode_to_flags(
+        mode, flags={"f": os.F_OK, "w": os.W_OK, "r": os.R_OK, "x": os.X_OK}
+    ):
         if isinstance(mode, str):
             mode = reduce(operator.or_, [flags[m] for m in mode.lower()], 0)
         return mode
@@ -399,11 +396,9 @@ class Path(str, six.ABC):
         parts = self.split()
         baseparts = source.split()
         ancestors = len(
-            list(
-                itertools.takewhile(lambda p: p[0] == p[1],
-                                    zip(parts, baseparts))))
-        return RelativePath([".."] * (len(baseparts) - ancestors) +
-                            parts[ancestors:])
+            list(itertools.takewhile(lambda p: p[0] == p[1], zip(parts, baseparts)))
+        )
+        return RelativePath([".."] * (len(baseparts) - ancestors) + parts[ancestors:])
 
     def __sub__(self, other):
         """Same as ``self.relative_to(other)``"""
@@ -430,8 +425,10 @@ class Path(str, six.ABC):
     def parents(self):
         """Pathlib like sequence of ancestors"""
         join = lambda x, y: self._form(x) / y
-        as_list = (reduce(join, self.parts[:i], self.parts[0])
-                   for i in range(len(self.parts) - 1, 0, -1))
+        as_list = (
+            reduce(join, self.parts[:i], self.parts[0])
+            for i in range(len(self.parts) - 1, 0, -1)
+        )
         return tuple(as_list)
 
     @property
@@ -466,7 +463,7 @@ class RelativePath(object):
         return self.parts[index]
 
     def __repr__(self):
-        return "RelativePath(%r)" % (self.parts, )
+        return "RelativePath(%r)" % (self.parts,)
 
     def __eq__(self, other):
         return str(self) == str(other)

@@ -9,16 +9,17 @@ from contextlib import contextmanager
 from plumbum.lib import _setdoc, IS_WIN32, six
 from plumbum.path.base import Path, FSUser
 from plumbum.path.remote import RemotePath
+
 try:
     from pwd import getpwuid, getpwnam
     from grp import getgrgid, getgrnam
 except ImportError:
 
     def getpwuid(x):  # type: ignore
-        return (None, )
+        return (None,)
 
     def getgrgid(x):  # type: ignore
-        return (None, )
+        return (None,)
 
     def getpwnam(x):  # type: ignore
         raise OSError("`getpwnam` not supported")
@@ -37,26 +38,28 @@ except ImportError:
 logger = logging.getLogger("plumbum.local")
 
 
-#===================================================================================================
+# ===================================================================================================
 # Local Paths
-#===================================================================================================
+# ===================================================================================================
 class LocalPath(Path):
     """The class implementing local-machine paths"""
 
     CASE_SENSITIVE = not IS_WIN32
 
     def __new__(cls, *parts):
-        if len(parts) == 1 and \
-                isinstance(parts[0], cls) and \
-                not isinstance(parts[0], LocalWorkdir):
+        if (
+            len(parts) == 1
+            and isinstance(parts[0], cls)
+            and not isinstance(parts[0], LocalWorkdir)
+        ):
             return parts[0]
         if not parts:
             raise TypeError("At least one path part is required (none given)")
         if any(isinstance(path, RemotePath) for path in parts):
-            raise TypeError(
-                "LocalPath cannot be constructed from %r" % (parts, ))
+            raise TypeError("LocalPath cannot be constructed from %r" % (parts,))
         self = super(LocalPath, cls).__new__(
-            cls, os.path.normpath(os.path.join(*(str(p) for p in parts))))
+            cls, os.path.normpath(os.path.join(*(str(p) for p in parts)))
+        )
         return self
 
     @property
@@ -155,12 +158,10 @@ class LocalPath(Path):
 
     @_setdoc(Path)
     def with_suffix(self, suffix, depth=1):
-        if (suffix and not suffix.startswith(os.path.extsep)
-                or suffix == os.path.extsep):
+        if suffix and not suffix.startswith(os.path.extsep) or suffix == os.path.extsep:
             raise ValueError("Invalid suffix %r" % (suffix))
         name = self.name
-        depth = len(self.suffixes) if depth is None else min(
-            depth, len(self.suffixes))
+        depth = len(self.suffixes) if depth is None else min(depth, len(self.suffixes))
         for i in range(depth):
             name, ext = os.path.splitext(name)
         return LocalPath(self.dirname) / (name + suffix)
@@ -229,9 +230,9 @@ class LocalPath(Path):
         return open(str(self), mode)
 
     @_setdoc(Path)
-    def read(self, encoding=None, mode='r'):
-        if encoding and 'b' not in mode:
-            mode = mode + 'b'
+    def read(self, encoding=None, mode="r"):
+        if encoding and "b" not in mode:
+            mode = mode + "b"
         with self.open(mode) as f:
             data = f.read()
             if encoding:
@@ -244,25 +245,31 @@ class LocalPath(Path):
             data = data.encode(encoding)
         if mode is None:
             if isinstance(data, six.unicode_type):
-                mode = 'w'
+                mode = "w"
             else:
-                mode = 'wb'
+                mode = "wb"
         with self.open(mode) as f:
             f.write(data)
 
     @_setdoc(Path)
     def touch(self):
-        with open(str(self), 'a'):
+        with open(str(self), "a"):
             os.utime(str(self), None)
 
     @_setdoc(Path)
     def chown(self, owner=None, group=None, recursive=None):
         if not hasattr(os, "chown"):
             raise OSError("os.chown() not supported")
-        uid = self.uid if owner is None else (owner if isinstance(owner, int)
-                                              else getpwnam(owner)[2])
-        gid = self.gid if group is None else (group if isinstance(group, int)
-                                              else getgrnam(group)[2])
+        uid = (
+            self.uid
+            if owner is None
+            else (owner if isinstance(owner, int) else getpwnam(owner)[2])
+        )
+        gid = (
+            self.gid
+            if group is None
+            else (group if isinstance(group, int) else getgrnam(group)[2])
+        )
         os.chown(str(self), uid, gid)
         if recursive or (recursive is None and self.is_dir()):
             for subpath in self.walk():
@@ -281,12 +288,14 @@ class LocalPath(Path):
     @_setdoc(Path)
     def link(self, dst):
         if isinstance(dst, RemotePath):
-            raise TypeError("Cannot create a hardlink from local path %s to %r"
-                            % (self, dst))
+            raise TypeError(
+                "Cannot create a hardlink from local path %s to %r" % (self, dst)
+            )
         if hasattr(os, "link"):
             os.link(str(self), str(dst))
         else:
             from plumbum.machines.local import local
+
             # windows: use mklink
             if self.is_dir():
                 local["cmd"]("/C", "mklink", "/D", "/H", str(dst), str(self))
@@ -296,12 +305,14 @@ class LocalPath(Path):
     @_setdoc(Path)
     def symlink(self, dst):
         if isinstance(dst, RemotePath):
-            raise TypeError("Cannot create a symlink from local path %s to %r"
-                            % (self, dst))
+            raise TypeError(
+                "Cannot create a symlink from local path %s to %r" % (self, dst)
+            )
         if hasattr(os, "symlink"):
             os.symlink(str(self), str(dst))
         else:
             from plumbum.machines.local import local
+
             # windows: use mklink
             if self.is_dir():
                 local["cmd"]("/C", "mklink", "/D", str(dst), str(self))
@@ -323,9 +334,8 @@ class LocalPath(Path):
                 raise
 
     @_setdoc(Path)
-    def as_uri(self, scheme='file'):
-        return urlparse.urljoin(
-            str(scheme) + ':', urllib.pathname2url(str(self)))
+    def as_uri(self, scheme="file"):
+        return urlparse.urljoin(str(scheme) + ":", urllib.pathname2url(str(self)))
 
     @property  # type: ignore
     @_setdoc(Path)
@@ -353,7 +363,7 @@ class LocalWorkdir(LocalPath):
         :param newdir: The destination director (a string or a ``LocalPath``)
         """
         if isinstance(newdir, RemotePath):
-            raise TypeError("newdir cannot be %r" % (newdir, ))
+            raise TypeError("newdir cannot be %r" % (newdir,))
         logger.debug("Chdir to %s", newdir)
         os.chdir(str(newdir))
         return self.__class__()

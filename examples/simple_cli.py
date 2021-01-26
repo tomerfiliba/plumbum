@@ -41,8 +41,8 @@ from plumbum import cli
 
 
 class MyCompiler(cli.Application):
-    verbose = cli.Flag(["-v", "--verbose"], help = "Enable verbose mode")
-    include_dirs = cli.SwitchAttr("-I", list = True, help = "Specify include directories")
+    verbose = cli.Flag(["-v", "--verbose"], help="Enable verbose mode")
+    include_dirs = cli.SwitchAttr("-I", list=True, help="Specify include directories")
 
     @cli.switch("-loglevel", int)
     def set_log_level(self, level):

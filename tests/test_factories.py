@@ -13,11 +13,12 @@ class TestImportColors:
         import plumbum.colors
         from plumbum.colors import bold
         from plumbum.colors.fg import red
+
         assert str(red) == str(colors.red)
         assert str(bold) == str(colors.bold)
 
-class TestANSIColor:
 
+class TestANSIColor:
     def setup_method(self, method):
         colors.use_color = True
 
@@ -33,13 +34,13 @@ class TestANSIColor:
         assert colors.full(2) == colors[2]
         assert colors.simple(2) == colors(2)
         assert colors(54) == colors[54]
-        assert colors(1,30,77) == colors.rgb(1,30,77)
-        assert colors[1,30,77] == colors.rgb(1,30,77)
+        assert colors(1, 30, 77) == colors.rgb(1, 30, 77)
+        assert colors[1, 30, 77] == colors.rgb(1, 30, 77)
 
     def testColorStrings(self):
-        assert '\033[0m' == colors.reset
-        assert '\033[1m' == colors.bold
-        assert '\033[39m' == colors.fg.reset
+        assert "\033[0m" == colors.reset
+        assert "\033[1m" == colors.bold
+        assert "\033[39m" == colors.fg.reset
 
     def testNegateIsReset(self):
         assert colors.reset == ~colors
@@ -52,20 +53,20 @@ class TestANSIColor:
         assert colors(colors.bold) == colors.bold
 
     def testFromCode(self):
-        assert colors('\033[31m') == colors.red
+        assert colors("\033[31m") == colors.red
 
     def testEmptyStyle(self):
-        assert str(colors()) == ''
-        assert str(colors('')) == ''
-        assert str(colors(None)) == ''
+        assert str(colors()) == ""
+        assert str(colors("")) == ""
+        assert str(colors(None)) == ""
 
     def testLoadColorByName(self):
-        assert colors['LightBlue'] == colors.fg['LightBlue']
-        assert colors.bg['light_green'] == colors.bg['LightGreen']
-        assert colors['DeepSkyBlue1'] == colors['#00afff']
-        assert colors['DeepSkyBlue1'] == colors.hex('#00afff')
+        assert colors["LightBlue"] == colors.fg["LightBlue"]
+        assert colors.bg["light_green"] == colors.bg["LightGreen"]
+        assert colors["DeepSkyBlue1"] == colors["#00afff"]
+        assert colors["DeepSkyBlue1"] == colors.hex("#00afff")
 
-        assert colors['DeepSkyBlue1'] == colors[39]
+        assert colors["DeepSkyBlue1"] == colors[39]
         assert colors.DeepSkyBlue1 == colors[39]
         assert colors.deepskyblue1 == colors[39]
         assert colors.Deep_Sky_Blue1 == colors[39]
@@ -73,7 +74,6 @@ class TestANSIColor:
 
         with pytest.raises(AttributeError):
             colors.Notacolorsatall
-
 
     def testMultiColor(self):
         sumcolors = colors.bold & colors.blue
@@ -90,9 +90,8 @@ class TestANSIColor:
         assert colors1.basic == colors.DarkSlateGray2
         assert str(colors1.basic) == str(colors.LightGray)
 
-        colors2 = colors.rgb(1,45,214)
+        colors2 = colors.rgb(1, 45, 214)
         assert str(colors2.full) == str(colors.Blue3A)
-
 
     def testFromAnsi(self):
         for c in colors[1:7]:
@@ -116,8 +115,8 @@ class TestANSIColor:
         assert col == colors.from_ansi(str(col))
 
     def testWrappedColor(self):
-        string = 'This is a string'
-        wrapped = '\033[31mThis is a string\033[39m'
+        string = "This is a string"
+        wrapped = "\033[31mThis is a string\033[39m"
         assert colors.red.wrap(string) == wrapped
         assert colors.red | string == wrapped
         assert colors.red[string] == wrapped
@@ -127,35 +126,35 @@ class TestANSIColor:
         assert newcolors.wrap(string) == string | colors.blue & colors.underline
 
     def testUndoColor(self):
-        assert '\033[39m' == ~colors.fg
-        assert '\033[49m' == ~colors.bg
-        assert '\033[22m' == ~colors.bold
-        assert '\033[22m' == ~colors.dim
+        assert "\033[39m" == ~colors.fg
+        assert "\033[49m" == ~colors.bg
+        assert "\033[22m" == ~colors.bold
+        assert "\033[22m" == ~colors.dim
         for i in range(7):
-            assert '\033[39m' == ~colors(i)
-            assert '\033[49m' == ~colors.bg(i)
-            assert '\033[39m' == ~colors.fg(i)
-            assert '\033[49m' == ~colors.bg(i)
+            assert "\033[39m" == ~colors(i)
+            assert "\033[49m" == ~colors.bg(i)
+            assert "\033[39m" == ~colors.fg(i)
+            assert "\033[49m" == ~colors.bg(i)
         for i in range(256):
-            assert '\033[39m' == ~colors.fg[i]
-            assert '\033[49m' == ~colors.bg[i]
-        assert '\033[0m' == ~colors.reset
+            assert "\033[39m" == ~colors.fg[i]
+            assert "\033[49m" == ~colors.bg[i]
+        assert "\033[0m" == ~colors.reset
         assert colors.do_nothing == ~colors.do_nothing
 
         assert colors.bold.reset == ~colors.bold
 
     def testLackOfColor(self):
         Style.use_color = False
-        assert '' == colors.fg.red
-        assert '' == ~colors.fg
-        assert '' == colors.fg['LightBlue']
+        assert "" == colors.fg.red
+        assert "" == ~colors.fg
+        assert "" == colors.fg["LightBlue"]
 
     def testFromHex(self):
         with pytest.raises(ColorNotFound):
-            colors.hex('asdf')
+            colors.hex("asdf")
 
         with pytest.raises(ColorNotFound):
-            colors.hex('#1234Z2')
+            colors.hex("#1234Z2")
 
         with pytest.raises(ColorNotFound):
             colors.hex(12)
@@ -164,10 +163,11 @@ class TestANSIColor:
         colors.blue()
         assert capsys.readouterr()[0] == str(colors.blue)
 
-
     def testPrint(self, capsys):
-        colors.yellow.print('This is printed to stdout', end='')
-        assert capsys.readouterr()[0] == str(colors.yellow.wrap('This is printed to stdout'))
+        colors.yellow.print("This is printed to stdout", end="")
+        assert capsys.readouterr()[0] == str(
+            colors.yellow.wrap("This is printed to stdout")
+        )
 
 
 class TestHTMLColor:
@@ -177,6 +177,6 @@ class TestHTMLColor:
         assert "This is tagged" | htmlcolors.red == red_tagged
 
         twin_tagged = '<font color="#C00000"><em>This is tagged</em></font>'
-        assert "This is tagged" |  htmlcolors.red & htmlcolors.em == twin_tagged
+        assert "This is tagged" | htmlcolors.red & htmlcolors.em == twin_tagged
         assert "This is tagged" | htmlcolors.em & htmlcolors.red == twin_tagged
         assert htmlcolors.em & htmlcolors.red | "This is tagged" == twin_tagged

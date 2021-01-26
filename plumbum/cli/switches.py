@@ -11,65 +11,75 @@ _, ngettext = _translation.gettext, _translation.ngettext
 
 class SwitchError(Exception):
     """A general switch related-error (base class of all other switch errors)"""
+
     pass
 
 
 class PositionalArgumentsError(SwitchError):
     """Raised when an invalid number of positional arguments has been given"""
+
     pass
 
 
 class SwitchCombinationError(SwitchError):
     """Raised when an invalid combination of switches has been given"""
+
     pass
 
 
 class UnknownSwitch(SwitchError):
     """Raised when an unrecognized switch has been given"""
+
     pass
 
 
 class MissingArgument(SwitchError):
     """Raised when a switch requires an argument, but one was not provided"""
+
     pass
 
 
 class MissingMandatorySwitch(SwitchError):
     """Raised when a mandatory switch has not been given"""
+
     pass
 
 
 class WrongArgumentType(SwitchError):
     """Raised when a switch expected an argument of some type, but an argument of a wrong
     type has been given"""
+
     pass
 
 
 class SubcommandError(SwitchError):
     """Raised when there's something wrong with sub-commands"""
+
     pass
 
 
-#===================================================================================================
+# ===================================================================================================
 # The switch decorator
-#===================================================================================================
+# ===================================================================================================
 class SwitchInfo(object):
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
 
-def switch(names,
-           argtype=None,
-           argname=None,
-           list=False,
-           mandatory=False,
-           requires=(),
-           excludes=(),
-           help=None,
-           overridable=False,
-           group="Switches",
-           envname=None):
+def switch(
+    names,
+    argtype=None,
+    argname=None,
+    list=False,
+    mandatory=False,
+    requires=(),
+    excludes=(),
+    help=None,
+    overridable=False,
+    group="Switches",
+    envname=None,
+):
     """
     A decorator that exposes functions as command-line switches. Usage::
 
@@ -185,7 +195,8 @@ def switch(names,
             requires=requires,
             excludes=excludes,
             argname=argname2,
-            help=help2)
+            help=help2,
+        )
         return func
 
     return deco
@@ -202,9 +213,9 @@ def autoswitch(*args, **kwargs):
     return deco
 
 
-#===================================================================================================
+# ===================================================================================================
 # Switch Attributes
-#===================================================================================================
+# ===================================================================================================
 class SwitchAttr(object):
     """
     A switch that stores its result in an attribute (descriptor). Usage::
@@ -222,25 +233,21 @@ class SwitchAttr(object):
     :param argname: The switch argument's name (default is ``"VALUE"``)
     :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switch>`
     """
-    ATTR_NAME = '__plumbum_switchattr_dict__'
 
-    def __init__(self,
-                 names,
-                 argtype=str,
-                 default=None,
-                 list=False,
-                 argname=_("VALUE"),
-                 **kwargs):
+    ATTR_NAME = "__plumbum_switchattr_dict__"
+
+    def __init__(
+        self, names, argtype=str, default=None, list=False, argname=_("VALUE"), **kwargs
+    ):
         self.__doc__ = "Sets an attribute"  # to prevent the help message from showing SwitchAttr's docstring
         if default and argtype is not None:
             defaultmsg = _("; the default is {0}").format(default)
             if "help" in kwargs:
                 kwargs["help"] += defaultmsg
             else:
-                kwargs["help"] = defaultmsg.lstrip('; ')
+                kwargs["help"] = defaultmsg.lstrip("; ")
 
-        switch(
-            names, argtype=argtype, argname=argname, list=list, **kwargs)(self)
+        switch(names, argtype=argtype, argname=argname, list=list, **kwargs)(self)
         listtype = type([])
         if list:
             if default is None:
@@ -259,8 +266,7 @@ class SwitchAttr(object):
         if inst is None:
             return self
         else:
-            return getattr(inst, self.ATTR_NAME, {}).get(
-                self, self._default_value)
+            return getattr(inst, self.ATTR_NAME, {}).get(self, self._default_value)
 
     def __set__(self, inst, val):
         if inst is None:
@@ -288,7 +294,8 @@ class Flag(SwitchAttr):
 
     def __init__(self, names, default=False, **kwargs):
         SwitchAttr.__init__(
-            self, names, argtype=None, default=default, list=False, **kwargs)
+            self, names, argtype=None, default=default, list=False, **kwargs
+        )
 
     def __call__(self, inst):
         self.__set__(inst, not self._default_value)
@@ -311,16 +318,17 @@ class CountOf(SwitchAttr):
 
     def __init__(self, names, default=0, **kwargs):
         SwitchAttr.__init__(
-            self, names, argtype=None, default=default, list=True, **kwargs)
+            self, names, argtype=None, default=default, list=True, **kwargs
+        )
         self._default_value = default  # issue #118
 
     def __call__(self, inst, v):
         self.__set__(inst, len(v))
 
 
-#===================================================================================================
+# ===================================================================================================
 # Decorator for function that adds argument checking
-#===================================================================================================
+# ===================================================================================================
 
 
 class positional(object):
@@ -398,15 +406,15 @@ class Validator(six.ABC):
         slots = {}
         for cls in self.__mro__:
             for prop in getattr(cls, "__slots__", ()):
-                if prop[0] != '_':
+                if prop[0] != "_":
                     slots[prop] = getattr(self, prop)
         mystrs = ("{0} = {1}".format(name, slots[name]) for name in slots)
         return "{0}({1})".format(self.__class__.__name__, ", ".join(mystrs))
 
 
-#===================================================================================================
+# ===================================================================================================
 # Switch type validators
-#===================================================================================================
+# ===================================================================================================
 class Range(Validator):
     """
     A switch-type validator that checks for the inclusion of a value in a certain range.
@@ -418,6 +426,7 @@ class Range(Validator):
     :param start: The minimal value
     :param end: The maximal value
     """
+
     __slots__ = ("start", "end")
 
     def __init__(self, start, end):
@@ -431,7 +440,8 @@ class Range(Validator):
         obj = int(obj)
         if obj < self.start or obj > self.end:
             raise ValueError(
-                _("Not in range [{0:d}..{1:d}]").format(self.start, self.end))
+                _("Not in range [{0:d}..{1:d}]").format(self.start, self.end)
+            )
         return obj
 
     def choices(self, partial=""):
@@ -460,16 +470,17 @@ class Set(Validator):
         self.case_sensitive = kwargs.pop("case_sensitive", False)
         self.csv = kwargs.pop("csv", False)
         if self.csv is True:
-            self.csv = ','
+            self.csv = ","
         if kwargs:
             raise TypeError(
-                _("got unexpected keyword argument(s): {0}").format(
-                    kwargs.keys()))
+                _("got unexpected keyword argument(s): {0}").format(kwargs.keys())
+            )
         self.values = values
 
     def __repr__(self):
-        return "{{{0}}}".format(", ".join(
-            v if isinstance(v, str) else v.__name__ for v in self.values))
+        return "{{{0}}}".format(
+            ", ".join(v if isinstance(v, str) else v.__name__ for v in self.values)
+        )
 
     def __call__(self, value, check_csv=True):
         if self.csv and check_csv:
@@ -487,10 +498,14 @@ class Set(Validator):
                 return opt(value)
             except ValueError:
                 pass
-        raise ValueError("Invalid value: %s (Expected one of %s)" % (value, self.values))
+        raise ValueError(
+            "Invalid value: %s (Expected one of %s)" % (value, self.values)
+        )
 
     def choices(self, partial=""):
-        choices = set(opt if isinstance(opt, str) else "({})".format(opt) for opt in self.values)
+        choices = set(
+            opt if isinstance(opt, str) else "({})".format(opt) for opt in self.values
+        )
         if partial:
             choices = set(opt for opt in choices if opt.lower().startswith(partial))
         return choices
@@ -529,7 +544,8 @@ def MakeDirectory(val):
     p = local.path(val)
     if p.is_file():
         raise ValueError(
-            '{0} is a file, should be nonexistent, or a directory'.format(val))
+            "{0} is a file, should be nonexistent, or a directory".format(val)
+        )
     elif not p.exists():
         p.mkdir()
     return p

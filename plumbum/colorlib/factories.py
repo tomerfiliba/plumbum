@@ -10,7 +10,7 @@ from functools import reduce
 from .names import color_names, default_styles
 from .styles import ColorNotFound
 
-__all__ = ['ColorFactory', 'StyleFactory']
+__all__ = ["ColorFactory", "StyleFactory"]
 
 
 class ColorFactory(object):
@@ -25,14 +25,13 @@ class ColorFactory(object):
         # Adding the color name shortcuts for foreground colors
         for item in color_names[:16]:
             setattr(
-                self, item,
-                style.from_color(style.color_class.from_simple(item, fg=fg)))
+                self, item, style.from_color(style.color_class.from_simple(item, fg=fg))
+            )
 
     def __getattr__(self, item):
         """Full color names work, but do not populate __dir__."""
         try:
-            return self._style.from_color(
-                self._style.color_class(item, fg=self._fg))
+            return self._style.from_color(self._style.color_class(item, fg=self._fg))
         except ColorNotFound:
             raise AttributeError(item)
 
@@ -40,25 +39,27 @@ class ColorFactory(object):
         """Gets the style for a color, using standard name procedure: either full
         color name, html code, or number."""
         return self._style.from_color(
-            self._style.color_class.from_full(name, fg=self._fg))
+            self._style.color_class.from_full(name, fg=self._fg)
+        )
 
     def simple(self, name):
         """Return the extended color scheme color for a value or name."""
         return self._style.from_color(
-            self._style.color_class.from_simple(name, fg=self._fg))
+            self._style.color_class.from_simple(name, fg=self._fg)
+        )
 
     def rgb(self, r, g=None, b=None):
         """Return the extended color scheme color for a value."""
         if g is None and b is None:
             return self.hex(r)
         else:
-            return self._style.from_color(
-                self._style.color_class(r, g, b, fg=self._fg))
+            return self._style.from_color(self._style.color_class(r, g, b, fg=self._fg))
 
     def hex(self, hexcode):
         """Return the extended color scheme color for a value."""
         return self._style.from_color(
-            self._style.color_class.from_hex(hexcode, fg=self._fg))
+            self._style.color_class.from_hex(hexcode, fg=self._fg)
+        )
 
     def ansi(self, ansiseq):
         """Make a style from an ansi text sequence"""
@@ -84,14 +85,15 @@ class ColorFactory(object):
 
     def __call__(self, val_or_r=None, g=None, b=None):
         """Shortcut to provide way to access colors."""
-        if val_or_r is None or (isinstance(val_or_r, str) and val_or_r == ''):
+        if val_or_r is None or (isinstance(val_or_r, str) and val_or_r == ""):
             return self._style()
         if isinstance(val_or_r, self._style):
             return self._style(val_or_r)
-        if isinstance(val_or_r, str) and '\033' in val_or_r:
+        if isinstance(val_or_r, str) and "\033" in val_or_r:
             return self.ansi(val_or_r)
         return self._style.from_color(
-            self._style.color_class(val_or_r, g, b, fg=self._fg))
+            self._style.color_class(val_or_r, g, b, fg=self._fg)
+        )
 
     def __iter__(self):
         """Iterates through all colors in extended colorset."""
@@ -158,13 +160,13 @@ class StyleFactory(ColorFactory):
     def stdout(self, newout):
         self._style._stdout = newout
 
-    def get_colors_from_string(self, color=''):
+    def get_colors_from_string(self, color=""):
         """
         Sets color based on string, use `.` or space for separator,
         and numbers, fg/bg, htmlcodes, etc all accepted (as strings).
         """
 
-        names = color.replace('.', ' ').split()
+        names = color.replace(".", " ").split()
         prev = self
         styleslist = []
         for name in names:
