@@ -291,10 +291,15 @@ class LocalMachine(BaseMachine):
 
         if cwd is None:
             cwd = self.cwd
-        if env is None:
-            env = self.env
-        if isinstance(env, BaseEnv):
-            env = env.getdict()
+
+        envs = [self.env, env]
+        env = {}
+        for _env in envs:
+            if not _env:
+                continue
+            if isinstance(_env, BaseEnv):
+                _env = _env.getdict()
+            env.update(_env)
 
         if self._as_user_stack:
             argv, executable = self._as_user_stack[-1](argv)

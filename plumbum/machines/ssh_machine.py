@@ -127,13 +127,20 @@ class SshMachine(BaseRemoteMachine):
         return "ssh://%s" % (self._fqhost, )
 
     @_setdoc(BaseRemoteMachine)
-    def popen(self, args, ssh_opts=(), **kwargs):
+    def popen(self, args, ssh_opts=(), env=None, cwd=None, **kwargs):
         cmdline = []
         cmdline.extend(ssh_opts)
         cmdline.append(self._fqhost)
-        if args and hasattr(self, "env"):
-            envdelta = self.env.getdelta()
-            cmdline.extend(["cd", str(self.cwd), "&&"])
+        if args:
+            envdelta = {}
+            if hasattr(self, "env"):
+                envdelta.update(self.env.getdelta())
+            if env:
+                envdelta.update(env)
+            if cwd is None:
+                cwd = getattr(self, "cwd", None)
+            if cwd:
+                cmdline.extend(["cd", str(cwd), "&&"])
             if envdelta:
                 cmdline.append("env")
                 cmdline.extend("%s=%s" % (k, shquote(v)) for k, v in envdelta.items())

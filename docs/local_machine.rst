@@ -33,8 +33,7 @@ The ``local.cwd`` attribute represents the current working directory. You can ch
     >>> local.cwd
     <Workdir d:\workspace\plumbum\docs>
 
-But a much more useful pattern is to use it as a *context manager*, so it behaves like 
-``pushd``/``popd``::
+You can also use it as a *context manager*, so it behaves like ``pushd``/``popd``::
 
     >>> with local.cwd("c:\\windows"):
     ...     print "%s:%s" % (local.cwd, (ls | wc["-l"])())
@@ -45,6 +44,13 @@ But a much more useful pattern is to use it as a *context manager*, so it behave
     c:\windows\system32: 3013
     >>> print "%s:%s" % (local.cwd, (ls | wc["-l"])())
     d:\workspace\plumbum: 9
+
+Finally, A more explicit and thread-safe way of running a command in a differet directory is using the ``.with_cwd()`` method:
+
+    >>> ls_in_docs = local.cmd.ls.with_cwd("docs")
+    >>> ls_in_docs()
+    'api\nchangelog.rst\n_cheatsheet.rst\ncli.rst\ncolorlib.rst\n_color_list.html\ncolors.rst\nconf.py\nindex.rst\nlocal_commands.rst\nlocal_machine.rst\nmake.bat\nMakefile\n_news.rst\npaths.rst\nquickref.rst\nremote.rst\n_static\n_templates\ntyped_env.rst\nutils.rst\n'
+
 
 Environment
 -----------

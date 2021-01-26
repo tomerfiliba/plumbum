@@ -432,6 +432,9 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                 assert printenv.with_env(FOO = "sea", BAR = "world")("FOO") == "sea\n"
                 assert printenv.with_env(FOO = "sea", BAR = "world")("BAR") == "world\n"
 
+            assert rem.cmd.pwd.with_cwd("/")() == "/\n"
+            assert rem.cmd.pwd['-L'].with_env(A='X').with_cwd("/")() == "/\n"
+
     @pytest.mark.skipif('useradd' not in local,
             reason = "System does not have useradd (Mac?)")
     def test_sshpass(self):

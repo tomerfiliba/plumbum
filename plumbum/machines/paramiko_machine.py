@@ -313,10 +313,13 @@ class ParamikoMachine(BaseRemoteMachine):
               stdout=None,
               stderr=None,
               new_session=False,
+              env=None,
               cwd=None):
         # new_session is ignored for ParamikoMachine
         argv = []
         envdelta = self.env.getdelta()
+        if env:
+            envdelta.update(env)
         argv.extend(["cd", str(cwd or self.cwd), "&&"])
         if envdelta:
             argv.append("env")
