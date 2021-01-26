@@ -22,3 +22,5 @@ tests/.cache/*
 *.pot
 /*venv*
 *.mypy_cache
+/plumbum/version.py
+/tests/nohup.out
