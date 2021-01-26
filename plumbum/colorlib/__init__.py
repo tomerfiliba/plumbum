@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """\
 The ``ansicolor`` object provides ``bg`` and ``fg`` to access colors,
 and attributes like bold and

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pytest
 from plumbum import local, SshMachine
 from plumbum.path.utils import copy, delete, move
@@ -52,4 +53,3 @@ class TestUtils:
 
                             # test rm
                             delete(dir)
-

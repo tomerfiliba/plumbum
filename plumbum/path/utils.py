@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from plumbum.path.base import Path
 from plumbum.lib import six
 from plumbum.machines.local import local, LocalPath

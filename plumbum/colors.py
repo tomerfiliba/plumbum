@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 This module imitates a real module, providing standard syntax
 like from `plumbum.colors` and from `plumbum.colors.bg` to work alongside

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from plumbum.lib import six, getdoc
 from plumbum.cli.i18n import get_translation_for
 from plumbum import local

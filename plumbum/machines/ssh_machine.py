@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from plumbum.lib import _setdoc, IS_WIN32
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession

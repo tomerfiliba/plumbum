@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from IPython.core.magic import (
     Magics,
     magics_class,  # type: ignore

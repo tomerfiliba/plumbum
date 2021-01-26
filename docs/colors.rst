@@ -8,7 +8,7 @@ Colors
 
 The purpose of the `plumbum.colors` library is to make adding
 text styles (such as color) to Python easy and safe. Color is often a great
-addition to shell scripts, but not a necessity, and implementing it properly 
+addition to shell scripts, but not a necessity, and implementing it properly
 is tricky. It is easy to end up with an unreadable color stuck on your terminal or
 with random unreadable symbols around your text. With the color module, you get quick,
 safe access to ANSI colors and attributes for your scripts. The module also provides an
@@ -46,7 +46,7 @@ To create a custom style you would do
     print(colors.green & colors.bold | "This is green and bold.")
 
 .. raw:: html
-    
+
     <font color="#008000"><b>This is green and bold.</b></font>
 
 You can use rgb colors, too:
@@ -75,7 +75,7 @@ Styles are accessed through the ``plumbum.colors`` object. This has the followin
       The global reset will restore all properties at once.
     ``do_nothing``
       Does nothing at all, but otherwise acts like any ``Style`` object. It is its own inverse. Useful for ``cli`` properties.
-      
+
     Styles loaded from a stylesheet dictionary, such as ``warn`` and ``info``.
       These allow you to set standard styles based on behavior rather than colors, and you can load a new stylesheet with ``colors.load_stylesheet(...)``.
 
@@ -93,8 +93,8 @@ Recreating and loading the default stylesheet would look like this:
     ...  success="fg green")
 
     >>> colors.load_stylesheet(default_styles)
-          
-          
+
+
 
 The ``colors.from_ansi(code)`` method allows
 you to create a Style from any ansi sequence, even complex or combined ones.
@@ -108,7 +108,7 @@ directly as methods. The first 16 primary colors, ``black``, ``red``, ``green``,
 ``blue``, ``magenta``, ``cyan``, etc, as well as ``reset``, are available. All 256 color
 names are available, but do not populate directly, so that auto-completion
 gives reasonable results. You can also access colors using strings and do ``colors.fg[string]``.
-Capitalization, underscores, and spaces (for strings) will be ignored. 
+Capitalization, underscores, and spaces (for strings) will be ignored.
 
 You can also access colors numerically with ``colors.fg[n]`` for the extended 256 color codes.
 ``colors.fg.rgb(r,g,b)`` will create a color from an
@@ -193,7 +193,7 @@ An example of the usage of unsafe ``colors`` manipulations inside a context mana
     with colors:
         colors.fg.red.now()
         print('This is in red')  .. raw:: html
-    
+
     <p><font color="#800000">This is in red</font><br/>
     <font color="#008000">This is in green <span style="text-decoration: underline;">and now also underlined!</span></font><br/>
     <font color="#008000"><span style="text-decoration: underline;">Underlined</span> and not underlined but still green.</font><br/>
@@ -201,13 +201,13 @@ An example of the usage of unsafe ``colors`` manipulations inside a context mana
 
         colors.green.now()
         print('This is green ' + colors.underline + 'and now also underlined!')
-        print('Underlined' + colors.underline.reset + ' and not underlined but still red') 
+        print('Underlined' + colors.underline.reset + ' and not underlined but still red')
     print('This is completly restored, even if an exception is thrown!')
 
 Output:
 
   .. raw:: html
-    
+
     <p><font color="#800000">This is in red</font><br/>
     <font color="#008000">This is in green <span style="text-decoration: underline;">and now also underlined!</span></font><br/>
     <font color="#008000"><span style="text-decoration: underline;">Underlined</span> and not underlined but still green.</font><br/>

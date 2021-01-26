@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 import pytest
 
@@ -19,4 +20,3 @@ class TestSudo:
     def test_as_user(self):
         with local.as_root():
             local["date"]()
-

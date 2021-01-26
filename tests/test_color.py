@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pytest
 from plumbum.colorlib.styles import ANSIStyle, Color, AttributeNotFound, ColorNotFound
 from plumbum.colorlib.names import color_html, FindNearest
@@ -66,4 +67,3 @@ class TestNearestColor:
                 for b in myrange:
                     near = FindNearest(r,g,b)
                     assert near.all_slow() == near.all_fast(), 'Tested: {0}, {1}, {2}'.format(r,g,b)
-

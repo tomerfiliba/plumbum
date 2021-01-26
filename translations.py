@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # If you are on macOS and using brew, you might need the following first:
 # export PATH="/usr/local/opt/gettext/bin:$PATH"
@@ -32,5 +33,3 @@ for translation in translation_dir // '*.po':
     if not local_dir.exists():
         local_dir.mkdir()
     msgfmt['-o',  local_dir / 'plumbum.cli.mo', translation] & FG
-
-

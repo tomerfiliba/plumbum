@@ -41,7 +41,7 @@ You can use ``.with_suffix(suffix, depth=1)`` to replace the last ``depth`` suff
 If you specify None for the depth, it will replace all suffixes (for example, ``.tar.gz`` is two suffixes).
 Note that a name like ``file.name.10.15.tar.gz`` will have "5" suffixes.
 Also available is ``.with_name(name)``, which will will replace the entire name.
-``preferred_suffix(suffix)`` will add a suffix if one does not exist (for default suffix situations). 
+``preferred_suffix(suffix)`` will add a suffix if one does not exist (for default suffix situations).
 
 Paths can be composed using ``/`` or ``[]``::
 
@@ -71,14 +71,14 @@ Paths also supply ``.iterdir()``, which may be faster on Python 3.5.
 
 Globing can be easily performed using ``//`` (floor division)::
     >>> p // "*.dll"
-    [<LocalPath c:\windows\masetupcaller.dll>, ...] 
+    [<LocalPath c:\windows\masetupcaller.dll>, ...]
     >>> p // "*/*.dll"
     [<LocalPath c:\windows\apppatch\acgenral.dll>, ...]
     >>> local.cwd / "docs" // "*.rst"
     [<LocalPath d:\workspace\plumbum\docs\cli.rst>, ...]
 
 
-.. versionadded:: 1.6 
+.. versionadded:: 1.6
 
     Globing a tuple will glob for each of the items in the tuple, and return the aggregated result.
 
@@ -91,7 +91,7 @@ Files can be opened and read directly::
 
     Support for treating a path exactly like a ``str``, so they can be used directly in ``open()``.
 
-Paths also supply ``.delete()``, ``.copy(destination, override=False)``, and ``.move(destination)``. On systems that 
+Paths also supply ``.delete()``, ``.copy(destination, override=False)``, and ``.move(destination)``. On systems that
 support it, you can also use ``.symlink(destination)``, ``.link(destination)``, and ``.unlink()``. You can change permissions with ``.chmod(mode)``,
 and change owners with ``.chown(owner=None, group=None, recursive=None)``. If ``recursive`` is ``None``, this will be recursive only
 if the path is a directory.

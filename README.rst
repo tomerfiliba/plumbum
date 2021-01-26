@@ -193,5 +193,3 @@ Colors and Styles
           colors.rgb(18, 146, 64) | "or full rgb colors",
           'can be used.')
     print("Unsafe " + colors.bg.dark_khaki + "color access" + colors.bg.reset + " is available too.")
-
-

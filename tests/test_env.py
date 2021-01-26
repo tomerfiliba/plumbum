@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pytest
 
 import plumbum
@@ -66,4 +67,3 @@ class TestEnv:
     @skip_on_windows
     def test_user(self):
         assert local.env.user
-

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 from contextlib import contextmanager
 from plumbum.commands import CommandNotFound, shquote, ConcreteCommand

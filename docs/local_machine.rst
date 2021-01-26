@@ -3,9 +3,9 @@
 The Local Object
 ================
 So far we've only seen running local commands, but there's more to the ``local`` object than
-this; it aims to "fully represent" the *local machine*. 
+this; it aims to "fully represent" the *local machine*.
 
-First, you should get acquainted with ``which``, which performs program name resolution in 
+First, you should get acquainted with ``which``, which performs program name resolution in
 the system ``PATH`` and returns the first match (or raises an exception if no match is found)::
 
     >>> local.which("ls")
@@ -15,7 +15,7 @@ the system ``PATH`` and returns the first match (or raises an exception if no ma
        [...]
     plumbum.commands.CommandNotFound: ('nonexistent', [...])
 
-Another member is ``python``, which is a command object that points to the current interpreter 
+Another member is ``python``, which is a command object that points to the current interpreter
 (``sys.executable``)::
 
     >>> local.python
@@ -54,7 +54,7 @@ Finally, A more explicit and thread-safe way of running a command in a differet 
 
 Environment
 -----------
-Much like ``cwd``, ``local.env`` represents the *local environment*. It is a dictionary-like 
+Much like ``cwd``, ``local.env`` represents the *local environment*. It is a dictionary-like
 object that holds **environment variables**, which you can get/set intuitively::
 
     >>> local.env["JAVA_HOME"]
@@ -84,7 +84,7 @@ it's own private copy of the environment::
                   |     raise KeyError(key) from None
                   | KeyError: 'FOO'
 
-In order to make cross-platform-ness easier, the ``local.env`` object provides some convenience 
+In order to make cross-platform-ness easier, the ``local.env`` object provides some convenience
 properties for getting the username (``.user``), the home path (``.home``), and the executable path
 (``path``) as a list. For instance::
 

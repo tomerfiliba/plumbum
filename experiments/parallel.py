@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from plumbum.commands.base import BaseCommand
 from plumbum.commands.processes import run_proc, CommandNotFound, ProcessExecutionError
 
@@ -174,10 +175,3 @@ if __name__ == "__main__":
     print(ret)
     ret = [int(pid) for pid in stdout]
     assert(len(set(ret))==3)
-
-
-
-
-
-
-

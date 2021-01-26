@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Test that PuttyMachine initializes its SshMachine correctly"""
 
 import pytest
