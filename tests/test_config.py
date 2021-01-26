@@ -6,7 +6,6 @@ import pytest
 from plumbum import local
 from plumbum.cli import Config, ConfigINI
 
-
 fname = "test_config.ini"
 
 

@@ -1,36 +1,37 @@
 # -*- coding: utf-8 -*-
-import pytest
-import pickle
 import os
-import sys
+import pickle
 import signal
+import sys
 import time
-from plumbum import (
-    local,
-    LocalPath,
-    FG,
-    BG,
-    TF,
-    RETCODE,
-    ERROUT,
-    TEE,
-    CommandNotFound,
-    ProcessExecutionError,
-    ProcessTimedOut,
-    ProcessLineTimedOut,
-)
-from plumbum.lib import six, IS_WIN32
-from plumbum.fs.atomic import AtomicFile, AtomicCounterFile, PidFile
-from plumbum.machines.local import LocalCommand, PlumbumLocalPopen
-from plumbum.path import RelativePath
-import plumbum
 
+import pytest
+
+import plumbum
+from plumbum import (
+    BG,
+    ERROUT,
+    FG,
+    RETCODE,
+    TEE,
+    TF,
+    CommandNotFound,
+    LocalPath,
+    ProcessExecutionError,
+    ProcessLineTimedOut,
+    ProcessTimedOut,
+    local,
+)
 from plumbum._testtools import (
+    skip_on_windows,
     skip_without_chown,
     skip_without_tty,
-    skip_on_windows,
     xfail_on_pypy,
 )
+from plumbum.fs.atomic import AtomicCounterFile, AtomicFile, PidFile
+from plumbum.lib import IS_WIN32, six
+from plumbum.machines.local import LocalCommand, PlumbumLocalPopen
+from plumbum.path import RelativePath
 
 # This is a string since we are testing local paths
 SDIR = os.path.dirname(os.path.abspath(__file__))
@@ -479,7 +480,7 @@ class TestLocalMachine:
 
     @skip_on_windows
     def test_piping(self):
-        from plumbum.cmd import ls, grep
+        from plumbum.cmd import grep, ls
 
         chain = ls | grep["\\.py"]
         assert "test_local.py" in chain().splitlines()
@@ -489,7 +490,7 @@ class TestLocalMachine:
 
     @skip_on_windows
     def test_redirection(self):
-        from plumbum.cmd import cat, ls, grep, rm
+        from plumbum.cmd import cat, grep, ls, rm
 
         chain = (ls | grep["\\.py"]) > "tmp.txt"
         chain()
@@ -523,7 +524,7 @@ class TestLocalMachine:
         assert "test_local.py" in out.decode(local.encoding).splitlines()
 
     def test_run(self):
-        from plumbum.cmd import ls, grep
+        from plumbum.cmd import grep, ls
 
         rc, out, err = (ls | grep["non_exist1N9"]).run(retcode=1)
         assert rc == 1
@@ -569,8 +570,8 @@ class TestLocalMachine:
 
     @skip_on_windows
     def test_iter_lines_timeout_by_type(self):
-        from plumbum.commands.processes import BY_TYPE
         from plumbum.cmd import bash
+        from plumbum.commands.processes import BY_TYPE
 
         cmd = bash[
             "-ce", "for ((i=0;1==1;i++)); do echo $i; sleep .3; echo $i 1>&2; done"
@@ -612,7 +613,7 @@ class TestLocalMachine:
 
     @skip_on_windows
     def test_modifiers(self):
-        from plumbum.cmd import ls, grep
+        from plumbum.cmd import grep, ls
 
         f = (ls["-a"] | grep["\\.py"]) & BG
         f.wait()
@@ -646,8 +647,8 @@ class TestLocalMachine:
 
     @skip_on_windows
     def test_logger_pipe(self):
-        from plumbum.commands.modifiers import PipeToLoggerMixin
         from plumbum.cmd import bash
+        from plumbum.commands.modifiers import PipeToLoggerMixin
 
         logs = []
 
@@ -673,8 +674,8 @@ class TestLocalMachine:
 
     @skip_on_windows
     def test_logger_pipe_line_timeout(self):
-        from plumbum.commands.modifiers import PipeToLoggerMixin
         from plumbum.cmd import bash
+        from plumbum.commands.modifiers import PipeToLoggerMixin
 
         cmd = bash["-ce", "for ((i=0;i<10;i++)); do echo .$i; sleep .$i; done"]
 
@@ -956,7 +957,7 @@ for _ in range(%s):
         LocalPath(local.cwd)
 
     def test_pipeline_failure(self):
-        from plumbum.cmd import ls, head
+        from plumbum.cmd import head, ls
 
         with pytest.raises(ProcessExecutionError):
             (ls["--no-such-option"] | head)()
@@ -974,8 +975,9 @@ for _ in range(%s):
         print((echo["one two three four"] | grep["six"] | grep["five"])(retcode=None))
 
     def test_pipeline_stdin(self):
-        from plumbum.cmd import cat
         from subprocess import PIPE
+
+        from plumbum.cmd import cat
 
         with (cat | cat).bgrun(stdin=PIPE) as future:
             future.stdin.write(b"foobar")
@@ -1046,8 +1048,9 @@ class TestLocalEncoding:
     )
     @pytest.mark.usefixtures("cleandir")
     def test_out_rich(self):
-        from plumbum.cmd import cat
         import io
+
+        from plumbum.cmd import cat
 
         with io.open("temp.txt", "w", encoding="utf8") as f:
             f.write(self.richstr)
@@ -1058,7 +1061,8 @@ class TestLocalEncoding:
     @pytest.mark.skipif(not six.PY3, reason="Unicode paths only supported on Python 3")
     @pytest.mark.usefixtures("cleandir")
     def test_runfile_rich(self):
-        import stat, os
+        import os
+        import stat
 
         name = self.richstr + six.str("_program")
         with open(name, "w") as f:

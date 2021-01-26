@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import errno
-from contextlib import contextmanager
-from plumbum.path.base import Path, FSUser
-from plumbum.lib import _setdoc, six
-from plumbum.commands import shquote, ProcessExecutionError
 import os
 import sys
+from contextlib import contextmanager
+
+from plumbum.commands import ProcessExecutionError, shquote
+from plumbum.lib import _setdoc, six
+from plumbum.path.base import FSUser, Path
 
 try:  # Py3
     import urllib.request as urllib

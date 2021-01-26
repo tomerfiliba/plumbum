@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, division
+from __future__ import division, print_function
 
-from abc import abstractmethod
-from plumbum.lib import six, _setdoc
-from plumbum import local
 import os
+from abc import abstractmethod
+
+from plumbum import local
+from plumbum.lib import _setdoc, six
 
 try:
     from configparser import ConfigParser, NoOptionError, NoSectionError  # Py3

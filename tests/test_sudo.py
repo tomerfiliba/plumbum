@@ -4,9 +4,7 @@ import pytest
 
 import plumbum
 from plumbum import local
-
 from plumbum._testtools import skip_on_windows
-
 
 # This is a seperate file to make seperating (ugly) sudo command easier
 # For example, you can now run test_local direcly without typing a password

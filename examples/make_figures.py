@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
 
-from plumbum.cmd import pdflatex, convert
-from plumbum import local, cli, FG
+from plumbum import FG, cli, local
+from plumbum.cmd import convert, pdflatex
 from plumbum.path.utils import delete
 
 

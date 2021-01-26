@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from plumbum.commands.base import BaseCommand
-from plumbum.commands.processes import run_proc, CommandNotFound, ProcessExecutionError
+from plumbum.commands.processes import CommandNotFound, ProcessExecutionError, run_proc
 
 
 def make_concurrent(self, rhs):
@@ -189,7 +189,7 @@ class ClusterSession(object):
 
 if __name__ == "__main__":
     from plumbum import local
-    from plumbum.cmd import ls, date, sleep
+    from plumbum.cmd import date, ls, sleep
 
     c = ls & date & sleep[1]
     print(c())

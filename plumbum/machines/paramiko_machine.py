@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
-import logging
 import errno
+import logging
 import os
-import stat
 import socket
+import stat
+
 from plumbum.commands.base import shquote
+from plumbum.commands.processes import ProcessLineTimedOut, iter_lines
+from plumbum.lib import _setdoc, six
 from plumbum.machines.base import PopenAddons
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
-from plumbum.lib import _setdoc, six
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath, StatRes
-from plumbum.commands.processes import iter_lines, ProcessLineTimedOut
-
 
 try:
     # Sigh... we need to gracefully-import paramiko for Sphinx builds, etc
@@ -486,7 +486,7 @@ class SocketCompatibleChannel(object):
 def _iter_lines(proc, decode, linesize, line_timeout=None):
 
     try:
-        from selectors import DefaultSelector, EVENT_READ
+        from selectors import EVENT_READ, DefaultSelector
     except ImportError:
         # Pre Python 3.4 implementation
         from select import select

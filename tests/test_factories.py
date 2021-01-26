@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-import pytest
-from plumbum import colors
-from plumbum.colorlib.styles import ANSIStyle as Style, ColorNotFound
-from plumbum.colorlib import htmlcolors
+
 import sys
+
+import pytest
+
+from plumbum import colors
+from plumbum.colorlib import htmlcolors
+from plumbum.colorlib.styles import ANSIStyle as Style
+from plumbum.colorlib.styles import ColorNotFound
 
 
 class TestImportColors:

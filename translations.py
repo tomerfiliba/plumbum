@@ -4,8 +4,8 @@
 # If you are on macOS and using brew, you might need the following first:
 # export PATH="/usr/local/opt/gettext/bin:$PATH"
 
-from plumbum import local, FG
-from plumbum.cmd import xgettext, msgmerge, msgfmt
+from plumbum import FG, local
+from plumbum.cmd import msgfmt, msgmerge, xgettext
 
 translation_dir = local.cwd / "plumbum/cli/i18n"
 template = translation_dir / "messages.pot"

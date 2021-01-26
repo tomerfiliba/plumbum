@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-import pytest
 import sys
+
+import pytest
 
 from plumbum import cli, local
 from plumbum.cli.terminal import get_terminal_size

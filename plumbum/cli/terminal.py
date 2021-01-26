@@ -4,12 +4,15 @@ Terminal-related utilities
 --------------------------
 """
 
-from __future__ import division, print_function, absolute_import
-import sys
+from __future__ import absolute_import, division, print_function
+
 import os
+import sys
+
 from plumbum import local
-from .termsize import get_terminal_size
+
 from .progress import Progress
+from .termsize import get_terminal_size
 
 
 def readline(message=""):

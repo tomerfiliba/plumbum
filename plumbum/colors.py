@@ -6,9 +6,10 @@ all the standard syntax for colors.
 """
 
 from __future__ import print_function
-import sys
-import os
+
 import atexit
+import os
+import sys
 
 from plumbum.colorlib import ansicolors, main
 

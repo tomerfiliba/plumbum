@@ -1,26 +1,27 @@
 # -*- coding: utf-8 -*-
-import pytest
-import sys
+import logging
 import os
 import socket
+import sys
 import time
-import logging
-import plumbum
-import env
 from copy import deepcopy
+
+import env
+import pytest
+
+import plumbum
 from plumbum import (
-    RemotePath,
-    SshMachine,
+    NOHUP,
     CommandNotFound,
     ProcessExecutionError,
-    local,
     ProcessTimedOut,
-    NOHUP,
+    RemotePath,
+    SshMachine,
+    local,
 )
-from plumbum import CommandNotFound
+from plumbum._testtools import skip_on_windows, skip_without_chown
 from plumbum.lib import six
-from plumbum.machines.session import IncorrectLogin, HostPublicKeyUnknown
-from plumbum._testtools import skip_without_chown, skip_on_windows
+from plumbum.machines.session import HostPublicKeyUnknown, IncorrectLogin
 
 try:
     import paramiko

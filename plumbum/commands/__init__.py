@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 
 from plumbum.commands.base import (
+    ERROUT,
+    BaseCommand,
+    ConcreteCommand,
     shquote,
     shquote_list,
-    BaseCommand,
-    ERROUT,
-    ConcreteCommand,
 )
 from plumbum.commands.modifiers import (
-    ExecutionModifier,
-    Future,
-    FG,
     BG,
+    FG,
+    NOHUP,
+    RETCODE,
     TEE,
     TF,
-    RETCODE,
-    NOHUP,
+    ExecutionModifier,
+    Future,
 )
-from plumbum.commands.processes import run_proc
 from plumbum.commands.processes import (
-    ProcessExecutionError,
-    ProcessTimedOut,
     CommandNotFound,
+    ProcessExecutionError,
     ProcessLineTimedOut,
+    ProcessTimedOut,
+    run_proc,
 )

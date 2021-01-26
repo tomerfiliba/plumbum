@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-import pytest
 import os
-import sys
 import platform
+import sys
+
+import pytest
 
 skip_without_chown = pytest.mark.skipif(
     not hasattr(os, "chown"), reason="os.chown not supported"

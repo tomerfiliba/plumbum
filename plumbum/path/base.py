@@ -4,11 +4,11 @@ from __future__ import absolute_import
 import itertools
 import operator
 import os
-from plumbum.lib import six
-from abc import abstractmethod, abstractproperty
 import warnings
-
+from abc import abstractmethod, abstractproperty
 from functools import reduce
+
+from plumbum.lib import six
 
 
 class FSUser(int):

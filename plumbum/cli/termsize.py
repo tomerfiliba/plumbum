@@ -3,7 +3,8 @@
 Terminal size utility
 ---------------------
 """
-from __future__ import division, print_function, absolute_import
+from __future__ import absolute_import, division, print_function
+
 import os
 import platform
 import warnings
@@ -43,7 +44,7 @@ def get_terminal_size(default=(80, 25)):
 
 def _get_terminal_size_windows():  # pragma: no cover
     try:
-        from ctypes import windll, create_string_buffer  # type: ignore
+        from ctypes import create_string_buffer, windll  # type: ignore
 
         STDERR_HANDLE = -12
         h = windll.kernel32.GetStdHandle(STDERR_HANDLE)

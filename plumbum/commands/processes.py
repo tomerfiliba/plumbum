@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
-import time
 import atexit
 import heapq
+import time
 from threading import Thread
+
 from plumbum.lib import IS_WIN32, six
 
 try:
-    from queue import Queue, Empty as QueueEmpty
+    from queue import Empty as QueueEmpty
+    from queue import Queue
 except ImportError:
-    from Queue import Queue, Empty as QueueEmpty  # type: ignore
+    from Queue import Empty as QueueEmpty  # type: ignore
+    from Queue import Queue
 
 try:
     from io import StringIO
@@ -26,7 +29,7 @@ def _check_process(proc, retcode, timeout, stdout, stderr):
 
 def _iter_lines_posix(proc, decode, linesize, line_timeout=None):
     try:
-        from selectors import DefaultSelector, EVENT_READ
+        from selectors import EVENT_READ, DefaultSelector
     except ImportError:
         # Pre Python 3.4 implementation
         from select import select

@@ -3,13 +3,14 @@
 Atomic file operations
 """
 
-import os
-import threading
-import sys
 import atexit
+import os
+import sys
+import threading
 from contextlib import contextmanager
-from plumbum.machines.local import local
+
 from plumbum.lib import six
+from plumbum.machines.local import local
 
 if not hasattr(threading, "get_ident"):
     try:
@@ -26,8 +27,8 @@ except ImportError:
 
     try:
         from pywintypes import error as WinError
-        from win32file import LockFileEx, UnlockFile, OVERLAPPED
         from win32con import LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY
+        from win32file import OVERLAPPED, LockFileEx, UnlockFile
     except ImportError:
         raise ImportError(
             "On Windows, we require Python for Windows Extensions (pywin32)"

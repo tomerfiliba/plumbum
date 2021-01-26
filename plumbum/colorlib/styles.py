@@ -8,16 +8,23 @@ but merely provides the workhorse for finding and manipulating colors.
 With the ``Style`` class, any color can be directly called or given to a with statement.
 """
 
-from __future__ import print_function, absolute_import
-import sys
+from __future__ import absolute_import, print_function
+
 import os
-import re
-from copy import copy
-from .names import color_names, color_html
-from .names import color_codes_simple, from_html
-from .names import FindNearest, attributes_ansi
-from abc import abstractmethod, ABCMeta
 import platform
+import re
+import sys
+from abc import ABCMeta, abstractmethod
+from copy import copy
+
+from .names import (
+    FindNearest,
+    attributes_ansi,
+    color_codes_simple,
+    color_html,
+    color_names,
+    from_html,
+)
 
 try:
     from abc import ABC

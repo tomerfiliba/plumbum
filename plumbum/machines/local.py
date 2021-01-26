@@ -1,38 +1,38 @@
 # -*- coding: utf-8 -*-
-import os
-import sys
-import subprocess
 import logging
-import time
+import os
 import platform
 import re
-from functools import partial
-from plumbum.path.local import LocalPath, LocalWorkdir
-from tempfile import mkdtemp
+import subprocess
+import sys
+import time
 from contextlib import contextmanager
-from plumbum.path.remote import RemotePath
+from functools import partial
+from tempfile import mkdtemp
+
 from plumbum.commands import CommandNotFound, ConcreteCommand
-from plumbum.machines.session import ShellSession
-from plumbum.lib import ProcInfo, IS_WIN32, six, StaticProperty
-from plumbum.commands.daemons import win32_daemonize, posix_daemonize
+from plumbum.commands.daemons import posix_daemonize, win32_daemonize
 from plumbum.commands.processes import iter_lines
-from plumbum.machines.base import BaseMachine
-from plumbum.machines.base import PopenAddons
+from plumbum.lib import IS_WIN32, ProcInfo, StaticProperty, six
+from plumbum.machines.base import BaseMachine, PopenAddons
 from plumbum.machines.env import BaseEnv
+from plumbum.machines.session import ShellSession
+from plumbum.path.local import LocalPath, LocalWorkdir
+from plumbum.path.remote import RemotePath
 
 if sys.version_info[0] >= 3:
     # python 3 has the new-and-improved subprocess module
-    from subprocess import Popen, PIPE
+    from subprocess import PIPE, Popen
 
     has_new_subprocess = True
 else:
     # otherwise, see if we have subprocess32
     try:
-        from subprocess32 import Popen, PIPE
+        from subprocess32 import PIPE, Popen
 
         has_new_subprocess = True
     except ImportError:
-        from subprocess import Popen, PIPE
+        from subprocess import PIPE, Popen
 
         has_new_subprocess = False
 
@@ -57,7 +57,7 @@ class PlumbumLocalPopen(PopenAddons):
 
 
 if IS_WIN32:
-    from plumbum.machines._windows import get_pe_subsystem, IMAGE_SUBSYSTEM_WINDOWS_CUI
+    from plumbum.machines._windows import IMAGE_SUBSYSTEM_WINDOWS_CUI, get_pe_subsystem
 
 logger = logging.getLogger("plumbum.local")
 

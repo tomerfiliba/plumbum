@@ -4,9 +4,11 @@ Color-related factories. They produce Styles.
 
 """
 
-from __future__ import print_function, absolute_import
+from __future__ import absolute_import, print_function
+
 import sys
 from functools import reduce
+
 from .names import color_names, default_styles
 from .styles import ColorNotFound
 

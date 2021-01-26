@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-import subprocess
-import os
-import time
-import sys
 import errno
+import os
 import signal
+import subprocess
+import sys
+import time
 import traceback
+
 from plumbum.commands.processes import ProcessExecutionError
 
 
