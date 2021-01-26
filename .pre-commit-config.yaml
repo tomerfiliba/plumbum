@@ -31,22 +31,25 @@ repos:
   hooks:
   - id: pyupgrade
 
-  # - repo: https://github.com/pycqa/flake8
-  #   rev: 3.8.4
-  #   hooks:
-  #   - id: flake8
-  #     exclude: docs/conf.py
-  #     additional_dependencies: [flake8-bugbear, flake8-print]
-  #
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v0.800
-  #   hooks:
-  #   - id: mypy
-  #     files: plumbum
-  #
-  # This wants the .mo files removed
-  # - repo: https://github.com/mgedmin/check-manifest
-  #   rev: "0.46"
-  #   hooks:
-  #   - id: check-manifest
-  #     stages: [manual]
+- repo: https://github.com/pycqa/flake8
+  rev: 3.8.4
+  hooks:
+  - id: flake8
+    exclude: docs/conf.py
+    additional_dependencies: [flake8-bugbear, flake8-print]
+    stages: [manual]
+
+
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v0.800
+  hooks:
+  - id: mypy
+    files: plumbum
+    stages: [manual]
+
+# This wants the .mo files removed
+- repo: https://github.com/mgedmin/check-manifest
+  rev: "0.46"
+  hooks:
+  - id: check-manifest
+    stages: [manual]
