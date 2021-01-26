@@ -89,4 +89,4 @@ class TestNearestColor:
                     near = FindNearest(r, g, b)
                     assert (
                         near.all_slow() == near.all_fast()
-                    ), "Tested: {0}, {1}, {2}".format(r, g, b)
+                    ), "Tested: {}, {}, {}".format(r, g, b)

@@ -286,14 +286,14 @@ class ShellSession(object):
             full_cmd = cmd.formulate(1)
         else:
             full_cmd = cmd
-        marker = "--.END%s.--" % (time.time() * random.random(),)
+        marker = "--.END{}.--".format(time.time() * random.random())
         if full_cmd.strip():
             full_cmd += " ; "
         else:
             full_cmd = "true ; "
-        full_cmd += "echo $? ; echo '%s'" % (marker,)
+        full_cmd += "echo $? ; echo '{}'".format(marker)
         if not self.isatty:
-            full_cmd += " ; echo '%s' 1>&2" % (marker,)
+            full_cmd += " ; echo '{}' 1>&2".format(marker)
         if self.custom_encoding:
             full_cmd = full_cmd.encode(self.custom_encoding)
         shell_logger.debug("Running %r", full_cmd)

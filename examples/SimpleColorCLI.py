@@ -6,7 +6,6 @@ from plumbum import cli, colors
 # plumbum.colors = StyleFactory(HTMLStyle)
 
 
-
 class MyApp(cli.Application):
     PROGNAME = colors.green
     VERSION = colors.blue | "1.0.2"

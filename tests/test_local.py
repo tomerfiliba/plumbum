@@ -297,7 +297,7 @@ class TestLocalPath:
                 (tmp / "pb_333").mkdir(exist_ok=False, parents=False, mode=0o333)
                 local.python(
                     "-c",
-                    "import os; os.mkdir({0}, 0o333)".format(repr(str(tmp / "py_333"))),
+                    "import os; os.mkdir({}, 0o333)".format(repr(str(tmp / "py_333"))),
                 )
                 pb_final_mode = oct((tmp / "pb_333").stat().st_mode)
                 py_final_mode = oct((tmp / "py_333").stat().st_mode)
@@ -639,7 +639,7 @@ class TestLocalMachine:
     def test_tee_race(self, capfd):
         from plumbum.cmd import seq
 
-        EXPECT = "".join("{0}\n".format(i) for i in range(1, 5001))
+        EXPECT = "".join("{}\n".format(i) for i in range(1, 5001))
         for _ in range(5):
             result = seq["1", "5000"] & TEE
             assert result[1] == EXPECT
@@ -890,10 +890,10 @@ except PidFileTaken:
 import time
 time.sleep(0.2)
 afc = AtomicCounterFile.open("counter")
-for _ in range(%s):
+for _ in range({}):
     print(afc.next())
     time.sleep(0.1)
-""" % (
+""".format(
             num_of_increments,
         )
 

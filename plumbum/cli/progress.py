@@ -112,7 +112,7 @@ class ProgressBase(six.ABC):
             return "Starting...                         "
         else:
             elapsed_time, time_remaining = list(map(str, self.time_remaining()))
-            return "{0} completed, {1} remaining".format(
+            return "{} completed, {} remaining".format(
                 elapsed_time.split(".")[0], time_remaining.split(".")[0]
             )
 
@@ -155,23 +155,21 @@ class Progress(ProgressBase):
         ending = " " + (
             self.str_time_remaining()
             if self.timer
-            else "{0} of {1} complete".format(self.value, self.length)
+            else "{} of {} complete".format(self.value, self.length)
         )
         if width - len(ending) < 10 or self.has_output:
             self.width = 0
             if self.timer:
-                return "{0:.0%} complete: {1}".format(
-                    percent, self.str_time_remaining()
-                )
+                return "{:.0%} complete: {}".format(percent, self.str_time_remaining())
             else:
-                return "{0:.0%} complete".format(percent)
+                return "{:.0%} complete".format(percent)
 
         else:
             self.width = width - len(ending) - 2 - 1
             nstars = int(percent * self.width)
             pbar = "[" + "*" * nstars + " " * (self.width - nstars) + "]" + ending
 
-        str_percent = " {0:.0%} ".format(percent)
+        str_percent = " {:.0%} ".format(percent)
 
         return (
             pbar[: self.width // 2 - 2]
@@ -222,7 +220,7 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
     def value(self, val):
         self._value = val
         self.prog.value = max(val, 0)
-        self.prog.description = "{0:.2%}".format(self.value / self.length)
+        self.prog.description = "{:.2%}".format(self.value / self.length)
         if self.timer and val > 0:
             self._label.value = self.HTMLBOX.format(self.str_time_remaining())
 

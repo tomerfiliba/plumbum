@@ -14,7 +14,7 @@ class MountEntry(object):
         self.options = options.split(",")
 
     def __str__(self):
-        return "%s on %s type %s (%s)" % (
+        return "{} on {} type {} ({})".format(
             self.dev,
             self.point,
             self.fstype,

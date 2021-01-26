@@ -32,7 +32,7 @@ class Path(str, six.ABC):
     CASE_SENSITIVE = True
 
     def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, str(self))
+        return "<{} {}>".format(self.__class__.__name__, str(self))
 
     def __div__(self, other):
         """Joins two paths"""
@@ -463,7 +463,7 @@ class RelativePath(object):
         return self.parts[index]
 
     def __repr__(self):
-        return "RelativePath(%r)" % (self.parts,)
+        return "RelativePath({!r})".format(self.parts)
 
     def __eq__(self, other):
         return str(self) == str(other)

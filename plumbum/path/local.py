@@ -58,7 +58,7 @@ class LocalPath(Path):
         if not parts:
             raise TypeError("At least one path part is required (none given)")
         if any(isinstance(path, RemotePath) for path in parts):
-            raise TypeError("LocalPath cannot be constructed from %r" % (parts,))
+            raise TypeError("LocalPath cannot be constructed from {!r}".format(parts))
         self = super(LocalPath, cls).__new__(
             cls, os.path.normpath(os.path.join(*(str(p) for p in parts)))
         )
@@ -191,14 +191,14 @@ class LocalPath(Path):
     @_setdoc(Path)
     def move(self, dst):
         if isinstance(dst, RemotePath):
-            raise TypeError("Cannot move local path %s to %r" % (self, dst))
+            raise TypeError("Cannot move local path {} to {!r}".format(self, dst))
         shutil.move(str(self), str(dst))
         return LocalPath(dst)
 
     @_setdoc(Path)
     def copy(self, dst, override=None):
         if isinstance(dst, RemotePath):
-            raise TypeError("Cannot copy local path %s to %r" % (self, dst))
+            raise TypeError("Cannot copy local path {} to {!r}".format(self, dst))
         dst = LocalPath(dst)
         if override is False and dst.exists():
             raise TypeError("File exists and override was not specified")
@@ -291,7 +291,7 @@ class LocalPath(Path):
     def link(self, dst):
         if isinstance(dst, RemotePath):
             raise TypeError(
-                "Cannot create a hardlink from local path %s to %r" % (self, dst)
+                "Cannot create a hardlink from local path {} to {!r}".format(self, dst)
             )
         if hasattr(os, "link"):
             os.link(str(self), str(dst))
@@ -308,7 +308,7 @@ class LocalPath(Path):
     def symlink(self, dst):
         if isinstance(dst, RemotePath):
             raise TypeError(
-                "Cannot create a symlink from local path %s to %r" % (self, dst)
+                "Cannot create a symlink from local path {} to {!r}".format(self, dst)
             )
         if hasattr(os, "symlink"):
             os.symlink(str(self), str(dst))
@@ -365,7 +365,7 @@ class LocalWorkdir(LocalPath):
         :param newdir: The destination director (a string or a ``LocalPath``)
         """
         if isinstance(newdir, RemotePath):
-            raise TypeError("newdir cannot be %r" % (newdir,))
+            raise TypeError("newdir cannot be {!r}".format(newdir))
         logger.debug("Chdir to %s", newdir)
         os.chdir(str(newdir))
         return self.__class__()

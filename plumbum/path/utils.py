@@ -20,7 +20,7 @@ def delete(*paths):
         elif hasattr(p, "__iter__"):
             delete(*p)
         else:
-            raise TypeError("Cannot delete %r" % (p,))
+            raise TypeError("Cannot delete {!r}".format(p))
 
 
 def _move(src, dst):
@@ -45,7 +45,7 @@ def move(src, dst):
             dst.mkdir()
         elif not dst.is_dir():
             raise ValueError(
-                "When using multiple sources, dst %r must be a directory" % (dst,)
+                "When using multiple sources, dst {!r} must be a directory".format(dst)
             )
         for src2 in src:
             move(src2, dst)
@@ -83,7 +83,7 @@ def copy(src, dst):
             dst.mkdir()
         elif not dst.is_dir():
             raise ValueError(
-                "When using multiple sources, dst %r must be a directory" % (dst,)
+                "When using multiple sources, dst {!r} must be a directory".format(dst)
             )
         for src2 in src:
             copy(src2, dst)

@@ -300,7 +300,7 @@ class BoundCommand(BaseCommand):
         self.args = list(args)
 
     def __repr__(self):
-        return "BoundCommand(%r, %r)" % (self.cmd, self.args)
+        return "BoundCommand({!r}, {!r})".format(self.cmd, self.args)
 
     def _get_encoding(self):
         return self.cmd._get_encoding()
@@ -329,7 +329,7 @@ class BoundEnvCommand(BaseCommand):
         self.cwd = cwd
 
     def __repr__(self):
-        return "BoundEnvCommand(%r, %r)" % (self.cmd, self.env)
+        return "BoundEnvCommand({!r}, {!r})".format(self.cmd, self.env)
 
     def _get_encoding(self):
         return self.cmd._get_encoding()
@@ -358,7 +358,7 @@ class Pipeline(BaseCommand):
         self.dstcmd = dstcmd
 
     def __repr__(self):
-        return "Pipeline(%r, %r)" % (self.srccmd, self.dstcmd)
+        return "Pipeline({!r}, {!r})".format(self.srccmd, self.dstcmd)
 
     def _get_encoding(self):
         return self.srccmd._get_encoding() or self.dstcmd._get_encoding()
@@ -438,7 +438,7 @@ class BaseRedirection(BaseCommand):
         return self.cmd._get_encoding()
 
     def __repr__(self):
-        return "%s(%r, %r)" % (self.__class__.__name__, self.cmd, self.file)
+        return "{}({!r}, {!r})".format(self.__class__.__name__, self.cmd, self.file)
 
     def formulate(self, level=0, args=()):
         return self.cmd.formulate(level + 1, args) + [
@@ -455,7 +455,7 @@ class BaseRedirection(BaseCommand):
         from plumbum.machines.remote import RemotePath
 
         if self.KWARG in kwargs and kwargs[self.KWARG] not in (PIPE, None):
-            raise RedirectionError("%s is already redirected" % (self.KWARG,))
+            raise RedirectionError("{} is already redirected".format(self.KWARG))
         if isinstance(self.file, RemotePath):
             raise TypeError("Cannot redirect to/from remote paths")
         if isinstance(self.file, six.string_types + (LocalPath,)):
@@ -522,7 +522,7 @@ class StdinDataRedirection(BaseCommand):
 
     def formulate(self, level=0, args=()):
         return [
-            "echo %s" % (shquote(self.data),),
+            "echo {}".format(shquote(self.data)),
             "|",
             self.cmd.formulate(level + 1, args),
         ]
@@ -563,7 +563,7 @@ class ConcreteCommand(BaseCommand):
         return str(self.executable)
 
     def __repr__(self):
-        return "{0}({1})".format(type(self).__name__, self.executable)
+        return "{}({})".format(type(self).__name__, self.executable)
 
     def _get_encoding(self):
         return self.custom_encoding

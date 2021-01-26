@@ -339,7 +339,7 @@ class RemotePath(Path):
 
     @_setdoc(Path)
     def as_uri(self, scheme="ssh"):
-        return "{0}://{1}{2}".format(
+        return "{}://{}{}".format(
             scheme, self.remote._fqhost, urllib.pathname2url(str(self))
         )
 
@@ -373,7 +373,7 @@ class RemoteWorkdir(RemotePath):
 
     def chdir(self, newdir):
         """Changes the current working directory to the given one"""
-        self.remote._session.run("cd %s" % (shquote(newdir),))
+        self.remote._session.run("cd {}".format(shquote(newdir)))
         if hasattr(self.remote, "_cwd"):
             del self.remote._cwd
         return self.__class__(self.remote)

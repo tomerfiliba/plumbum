@@ -26,7 +26,7 @@ class Future(object):
         self._stderr = None
 
     def __repr__(self):
-        return "<Future %r (%s)>" % (
+        return "<Future {!r} ({})>".format(
             self.proc.argv,
             self._returncode if self.ready() else "running",
         )
@@ -87,8 +87,8 @@ class ExecutionModifier(object):
             for prop in slots_list:
                 if prop[0] != "_":
                     slots[prop] = getattr(self, prop)
-        mystrs = ("{0} = {1}".format(name, slots[name]) for name in slots)
-        return "{0}({1})".format(self.__class__.__name__, ", ".join(mystrs))
+        mystrs = ("{} = {}".format(name, slots[name]) for name in slots)
+        return "{}({})".format(self.__class__.__name__, ", ".join(mystrs))
 
     @classmethod
     def __call__(cls, *args, **kwargs):
@@ -457,7 +457,7 @@ class PipeToLoggerMixin:
                     level = levels[typ]
                     for line in lines.splitlines():
                         if prefix:
-                            line = "%s: %s" % (prefix, line)
+                            line = "{}: {}".format(prefix, line)
                         self.log(level, line)
                 return popen.returncode
 

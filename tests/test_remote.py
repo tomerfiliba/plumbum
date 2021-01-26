@@ -195,7 +195,7 @@ class TestRemotePath:
                     (tmp / "pb_333").mkdir(exist_ok=False, parents=False, mode=0o333)
                     rem.python(
                         "-c",
-                        "import os; os.mkdir({0}, 0o333)".format(
+                        "import os; os.mkdir({}, 0o333)".format(
                             repr(str(tmp / "py_333"))
                         ),
                     )

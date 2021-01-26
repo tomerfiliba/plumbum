@@ -81,7 +81,7 @@ class TypedEnv(MutableMapping):
         def convert(self, s):
             s = s.lower()
             if s not in ("yes", "no", "true", "false", "1", "0"):
-                raise ValueError("Unrecognized boolean value: %r" % (s,))
+                raise ValueError("Unrecognized boolean value: {!r}".format(s))
             return s in ("yes", "true", "1")
 
         def __set__(self, instance, value):
@@ -114,11 +114,11 @@ class TypedEnv(MutableMapping):
 
     def __init__(self, env=os.environ):
         self._env = env
-        self._defined_keys = set(
+        self._defined_keys = {
             k
             for (k, v) in inspect.getmembers(self.__class__)
             if isinstance(v, self._BaseVar)
-        )
+        }
 
     def __iter__(self):
         return iter(dir(self))
@@ -153,7 +153,9 @@ class TypedEnv(MutableMapping):
         try:
             return self._raw_get(name)
         except EnvironmentVariableError:
-            raise AttributeError("%s has no attribute %r" % (self.__class__, name))
+            raise AttributeError(
+                "{} has no attribute {!r}".format(self.__class__, name)
+            )
 
     def __getitem__(self, key):
         return getattr(self, key)  # delegate through the descriptors

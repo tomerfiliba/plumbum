@@ -16,17 +16,17 @@ class TestEnv:
     def test_change_env(self):
         with local.env(silly=12):
             assert 12 == local.env["silly"]
-            actual = set(x.split("=")[0] for x in printenv().splitlines() if "=" in x)
-            localenv = set(x[0] for x in local.env)
+            actual = {x.split("=")[0] for x in printenv().splitlines() if "=" in x}
+            localenv = {x[0] for x in local.env}
             print(actual, localenv)
             assert localenv == actual
             assert len(local.env) == len(actual)
 
     def test_dictlike(self):
-        keys = set(x.split("=")[0] for x in printenv().splitlines() if "=" in x)
-        values = set(
+        keys = {x.split("=")[0] for x in printenv().splitlines() if "=" in x}
+        values = {
             x.split("=", 1)[1].strip() for x in printenv().splitlines() if "=" in x
-        )
+        }
 
         assert keys == set(local.env.keys())
         assert len(values) == len(set(local.env.values()))
