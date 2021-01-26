@@ -35,6 +35,9 @@ of command-line interface (CLI) programs.
 
 See https://plumbum.readthedocs.io for full details
 """
+
+# Avoids a circular import error later
+import plumbum.path
 from plumbum.commands import (
     ProcessExecutionError,
     CommandNotFound,
