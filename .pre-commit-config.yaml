@@ -44,6 +44,7 @@ repos:
   #   - id: mypy
   #     files: plumbum
   #
+  # This wants the .mo files removed
   # - repo: https://github.com/mgedmin/check-manifest
   #   rev: "0.46"
   #   hooks:
