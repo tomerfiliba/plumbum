@@ -3,13 +3,15 @@
 Progress bar
 ------------
 """
-from __future__ import print_function, division
+from __future__ import division, print_function
+
+import datetime
+import sys
 import warnings
 from abc import abstractmethod
-import datetime
-from plumbum.lib import six
+
 from plumbum.cli.termsize import get_terminal_size
-import sys
+from plumbum.lib import six
 
 
 class ProgressBase(six.ABC):
@@ -196,9 +198,9 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             try:
-                from ipywidgets import IntProgress, HTML, HBox  # type: ignore
+                from ipywidgets import HTML, HBox, IntProgress  # type: ignore
             except ImportError:  # Support IPython < 4.0
-                from IPython.html.widgets import IntProgress, HTML, HBox  # type: ignore
+                from IPython.html.widgets import HTML, HBox, IntProgress  # type: ignore
 
         super(ProgressIPy, self).__init__(*args, **kargs)
         self.prog = IntProgress(max=self.length)

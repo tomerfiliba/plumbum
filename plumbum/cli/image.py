@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function, division
+from __future__ import division, print_function
+
+import sys
 
 from plumbum import colors
-from .termsize import get_terminal_size
+
 from .. import cli
-import sys
+from .termsize import get_terminal_size
 
 
 class Image(object):

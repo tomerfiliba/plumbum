@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
+import functools
 import shlex
 import subprocess
 import sys
-import functools
 from contextlib import contextmanager
-from plumbum.commands.processes import run_proc, iter_lines
-import plumbum.commands.modifiers
-from plumbum.lib import six
-from tempfile import TemporaryFile
 from subprocess import PIPE, Popen
+from tempfile import TemporaryFile
 from types import MethodType
+
+import plumbum.commands.modifiers
+from plumbum.commands.processes import iter_lines, run_proc
+from plumbum.lib import six
 
 
 class RedirectionError(Exception):

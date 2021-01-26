@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
-import pytest
 import os
 import sys
 import time
+
 import psutil
-from plumbum import local, NOHUP
+import pytest
+
+from plumbum import NOHUP, local
 
 try:
     from plumbum.cmd import bash, echo
 except ImportError:
     bash = None
     echo = None
-from plumbum.path.utils import delete
 from plumbum._testtools import skip_on_windows
+from plumbum.path.utils import delete
 
 
 @skip_on_windows

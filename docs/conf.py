@@ -11,7 +11,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os, time
+import os
+import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -52,7 +54,7 @@ copyright = u"%d, Tomer Filiba, licensed under Attribution-ShareAlike 3.0" % (
 # built documents.
 #
 # The short X.Y version.
-from plumbum.version import version_string, release_date
+from plumbum.version import release_date, version_string
 
 version = version_string
 # The full version, including alpha/beta/rc tags.

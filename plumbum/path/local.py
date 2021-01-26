@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
-import os
-import sys
-import glob
-import shutil
 import errno
+import glob
 import logging
+import os
+import shutil
+import sys
 from contextlib import contextmanager
-from plumbum.lib import _setdoc, IS_WIN32, six
-from plumbum.path.base import Path, FSUser
+
+from plumbum.lib import IS_WIN32, _setdoc, six
+from plumbum.path.base import FSUser, Path
 from plumbum.path.remote import RemotePath
 
 try:
-    from pwd import getpwuid, getpwnam
     from grp import getgrgid, getgrnam
+    from pwd import getpwnam, getpwuid
 except ImportError:
 
     def getpwuid(x):  # type: ignore
@@ -32,8 +33,9 @@ try:  # Py3
     import urllib.parse as urlparse
     import urllib.request as urllib
 except ImportError:
-    import urlparse  # type: ignore
     import urllib  # type: ignore
+
+    import urlparse  # type: ignore
 
 logger = logging.getLogger("plumbum.local")
 

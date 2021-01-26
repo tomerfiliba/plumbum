@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import struct
+
 from plumbum.lib import six
 
 LFANEW_OFFSET = 30 * 2

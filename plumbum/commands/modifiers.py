@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
-from select import select
-from subprocess import PIPE
 import sys
 import time
 from itertools import chain
+from select import select
+from subprocess import PIPE
 
-from plumbum.commands.processes import run_proc, ProcessExecutionError
-from plumbum.commands.processes import BY_TYPE
 import plumbum.commands.base
+from plumbum.commands.processes import BY_TYPE, ProcessExecutionError, run_proc
 from plumbum.lib import read_fd_decode_safely
 
 

@@ -1,23 +1,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+from .application import Application
+from .config import Config, ConfigINI
 from .switches import (
-    SwitchError,
-    switch,
-    autoswitch,
-    SwitchAttr,
-    Flag,
+    CSV,
     CountOf,
-    positional,
-)
-from .switches import (
-    Range,
-    Set,
     ExistingDirectory,
     ExistingFile,
+    Flag,
     NonexistentPath,
     Predicate,
-    CSV,
+    Range,
+    Set,
+    SwitchAttr,
+    SwitchError,
+    autoswitch,
+    positional,
+    switch,
 )
-from .application import Application
-from .config import ConfigINI, Config

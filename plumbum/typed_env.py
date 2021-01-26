@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import os
 import inspect
+import os
 
 try:
     from collections.abc import MutableMapping

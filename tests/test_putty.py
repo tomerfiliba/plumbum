@@ -2,8 +2,8 @@
 """Test that PuttyMachine initializes its SshMachine correctly"""
 
 import pytest
-from plumbum import PuttyMachine, SshMachine
 
+from plumbum import PuttyMachine, SshMachine
 from plumbum._testtools import xfail_on_pypy
 
 

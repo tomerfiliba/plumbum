@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import with_statement, print_function
-import unittest
+from __future__ import print_function, with_statement
+
 import os
+import unittest
+
 from plumbum import colors
 
 # This is really intended to be run manually, so the output can be observed, rather than with py.test

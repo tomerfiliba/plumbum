@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import unittest
 
-from plumbum import local, SshMachine
 from parallel import Cluster
 
+from plumbum import SshMachine, local
 
 TEST_HOST = "127.0.0.1"
 

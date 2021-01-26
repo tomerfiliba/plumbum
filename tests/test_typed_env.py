@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+
 from plumbum.typed_env import TypedEnv
 
 

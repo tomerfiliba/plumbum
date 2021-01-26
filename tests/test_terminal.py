@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-import pytest
 import sys
 import time
 from contextlib import contextmanager
 
-from plumbum.cli.terminal import ask, choose, prompt, hexdump, Progress
+import pytest
+
+from plumbum.cli.terminal import Progress, ask, choose, hexdump, prompt
 from plumbum.lib import StringIO
 
 try:

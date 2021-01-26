@@ -39,14 +39,20 @@ See https://plumbum.readthedocs.io for full details
 # Avoids a circular import error later
 import plumbum.path
 from plumbum.commands import (
-    ProcessExecutionError,
+    BG,
+    ERROUT,
+    FG,
+    NOHUP,
+    RETCODE,
+    TEE,
+    TF,
     CommandNotFound,
-    ProcessTimedOut,
+    ProcessExecutionError,
     ProcessLineTimedOut,
+    ProcessTimedOut,
 )
-from plumbum.commands import FG, BG, TEE, TF, RETCODE, ERROUT, NOHUP
-from plumbum.path import Path, LocalPath, RemotePath
-from plumbum.machines import local, BaseRemoteMachine, SshMachine, PuttyMachine
+from plumbum.machines import BaseRemoteMachine, PuttyMachine, SshMachine, local
+from plumbum.path import LocalPath, Path, RemotePath
 from plumbum.version import version
 
 __author__ = "Tomer Filiba (tomerfiliba@gmail.com)"

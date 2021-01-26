@@ -20,8 +20,8 @@ if loc is None or loc.startswith("en"):
 
 
 else:
-    import os
     import gettext
+    import os
 
     # If not installed with setuptools, this might not be available
     try:
@@ -30,7 +30,7 @@ else:
         pkg_resources = None
 
     try:
-        from typing import Tuple, List, Callable
+        from typing import Callable, List, Tuple
     except ImportError:
         pass
 

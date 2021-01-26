@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-import pytest
 import os
 import sys
 import tempfile
+
+import pytest
 
 if sys.version_info[0] < 3:
     collect_ignore = ["test_3_cli.py"]

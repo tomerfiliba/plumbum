@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-import time
-import random
 import logging
+import random
 import threading
+import time
+
 from plumbum.commands import BaseCommand, run_proc
 from plumbum.commands.processes import ProcessExecutionError
 from plumbum.lib import six

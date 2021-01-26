@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import with_statement, print_function
+from __future__ import print_function, with_statement
+
 from plumbum import colors
 
 with colors:

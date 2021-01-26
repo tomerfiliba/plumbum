@@ -1,29 +1,30 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, print_function, absolute_import
+from __future__ import absolute_import, division, print_function
+
+import functools
 import os
 import sys
-import functools
-from textwrap import TextWrapper
 from collections import defaultdict
-
-from plumbum.lib import six, getdoc
-from .terminal import get_terminal_size
-from .switches import (
-    SwitchError,
-    UnknownSwitch,
-    MissingArgument,
-    WrongArgumentType,
-    MissingMandatorySwitch,
-    SwitchCombinationError,
-    PositionalArgumentsError,
-    switch,
-    SubcommandError,
-    Flag,
-    CountOf,
-)
+from textwrap import TextWrapper
 
 from plumbum import colors, local
 from plumbum.cli.i18n import get_translation_for
+from plumbum.lib import getdoc, six
+
+from .switches import (
+    CountOf,
+    Flag,
+    MissingArgument,
+    MissingMandatorySwitch,
+    PositionalArgumentsError,
+    SubcommandError,
+    SwitchCombinationError,
+    SwitchError,
+    UnknownSwitch,
+    WrongArgumentType,
+    switch,
+)
+from .terminal import get_terminal_size
 
 _translation = get_translation_for(__name__)
 T_, ngettext = _translation.gettext, _translation.ngettext

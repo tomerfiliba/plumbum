@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-from plumbum.lib import _setdoc, IS_WIN32
+import warnings
+
+from plumbum.commands import ProcessExecutionError, shquote
+from plumbum.lib import IS_WIN32, _setdoc
+from plumbum.machines.local import local
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
-from plumbum.machines.local import local
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath
-from plumbum.commands import ProcessExecutionError, shquote
-import warnings
 
 
 class SshTunnel(object):

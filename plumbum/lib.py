@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-import sys
-import os
-from contextlib import contextmanager
-from abc import ABCMeta
 import inspect
+import os
+import sys
+from abc import ABCMeta
+from contextlib import contextmanager
 
 IS_WIN32 = sys.platform == "win32"
 

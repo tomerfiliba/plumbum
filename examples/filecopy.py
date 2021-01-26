@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import logging
-from plumbum import cli, local
-from plumbum.path.utils import delete, copy
 
+from plumbum import cli, local
+from plumbum.path.utils import copy, delete
 
 logger = logging.getLogger("FileCopier")
 

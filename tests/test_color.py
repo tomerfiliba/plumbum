@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import pytest
-from plumbum.colorlib.styles import ANSIStyle, Color, AttributeNotFound, ColorNotFound
-from plumbum.colorlib.names import color_html, FindNearest
 
 # Just check to see if this file is importable
 from plumbum.cli.image import Image
+from plumbum.colorlib.names import FindNearest, color_html
+from plumbum.colorlib.styles import ANSIStyle, AttributeNotFound, Color, ColorNotFound
 
 
 class TestNearestColor:

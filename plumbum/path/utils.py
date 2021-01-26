@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from plumbum.path.base import Path
-from plumbum.lib import six
-from plumbum.machines.local import local, LocalPath
 import os
+
+from plumbum.lib import six
+from plumbum.machines.local import LocalPath, local
+from plumbum.path.base import Path
 
 
 def delete(*paths):

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import re
 from contextlib import contextmanager
-from plumbum.commands import CommandNotFound, shquote, ConcreteCommand
-from plumbum.lib import _setdoc, ProcInfo, six
-from plumbum.machines.local import LocalPath
 from tempfile import NamedTemporaryFile
+
+from plumbum.commands import CommandNotFound, ConcreteCommand, shquote
+from plumbum.lib import ProcInfo, _setdoc, six
 from plumbum.machines.base import BaseMachine
 from plumbum.machines.env import BaseEnv
+from plumbum.machines.local import LocalPath
 from plumbum.path.remote import RemotePath, RemoteWorkdir, StatRes
 
 
