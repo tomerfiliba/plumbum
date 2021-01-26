@@ -7,4 +7,3 @@ do
     echo $i >> slow_process.out
     sleep 1
 done
-

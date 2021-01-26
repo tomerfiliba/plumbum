@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 $ python simple_cli.py --help
 simple_cli.py v1.0
@@ -56,4 +57,3 @@ class MyCompiler(cli.Application):
 
 if __name__ == "__main__":
     MyCompiler()
-

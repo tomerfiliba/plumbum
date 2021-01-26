@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from plumbum.paramiko_machine import ParamikoMachine as PM
 from plumbum import local
 local.env.path.append("c:\\progra~1\\git\\bin")
@@ -12,5 +13,3 @@ mgrep=m["grep"]
 (mls | grep["\\."])()
 
 (ls | mgrep["\\."])()
-
-

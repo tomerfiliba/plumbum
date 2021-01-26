@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from plumbum.commands.processes import CommandNotFound
 from plumbum.commands.processes import ProcessExecutionError
 from plumbum.commands.processes import ProcessTimedOut

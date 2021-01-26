@@ -31,5 +31,3 @@ anaconda login
 for f in `ls outputdir/*/*.tar.bz2`; do anaconda upload $f; done
 anaconda logout
 ```
-
-

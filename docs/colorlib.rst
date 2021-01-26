@@ -42,7 +42,7 @@ The ``colors`` object has the following available objects:
     ``do_nothing``
       Does nothing at all, but otherwise acts like any ``Style`` object. It is its own inverse. Useful for ``cli`` properties.
 
-The ``colors`` object can be used in a with statement, which resets all styles on leaving 
+The ``colors`` object can be used in a with statement, which resets all styles on leaving
 the statement body. Although factories do support
 some of the same methods as a Style, their primary purpose is to generate Styles. The colors object has a
 ``use_color`` property that can be set to force the use of color. A ``stdout`` property is provided
@@ -69,13 +69,13 @@ Full hex codes can be used, too. If no match is found,
 these will be the true 24 bit color value.
 
 The ``fg`` and ``bg`` also can be put in with statements, and they
-will restore the foreground and background color only, respectively. 
+will restore the foreground and background color only, respectively.
 
 ``colors.rgb(r,g,b)`` will create a color from an
 input red, green, and blue values (integers from 0-255). ``colors.rgb(code)`` will allow
 you to input an html style hex sequence. These work on ``fg`` and ``bg`` too. The ``repr`` of
 styles is smart and will show you the closest color to the one you selected if you didn't exactly
-select a color through RGB. 
+select a color through RGB.
 
 Style manipulations
 ===================
@@ -118,13 +118,13 @@ An example of the usage of unsafe ``colors`` manipulations inside a context mana
         print('This is in red')
         colors.green.now()
         print('This is green ' + colors.underline + 'and now also underlined!')
-        print('Underlined' + colors.underline.reset + ' and not underlined but still red') 
+        print('Underlined' + colors.underline.reset + ' and not underlined but still red')
     print('This is completly restored, even if an exception is thrown!')
 
 Output:
 
   .. raw:: html
-    
+
     <p><font color="#800000">This is in red</font><br/>
     <font color="#008000">This is in green <span style="text-decoration: underline;">and now also underlined!</span></font><br/>
     <font color="#008000"><span style="text-decoration: underline;">Underlined</span> and not underlined but still green.</font><br/>
@@ -210,7 +210,7 @@ If you want to enforce a specific representation, you can use ``.basic`` (8 colo
 the output representation and name of the best match color. The internal RGB colors
 are remembered, so this is a non-destructive operation.
 
-To limit the use of color to one of these styles, set ``colors.use_color`` to 1 for 8 colors, 2 for 16 colors, 
+To limit the use of color to one of these styles, set ``colors.use_color`` to 1 for 8 colors, 2 for 16 colors,
 3 for 256 colors, or 4 for true color. It will be guessed based on your system on initialisation.
 
 The Classes
@@ -254,7 +254,7 @@ For example, if you wanted to create an HTMLStyle and HTMLcolors, you could do::
             for attr in sorted(self.attributes):
                 if self.attributes[attr]:
                     result += '<' + self.attribute_names[attr] + '>'
-     
+
             for attr in reversed(sorted(self.attributes)):
                 if not self.attributes[attr]:
                     result += '</' + self.attribute_names[attr].split()[0] + '>'
@@ -266,7 +266,7 @@ For example, if you wanted to create an HTMLStyle and HTMLcolors, you could do::
             return result
 
     htmlcolors = StyleFactory(HTMLStyle)
-    
+
 This doesn't support global resets, since that's not how HTML works, but otherwise is a working implementation. This is an example of how easy it is to add support for other output formats.
 
 An example of usage::
@@ -285,7 +285,7 @@ The above color table can be generated with::
 
 
 .. note::
-    
+
     ``HTMLStyle`` is implemented in the library, as well, with the
     ``htmlcolors`` object available in ``plumbum.colorlib``. It was used
     to create the colored output in this document, with small changes

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import errno
 from contextlib import contextmanager
 from plumbum.path.base import Path, FSUser

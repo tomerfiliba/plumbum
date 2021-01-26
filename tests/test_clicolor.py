@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from plumbum import cli, colors
 
 colors.use_color = 3

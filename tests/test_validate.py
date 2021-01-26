@@ -88,5 +88,3 @@ class TestProg:
         _, rc = MainValidator.run(["prog", "1", "3"], exit = False)
         assert rc == 0
         assert "1 3" ==  capsys.readouterr()[0].strip()
-
-

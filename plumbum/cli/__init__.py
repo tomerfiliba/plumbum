@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
 from .switches import SwitchError, switch, autoswitch, SwitchAttr, Flag, CountOf, positional

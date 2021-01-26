@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import inspect
 
@@ -6,7 +7,7 @@ try:
 except ImportError:
     from collections import MutableMapping
 
-    
+
 NO_DEFAULT = object()
 
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Color-related factories. They produce Styles.
 

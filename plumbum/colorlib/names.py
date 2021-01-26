@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Names for the standard and extended color set.
 Extended set is similar to `vim wiki <http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim>`_, `colored <https://pypi.python.org/pypi/colored>`_, etc. Colors based on `wikipedia <https://en.wikipedia.org/wiki/ANSI_escape_code#Colors>`_.

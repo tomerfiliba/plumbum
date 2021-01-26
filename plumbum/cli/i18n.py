@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import locale
 
 # High performance method for English (no translation needed)

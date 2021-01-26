@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 This file provides two classes, `Color` and `Style`.
 

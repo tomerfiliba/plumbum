@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 import pytest
 from plumbum import colors
@@ -16,7 +17,7 @@ class TestImportColors:
         assert str(bold) == str(colors.bold)
 
 class TestANSIColor:
-    
+
     def setup_method(self, method):
         colors.use_color = True
 
@@ -179,4 +180,3 @@ class TestHTMLColor:
         assert "This is tagged" |  htmlcolors.red & htmlcolors.em == twin_tagged
         assert "This is tagged" | htmlcolors.em & htmlcolors.red == twin_tagged
         assert htmlcolors.em & htmlcolors.red | "This is tagged" == twin_tagged
-

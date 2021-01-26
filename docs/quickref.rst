@@ -14,7 +14,7 @@ Optional arguments
 ================ =========================
 Utility          Usage
 ================ =========================
-``Flag``         True or False descriptor 
+``Flag``         True or False descriptor
 ``SwitchAttr``   A value as a descriptor
 ``CountOf``      Counting version of ``Flag``
 ``@switch``      A function that runs when passed
@@ -42,7 +42,7 @@ Common options
 **************
 
 ================== ============================ ==================
-Option             Used in                      Usage  
+Option             Used in                      Usage
 ================== ============================ ==================
 First argument     Non-auto                     The name, or list of names, includes dash(es)
 Second argument    All                          The validator
@@ -96,7 +96,7 @@ Subtraction       Relative path
 Property                                            Description                 Compare to Pathlib
 =================================================== =========================== ==================
 ``.name``                                           The file name               ✓
-``.basename``                                       DEPRECATED                  
+``.basename``                                       DEPRECATED
 ``.stem``                                           Name without extension      ✓
 ``.dirname``                                        Directory name              ✗
 ``.root``                                           The file tree root          ✓
@@ -114,7 +114,7 @@ Property                                            Description                 
     Missing:
              .anchor
 
-    
+
 
 =================================================== =========================== ==================
 Method                                              Description                 Compare to Pathlib
@@ -197,5 +197,3 @@ Main colors: ``black`` ``red`` ``green`` ``yellow`` ``blue`` ``magenta`` ``cyan`
 Default styles: ``warn`` ``title`` ``fatal`` ``highlight`` ``info`` ``success``
 
 Attrs: ``bold`` ``dim`` ``underline`` ``italics`` ``reverse`` ``strikeout`` ``hidden``
-
-

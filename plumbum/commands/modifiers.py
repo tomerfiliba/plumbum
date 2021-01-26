@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 from select import select
 from subprocess import PIPE
