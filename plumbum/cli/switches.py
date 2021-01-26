@@ -408,8 +408,8 @@ class Validator(six.ABC):
             for prop in getattr(cls, "__slots__", ()):
                 if prop[0] != "_":
                     slots[prop] = getattr(self, prop)
-        mystrs = ("{0} = {1}".format(name, slots[name]) for name in slots)
-        return "{0}({1})".format(self.__class__.__name__, ", ".join(mystrs))
+        mystrs = ("{} = {}".format(name, slots[name]) for name in slots)
+        return "{}({})".format(self.__class__.__name__, ", ".join(mystrs))
 
 
 # ===================================================================================================
@@ -434,7 +434,7 @@ class Range(Validator):
         self.end = end
 
     def __repr__(self):
-        return "[{0:d}..{1:d}]".format(self.start, self.end)
+        return "[{:d}..{:d}]".format(self.start, self.end)
 
     def __call__(self, obj):
         obj = int(obj)
@@ -499,15 +499,15 @@ class Set(Validator):
             except ValueError:
                 pass
         raise ValueError(
-            "Invalid value: %s (Expected one of %s)" % (value, self.values)
+            "Invalid value: {} (Expected one of {})".format(value, self.values)
         )
 
     def choices(self, partial=""):
-        choices = set(
+        choices = {
             opt if isinstance(opt, str) else "({})".format(opt) for opt in self.values
-        )
+        }
         if partial:
-            choices = set(opt for opt in choices if opt.lower().startswith(partial))
+            choices = {opt for opt in choices if opt.lower().startswith(partial)}
         return choices
 
 
@@ -544,7 +544,7 @@ def MakeDirectory(val):
     p = local.path(val)
     if p.is_file():
         raise ValueError(
-            "{0} is a file, should be nonexistent, or a directory".format(val)
+            "{} is a file, should be nonexistent, or a directory".format(val)
         )
     elif not p.exists():
         p.mkdir()

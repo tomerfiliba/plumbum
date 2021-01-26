@@ -232,7 +232,7 @@ class ParamikoMachine(BaseRemoteMachine):
         self.host = host
         kwargs = {}
         if user:
-            self._fqhost = "%s@%s" % (user, host)
+            self._fqhost = "{}@{}".format(user, host)
             kwargs["username"] = user
         else:
             self._fqhost = host
@@ -274,7 +274,7 @@ class ParamikoMachine(BaseRemoteMachine):
         BaseRemoteMachine.__init__(self, encoding, connect_timeout)
 
     def __str__(self):
-        return "paramiko://%s" % (self._fqhost,)
+        return "paramiko://{}".format(self._fqhost)
 
     def close(self):
         BaseRemoteMachine.close(self)
@@ -327,7 +327,7 @@ class ParamikoMachine(BaseRemoteMachine):
         argv.extend(["cd", str(cwd or self.cwd), "&&"])
         if envdelta:
             argv.append("env")
-            argv.extend("%s=%s" % (k, shquote(v)) for k, v in envdelta.items())
+            argv.extend("{}={}".format(k, shquote(v)) for k, v in envdelta.items())
         argv.extend(args.formulate())
         cmdline = " ".join(argv)
         logger.debug(cmdline)
@@ -346,11 +346,11 @@ class ParamikoMachine(BaseRemoteMachine):
     @_setdoc(BaseRemoteMachine)
     def download(self, src, dst):
         if isinstance(src, LocalPath):
-            raise TypeError("src of download cannot be %r" % (src,))
+            raise TypeError("src of download cannot be {!r}".format(src))
         if isinstance(src, RemotePath) and src.remote != self:
-            raise TypeError("src %r points to a different remote machine" % (src,))
+            raise TypeError("src {!r} points to a different remote machine".format(src))
         if isinstance(dst, RemotePath):
-            raise TypeError("dst of download cannot be %r" % (dst,))
+            raise TypeError("dst of download cannot be {!r}".format(dst))
         return self._download(
             src if isinstance(src, RemotePath) else self.path(src),
             dst if isinstance(dst, LocalPath) else LocalPath(dst),
@@ -370,11 +370,11 @@ class ParamikoMachine(BaseRemoteMachine):
     @_setdoc(BaseRemoteMachine)
     def upload(self, src, dst):
         if isinstance(src, RemotePath):
-            raise TypeError("src of upload cannot be %r" % (src,))
+            raise TypeError("src of upload cannot be {!r}".format(src))
         if isinstance(dst, LocalPath):
-            raise TypeError("dst of upload cannot be %r" % (dst,))
+            raise TypeError("dst of upload cannot be {!r}".format(dst))
         if isinstance(dst, RemotePath) and dst.remote != self:
-            raise TypeError("dst %r points to a different remote machine" % (dst,))
+            raise TypeError("dst {!r} points to a different remote machine".format(dst))
         return self._upload(
             src if isinstance(src, LocalPath) else LocalPath(src),
             dst if isinstance(dst, RemotePath) else self.path(dst),

@@ -119,7 +119,7 @@ class ColorFactory(object):
 
     def __repr__(self):
         """Simple representation of the class by name."""
-        return "<{0}>".format(self.__class__.__name__)
+        return "<{}>".format(self.__class__.__name__)
 
 
 class StyleFactory(ColorFactory):

@@ -217,7 +217,7 @@ class LocalMachine(BaseMachine):
         parts2 = [str(self.cwd)]
         for p in parts:
             if isinstance(p, RemotePath):
-                raise TypeError("Cannot construct LocalPath from %r" % (p,))
+                raise TypeError("Cannot construct LocalPath from {!r}".format(p))
             parts2.append(self.env.expanduser(str(p)))
         return LocalPath(os.path.join(*parts2))
 
@@ -248,7 +248,7 @@ class LocalMachine(BaseMachine):
                 # search for command
                 return LocalCommand(self.which(cmd))
         else:
-            raise TypeError("cmd must not be a RemotePath: %r" % (cmd,))
+            raise TypeError("cmd must not be a RemotePath: {!r}".format(cmd))
 
     def _popen(
         self,
@@ -445,7 +445,7 @@ class LocalMachine(BaseMachine):
                     [
                         "runas",
                         "/savecred",
-                        "/user:%s" % (username,),
+                        "/user:{}".format(username),
                         '"' + " ".join(str(a) for a in argv) + '"',
                     ],
                     self.which("runas"),

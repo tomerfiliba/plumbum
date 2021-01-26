@@ -431,4 +431,4 @@ def from_html(color):
 
 def to_html(r, g, b):
     """Convert rgb to html hex code."""
-    return "#{0:02x}{1:02x}{2:02x}".format(r, g, b)
+    return "#{:02x}{:02x}{:02x}".format(r, g, b)

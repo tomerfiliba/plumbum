@@ -94,7 +94,7 @@ def choose(question, options, default=None):
         sys.stdout.write("(%d) %s\n" % (i, text))
     if default is not None:
         if defindex is None:
-            msg = "Choice [%s]: " % (default,)
+            msg = "Choice [{}]: ".format(default)
         else:
             msg = "Choice [%d]: " % (defindex,)
     else:
@@ -129,7 +129,7 @@ def prompt(question, type=str, default=NotImplemented, validator=lambda val: Tru
     """
     question = question.rstrip(" \t:")
     if default is not NotImplemented:
-        question += " [%s]" % (default,)
+        question += " [{}]".format(default)
     question += ": "
     while True:
         try:
@@ -145,12 +145,12 @@ def prompt(question, type=str, default=NotImplemented, validator=lambda val: Tru
         try:
             ans = type(ans)
         except (TypeError, ValueError) as ex:
-            sys.stdout.write("Invalid value (%s), please try again\n" % (ex,))
+            sys.stdout.write("Invalid value ({}), please try again\n".format(ex))
             continue
         try:
             valid = validator(ans)
         except ValueError as ex:
-            sys.stdout.write("%s, please try again\n" % (ex,))
+            sys.stdout.write("{}, please try again\n".format(ex))
             continue
         if not valid:
             sys.stdout.write("Value not in specified range, please try again\n")
@@ -180,7 +180,7 @@ def hexdump(data_or_stream, bytes_per_line=16, aggregate=True):
     prev = None
     skipped = False
     for i, chunk in enumerate(read_chunk()):
-        hexd = " ".join("%02x" % (ord(ch),) for ch in chunk)
+        hexd = " ".join("{:02x}".format(ord(ch)) for ch in chunk)
         text = "".join(ch if 32 <= ord(ch) < 127 else "." for ch in chunk)
         if aggregate and prev == chunk:
             skipped = True
@@ -188,7 +188,7 @@ def hexdump(data_or_stream, bytes_per_line=16, aggregate=True):
         prev = chunk
         if skipped:
             yield "*"
-        yield "%06x | %s| %s" % (
+        yield "{:06x} | {}| {}".format(
             i * bytes_per_line,
             hexd.ljust(bytes_per_line * 3, " "),
             text,
@@ -210,7 +210,7 @@ def pager(rows, pagercmd=None):  # pragma: no cover
     pg = pagercmd.popen(stdout=None, stderr=None)
     try:
         for row in rows:
-            line = "%s\n" % (row,)
+            line = "{}\n".format(row)
             try:
                 pg.stdin.write(line)
                 pg.stdin.flush()

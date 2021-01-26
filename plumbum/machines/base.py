@@ -14,7 +14,7 @@ class PopenAddons(object):
         """This verifies that the correct command is attributed."""
         if getattr(self, "_timed_out", False):
             raise ProcessTimedOut(
-                "Process did not terminate within %s seconds" % (timeout,),
+                "Process did not terminate within {} seconds".format(timeout),
                 getattr(self, "argv", None),
             )
 

@@ -101,7 +101,7 @@ class AtomicFile(object):
 
     def __repr__(self):
         return (
-            "<AtomicFile: %s>" % (self.path,)
+            "<AtomicFile: {}>".format(self.path)
             if self._fileobj
             else "<AtomicFile: closed>"
         )
@@ -240,7 +240,7 @@ class AtomicCounterFile(object):
         if value is None:
             value = self.initial
         if not isinstance(value, six.integer_types):
-            raise TypeError("value must be an integer, not %r" % (type(value),))
+            raise TypeError("value must be an integer, not {!r}".format(type(value)))
         self.atomicfile.write_atomic(str(value).encode("utf8"))
 
     def next(self):
@@ -316,7 +316,8 @@ class PidFile(object):
             except (IOError, OSError):
                 pid = "Unknown"
             raise PidFileTaken(
-                "PID file %r taken by process %s" % (self.atomicfile.path, pid), pid
+                "PID file {!r} taken by process {}".format(self.atomicfile.path, pid),
+                pid,
             )
         else:
             self.atomicfile.write_atomic(str(os.getpid()).encode("utf8"))

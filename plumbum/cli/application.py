@@ -63,7 +63,7 @@ class Subcommand(object):
             try:
                 cls = getattr(mod, clsname)
             except AttributeError:
-                raise ImportError("cannot import name {0}".format(clsname))
+                raise ImportError("cannot import name {}".format(clsname))
             self.subapplication = cls
         return self.subapplication
 
@@ -273,7 +273,7 @@ class Application(object):
         """
 
         def wrapper(subapp):
-            attrname = "_subcommand_{0}".format(
+            attrname = "_subcommand_{}".format(
                 subapp if isinstance(subapp, str) else subapp.__name__
             )
             setattr(cls, attrname, Subcommand(name, subapp))
@@ -413,7 +413,7 @@ class Application(object):
                 continue  # skip if overridden by command line arguments
 
             val = self._handle_argument(envval, swinfo.argtype, env)
-            envname = "${0}".format(env)
+            envname = "${}".format(env)
             if swinfo.list:
                 # multiple values over environment variables are not supported,
                 # this will require some sort of escaping and separator convention
@@ -464,18 +464,18 @@ class Application(object):
                         )
                     )
                 )
-            requirements[swinfo.func] = set(
+            requirements[swinfo.func] = {
                 self._switches_by_name[req] for req in swinfo.requires
-            )
-            exclusions[swinfo.func] = set(
+            }
+            exclusions[swinfo.func] = {
                 self._switches_by_name[exc] for exc in swinfo.excludes
-            )
+            }
 
         # TODO: compute topological order
 
         gotten = set(swfuncs.keys())
         for func in gotten:
-            missing = set(f.func for f in requirements[func]) - gotten
+            missing = {f.func for f in requirements[func]} - gotten
             if missing:
                 raise SwitchCombinationError(
                     T_("Given {0}, the following are missing {1}").format(
@@ -483,7 +483,7 @@ class Application(object):
                         [self._switches_by_func[f].names[0] for f in missing],
                     )
                 )
-            invalid = set(f.func for f in exclusions[func]) & gotten
+            invalid = {f.func for f in exclusions[func]} & gotten
             if invalid:
                 raise SwitchCombinationError(
                     T_("Given {0}, the following are invalid {1}").format(
@@ -714,7 +714,7 @@ class Application(object):
 
         if self._subcommands:
             for name, subcls in sorted(self._subcommands.items()):
-                subapp = (subcls.get())("{0} {1}".format(self.PROGNAME, name))
+                subapp = (subcls.get())("{} {}".format(self.PROGNAME, name))
                 subapp.parent = self
                 for si in subapp._switches_by_func.values():
                     if si.group == "Meta-switches":
@@ -846,10 +846,10 @@ class Application(object):
         tailargs = m.args[1:]  # skip self
         if m.defaults:
             for i, d in enumerate(reversed(m.defaults)):
-                tailargs[-i - 1] = "[{0}={1}]".format(tailargs[-i - 1], d)
+                tailargs[-i - 1] = "[{}={}]".format(tailargs[-i - 1], d)
         if m.varargs:
             tailargs.append(
-                "{0}...".format(
+                "{}...".format(
                     m.varargs,
                 )
             )
@@ -894,7 +894,7 @@ class Application(object):
                             typename = si.argtype.__name__
                         else:
                             typename = str(si.argtype)
-                        argtype = " {0}:{1}".format(si.argname.upper(), typename)
+                        argtype = " {}:{}".format(si.argname.upper(), typename)
                     else:
                         argtype = ""
                     prefix = swnames + argtype
@@ -995,4 +995,4 @@ class Application(object):
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
         ver_name = ver if ver is not None else T_("(version not set)")
-        print("{0} {1}".format(self.PROGNAME, ver_name))
+        print("{} {}".format(self.PROGNAME, ver_name))

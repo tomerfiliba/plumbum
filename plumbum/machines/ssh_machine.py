@@ -21,7 +21,7 @@ class SshTunnel(object):
 
     def __repr__(self):
         if self._session.alive():
-            return "<SshTunnel %s>" % (self._session.proc,)
+            return "<SshTunnel {}>".format(self._session.proc)
         else:
             return "<SshTunnel (defunct)>"
 
@@ -108,7 +108,7 @@ class SshMachine(BaseRemoteMachine):
         scp_args = []
         ssh_args = []
         if user:
-            self._fqhost = "%s@%s" % (user, host)
+            self._fqhost = "{}@{}".format(user, host)
         else:
             self._fqhost = host
         if port:
@@ -130,7 +130,7 @@ class SshMachine(BaseRemoteMachine):
         )
 
     def __str__(self):
-        return "ssh://%s" % (self._fqhost,)
+        return "ssh://{}".format(self._fqhost)
 
     @_setdoc(BaseRemoteMachine)
     def popen(self, args, ssh_opts=(), env=None, cwd=None, **kwargs):
@@ -149,7 +149,9 @@ class SshMachine(BaseRemoteMachine):
                 cmdline.extend(["cd", str(cwd), "&&"])
             if envdelta:
                 cmdline.append("env")
-                cmdline.extend("%s=%s" % (k, shquote(v)) for k, v in envdelta.items())
+                cmdline.extend(
+                    "{}={}".format(k, shquote(v)) for k, v in envdelta.items()
+                )
             if isinstance(args, (tuple, list)):
                 cmdline.extend(args)
             else:
@@ -266,7 +268,7 @@ class SshMachine(BaseRemoteMachine):
                 sock.connect(("localhost", 1234))
                 # sock is now tunneled to megazord:5678
         """
-        ssh_opts = ["-L", "[%s]:%s:[%s]:%s" % (lhost, lport, dhost, dport)]
+        ssh_opts = ["-L", "[{}]:{}:[{}]:{}".format(lhost, lport, dhost, dport)]
         proc = self.popen((), ssh_opts=ssh_opts, new_session=True)
         return SshTunnel(
             ShellSession(
@@ -284,28 +286,28 @@ class SshMachine(BaseRemoteMachine):
     @_setdoc(BaseRemoteMachine)
     def download(self, src, dst):
         if isinstance(src, LocalPath):
-            raise TypeError("src of download cannot be %r" % (src,))
+            raise TypeError("src of download cannot be {!r}".format(src))
         if isinstance(src, RemotePath) and src.remote != self:
-            raise TypeError("src %r points to a different remote machine" % (src,))
+            raise TypeError("src {!r} points to a different remote machine".format(src))
         if isinstance(dst, RemotePath):
-            raise TypeError("dst of download cannot be %r" % (dst,))
+            raise TypeError("dst of download cannot be {!r}".format(dst))
         if IS_WIN32:
             src = self._translate_drive_letter(src)
             dst = self._translate_drive_letter(dst)
-        self._scp_command("%s:%s" % (self._fqhost, shquote(src)), dst)
+        self._scp_command("{}:{}".format(self._fqhost, shquote(src)), dst)
 
     @_setdoc(BaseRemoteMachine)
     def upload(self, src, dst):
         if isinstance(src, RemotePath):
-            raise TypeError("src of upload cannot be %r" % (src,))
+            raise TypeError("src of upload cannot be {!r}".format(src))
         if isinstance(dst, LocalPath):
-            raise TypeError("dst of upload cannot be %r" % (dst,))
+            raise TypeError("dst of upload cannot be {!r}".format(dst))
         if isinstance(dst, RemotePath) and dst.remote != self:
-            raise TypeError("dst %r points to a different remote machine" % (dst,))
+            raise TypeError("dst {!r} points to a different remote machine".format(dst))
         if IS_WIN32:
             src = self._translate_drive_letter(src)
             dst = self._translate_drive_letter(dst)
-        self._scp_command(src, "%s:%s" % (self._fqhost, shquote(dst)))
+        self._scp_command(src, "{}:{}".format(self._fqhost, shquote(dst)))
 
 
 class PuttyMachine(SshMachine):
@@ -358,7 +360,7 @@ class PuttyMachine(SshMachine):
         )
 
     def __str__(self):
-        return "putty-ssh://%s" % (self._fqhost,)
+        return "putty-ssh://{}".format(self._fqhost)
 
     def _translate_drive_letter(self, path):
         # pscp takes care of windows paths automatically

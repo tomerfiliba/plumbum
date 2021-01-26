@@ -141,7 +141,7 @@ class BaseEnv(object):
     def getdict(self):
         """Returns the environment as a real dictionary"""
         self._curr["PATH"] = self.path.join()
-        return dict((k, str(v)) for k, v in self._curr.items())
+        return {k: str(v) for k, v in self._curr.items()}
 
     @property
     def path(self):
