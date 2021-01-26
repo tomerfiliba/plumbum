@@ -23,46 +23,53 @@ try:
     import fcntl
 except ImportError:
     import msvcrt
+
     try:
         from pywintypes import error as WinError
         from win32file import LockFileEx, UnlockFile, OVERLAPPED
         from win32con import LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY
     except ImportError:
         raise ImportError(
-            "On Windows, we require Python for Windows Extensions (pywin32)")
+            "On Windows, we require Python for Windows Extensions (pywin32)"
+        )
 
     @contextmanager
     def locked_file(fileno, blocking=True):
         hndl = msvcrt.get_osfhandle(fileno)
         try:
             LockFileEx(
-                hndl, LOCKFILE_EXCLUSIVE_LOCK |
-                (0 if blocking else LOCKFILE_FAIL_IMMEDIATELY), 0xffffffff,
-                0xffffffff, OVERLAPPED())
+                hndl,
+                LOCKFILE_EXCLUSIVE_LOCK
+                | (0 if blocking else LOCKFILE_FAIL_IMMEDIATELY),
+                0xFFFFFFFF,
+                0xFFFFFFFF,
+                OVERLAPPED(),
+            )
         except WinError:
             _, ex, _ = sys.exc_info()
             raise WindowsError(*ex.args)
         try:
             yield
         finally:
-            UnlockFile(hndl, 0, 0, 0xffffffff, 0xffffffff)
+            UnlockFile(hndl, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF)
+
+
 else:
     if hasattr(fcntl, "lockf"):
 
         @contextmanager
         def locked_file(fileno, blocking=True):
-            fcntl.lockf(fileno,
-                        fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
+            fcntl.lockf(fileno, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
             try:
                 yield
             finally:
                 fcntl.lockf(fileno, fcntl.LOCK_UN)
+
     else:
 
         @contextmanager
         def locked_file(fileno, blocking=True):
-            fcntl.flock(fileno,
-                        fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
+            fcntl.flock(fileno, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
             try:
                 yield
             finally:
@@ -92,8 +99,11 @@ class AtomicFile(object):
         self.reopen()
 
     def __repr__(self):
-        return "<AtomicFile: %s>" % (
-            self.path, ) if self._fileobj else "<AtomicFile: closed>"
+        return (
+            "<AtomicFile: %s>" % (self.path,)
+            if self._fileobj
+            else "<AtomicFile: closed>"
+        )
 
     def __del__(self):
         self.close()
@@ -116,7 +126,8 @@ class AtomicFile(object):
         """
         self.close()
         self._fileobj = os.fdopen(
-            os.open(str(self.path), os.O_CREAT | os.O_RDWR, 384), "r+b", 0)
+            os.open(str(self.path), os.O_CREAT | os.O_RDWR, 384), "r+b", 0
+        )
 
     @contextmanager
     def locked(self, blocking=True):
@@ -174,9 +185,9 @@ class AtomicFile(object):
         with self.locked():
             self._fileobj.seek(0)
             while data:
-                chunk = data[:self.CHUNK_SIZE]
+                chunk = data[: self.CHUNK_SIZE]
                 self._fileobj.write(chunk)
-                data = data[len(chunk):]
+                data = data[len(chunk) :]
             self._fileobj.flush()
             self._fileobj.truncate()
 
@@ -228,8 +239,7 @@ class AtomicCounterFile(object):
         if value is None:
             value = self.initial
         if not isinstance(value, six.integer_types):
-            raise TypeError(
-                "value must be an integer, not %r" % (type(value), ))
+            raise TypeError("value must be an integer, not %r" % (type(value),))
         self.atomicfile.write_atomic(str(value).encode("utf8"))
 
     def next(self):
@@ -305,8 +315,8 @@ class PidFile(object):
             except (IOError, OSError):
                 pid = "Unknown"
             raise PidFileTaken(
-                "PID file %r taken by process %s" % (self.atomicfile.path,
-                                                     pid), pid)
+                "PID file %r taken by process %s" % (self.atomicfile.path, pid), pid
+            )
         else:
             self.atomicfile.write_atomic(str(os.getpid()).encode("utf8"))
             atexit.register(self.release)

@@ -91,9 +91,9 @@ def choose(question, options, default=None):
         sys.stdout.write("(%d) %s\n" % (i, text))
     if default is not None:
         if defindex is None:
-            msg = "Choice [%s]: " % (default, )
+            msg = "Choice [%s]: " % (default,)
         else:
-            msg = "Choice [%d]: " % (defindex, )
+            msg = "Choice [%d]: " % (defindex,)
     else:
         msg = "Choice: "
     while True:
@@ -113,10 +113,7 @@ def choose(question, options, default=None):
         return choices[choice]
 
 
-def prompt(question,
-           type=str,
-           default=NotImplemented,
-           validator=lambda val: True):
+def prompt(question, type=str, default=NotImplemented, validator=lambda val: True):
     """
     Presents the user with a validated question, keeps asking if validation does not pass.
 
@@ -129,7 +126,7 @@ def prompt(question,
     """
     question = question.rstrip(" \t:")
     if default is not NotImplemented:
-        question += " [%s]" % (default, )
+        question += " [%s]" % (default,)
     question += ": "
     while True:
         try:
@@ -138,23 +135,22 @@ def prompt(question,
             ans = ""
         if not ans:
             if default is not NotImplemented:
-                #sys.stdout.write("\b%s\n" % (default,))
+                # sys.stdout.write("\b%s\n" % (default,))
                 return default
             else:
                 continue
         try:
             ans = type(ans)
         except (TypeError, ValueError) as ex:
-            sys.stdout.write("Invalid value (%s), please try again\n" % (ex, ))
+            sys.stdout.write("Invalid value (%s), please try again\n" % (ex,))
             continue
         try:
             valid = validator(ans)
         except ValueError as ex:
-            sys.stdout.write("%s, please try again\n" % (ex, ))
+            sys.stdout.write("%s, please try again\n" % (ex,))
             continue
         if not valid:
-            sys.stdout.write(
-                "Value not in specified range, please try again\n")
+            sys.stdout.write("Value not in specified range, please try again\n")
             continue
         return ans
 
@@ -171,16 +167,17 @@ def hexdump(data_or_stream, bytes_per_line=16, aggregate=True):
                 if not buf:
                     break
                 yield buf
+
     else:
 
         def read_chunk():
             for i in range(0, len(data_or_stream), bytes_per_line):
-                yield data_or_stream[i:i + bytes_per_line]
+                yield data_or_stream[i : i + bytes_per_line]
 
     prev = None
     skipped = False
     for i, chunk in enumerate(read_chunk()):
-        hexd = " ".join("%02x" % (ord(ch), ) for ch in chunk)
+        hexd = " ".join("%02x" % (ord(ch),) for ch in chunk)
         text = "".join(ch if 32 <= ord(ch) < 127 else "." for ch in chunk)
         if aggregate and prev == chunk:
             skipped = True
@@ -188,8 +185,11 @@ def hexdump(data_or_stream, bytes_per_line=16, aggregate=True):
         prev = chunk
         if skipped:
             yield "*"
-        yield "%06x | %s| %s" % (i * bytes_per_line,
-                                 hexd.ljust(bytes_per_line * 3, " "), text)
+        yield "%06x | %s| %s" % (
+            i * bytes_per_line,
+            hexd.ljust(bytes_per_line * 3, " "),
+            text,
+        )
         skipped = False
 
 
@@ -207,7 +207,7 @@ def pager(rows, pagercmd=None):  # pragma: no cover
     pg = pagercmd.popen(stdout=None, stderr=None)
     try:
         for row in rows:
-            line = "%s\n" % (row, )
+            line = "%s\n" % (row,)
             try:
                 pg.stdin.write(line)
                 pg.stdin.flush()

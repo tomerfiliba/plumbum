@@ -37,6 +37,7 @@ class EnvPathList(list):
 
 class BaseEnv(object):
     """The base class of LocalEnv and RemoteEnv"""
+
     __slots__ = ["_curr", "_path", "_path_factory", "__weakref__"]
     CASE_SENSITIVE = True
 
@@ -100,8 +101,7 @@ class BaseEnv(object):
 
     def get(self, name, *default):
         """Returns the keys of the current environment (like dict.keys)"""
-        return self._curr.get((name if self.CASE_SENSITIVE else name.upper()),
-                              *default)
+        return self._curr.get((name if self.CASE_SENSITIVE else name.upper()), *default)
 
     def __delitem__(self, name):
         """Deletes an environment variable from the current environment"""
@@ -154,8 +154,7 @@ class BaseEnv(object):
         elif "USERPROFILE" in self:  # pragma: no cover
             return self._path_factory(self["USERPROFILE"])
         elif "HOMEPATH" in self:  # pragma: no cover
-            return self._path_factory(
-                self.get("HOMEDRIVE", ""), self["HOMEPATH"])
+            return self._path_factory(self.get("HOMEDRIVE", ""), self["HOMEPATH"])
         return None
 
     def _set_home(self, p):
@@ -175,8 +174,7 @@ class BaseEnv(object):
     def user(self):
         """Return the user name, or ``None`` if it is not set"""
         # adapted from getpass.getuser()
-        for name in ('LOGNAME', 'USER', 'LNAME',
-                     'USERNAME'):  # pragma: no branch
+        for name in ("LOGNAME", "USER", "LNAME", "USERNAME"):  # pragma: no branch
             if name in self:
                 return self[name]
         try:

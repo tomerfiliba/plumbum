@@ -35,7 +35,12 @@ of command-line interface (CLI) programs.
 
 See https://plumbum.readthedocs.io for full details
 """
-from plumbum.commands import ProcessExecutionError, CommandNotFound, ProcessTimedOut, ProcessLineTimedOut
+from plumbum.commands import (
+    ProcessExecutionError,
+    CommandNotFound,
+    ProcessTimedOut,
+    ProcessLineTimedOut,
+)
 from plumbum.commands import FG, BG, TEE, TF, RETCODE, ERROUT, NOHUP
 from plumbum.path import Path, LocalPath, RemotePath
 from plumbum.machines import local, BaseRemoteMachine, SshMachine, PuttyMachine
@@ -44,9 +49,9 @@ from plumbum.version import version
 __author__ = "Tomer Filiba (tomerfiliba@gmail.com)"
 __version__ = version
 
-#===================================================================================================
+# ===================================================================================================
 # Module hack: ``from plumbum.cmd import ls``
-#===================================================================================================
+# ===================================================================================================
 import sys
 from types import ModuleType
 
@@ -58,6 +63,7 @@ except ImportError:
 
 class LocalModule(ModuleType):
     """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
+
     __all__ = ()  # to make help() happy
     __package__ = __name__
 

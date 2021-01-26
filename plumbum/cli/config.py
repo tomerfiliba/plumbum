@@ -46,22 +46,22 @@ class ConfigBase(six.ABC):
 
     @abstractmethod
     def read(self):
-        '''Read in the linked file'''
+        """Read in the linked file"""
         pass
 
     @abstractmethod
     def write(self):
-        '''Write out the linked file'''
+        """Write out the linked file"""
         self.changed = False
 
     @abstractmethod
     def _get(self, option):
-        '''Internal get function for subclasses'''
+        """Internal get function for subclasses"""
         pass
 
     @abstractmethod
     def _set(self, option, value):
-        '''Internal set function for subclasses. Must return the value that was set.'''
+        """Internal set function for subclasses. Must return the value that was set."""
         pass
 
     def get(self, option, default=None):
@@ -85,7 +85,7 @@ class ConfigBase(six.ABC):
 
 
 class ConfigINI(ConfigBase):
-    DEFAULT_SECTION = 'DEFAULT'
+    DEFAULT_SECTION = "DEFAULT"
     slots = "parser".split()
 
     def __init__(self, filename):
@@ -99,16 +99,16 @@ class ConfigINI(ConfigBase):
 
     @_setdoc(ConfigBase)
     def write(self):
-        with open(self.filename, 'w') as f:
+        with open(self.filename, "w") as f:
             self.parser.write(f)
         super(ConfigINI, self).write()
 
     @classmethod
     def _sec_opt(cls, option):
-        if '.' not in option:
+        if "." not in option:
             sec = cls.DEFAULT_SECTION
         else:
-            sec, option = option.split('.', 1)
+            sec, option = option.split(".", 1)
         return sec, option
 
     @_setdoc(ConfigBase)

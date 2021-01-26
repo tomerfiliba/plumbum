@@ -4,9 +4,7 @@ from plumbum.typed_env import TypedEnv
 
 
 class TestTypedEnv:
-
     def test_env(self):
-
         class E(TypedEnv):
             terminal = TypedEnv.Str("TERM")
             B = TypedEnv.Bool("BOOL", default=True)
@@ -25,17 +23,17 @@ class TestTypedEnv:
         # check default
         assert e.B is True
 
-        raw_env['BOOL'] = "no"
+        raw_env["BOOL"] = "no"
         assert e.B is False
 
-        raw_env['BOOL'] = "0"
+        raw_env["BOOL"] = "0"
         assert e.B is False
 
         e.B = True
-        assert raw_env['BOOL'] == "yes"
+        assert raw_env["BOOL"] == "yes"
 
         e.B = False
-        assert raw_env['BOOL'] == "no"
+        assert raw_env["BOOL"] == "no"
 
         assert e.INTS == [1, 2, 3, 4]
         e.INTS = [1, 2]
@@ -47,15 +45,15 @@ class TestTypedEnv:
 
         raw_env["INTEGER"] = "4"
         assert e.I == 4
-        assert e['I'] == 4
+        assert e["I"] == 4
 
         e.I = "5"
-        assert raw_env['INT'] == "5"
+        assert raw_env["INT"] == "5"
         assert e.I == 5
-        assert e['I'] == 5
+        assert e["I"] == 5
 
         assert "{I} {B} {terminal}".format(**e) == "5 False foo"
-        assert dict(e) == dict(I=5, B=False, terminal='foo', INTS=[1, 2, 3, 4])
+        assert dict(e) == dict(I=5, B=False, terminal="foo", INTS=[1, 2, 3, 4])
 
         r = TypedEnv(raw_env)
         assert "{INT} {BOOL} {TERM}".format(**r) == "5 no foo"

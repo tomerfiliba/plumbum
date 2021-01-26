@@ -12,6 +12,7 @@ import warnings
 class SshTunnel(object):
     """An object representing an SSH tunnel (created by
     :func:`SshMachine.tunnel <plumbum.machines.remote.SshMachine.tunnel>`)"""
+
     __slots__ = ["_session", "__weakref__"]
 
     def __init__(self, session):
@@ -19,7 +20,7 @@ class SshTunnel(object):
 
     def __repr__(self):
         if self._session.alive():
-            return "<SshTunnel %s>" % (self._session.proc, )
+            return "<SshTunnel %s>" % (self._session.proc,)
         else:
             return "<SshTunnel (defunct)>"
 
@@ -76,19 +77,21 @@ class SshMachine(BaseRemoteMachine):
                         Ctrl+C (SIGINT)
     """
 
-    def __init__(self,
-                 host,
-                 user=None,
-                 port=None,
-                 keyfile=None,
-                 ssh_command=None,
-                 scp_command=None,
-                 ssh_opts=(),
-                 scp_opts=(),
-                 password=None,
-                 encoding="utf8",
-                 connect_timeout=10,
-                 new_session=False):
+    def __init__(
+        self,
+        host,
+        user=None,
+        port=None,
+        keyfile=None,
+        ssh_command=None,
+        scp_command=None,
+        ssh_opts=(),
+        scp_opts=(),
+        password=None,
+        encoding="utf8",
+        connect_timeout=10,
+        new_session=False,
+    ):
 
         if ssh_command is None:
             if password is not None:
@@ -122,10 +125,11 @@ class SshMachine(BaseRemoteMachine):
             self,
             encoding=encoding,
             connect_timeout=connect_timeout,
-            new_session=new_session)
+            new_session=new_session,
+        )
 
     def __str__(self):
-        return "ssh://%s" % (self._fqhost, )
+        return "ssh://%s" % (self._fqhost,)
 
     @_setdoc(BaseRemoteMachine)
     def popen(self, args, ssh_opts=(), env=None, cwd=None, **kwargs):
@@ -157,17 +161,12 @@ class SshMachine(BaseRemoteMachine):
         allowing the command to run "detached" from its controlling TTY or parent.
         Does not return anything. Depreciated (use command.nohup or daemonic_popen).
         """
-        warnings.warn("Use .nohup on the command or use daemonic_popen)",
-                      DeprecationWarning)
-        self.daemonic_popen(
-            command, cwd='.', stdout=None, stderr=None, append=False)
+        warnings.warn(
+            "Use .nohup on the command or use daemonic_popen)", DeprecationWarning
+        )
+        self.daemonic_popen(command, cwd=".", stdout=None, stderr=None, append=False)
 
-    def daemonic_popen(self,
-                       command,
-                       cwd='.',
-                       stdout=None,
-                       stderr=None,
-                       append=True):
+    def daemonic_popen(self, command, cwd=".", stdout=None, stderr=None, append=True):
         """
         Runs the given command using ``nohup`` and redirects std handles,
         allowing the command to run "detached" from its controlling TTY or parent.
@@ -181,23 +180,26 @@ class SshMachine(BaseRemoteMachine):
         if stderr is None:
             stderr = "&1"
 
-        if str(cwd) == '.':
+        if str(cwd) == ".":
             args = []
         else:
             args = ["cd", str(cwd), "&&"]
         args.append("nohup")
         args.extend(command.formulate())
         args.extend(
-            [(">>" if append else ">") + str(stdout),
-             "2" + (">>"
-                    if (append and stderr != "&1") else ">") + str(stderr),
-             "</dev/null"])
+            [
+                (">>" if append else ">") + str(stdout),
+                "2" + (">>" if (append and stderr != "&1") else ">") + str(stderr),
+                "</dev/null",
+            ]
+        )
         proc = self.popen(args, ssh_opts=["-f"])
         rc = proc.wait()
         try:
             if rc != 0:
-                raise ProcessExecutionError(args, rc, proc.stdout.read(),
-                                            proc.stderr.read())
+                raise ProcessExecutionError(
+                    args, rc, proc.stdout.read(), proc.stderr.read()
+                )
         finally:
             proc.stdin.close()
             proc.stdout.close()
@@ -207,16 +209,16 @@ class SshMachine(BaseRemoteMachine):
     def session(self, isatty=False, new_session=False):
         return ShellSession(
             self.popen(
-                ["/bin/sh"], (["-tt"] if isatty else ["-T"]),
-                new_session=new_session), self.custom_encoding, isatty,
-            self.connect_timeout)
+                ["/bin/sh"], (["-tt"] if isatty else ["-T"]), new_session=new_session
+            ),
+            self.custom_encoding,
+            isatty,
+            self.connect_timeout,
+        )
 
-    def tunnel(self,
-               lport,
-               dport,
-               lhost="localhost",
-               dhost="localhost",
-               connect_timeout=5):
+    def tunnel(
+        self, lport, dport, lhost="localhost", dhost="localhost", connect_timeout=5
+    ):
         r"""Creates an SSH tunnel from the TCP port (``lport``) of the local machine
         (``lhost``, defaults to ``"localhost"``, but it can be any IP you can ``bind()``)
         to the remote TCP port (``dport``) of the destination machine (``dhost``, defaults
@@ -267,9 +269,9 @@ class SshMachine(BaseRemoteMachine):
         proc = self.popen((), ssh_opts=ssh_opts, new_session=True)
         return SshTunnel(
             ShellSession(
-                proc,
-                self.custom_encoding,
-                connect_timeout=self.connect_timeout))
+                proc, self.custom_encoding, connect_timeout=self.connect_timeout
+            )
+        )
 
     def _translate_drive_letter(self, path):
         # replace c:\some\path with /c/some/path
@@ -281,12 +283,11 @@ class SshMachine(BaseRemoteMachine):
     @_setdoc(BaseRemoteMachine)
     def download(self, src, dst):
         if isinstance(src, LocalPath):
-            raise TypeError("src of download cannot be %r" % (src, ))
+            raise TypeError("src of download cannot be %r" % (src,))
         if isinstance(src, RemotePath) and src.remote != self:
-            raise TypeError(
-                "src %r points to a different remote machine" % (src, ))
+            raise TypeError("src %r points to a different remote machine" % (src,))
         if isinstance(dst, RemotePath):
-            raise TypeError("dst of download cannot be %r" % (dst, ))
+            raise TypeError("dst of download cannot be %r" % (dst,))
         if IS_WIN32:
             src = self._translate_drive_letter(src)
             dst = self._translate_drive_letter(dst)
@@ -295,12 +296,11 @@ class SshMachine(BaseRemoteMachine):
     @_setdoc(BaseRemoteMachine)
     def upload(self, src, dst):
         if isinstance(src, RemotePath):
-            raise TypeError("src of upload cannot be %r" % (src, ))
+            raise TypeError("src of upload cannot be %r" % (src,))
         if isinstance(dst, LocalPath):
-            raise TypeError("dst of upload cannot be %r" % (dst, ))
+            raise TypeError("dst of upload cannot be %r" % (dst,))
         if isinstance(dst, RemotePath) and dst.remote != self:
-            raise TypeError(
-                "dst %r points to a different remote machine" % (dst, ))
+            raise TypeError("dst %r points to a different remote machine" % (dst,))
         if IS_WIN32:
             src = self._translate_drive_letter(src)
             dst = self._translate_drive_letter(dst)
@@ -315,18 +315,20 @@ class PuttyMachine(SshMachine):
     Arguments are the same as for :class:`plumbum.machines.remote.SshMachine`
     """
 
-    def __init__(self,
-                 host,
-                 user=None,
-                 port=None,
-                 keyfile=None,
-                 ssh_command=None,
-                 scp_command=None,
-                 ssh_opts=(),
-                 scp_opts=(),
-                 encoding="utf8",
-                 connect_timeout=10,
-                 new_session=False):
+    def __init__(
+        self,
+        host,
+        user=None,
+        port=None,
+        keyfile=None,
+        ssh_command=None,
+        scp_command=None,
+        ssh_opts=(),
+        scp_opts=(),
+        encoding="utf8",
+        connect_timeout=10,
+        new_session=False,
+    ):
         if ssh_command is None:
             ssh_command = local["plink"]
         if scp_command is None:
@@ -351,10 +353,11 @@ class PuttyMachine(SshMachine):
             scp_opts=scp_opts,
             encoding=encoding,
             connect_timeout=connect_timeout,
-            new_session=new_session)
+            new_session=new_session,
+        )
 
     def __str__(self):
-        return "putty-ssh://%s" % (self._fqhost, )
+        return "putty-ssh://%s" % (self._fqhost,)
 
     def _translate_drive_letter(self, path):
         # pscp takes care of windows paths automatically
@@ -363,6 +366,8 @@ class PuttyMachine(SshMachine):
     @_setdoc(BaseRemoteMachine)
     def session(self, isatty=False, new_session=False):
         return ShellSession(
-            self.popen(
-                (), (["-t"] if isatty else ["-T"]), new_session=new_session),
-            self.custom_encoding, isatty, self.connect_timeout)
+            self.popen((), (["-t"] if isatty else ["-T"]), new_session=new_session),
+            self.custom_encoding,
+            isatty,
+            self.connect_timeout,
+        )

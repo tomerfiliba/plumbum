@@ -8,10 +8,10 @@ from setuptools import setup
 
 # Fix for building on non-Windows systems
 try:
-    codecs.lookup('mbcs')
+    codecs.lookup("mbcs")
 except LookupError:
-    ascii = codecs.lookup('ascii')
-    func = lambda name, enc=ascii: {True: enc}.get(name=='mbcs')
+    ascii = codecs.lookup("ascii")
+    func = lambda name, enc=ascii: {True: enc}.get(name == "mbcs")
     codecs.register(func)
 
 setup()

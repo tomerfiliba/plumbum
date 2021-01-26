@@ -7,7 +7,7 @@ from plumbum import PuttyMachine, SshMachine
 from plumbum._testtools import xfail_on_pypy
 
 
-@pytest.fixture(params=['default', '322'])
+@pytest.fixture(params=["default", "322"])
 def ssh_port(request):
     return request.param
 
@@ -15,9 +15,9 @@ def ssh_port(request):
 class TestPuttyMachine:
     @xfail_on_pypy
     def test_putty_command(self, mocker, ssh_port):
-        local = mocker.patch('plumbum.machines.ssh_machine.local')
-        init = mocker.spy(SshMachine, '__init__')
-        mocker.patch('plumbum.machines.ssh_machine.BaseRemoteMachine')
+        local = mocker.patch("plumbum.machines.ssh_machine.local")
+        init = mocker.spy(SshMachine, "__init__")
+        mocker.patch("plumbum.machines.ssh_machine.BaseRemoteMachine")
 
         host = mocker.MagicMock()
         user = local.env.user
@@ -25,13 +25,13 @@ class TestPuttyMachine:
         ssh_command = local["plink"]
         scp_command = local["pscp"]
         ssh_opts = ["-ssh"]
-        if ssh_port == 'default':
+        if ssh_port == "default":
             putty_port = None
             scp_opts = ()
         else:
             putty_port = int(ssh_port)
-            ssh_opts.extend(['-P', ssh_port])
-            scp_opts = ['-P', ssh_port]
+            ssh_opts.extend(["-P", ssh_port])
+            scp_opts = ["-P", ssh_port]
         encoding = mocker.MagicMock()
         connect_timeout = 20
         new_session = True
@@ -60,11 +60,11 @@ class TestPuttyMachine:
         )
 
     def test_putty_str(self, mocker):
-        local = mocker.patch('plumbum.machines.ssh_machine.local')
-        mocker.patch('plumbum.machines.ssh_machine.BaseRemoteMachine')
+        local = mocker.patch("plumbum.machines.ssh_machine.local")
+        mocker.patch("plumbum.machines.ssh_machine.BaseRemoteMachine")
 
         host = mocker.MagicMock()
         user = local.env.user
 
         machine = PuttyMachine(host)
-        assert str(machine) == 'putty-ssh://{0}@{1}'.format(user, host)
+        assert str(machine) == "putty-ssh://{0}@{1}".format(user, host)

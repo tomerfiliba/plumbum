@@ -23,14 +23,17 @@ from plumbum.machines.env import BaseEnv
 if sys.version_info[0] >= 3:
     # python 3 has the new-and-improved subprocess module
     from subprocess import Popen, PIPE
+
     has_new_subprocess = True
 else:
     # otherwise, see if we have subprocess32
     try:
         from subprocess32 import Popen, PIPE
+
         has_new_subprocess = True
     except ImportError:
         from subprocess import Popen, PIPE
+
         has_new_subprocess = False
 
 
@@ -59,11 +62,12 @@ if IS_WIN32:
 logger = logging.getLogger("plumbum.local")
 
 
-#===================================================================================================
+# ===================================================================================================
 # Environment
-#===================================================================================================
+# ===================================================================================================
 class LocalEnv(BaseEnv):
     """The local machine's environment; exposes a dict-like interface"""
+
     __slots__ = ()
     CASE_SENSITIVE = not IS_WIN32
 
@@ -105,17 +109,17 @@ class LocalEnv(BaseEnv):
         return output
 
 
-#===================================================================================================
+# ===================================================================================================
 # Local Commands
-#===================================================================================================
+# ===================================================================================================
 class LocalCommand(ConcreteCommand):
     __slots__ = ()
     QUOTE_LEVEL = 2
 
     def __init__(self, executable, encoding="auto"):
         ConcreteCommand.__init__(
-            self, executable, local.custom_encoding
-            if encoding == "auto" else encoding)
+            self, executable, local.custom_encoding if encoding == "auto" else encoding
+        )
 
     @property
     def machine(self):
@@ -123,18 +127,19 @@ class LocalCommand(ConcreteCommand):
 
     def popen(self, args=(), cwd=None, env=None, **kwargs):
         if isinstance(args, six.string_types):
-            args = (args, )
+            args = (args,)
         return self.machine._popen(
             self.executable,
             self.formulate(0, args),
             cwd=self.cwd if cwd is None else cwd,
             env=self.env if env is None else env,
-            **kwargs)
+            **kwargs
+        )
 
 
-#===================================================================================================
+# ===================================================================================================
 # Local Machine
-#===================================================================================================
+# ===================================================================================================
 
 
 class LocalMachine(BaseMachine):
@@ -160,7 +165,8 @@ class LocalMachine(BaseMachine):
 
     if IS_WIN32:
         _EXTENSIONS = [""] + env.get("PATHEXT", ":.exe:.bat").lower().split(
-            os.path.pathsep)
+            os.path.pathsep
+        )
 
         @classmethod
         def _which(cls, progname):
@@ -171,6 +177,7 @@ class LocalMachine(BaseMachine):
                     if fn.access("x") and not fn.is_dir():
                         return fn
             return None
+
     else:
 
         @classmethod
@@ -210,7 +217,7 @@ class LocalMachine(BaseMachine):
         parts2 = [str(self.cwd)]
         for p in parts:
             if isinstance(p, RemotePath):
-                raise TypeError("Cannot construct LocalPath from %r" % (p, ))
+                raise TypeError("Cannot construct LocalPath from %r" % (p,))
             parts2.append(self.env.expanduser(str(p)))
         return LocalPath(os.path.join(*parts2))
 
@@ -241,24 +248,27 @@ class LocalMachine(BaseMachine):
                 # search for command
                 return LocalCommand(self.which(cmd))
         else:
-            raise TypeError("cmd must not be a RemotePath: %r" % (cmd, ))
+            raise TypeError("cmd must not be a RemotePath: %r" % (cmd,))
 
-    def _popen(self,
-               executable,
-               argv,
-               stdin=PIPE,
-               stdout=PIPE,
-               stderr=PIPE,
-               cwd=None,
-               env=None,
-               new_session=False,
-               **kwargs):
+    def _popen(
+        self,
+        executable,
+        argv,
+        stdin=PIPE,
+        stdout=PIPE,
+        stderr=PIPE,
+        cwd=None,
+        env=None,
+        new_session=False,
+        **kwargs
+    ):
         if new_session:
             if has_new_subprocess:
                 kwargs["start_new_session"] = True
             elif IS_WIN32:
-                kwargs["creationflags"] = kwargs.get(
-                    "creationflags", 0) | subprocess.CREATE_NEW_PROCESS_GROUP
+                kwargs["creationflags"] = (
+                    kwargs.get("creationflags", 0) | subprocess.CREATE_NEW_PROCESS_GROUP
+                )
             else:
 
                 def preexec_fn(prev_fn=kwargs.get("preexec_fn", lambda: None)):
@@ -267,8 +277,7 @@ class LocalMachine(BaseMachine):
 
                 kwargs["preexec_fn"] = preexec_fn
 
-        if IS_WIN32 and "startupinfo" not in kwargs and stdin not in (
-                sys.stdin, None):
+        if IS_WIN32 and "startupinfo" not in kwargs and stdin not in (sys.stdin, None):
             subsystem = get_pe_subsystem(str(executable))
 
             if subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI:
@@ -276,15 +285,20 @@ class LocalMachine(BaseMachine):
                 sui = subprocess.STARTUPINFO()
                 kwargs["startupinfo"] = sui
                 if hasattr(subprocess, "_subprocess"):
-                    sui.dwFlags |= subprocess._subprocess.STARTF_USESHOWWINDOW  # @UndefinedVariable
-                    sui.wShowWindow = subprocess._subprocess.SW_HIDE  # @UndefinedVariable
+                    sui.dwFlags |= (
+                        subprocess._subprocess.STARTF_USESHOWWINDOW
+                    )  # @UndefinedVariable
+                    sui.wShowWindow = (
+                        subprocess._subprocess.SW_HIDE
+                    )  # @UndefinedVariable
                 else:
                     sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # @UndefinedVariable
                     sui.wShowWindow = subprocess.SW_HIDE  # @UndefinedVariable
 
         if not has_new_subprocess and "close_fds" not in kwargs:
-            if IS_WIN32 and (stdin is not None or stdout is not None
-                             or stderr is not None):
+            if IS_WIN32 and (
+                stdin is not None or stdout is not None or stderr is not None
+            ):
                 # we can't close fds if we're on windows and we want to redirect any std handle
                 kwargs["close_fds"] = False
             else:
@@ -314,18 +328,14 @@ class LocalMachine(BaseMachine):
             stderr=stderr,
             cwd=str(cwd),
             env=env,
-            **kwargs)  # bufsize = 4096
+            **kwargs
+        )  # bufsize = 4096
         proc._start_time = time.time()
         proc.custom_encoding = self.custom_encoding
         proc.argv = argv
         return proc
 
-    def daemonic_popen(self,
-                       command,
-                       cwd="/",
-                       stdout=None,
-                       stderr=None,
-                       append=True):
+    def daemonic_popen(self, command, cwd="/", stdout=None, stderr=None, append=True):
         """
         On POSIX systems:
 
@@ -357,21 +367,24 @@ class LocalMachine(BaseMachine):
             .. versionadded:: 1.3
             """
             import csv
+
             tasklist = local["tasklist"]
             output = tasklist("/V", "/FO", "CSV")
             if not six.PY3:
                 # The Py2 csv reader does not support non-ascii values
-                output = output.encode('ascii', 'ignore')
+                output = output.encode("ascii", "ignore")
             lines = output.splitlines()
             rows = csv.reader(lines)
             header = next(rows)
-            imgidx = header.index('Image Name')
-            pididx = header.index('PID')
-            statidx = header.index('Status')
-            useridx = header.index('User Name')
+            imgidx = header.index("Image Name")
+            pididx = header.index("PID")
+            statidx = header.index("Status")
+            useridx = header.index("User Name")
             for row in rows:
                 yield ProcInfo(
-                    int(row[pididx]), row[useridx], row[statidx], row[imgidx])
+                    int(row[pididx]), row[useridx], row[statidx], row[imgidx]
+                )
+
     else:
 
         def list_processes(self):
@@ -386,8 +399,8 @@ class LocalMachine(BaseMachine):
             for line in lines:
                 parts = line.strip().split()
                 yield ProcInfo(
-                    int(parts[0]), int(parts[1]), parts[2],
-                    " ".join(parts[3:]))
+                    int(parts[0]), int(parts[1]), parts[2], " ".join(parts[3:])
+                )
 
     def pgrep(self, pattern):
         """
@@ -427,14 +440,29 @@ class LocalMachine(BaseMachine):
         if IS_WIN32:
             if username is None:
                 username = "Administrator"
-            self._as_user_stack.append(lambda argv: (["runas", "/savecred", "/user:%s" % (username,),
-                '"' + " ".join(str(a) for a in argv) + '"'], self.which("runas")))
+            self._as_user_stack.append(
+                lambda argv: (
+                    [
+                        "runas",
+                        "/savecred",
+                        "/user:%s" % (username,),
+                        '"' + " ".join(str(a) for a in argv) + '"',
+                    ],
+                    self.which("runas"),
+                )
+            )
         else:
             if username is None:
                 self._as_user_stack.append(
-                    lambda argv: (["sudo"] + list(argv), self.which("sudo")))
+                    lambda argv: (["sudo"] + list(argv), self.which("sudo"))
+                )
             else:
-                self._as_user_stack.append(lambda argv: (["sudo", "-u", username] + list(argv), self.which("sudo")))
+                self._as_user_stack.append(
+                    lambda argv: (
+                        ["sudo", "-u", username] + list(argv),
+                        self.which("sudo"),
+                    )
+                )
         try:
             yield
         finally:

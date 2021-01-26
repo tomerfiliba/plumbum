@@ -29,6 +29,7 @@ def main():  # pragma: no cover
     """Color changing script entry. Call using
     python -m plumbum.colors, will reset if no arguments given."""
     import sys
-    color = ' '.join(sys.argv[1:]) if len(sys.argv) > 1 else ''
+
+    color = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else ""
     ansicolors.use_color = True
     ansicolors.get_colors_from_string(color).now()

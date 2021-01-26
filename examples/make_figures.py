@@ -10,12 +10,12 @@ from plumbum.path.utils import delete
 def image_comp(item):
     pdflatex["-shell-escape", item] & FG
     print("Converting", item)
-    convert[item.with_suffix(".svg"),
-            item.with_suffix(".png")] & FG
+    convert[item.with_suffix(".svg"), item.with_suffix(".png")] & FG
 
-    delete(item.with_suffix(".log"),
-           item.with_suffix(".aux"),
-           )
+    delete(
+        item.with_suffix(".log"),
+        item.with_suffix(".aux"),
+    )
 
 
 class MyApp(cli.Application):

@@ -4,6 +4,7 @@ from plumbum import local, SshMachine
 from plumbum.path.utils import copy, delete, move
 from plumbum._testtools import skip_on_windows
 
+
 @skip_on_windows
 class TestUtils:
     def test_copy_move_delete(self):
@@ -14,7 +15,7 @@ class TestUtils:
             (dir / "orog" / "rec").mkdir()
             for i in range(20):
                 touch(dir / "orog" / ("f%d.txt" % (i,)))
-            for i in range(20,40):
+            for i in range(20, 40):
                 touch(dir / "orog" / "rec" / ("f%d.txt" % (i,)))
 
             move(dir / "orog", dir / "orig")

@@ -14,12 +14,15 @@ class MountEntry(object):
         self.options = options.split(",")
 
     def __str__(self):
-        return "%s on %s type %s (%s)" % (self.dev, self.point, self.fstype,
-                                          ",".join(self.options))
+        return "%s on %s type %s (%s)" % (
+            self.dev,
+            self.point,
+            self.fstype,
+            ",".join(self.options),
+        )
 
 
-MOUNT_PATTERN = re.compile(
-    r"(.+?)\s+on\s+(.+?)\s+type\s+(\S+)(?:\s+\((.+?)\))?")
+MOUNT_PATTERN = re.compile(r"(.+?)\s+on\s+(.+?)\s+type\s+(\S+)(?:\s+\((.+?)\))?")
 
 
 def mount_table():

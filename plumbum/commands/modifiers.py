@@ -47,7 +47,8 @@ class Future(object):
         if self._returncode is not None:
             return
         self._returncode, self._stdout, self._stderr = run_proc(
-            self.proc, self._expected_retcode, self._timeout)
+            self.proc, self._expected_retcode, self._timeout
+        )
 
     @property
     def stdout(self):
@@ -68,13 +69,13 @@ class Future(object):
         return self._returncode
 
 
-#===================================================================================================
+# ===================================================================================================
 # execution modifiers
-#===================================================================================================
+# ===================================================================================================
 
 
 class ExecutionModifier(object):
-    __slots__ = ("__weakref__", )
+    __slots__ = ("__weakref__",)
 
     def __repr__(self):
         """Automatically creates a representation for given subclass with slots.
@@ -83,9 +84,9 @@ class ExecutionModifier(object):
         for cls in self.__class__.__mro__:
             slots_list = getattr(cls, "__slots__", ())
             if isinstance(slots_list, str):
-                slots_list = (slots_list, )
+                slots_list = (slots_list,)
             for prop in slots_list:
-                if prop[0] != '_':
+                if prop[0] != "_":
                     slots[prop] = getattr(self, prop)
         mystrs = ("{0} = {1}".format(name, slots[name]) for name in slots)
         return "{0}({1})".format(self.__class__.__name__, ", ".join(mystrs))
@@ -113,6 +114,7 @@ class _BG(ExecutionModifier):
        every once in a while, using a monitoring thread/reactor in the background.
        For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
     """
+
     __slots__ = ("retcode", "kargs", "timeout")
 
     def __init__(self, retcode=0, timeout=None, **kargs):
@@ -121,8 +123,7 @@ class _BG(ExecutionModifier):
         self.timeout = timeout
 
     def __rand__(self, cmd):
-        return Future(
-            cmd.popen(**self.kargs), self.retcode, timeout=self.timeout)
+        return Future(cmd.popen(**self.kargs), self.retcode, timeout=self.timeout)
 
 
 BG = _BG()
@@ -141,6 +142,7 @@ class _FG(ExecutionModifier):
         vim & FG       # run vim in the foreground, expecting an exit code of 0
         vim & FG(7)    # run vim in the foreground, expecting an exit code of 7
     """
+
     __slots__ = ("retcode", "timeout")
 
     def __init__(self, retcode=0, timeout=None):
@@ -148,11 +150,13 @@ class _FG(ExecutionModifier):
         self.timeout = timeout
 
     def __rand__(self, cmd):
-        cmd(retcode=self.retcode,
+        cmd(
+            retcode=self.retcode,
             stdin=None,
             stdout=None,
             stderr=None,
-            timeout=self.timeout)
+            timeout=self.timeout,
+        )
 
 
 FG = _FG()
@@ -183,11 +187,12 @@ class _TEE(ExecutionModifier):
 
     def __rand__(self, cmd):
         with cmd.bgrun(
-                retcode=self.retcode,
-                stdin=None,
-                stdout=PIPE,
-                stderr=PIPE,
-                timeout=self.timeout) as p:
+            retcode=self.retcode,
+            stdin=None,
+            stdout=PIPE,
+            stderr=PIPE,
+            timeout=self.timeout,
+        ) as p:
             outbuf = []
             errbuf = []
             out = p.stdout
@@ -202,7 +207,7 @@ class _TEE(ExecutionModifier):
                 # unconditionally enter the read loop, and only then
                 # break out of the outer loop if the process has
                 # exited.
-                done = (p.poll() is not None)
+                done = p.poll() is not None
 
                 # We continue this loop until we've done a full
                 # `select()` call without collecting any input. This
@@ -232,8 +237,8 @@ class _TEE(ExecutionModifier):
 
                         buf.append(data)
 
-            stdout = ''.join([x.decode('utf-8') for x in outbuf])
-            stderr = ''.join([x.decode('utf-8') for x in errbuf])
+            stdout = "".join([x.decode("utf-8") for x in outbuf])
+            stderr = "".join([x.decode("utf-8") for x in errbuf])
             return p.returncode, stdout, stderr
 
 
@@ -274,11 +279,13 @@ class _TF(ExecutionModifier):
     def __rand__(self, cmd):
         try:
             if self.FG:
-                cmd(retcode=self.retcode,
+                cmd(
+                    retcode=self.retcode,
                     stdin=None,
                     stdout=None,
                     stderr=None,
-                    timeout=self.timeout)
+                    timeout=self.timeout,
+                )
             else:
                 cmd(retcode=self.retcode, timeout=self.timeout)
             return True
@@ -306,8 +313,7 @@ class _RETCODE(ExecutionModifier):
     __slots__ = ("foreground", "timeout")
 
     def __init__(self, FG=False, timeout=None):
-        """`FG` to True to run in the foreground.
-        """
+        """`FG` to True to run in the foreground."""
         self.foreground = FG
         self.timeout = timeout
 
@@ -318,11 +324,8 @@ class _RETCODE(ExecutionModifier):
     def __rand__(self, cmd):
         if self.foreground:
             return cmd.run(
-                retcode=None,
-                stdin=None,
-                stdout=None,
-                stderr=None,
-                timeout=self.timeout)[0]
+                retcode=None, stdin=None, stdout=None, stderr=None, timeout=self.timeout
+            )[0]
         else:
             return cmd.run(retcode=None, timeout=self.timeout)[0]
 
@@ -352,10 +355,11 @@ class _NOHUP(ExecutionModifier):
         nohup sleep 5 &
 
     """
-    __slots__ = ('cwd', 'stdout', 'stderr', 'append')
 
-    def __init__(self, cwd='.', stdout='nohup.out', stderr=None, append=True):
-        """ Set ``cwd``, ``stdout``, or ``stderr``.
+    __slots__ = ("cwd", "stdout", "stderr", "append")
+
+    def __init__(self, cwd=".", stdout="nohup.out", stderr=None, append=True):
+        """Set ``cwd``, ``stdout``, or ``stderr``.
         Runs as a forked process. You can set ``append=False``, too.
         """
         self.cwd = cwd
@@ -381,7 +385,7 @@ class _NOHUP(ExecutionModifier):
 NOHUP = _NOHUP()
 
 
-class PipeToLoggerMixin():
+class PipeToLoggerMixin:
     """
     This mixin allows piping plumbum commands' output into a logger.
     The logger must implement a ``log(level, msg)`` method, as in ``logging.Logger``
@@ -426,11 +430,14 @@ class PipeToLoggerMixin():
     """
 
     from logging import DEBUG, INFO
+
     DEFAULT_LINE_TIMEOUT = 10 * 60
     DEFAULT_STDOUT = "INFO"
     DEFAULT_STDERR = "DEBUG"
 
-    def pipe(self, out_level=None, err_level=None, prefix=None, line_timeout=None, **kw):
+    def pipe(
+        self, out_level=None, err_level=None, prefix=None, line_timeout=None, **kw
+    ):
         """
         Pipe a command's stdout and stderr lines into this logger.
 
@@ -439,11 +446,13 @@ class PipeToLoggerMixin():
 
         Optionally use `prefix` for each line.
         """
-        class LogPipe(object):
 
+        class LogPipe(object):
             def __rand__(_, cmd):
                 popen = cmd if hasattr(cmd, "iter_lines") else cmd.popen()
-                for typ, lines in popen.iter_lines(line_timeout=line_timeout, mode=BY_TYPE, **kw):
+                for typ, lines in popen.iter_lines(
+                    line_timeout=line_timeout, mode=BY_TYPE, **kw
+                ):
                     if not lines:
                         continue
                     level = levels[typ]
@@ -453,7 +462,10 @@ class PipeToLoggerMixin():
                         self.log(level, line)
                 return popen.returncode
 
-        levels = {1: getattr(self, self.DEFAULT_STDOUT), 2: getattr(self, self.DEFAULT_STDERR)}
+        levels = {
+            1: getattr(self, self.DEFAULT_STDOUT),
+            2: getattr(self, self.DEFAULT_STDERR),
+        }
 
         if line_timeout is None:
             line_timeout = self.DEFAULT_LINE_TIMEOUT
@@ -483,4 +495,6 @@ class PipeToLoggerMixin():
         Pipe a command's stdout and stderr lines into this logger.
         Log levels for each stream are determined by ``DEFAULT_STDOUT`` and ``DEFAULT_STDERR``.
         """
-        return cmd & self.pipe(getattr(self, self.DEFAULT_STDOUT), getattr(self, self.DEFAULT_STDERR))
+        return cmd & self.pipe(
+            getattr(self, self.DEFAULT_STDOUT), getattr(self, self.DEFAULT_STDERR)
+        )
