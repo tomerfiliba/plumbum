@@ -22,7 +22,7 @@ jobs:
     - uses: pre-commit/action@v2.0.0
 
   tests:
-    name: Tests on 🐍 ${{ matix.pytohn-version }} ${{ matrix.os }}
+    name: Tests on 🐍 ${{ matrix.python-version }} ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
