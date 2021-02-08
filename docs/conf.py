@@ -51,12 +51,11 @@ copyright = u"%d, Tomer Filiba, licensed under Attribution-ShareAlike 3.0" % (
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-# The short X.Y version.
-from plumbum.version import release_date, version_string
+# The short X.Y version is release.
+from plumbum.version import version as release, version_tuple
 
-version = version_string
-# The full version, including alpha/beta/rc tags.
-release = version_string + " / " + release_date
+version = ".".join(str(v) for v in version_tuple[:2])
+
 
 autodoc_member_order = "bysource"
 
