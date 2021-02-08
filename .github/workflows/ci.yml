@@ -10,6 +10,9 @@ on:
     branches:
     - master
     - main
+  release:
+    types:
+    - published
 
 jobs:
 
