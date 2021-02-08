@@ -52,7 +52,8 @@ copyright = u"%d, Tomer Filiba, licensed under Attribution-ShareAlike 3.0" % (
 # built documents.
 #
 # The short X.Y version is release.
-from plumbum.version import version as release, version_tuple
+from plumbum.version import version as release
+from plumbum.version import version_tuple
 
 version = ".".join(str(v) for v in version_tuple[:2])
 
