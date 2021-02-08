@@ -1,7 +1,22 @@
+1.7.0
+-----
+
+* Commands: support ``.with_cwd()`` (`#513 <https://github.com/tomerfiliba/plumbum/pull/513>`_)
+* Commands:  make ``iter_lines`` deal with decoding errors during iteration (`#525 <https://github.com/tomerfiliba/plumbum/pull/525>`_)
+* Commands: fix handling of env-vars passed to plumbum BoundEnvCommands  (`#513 <https://github.com/tomerfiliba/plumbum/pull/513>`_)
+* Commands: fix support for win32 in ``iter_lines`` (`#500 <https://github.com/tomerfiliba/plumbum/pull/500>`_)
+* Paths: fix incorrect ``__getitem__`` method in Path (`#506 <https://github.com/tomerfiliba/plumbum/pull/506>`_)
+* Paths: Remote path stat had odd OSError  (`#505 <https://github.com/tomerfiliba/plumbum/pull/505>`_)
+* Paths: Fix ``RemotePath.copy()`` (`#527 <https://github.com/tomerfiliba/plumbum/pull/527>`_)
+* Paths: missing ``__fspath__`` added (`#498 <https://github.com/tomerfiliba/plumbum/pull/498>`_)
+* SSH: better error reporting on SshSession error (`#515 <https://github.com/tomerfiliba/plumbum/pull/515>`_)
+* Internal: redesigned CI, major cleanup to setuptools distribution, Black formatting, style checking throughout.
+
+
 1.6.9
 -----
 
-* Last version to support Python 2.6; added python_requires (`#507 <https://github.com/tomerfiliba/plumbum/pull/507>`_)
+* Last version to support Python 2.6; added python_requires for future versions (`#507 <https://github.com/tomerfiliba/plumbum/pull/507>`_)
 * Paths: Fix bug with subscription operations (`#498 <https://github.com/tomerfiliba/plumbum/pull/498>`_), (`#506 <https://github.com/tomerfiliba/plumbum/pull/506>`_)
 * Paths: Fix resolve (`#492 <https://github.com/tomerfiliba/plumbum/pull/492>`_)
 * Commands: Fix resolve (`#491 <https://github.com/tomerfiliba/plumbum/pull/491>`_)

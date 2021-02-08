@@ -1,3 +1,5 @@
+* **2021.02.08**: Version 1.7.0 released with a few new features like ``.with_cwd``, some useful bugfixes, and lots of cleanup.
+
 * **2020.03.23**: Version 1.6.9 released with several Path fixes, final version to support Python 2.6.
 
 * **2019.10.30**: Version 1.6.8 released with ``local.cmd``, a few command updates, ``Set`` improvements, and ``TypedEnv``.
