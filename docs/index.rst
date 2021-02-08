@@ -83,25 +83,32 @@ you encounter or to request features. The library is released under the permissi
 Requirements
 ------------
 
-Plumbum supports **Python 2.6-3.7** and **PyPy** and is continually
-tested on **Linux**, **Mac**, and **Windows** machines through `Travis CI <https://travis-ci.org/tomerfiliba/plumbum>`_
-and `Appveyor <https://ci.appveyor.com/project/HenrySchreiner/plumbum/branch/master>`_.
-Any Unix-like machine should work fine out of the box,
-but on Windows, you'll probably want to install a decent `coreutils <http://en.wikipedia.org/wiki/Coreutils>`_
-environment and add it to your ``PATH``. I can recommend `mingw <http://mingw.org/>`_ (which comes
-bundled with `Git for Windows <http://msysgit.github.com/>`_), but `cygwin <http://www.cygwin.com/>`_
-should work too. If you only wish to use Plumbum as a Popen-replacement to run Windows programs,
-then there's no need for the Unix tools.
+Plumbum supports **Python 2.7-3.9** and **PyPy** and is continually tested on
+**Linux**, **Mac**, and **Windows** machines through `GitHub Actions
+<https://github.com/tomerfiliba/plumbum/actions>`_.  Any Unix-like machine
+should work fine out of the box, but on Windows, you'll probably want to
+install a decent `coreutils <http://en.wikipedia.org/wiki/Coreutils>`_
+environment and add it to your ``PATH``, or use WSL(2). I can recommend `mingw
+<http://mingw.org/>`_ (which comes bundled with `Git for Windows
+<http://msysgit.github.com/>`_), but `cygwin <http://www.cygwin.com/>`_ should
+work too. If you only wish to use Plumbum as a Popen-replacement to run Windows
+programs, then there's no need for the Unix tools.
 
-Note that for remote command execution, an **openSSH-compatible** client is required (also bundled
-with *Git for Windows*), and a ``bash``-compatible shell and a coreutils environment is also
-expected on the host machine.
+Note that for remote command execution, an **openSSH-compatible** client is
+required (also bundled with *Git for Windows*), and a ``bash``-compatible shell
+and a coreutils environment is also expected on the host machine.
+
+This project uses ``setuptools`` to build wheels; and ``setuptools_scm`` is
+required for building SDists. These dependencies will be handled for you by PEP
+518 compatible builders, like `build <https://github.com/pypa/build>`_ and ``pip 10+``.
 
 Download
 --------
 
-You can **download** the library from the `Python Package Index <http://pypi.python.org/pypi/plumbum#downloads>`_
-(in a variety of formats), or run ``pip install plumbum`` directly. If you use Anaconda, you can also get it from the ``conda-forge`` channel with ``conda install -c conda-forge plumbum``.
+You can **download** the library from the `Python Package Index
+<http://pypi.python.org/pypi/plumbum#downloads>`_ (in a variety of formats), or
+run ``pip install plumbum`` directly. If you use Anaconda, you can also get it
+from the ``conda-forge`` channel with ``conda install -c conda-forge plumbum``.
 
 User Guide
 ==========
