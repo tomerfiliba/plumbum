@@ -22,7 +22,7 @@ jobs:
     - uses: pre-commit/action@v2.0.0
 
   tests:
-    name: Tests
+    name: Tests on 🐍 ${{ matix.pytohn-version }} ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -84,7 +84,7 @@ jobs:
 
   dist:
     name: Dist
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - name: Build SDist and wheel
@@ -95,7 +95,7 @@ jobs:
 
   deploy:
     name: Deploy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [dist]
     if: github.event_name == 'release' && github.event.action == 'published'
 
@@ -112,7 +112,7 @@ jobs:
 
   coverage:
     needs: [tests]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/setup-python@v2
     - name: Install coveralls
