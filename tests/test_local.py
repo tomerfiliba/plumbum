@@ -594,9 +594,10 @@ class TestLocalMachine:
             for i, lines in enumerate(ls["--bla"].popen()):
                 pass
             assert i == 1
-        assert err.value.stderr.startswith(
-            "/bin/ls: unrecognized option '--bla'"
-        ) or err.value.stderr.startswith("/bin/ls: illegal option -- -")
+        assert (
+            "/bin/ls: unrecognized option '--bla'" in err.value.stderr
+            or "bin/ls: illegal option -- -" in err.value.stderr
+        )
 
     @skip_on_windows
     def test_iter_lines_line_timeout(self):
