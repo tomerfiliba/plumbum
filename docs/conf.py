@@ -43,9 +43,7 @@ master_doc = "index"
 
 # General information about the project.
 project = u"Plumbum Shell Combinators"
-copyright = u"%d, Tomer Filiba, licensed under Attribution-ShareAlike 3.0" % (
-    time.gmtime().tm_year,
-)
+copyright = u"%d, Tomer Filiba, licensed under MIT" % (time.gmtime().tm_year,)
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
