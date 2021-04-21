@@ -192,6 +192,9 @@ class TestCLI:
         _, rc = SimpleApp.run(["foo", "--bacon=81", "--csv=MAX,MIN,100"], exit=False)
         assert rc == 0
 
+        _, rc = SimpleApp.run(["foo", "--bacon=81", "--csv=all,100"], exit=False)
+        assert rc == 0
+
         _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=100"], exit=False)
         assert rc == 0
 

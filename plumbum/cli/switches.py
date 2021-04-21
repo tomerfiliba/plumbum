@@ -455,10 +455,16 @@ class Set(Validator):
                              comparison or not. The default is ``False``
     :param csv: splits the input as a comma-separated-value before validating and returning
                 a list. Accepts ``True``, ``False``, or a string for the separator
-    """
+    :param all_markers: when a user inputs any value from this set, it is considered that
+                        he requested iteration over all values. By default `all_markers`
+                        are {"*", "all"}."""
 
     def __init__(self, *values, **kwargs):
         self.case_sensitive = kwargs.pop("case_sensitive", False)
+        all_markers = kwargs.pop("all_markers", None)
+        if all_markers is None:
+            all_markers = {"*", "all"} - set(values)
+        self.all_markers = frozenset(all_markers)
         self.csv = kwargs.pop("csv", False)
         if self.csv is True:
             self.csv = ","
@@ -466,7 +472,30 @@ class Set(Validator):
             raise TypeError(
                 _("got unexpected keyword argument(s): {0}").format(kwargs.keys())
             )
-        self.values = values
+
+        str_values = []
+        numeric_values = []
+        non_primitive_values = []
+        for opt in values:
+            if isinstance(opt, str):
+                if not self.case_sensitive:
+                    opt = opt.lower()
+                str_values.append(opt)
+            elif isinstance(opt, (int, float)):
+                numeric_values.append(opt)
+            else:
+                non_primitive_values.append(opt)
+        self.str_values = frozenset(str_values)
+        self.numeric_values = frozenset(numeric_values)
+        self.non_primitive_values = tuple(non_primitive_values)
+
+    @property
+    def primitive_values(self):
+        return self.str_values | self.numeric_values
+
+    @property
+    def values(self):
+        return tuple(self.primitive_values) + self.non_primitive_values
 
     def __repr__(self):
         items = ", ".join(v if isinstance(v, str) else v.__name__ for v in self.values)
@@ -474,16 +503,29 @@ class Set(Validator):
 
     def __call__(self, value, check_csv=True):
         if self.csv and check_csv:
-            return [self(v.strip(), check_csv=False) for v in value.split(",")]
+            vals = value.split(",")
+            res = []
+            for v in vals:
+                if v in self.all_markers:
+                    res.extend(self.primitive_values)
+                else:
+                    res.append(self(v.strip(), check_csv=False))
+
+            return res
+
         if not self.case_sensitive:
             value = value.lower()
-        for opt in self.values:
-            if isinstance(opt, str):
-                if not self.case_sensitive:
-                    opt = opt.lower()
-                if opt == value:
-                    return opt  # always return original value
-                continue
+
+        try:
+            if value in self.str_values:
+                return value
+
+            if value in self.numeric_values:
+                return value
+        except TypeError:
+            pass
+
+        for opt in self.non_primitive_values:
             try:
                 return opt(value)
             except ValueError:
@@ -491,9 +533,16 @@ class Set(Validator):
         raise ValueError(f"Invalid value: {value} (Expected one of {self.values})")
 
     def choices(self, partial=""):
-        choices = {opt if isinstance(opt, str) else f"({opt})" for opt in self.values}
+        choices = (
+            self.all_markers
+            | self.str_values
+            | {f"({opt})" for opt in self.numeric_values}
+            | {f"({opt})" for opt in self.primitive_values}
+        )
+
         if partial:
             choices = {opt for opt in choices if opt.lower().startswith(partial)}
+
         return choices
 
 
