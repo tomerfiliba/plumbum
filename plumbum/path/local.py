@@ -170,7 +170,7 @@ class LocalPath(Path):
 
     @_setdoc(Path)
     def glob(self, pattern):
-        fn = lambda pat: [LocalPath(m) for m in glob.glob(str(self / pat))]
+        fn = lambda pat: [LocalPath(m) for m in glob.glob(os.path.join(glob.escape(str(self)), pat))]
         return self._glob(pattern, fn)
 
     @_setdoc(Path)
