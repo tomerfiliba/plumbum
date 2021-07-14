@@ -84,14 +84,15 @@ Colors
 Colors are supported. You can use a colored string on ``PROGNAME``, ``VERSION`` and ``DESCRIPTION`` directly.
 If you set ``PROGNAME`` to a color, you can get auto-naming and color.
 The color of the usage string is available as ``COLOR_USAGE``, and the different groups can be colored with a
-dictionary ``COLOR_GROUPS``.
+dictionaries ``COLOR_GROUPS`` and ``COLOR_GROUP_TITLES``.
 
 For instance, the following is valid::
 
     class MyApp(cli.Application):
         PROGNAME = colors.green
         VERSION = colors.blue | "1.0.2"
-        COLOR_GROUPS = {"Meta-switches" : colors.bold & colors.yellow}
+        COLOR_GROUPS = {"Meta-switches" : colors.yellow}
+        COLOR_GROUP_TITLES = {"Meta-switches" : colors.bold & colors.yellow}
         opts =  cli.Flag("--ops", help=colors.magenta | "This is help")
 
 

@@ -124,12 +124,15 @@ class Application(object):
       one of '-', '*', and '/'; so that they are not combined with preceding paragraphs. Bullet '/' is
       "invisible", meaning that the bullet itself will not be printed to the output.
 
-    * ``USAGE`` - the usage line (shown in help)
+    * ``USAGE`` - the usage line (shown in help).
 
-    * ``COLOR_USAGE`` - The color of the usage line
+    * ``COLOR_USAGE`` - The color of the usage line.
 
     * ``COLOR_GROUPS`` - A dictionary that sets colors for the groups, like Meta-switches, Switches,
-      and Subcommands
+      and Subcommands.
+
+    * ``COLOR_GROUP_TITLES`` - A dictionary that sets colors for the group titles. If the dictionary is empty,
+      it defaults to ``COLOR_GROUPS``.
 
     * ``SUBCOMMAND_HELPMSG`` - Controls the printing of extra "see subcommand -h" help message.
       Default is a message, set to False to remove.
@@ -153,6 +156,7 @@ class Application(object):
     USAGE = None
     COLOR_USAGE = None
     COLOR_GROUPS = None
+    COLOR_GROUP_TITLES = None
     CALL_MAIN_IF_NESTED_COMMAND = True
     SUBCOMMAND_HELPMSG = T_("see '{parent} {sub} --help' for more info")
     ALLOW_ABBREV = False
@@ -188,6 +192,11 @@ class Application(object):
         self.COLOR_GROUPS = defaultdict(
             lambda: colors.do_nothing,
             dict() if type(self).COLOR_GROUPS is None else type(self).COLOR_GROUPS,
+        )
+
+        self.COLOR_GROUP_TITLES = defaultdict(
+            lambda: colors.do_nothing,
+            self.COLOR_GROUPS if type(self).COLOR_GROUP_TITLES is None else type(self).COLOR_GROUP_TITLES,
         )
         if type(self).COLOR_USAGE is None:
             self.COLOR_USAGE = colors.do_nothing
@@ -880,7 +889,7 @@ class Application(object):
             for grp, swinfos in sorted(by_groups.items(), key=lambda item: item[0]):
                 if show_groups:
                     lgrp = T_(grp) if grp in _switch_groups else grp
-                    print(self.COLOR_GROUPS[grp] | lgrp + ":")
+                    print(self.COLOR_GROUP_TITLES[grp] | lgrp + ":")
 
                 for si in sorted(swinfos, key=lambda si: si.names):
                     swnames = ", ".join(
@@ -942,7 +951,7 @@ class Application(object):
             print(description_indent.format(color | prefix, padding, color | msg))
 
         if self._subcommands:
-            gc = self.COLOR_GROUPS["Subcommands"]
+            gc = self.COLOR_GROUP_TITLES["Subcommands"]
             print(gc | T_("Sub-commands:"))
             for name, subcls in sorted(self._subcommands.items()):
                 with gc:
