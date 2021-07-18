@@ -196,7 +196,9 @@ class Application(object):
 
         self.COLOR_GROUP_TITLES = defaultdict(
             lambda: colors.do_nothing,
-            self.COLOR_GROUPS if type(self).COLOR_GROUP_TITLES is None else type(self).COLOR_GROUP_TITLES,
+            self.COLOR_GROUPS
+            if type(self).COLOR_GROUP_TITLES is None
+            else type(self).COLOR_GROUP_TITLES,
         )
         if type(self).COLOR_USAGE is None:
             self.COLOR_USAGE = colors.do_nothing
@@ -951,7 +953,7 @@ class Application(object):
             print(description_indent.format(color | prefix, padding, color | msg))
 
         if self._subcommands:
-            gc = self.COLOR_GROUP_TITLES["Subcommands"]
+            gc = self.COLOR_GROUP_TITLES["Sub-commands"]
             print(gc | T_("Sub-commands:"))
             for name, subcls in sorted(self._subcommands.items()):
                 with gc:
