@@ -74,6 +74,7 @@ class Subcommand(object):
 _switch_groups = ["Switches", "Meta-switches"]
 _switch_groups_l10n = [T_("Switches"), T_("Meta-switches")]
 
+
 # ===================================================================================================
 # CLI Application base class
 # ===================================================================================================
@@ -126,6 +127,8 @@ class Application(object):
 
     * ``USAGE`` - the usage line (shown in help).
 
+    * ``COLOR_USAGE_TITLE`` - The color of the usage line's header.
+
     * ``COLOR_USAGE`` - The color of the usage line.
 
     * ``COLOR_GROUPS`` - A dictionary that sets colors for the groups, like Meta-switches, Switches,
@@ -155,6 +158,7 @@ class Application(object):
     VERSION = None
     USAGE = None
     COLOR_USAGE = None
+    COLOR_USAGE_TITLE = None
     COLOR_GROUPS = None
     COLOR_GROUP_TITLES = None
     CALL_MAIN_IF_NESTED_COMMAND = True
@@ -866,8 +870,10 @@ class Application(object):
             )
         tailargs = " ".join(tailargs)
 
+        utc = self.COLOR_USAGE_TITLE if self.COLOR_USAGE_TITLE else self.COLOR_USAGE
+        print(utc | T_("Usage:"))
+
         with self.COLOR_USAGE:
-            print(T_("Usage:"))
             if not self.USAGE:
                 if self._subcommands:
                     self.USAGE = T_(

@@ -70,6 +70,7 @@ Utility                Usage
 ``DESCRIPTION_MORE=``   Custom description with whitespace
 ``ALLOW_ABREV=True``    Allow argparse style abbreviations
 ``COLOR_USAGE=``        Custom color for usage statement
+``COLOR_USAGE_TITLE=``  Custom color for usage statement's title
 ``COLOR_GROUPS=``       Colors of groups (dictionary)
 ``COLOR_GROUP_TITLES=`` Colors of group titles (dictionary)
 ====================== =====================================
