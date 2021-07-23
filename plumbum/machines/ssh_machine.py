@@ -225,9 +225,12 @@ class SshMachine(BaseRemoteMachine):
         r"""Creates an SSH tunnel from the TCP port (``lport``) of the local machine
         (``lhost``, defaults to ``"localhost"``, but it can be any IP you can ``bind()``)
         to the remote TCP port (``dport``) of the destination machine (``dhost``, defaults
-        to ``"localhost"``, which means *this remote machine*). The returned
-        :class:`SshTunnel <plumbum.machines.remote.SshTunnel>` object can be used as a
-        *context-manager*.
+        to ``"localhost"``, which means *this remote machine*). This function also
+        supports Unix sockets, in which case the local socket should be passed in as
+        ``lport`` and the local bind address should be ``None``. The same can be done
+        for a remote socket, by following the same pattern with ``dport`` and ``dhost``.
+        The returned :class:`SshTunnel <plumbum.machines.remote.SshTunnel>` object can
+        be used as a *context-manager*.
 
         The more conventional use case is the following::
 
@@ -263,12 +266,17 @@ class SshMachine(BaseRemoteMachine):
 
             rem = SshMachine("megazord")
 
-            with rem.tunnel(1234, 5678):
+            with rem.tunnel(1234, "/var/lib/mysql/mysql.sock", dhost=None):
                 sock = socket.socket()
                 sock.connect(("localhost", 1234))
-                # sock is now tunneled to megazord:5678
+                # sock is now tunneled to the MySQL socket on megazord
         """
-        ssh_opts = ["-L", "[{}]:{}:[{}]:{}".format(lhost, lport, dhost, dport)]
+        formatted_lhost = "" if lhost is None else "[{}]:".format(lhost)
+        formatted_dhost = "" if dhost is None else "[{}]:".format(dhost)
+        ssh_opts = [
+            "-L",
+            "{}{}:{}{}".format(formatted_lhost, lport, formatted_dhost, dport),
+        ]
         proc = self.popen((), ssh_opts=ssh_opts, new_session=True)
         return SshTunnel(
             ShellSession(

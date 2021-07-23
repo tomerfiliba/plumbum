@@ -1,3 +1,9 @@
+1.8.0
+-----
+
+* SSHMachine: support forwarding Unix sockets in ``.tunnel()`` (`#550 <https://github.com/tomerfiliba/plumbum/pull/550>`_)
+
+
 1.7.0
 -----
 

@@ -267,11 +267,26 @@ class TestRemotePath:
 
 
 class BaseRemoteMachineTest(object):
-    TUNNEL_PROG = r"""import sys, socket
+    TUNNEL_PROG_AF_INET = r"""import sys, socket
 s = socket.socket()
 s.bind(("", 0))
 s.listen(1)
-sys.stdout.write("{0}\n".format( s.getsockname()[1]))
+sys.stdout.write("{0}\n".format(s.getsockname()[1]))
+sys.stdout.flush()
+s2, _ = s.accept()
+data = s2.recv(100)
+s2.send(b"hello " + data)
+s2.close()
+s.close()
+"""
+
+    TUNNEL_PROG_AF_UNIX = r"""import sys, socket, tempfile
+s = socket.socket(family=socket.AF_UNIX)
+socket_location = tempfile.NamedTemporaryFile()
+socket_location.close()
+s.bind(socket_location.name)
+s.listen(1)
+sys.stdout.write("{0}\n".format(s.getsockname()))
 sys.stdout.flush()
 s2, _ = s.accept()
 data = s2.recv(100)
@@ -438,23 +453,26 @@ class TestRemoteMachine(BaseRemoteMachineTest):
         return SshMachine(TEST_HOST)
 
     def test_tunnel(self):
-        with self._connect() as rem:
-            p = (rem.python["-u"] << self.TUNNEL_PROG).popen()
-            try:
-                port = int(p.stdout.readline().decode("ascii").strip())
-            except ValueError:
+
+        for tunnel_prog in (self.TUNNEL_PROG_AF_INET, self.TUNNEL_PROG_AF_UNIX):
+            with self._connect() as rem:
+                p = (rem.python["-u"] << tunnel_prog).popen()
+                port_or_socket = p.stdout.readline().decode("ascii").strip()
+                try:
+                    port_or_socket = int(port_or_socket)
+                    dhost = "localhost"
+                except ValueError:
+                    dhost = None
+
+                with rem.tunnel(12222, port_or_socket, dhost=dhost) as tun:
+                    s = socket.socket()
+                    s.connect(("localhost", 12222))
+                    s.send(six.b("world"))
+                    data = s.recv(100)
+                    s.close()
+
                 print(p.communicate())
-                raise
-
-            with rem.tunnel(12222, port) as tun:
-                s = socket.socket()
-                s.connect(("localhost", 12222))
-                s.send(six.b("world"))
-                data = s.recv(100)
-                s.close()
-
-            print(p.communicate())
-            assert data == b"hello world"
+                assert data == b"hello world"
 
     def test_get(self):
         with self._connect() as rem:
@@ -525,7 +543,7 @@ class TestParamikoMachine(BaseRemoteMachineTest):
 
     def test_tunnel(self):
         with self._connect() as rem:
-            p = rem.python["-c", self.TUNNEL_PROG].popen()
+            p = rem.python["-c", self.TUNNEL_PROG_AF_INET].popen()
             try:
                 port = int(p.stdout.readline().strip())
             except ValueError:
