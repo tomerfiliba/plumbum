@@ -45,7 +45,7 @@ You can also use it as a *context manager*, so it behaves like ``pushd``/``popd`
     >>> print "%s:%s" % (local.cwd, (ls | wc["-l"])())
     d:\workspace\plumbum: 9
 
-Finally, A more explicit and thread-safe way of running a command in a differet directory is using the ``.with_cwd()`` method:
+Finally, A more explicit and thread-safe way of running a command in a different directory is using the ``.with_cwd()`` method:
 
     >>> ls_in_docs = local.cmd.ls.with_cwd("docs")
     >>> ls_in_docs()
