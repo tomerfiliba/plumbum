@@ -554,7 +554,7 @@ class Application(object):
 
         ordered = [
             (f, a)
-            for _, f, a in sorted([(sf.index, f, sf.val) for f, sf in swfuncs.items()])
+            for _, f, a in sorted((sf.index, f, sf.val) for f, sf in swfuncs.items())
         ]
         return ordered, tailargs
 

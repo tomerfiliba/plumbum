@@ -10,17 +10,20 @@ from plumbum.cmd import msgfmt, msgmerge, xgettext
 translation_dir = local.cwd / "plumbum/cli/i18n"
 template = translation_dir / "messages.pot"
 
-xgettext[
-    "--from-code",
-    "utf-8",
-    "-L",
-    "python",
-    "--keyword=T_",
-    "--package-name=Plumbum.cli",
-    "-o",
-    template,
-    sorted([x - local.cwd for x in local.cwd / "plumbum/cli" // "*.py"]),
-] & FG
+(
+    xgettext[
+        "--from-code",
+        "utf-8",
+        "-L",
+        "python",
+        "--keyword=T_",
+        "--package-name=Plumbum.cli",
+        "-o",
+        template,
+        sorted(x - local.cwd for x in local.cwd / "plumbum/cli" // "*.py"),
+    ]
+    & FG
+)
 
 for translation in translation_dir // "*.po":
     lang = translation.stem
