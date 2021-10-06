@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import pytest
-
 from plumbum import SshMachine, local
 from plumbum._testtools import skip_on_windows
 from plumbum.path.utils import copy, delete, move

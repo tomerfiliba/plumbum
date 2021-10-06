@@ -14,6 +14,20 @@ from plumbum import local
 from .progress import Progress
 from .termsize import get_terminal_size
 
+__all__ = (
+    "readline",
+    "ask",
+    "choose",
+    "prompt",
+    "get_terminal_size",
+    "Progress",
+    "get_terminal_size",
+)
+
+
+def __dir__():
+    return __all__
+
 
 def readline(message=""):
     """Gets a line of input from the user (stdin)"""

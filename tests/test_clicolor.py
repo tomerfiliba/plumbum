@@ -86,7 +86,3 @@ class TestNSApp:
         assert str(colors.red | "crunchy") in output
         assert str(colors.cyan | "this is a bacon switch") in output
         assert expected in output
-
-
-if __name__ == "__main__":
-    NotSoSimpleApp.run()

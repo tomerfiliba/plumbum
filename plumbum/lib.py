@@ -2,7 +2,6 @@
 import inspect
 import os
 import sys
-from abc import ABCMeta
 from contextlib import contextmanager
 
 IS_WIN32 = sys.platform == "win32"

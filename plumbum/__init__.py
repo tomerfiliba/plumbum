@@ -37,7 +37,7 @@ See https://plumbum.readthedocs.io for full details
 """
 
 # Avoids a circular import error later
-import plumbum.path
+import plumbum.path  # noqa: F401
 from plumbum.commands import (
     BG,
     ERROUT,
@@ -57,6 +57,30 @@ from plumbum.version import version
 
 __author__ = "Tomer Filiba (tomerfiliba@gmail.com)"
 __version__ = version
+
+__all__ = (
+    "BG",
+    "ERROUT",
+    "FG",
+    "NOHUP",
+    "RETCODE",
+    "TEE",
+    "TF",
+    "CommandNotFound",
+    "ProcessExecutionError",
+    "ProcessLineTimedOut",
+    "ProcessTimedOut",
+    "BaseRemoteMachine",
+    "PuttyMachine",
+    "SshMachine",
+    "local",
+    "LocalPath",
+    "Path",
+    "RemotePath",
+    "__author__",
+    "__version__",
+    "cmd",
+)
 
 # ===================================================================================================
 # Module hack: ``from plumbum.cmd import ls``
@@ -92,3 +116,8 @@ sys.modules[cmd.__name__] = cmd
 del sys
 del ModuleType
 del LocalModule
+
+
+def __dir__():
+    "Support nice tab completion"
+    return __all__
