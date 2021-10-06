@@ -20,3 +20,4 @@ def testdir():
 def cleandir():
     newpath = tempfile.mkdtemp()
     os.chdir(newpath)
+

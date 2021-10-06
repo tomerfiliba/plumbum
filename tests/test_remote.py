@@ -31,6 +31,9 @@ else:
     from plumbum.machines.paramiko_machine import ParamikoMachine
 
 
+pytestmark = pytest.mark.ssh
+
+
 def strassert(one, two):
     assert str(one) == str(two)
 
