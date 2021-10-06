@@ -34,7 +34,7 @@ jobs:
         include:
         - python-version: 'pypy-2.7'
           os: ubuntu-latest
-        - python-version: 'pypy-3.6'
+        - python-version: 'pypy-3.7'
           os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
@@ -74,7 +74,7 @@ jobs:
         ssh localhost -vvv "echo 'Worked!'"
 
     - name: Test with pytest
-      run: pytest --cov
+      run: pytest --cov --run-optional-tests=ssh,sudo
 
     - name: Upload coverage
       if: matrix.python-version != '2.7' && matrix.python-version != 'pypy-2.7'
@@ -91,7 +91,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build SDist and wheel
-      run: pipx run --spec build pyproject-build
+      run: pipx run build
     - uses: actions/upload-artifact@v2
       with:
         path: dist/*
