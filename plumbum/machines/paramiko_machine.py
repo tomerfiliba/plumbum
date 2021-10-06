@@ -19,7 +19,7 @@ try:
     import paramiko
 except ImportError:
 
-    class paramiko(object):
+    class paramiko(object):  # type: ignore
         def __nonzero__(self):
             return False
 
@@ -28,7 +28,7 @@ except ImportError:
         def __getattr__(self, name):
             raise ImportError("No module named paramiko")
 
-    paramiko = paramiko()
+    paramiko = paramiko()  # type: ignore
 
 logger = logging.getLogger("plumbum.paramiko")
 

@@ -26,14 +26,14 @@ from .names import (
     from_html,
 )
 
-try:
+if sys.version_info >= (3,):
     from abc import ABC
-except ImportError:
-    from abc import ABCMeta  # type: ignore
+else:
+    from abc import ABCMeta
 
     ABC = ABCMeta(
         "ABC", (object,), {"__module__": __name__, "__slots__": ("__weakref__")}
-    )  # type: ignore
+    )
 
 try:
     from typing import IO, Dict, Union

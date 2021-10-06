@@ -196,9 +196,9 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             try:
-                from ipywidgets import HTML, HBox, IntProgress  # type: ignore
+                from ipywidgets import HTML, HBox, IntProgress
             except ImportError:  # Support IPython < 4.0
-                from IPython.html.widgets import HTML, HBox, IntProgress  # type: ignore
+                from IPython.html.widgets import HTML, HBox, IntProgress
 
         super(ProgressIPy, self).__init__(*args, **kargs)
         self.prog = IntProgress(max=self.length)
@@ -206,7 +206,7 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
         self._box = HBox((self.prog, self._label))
 
     def start(self):
-        from IPython.display import display  # type: ignore
+        from IPython.display import display
 
         display(self._box)
         super(ProgressIPy, self).start()
@@ -248,9 +248,9 @@ class ProgressAuto(ProgressBase):
         try:  # pragma: no cover
             __IPYTHON__
             try:
-                from traitlets import TraitError  # type: ignore
+                from traitlets import TraitError
             except ImportError:  # Support for IPython < 4.0
-                from IPython.utils.traitlets import TraitError  # type: ignore
+                from IPython.utils.traitlets import TraitError
 
             try:
                 return ProgressIPy(*args, **kargs)

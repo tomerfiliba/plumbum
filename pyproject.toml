@@ -8,3 +8,15 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 write_to = "plumbum/version.py"
+
+
+[tool.mypy]
+files = ["plumbum"]
+python_version = "2.7"
+warn_unused_configs = true
+warn_unused_ignores = true
+
+
+[[tool.mypy.overrides]]
+module = ["IPython.*", "pywintypes.*", "win32con.*", "win32file.*", "PIL.*"]
+ignore_missing_imports = true
