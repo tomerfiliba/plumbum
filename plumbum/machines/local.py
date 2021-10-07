@@ -7,7 +7,6 @@ import subprocess
 import sys
 import time
 from contextlib import contextmanager
-from functools import partial
 from tempfile import mkdtemp
 
 from plumbum.commands import CommandNotFound, ConcreteCommand

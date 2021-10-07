@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, print_function
 
-import os
+import sys
 from abc import abstractmethod
 
 from plumbum import local
 from plumbum.lib import _setdoc, six
 
-try:
-    from configparser import ConfigParser, NoOptionError, NoSectionError  # Py3
-except ImportError:
-    from ConfigParser import ConfigParser, NoOptionError, NoSectionError  # type: ignore
+if sys.version_info >= (3,):
+    from configparser import ConfigParser, NoOptionError, NoSectionError
+else:
+    from ConfigParser import ConfigParser, NoOptionError, NoSectionError
 
 
 class ConfigBase(six.ABC):

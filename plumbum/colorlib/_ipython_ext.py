@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-import IPython.display  # type: ignore
-from IPython.core.magic import magics_class  # type: ignore; type: ignore
-from IPython.core.magic import Magics, cell_magic, needs_local_scope
+import sys
 
-try:
+import IPython.display
+from IPython.core.magic import Magics, cell_magic, magics_class, needs_local_scope
+
+if sys.version_info >= (3,):
     from io import StringIO
-except ImportError:
+else:
     try:
-        from cStringIO import StringIO  # type: ignore
+        from cStringIO import StringIO
     except ImportError:
         from StringIO import StringIO  # type: ignore
 
-import sys
 
 valid_choices = [x[8:] for x in dir(IPython.display) if "display_" == x[:8]]
 

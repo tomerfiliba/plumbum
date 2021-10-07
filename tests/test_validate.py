@@ -2,7 +2,6 @@
 from __future__ import division, print_function
 
 from plumbum import cli
-from plumbum.lib import six
 
 
 class TestValidator:
@@ -13,7 +12,7 @@ class TestValidator:
                 pass
 
         assert Try.main.positional == [abs, str]
-        assert Try.main.positional_varargs == None
+        assert Try.main.positional_varargs is None
 
     def test_position(self):
         class Try(object):
@@ -22,7 +21,7 @@ class TestValidator:
                 pass
 
         assert Try.main.positional == [abs, str]
-        assert Try.main.positional_varargs == None
+        assert Try.main.positional_varargs is None
 
     def test_mix(self):
         class Try(object):
@@ -31,7 +30,7 @@ class TestValidator:
                 pass
 
         assert Try.main.positional == [abs, str, None, bool]
-        assert Try.main.positional_varargs == None
+        assert Try.main.positional_varargs is None
 
     def test_var(self):
         class Try(object):
@@ -40,7 +39,7 @@ class TestValidator:
                 pass
 
         assert Try.main.positional == [abs, str]
-        assert Try.main.positional_varargs == int
+        assert Try.main.positional_varargs is int
 
     def test_defaults(self):
         class Try(object):

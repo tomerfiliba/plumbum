@@ -323,9 +323,9 @@ class BoundCommand(BaseCommand):
 class BoundEnvCommand(BaseCommand):
     __slots__ = ("cmd", "env", "cwd")
 
-    def __init__(self, cmd, env={}, cwd=None):
+    def __init__(self, cmd, env=None, cwd=None):
         self.cmd = cmd
-        self.env = env
+        self.env = env or {}
         self.cwd = cwd
 
     def __repr__(self):
@@ -341,7 +341,8 @@ class BoundEnvCommand(BaseCommand):
     def machine(self):
         return self.cmd.machine
 
-    def popen(self, args=(), cwd=None, env={}, **kwargs):
+    def popen(self, args=(), cwd=None, env=None, **kwargs):
+        env = env or {}
         return self.cmd.popen(
             args,
             cwd=self.cwd if cwd is None else cwd,

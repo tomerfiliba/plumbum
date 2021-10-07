@@ -19,3 +19,23 @@ from .switches import (
     positional,
     switch,
 )
+
+__all__ = (
+    "Application",
+    "Config",
+    "ConfigINI",
+    "CSV",
+    "CountOf",
+    "ExistingDirectory",
+    "ExistingFile",
+    "Flag",
+    "NonexistentPath",
+    "Predicate",
+    "Range",
+    "Set",
+    "SwitchAttr",
+    "SwitchError",
+    "autoswitch",
+    "positional",
+    "switch",
+)
