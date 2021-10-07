@@ -21,6 +21,7 @@ def cleandir():
     newpath = tempfile.mkdtemp()
     os.chdir(newpath)
 
+
 # Pulled from https://github.com/reece/pytest-optional-tests
 
 """implements declaration of optional tests using pytest markers
@@ -58,17 +59,17 @@ import pytest
 
 _logger = logging.getLogger(__name__)
 
-marker_re = re.compile("^(?P<marker>\w+)(:\s*(?P<description>.*))?")
+marker_re = re.compile(r"^(?P<marker>\w+)(:\s*(?P<description>.*))?")
 
 
 def pytest_addoption(parser):
-    group = parser.getgroup('collect')
+    group = parser.getgroup("collect")
     group.addoption(
-        '--run-optional-tests',
-        action='append',
-        dest='run_optional_tests',
+        "--run-optional-tests",
+        action="append",
+        dest="run_optional_tests",
         default=None,
-        help='Optional test markers to run, multiple and/or comma separated okay',
+        help="Optional test markers to run, multiple and/or comma separated okay",
     )
 
 
@@ -83,7 +84,7 @@ def pytest_configure(config):
     for ot in ot_ini:
         # ot should be a line like "optmarker: this is an opt marker", as with markers section
         config.addinivalue_line("markers", ot)
-    ot_markers = set(marker_re.match(l).group(1) for l in ot_ini)
+    ot_markers = {marker_re.match(l).group(1) for l in ot_ini}
 
     # collect requested optional tests
     ot_run = config.getoption("run_optional_tests")
@@ -99,11 +100,15 @@ def pytest_configure(config):
     if ot_run:
         unknown_tests = ot_run - ot_markers
         if unknown_tests:
-            raise ValueError("Requested execution of undeclared optional tests: {}".format(", ".join(unknown_tests)))
+            raise ValueError(
+                "Requested execution of undeclared optional tests: {}".format(
+                    ", ".join(unknown_tests)
+                )
+            )
 
     config._ot_markers = set(ot_markers)
     config._ot_run = set(ot_run)
-    
+
 
 def pytest_collection_modifyitems(config, items):
     # https://stackoverflow.com/a/50114028/342839
@@ -112,7 +117,7 @@ def pytest_collection_modifyitems(config, items):
 
     skips = {}
     for item in items:
-        marker_names = set(m.name for m in item.iter_markers())
+        marker_names = {m.name for m in item.iter_markers()}
         if not marker_names:
             continue
         test_otms = marker_names & ot_markers
@@ -124,5 +129,9 @@ def pytest_collection_modifyitems(config, items):
             continue
         mns = str(marker_names)
         if mns not in skips:
-            skips[mns] = pytest.mark.skip(reason="Skipping; marked with disabled optional tests ({})".format(", ".join(marker_names)))
+            skips[mns] = pytest.mark.skip(
+                reason="Skipping; marked with disabled optional tests ({})".format(
+                    ", ".join(marker_names)
+                )
+            )
         item.add_marker(skips[mns])
