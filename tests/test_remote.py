@@ -5,6 +5,7 @@ import socket
 import sys
 import time
 from copy import deepcopy
+from multiprocessing import Process, Queue
 
 import env
 import pytest
@@ -476,6 +477,46 @@ class TestRemoteMachine(BaseRemoteMachineTest):
 
                 print(p.communicate())
                 assert data == b"hello world"
+
+
+    def test_reverse_tunnel(self):
+
+        def serve_reverse_tunnel(queue):
+            s = socket.socket()
+            s.bind(("", 12222))
+            s.listen(1)
+            s2, _ = s.accept()
+            data = s2.recv(100).decode("ascii").strip()
+            queue.put(data)
+            s2.close()
+            s.close()
+
+        with self._connect() as rem:
+            get_unbound_socket_remote = """import sys, socket
+s = socket.socket()
+s.bind(("", 0))
+s.listen(1)
+sys.stdout.write(str(s.getsockname()[1]))
+sys.stdout.flush()
+s.close()
+"""
+            p = (rem.python["-u"] << get_unbound_socket_remote).popen()
+            remote_socket = p.stdout.readline().decode("ascii").strip()
+            queue = Queue()
+            tunnel_server = Process(target=serve_reverse_tunnel, args=(queue,))
+            tunnel_server.start()
+            message = str(time.time_ns())
+            with rem.tunnel(12222, remote_socket, dhost="localhost", reverse=True):
+                remote_send_af_inet = """import sys, socket
+s = socket.socket()
+s.connect(("localhost", {}))
+s.send("{}".encode("ascii"))
+s.close()
+""".format(remote_socket, message)
+                (rem.python["-u"] << remote_send_af_inet).popen()
+                tunnel_server.join()
+                assert queue.get() == message
+
 
     def test_get(self):
         with self._connect() as rem:
