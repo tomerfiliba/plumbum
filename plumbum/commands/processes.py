@@ -265,7 +265,7 @@ def _timeout_thread_func():
 
 
 bgthd = Thread(target=_timeout_thread_func, name="PlumbumTimeoutThread")
-bgthd.setDaemon(True)
+bgthd.daemon = True
 bgthd.start()
 
 
