@@ -228,9 +228,9 @@ class ParamikoMachine(BaseRemoteMachine):
         gss_host=None,
         get_pty=False,
         load_system_ssh_config=False,
+        **kwargs
     ):
         self.host = host
-        kwargs = {}
         if user:
             self._fqhost = "{}@{}".format(user, host)
             kwargs["username"] = user
