@@ -503,7 +503,7 @@ s.close()
             queue = Queue()
             tunnel_server = Process(target=serve_reverse_tunnel, args=(queue,))
             tunnel_server.start()
-            message = str(time.time_ns())
+            message = str(time.time())
             with rem.tunnel(12222, remote_socket, dhost="localhost", reverse=True):
                 remote_send_af_inet = """import sys, socket
 s = socket.socket()
