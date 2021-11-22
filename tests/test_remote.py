@@ -478,9 +478,7 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                 print(p.communicate())
                 assert data == b"hello world"
 
-
     def test_reverse_tunnel(self):
-
         def serve_reverse_tunnel(queue):
             s = socket.socket()
             s.bind(("", 12222))
@@ -512,11 +510,12 @@ s = socket.socket()
 s.connect(("localhost", {}))
 s.send("{}".encode("ascii"))
 s.close()
-""".format(remote_socket, message)
+""".format(
+                    remote_socket, message
+                )
                 (rem.python["-u"] << remote_send_af_inet).popen()
                 tunnel_server.join()
                 assert queue.get() == message
-
 
     def test_get(self):
         with self._connect() as rem:
