@@ -29,14 +29,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["2.7", "3.5", "3.7", "3.9"]
+        python-version: ["2.7", "3.5", "3.7", "3.10"]
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
         - python-version: 'pypy-2.7'
           os: ubuntu-latest
         - python-version: 'pypy-3.7'
           os: ubuntu-latest
-        - python-version: '3.10'
+        - python-version: 'pypy-3.8'
           os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 

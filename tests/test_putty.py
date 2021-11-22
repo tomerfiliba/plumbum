@@ -4,7 +4,6 @@
 import pytest
 
 from plumbum import PuttyMachine, SshMachine
-from plumbum._testtools import xfail_on_pypy
 
 
 @pytest.fixture(params=["default", "322"])
@@ -13,7 +12,6 @@ def ssh_port(request):
 
 
 class TestPuttyMachine:
-    @xfail_on_pypy
     def test_putty_command(self, mocker, ssh_port):
         local = mocker.patch("plumbum.machines.ssh_machine.local")
         init = mocker.spy(SshMachine, "__init__")
