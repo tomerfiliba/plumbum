@@ -490,6 +490,10 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                 print(p.communicate())
                 assert data == b"hello world"
 
+    @pytest.mark.skip(
+        sys.version_info >= (3, 8) and sys.platform.startswith("darwin"),
+        reason="Hangs when using spawn instead of fork (macOS 3.8+ default)",
+    )
     def test_reverse_tunnel(self):
 
         with self._connect() as rem:
