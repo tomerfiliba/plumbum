@@ -14,6 +14,9 @@ on:
     types:
     - published
 
+env:
+  FORCE_COLOR: 3
+
 jobs:
 
   pre-commit:
@@ -58,7 +61,7 @@ jobs:
 
     - name: Install
       run: |
-        pip install wheel coveralls
+        pip install wheel coveralls pytest-github-actions-annotate-failures
         pip install -e .[dev]
 
     - name: Setup SSH tests
