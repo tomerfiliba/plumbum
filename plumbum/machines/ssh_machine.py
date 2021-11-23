@@ -220,7 +220,13 @@ class SshMachine(BaseRemoteMachine):
         )
 
     def tunnel(
-        self, lport, dport, lhost="localhost", dhost="localhost", connect_timeout=5, reverse=False
+        self,
+        lport,
+        dport,
+        lhost="localhost",
+        dhost="localhost",
+        connect_timeout=5,
+        reverse=False,
     ):
         r"""Creates an SSH tunnel from the TCP port (``lport``) of the local machine
         (``lhost``, defaults to ``"localhost"``, but it can be any IP you can ``bind()``)
@@ -273,13 +279,17 @@ class SshMachine(BaseRemoteMachine):
         """
         formatted_lhost = "" if lhost is None else "[{}]:".format(lhost)
         formatted_dhost = "" if dhost is None else "[{}]:".format(dhost)
-        ssh_opts = [
-            "-L",
-            "{}{}:{}{}".format(formatted_lhost, lport, formatted_dhost, dport),
-        ] if not reverse else [
-            "-R",
-            "{}{}:{}{}".format(formatted_dhost, dport, formatted_lhost, lport),
-        ]
+        ssh_opts = (
+            [
+                "-L",
+                "{}{}:{}{}".format(formatted_lhost, lport, formatted_dhost, dport),
+            ]
+            if not reverse
+            else [
+                "-R",
+                "{}{}:{}{}".format(formatted_dhost, dport, formatted_lhost, lport),
+            ]
+        )
         proc = self.popen((), ssh_opts=ssh_opts, new_session=True)
         return SshTunnel(
             ShellSession(

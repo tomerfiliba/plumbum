@@ -380,6 +380,7 @@ s.close()
                 p = rem.which("dummy-executable")
                 assert p == rem.cwd / "not-in-path" / "dummy-executable"
 
+    @pytest.mark.xfail(env.PYPY, reason="PyPy sometimes fails here", strict=False)
     @pytest.mark.parametrize(
         "env",
         [
@@ -451,6 +452,17 @@ s.close()
             rfile.delete()
 
 
+def serve_reverse_tunnel(queue):
+    s = socket.socket()
+    s.bind(("", 12223))
+    s.listen(1)
+    s2, _ = s.accept()
+    data = s2.recv(100).decode("ascii").strip()
+    queue.put(data)
+    s2.close()
+    s.close()
+
+
 @skip_on_windows
 class TestRemoteMachine(BaseRemoteMachineTest):
     def _connect(self):
@@ -478,18 +490,11 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                 print(p.communicate())
                 assert data == b"hello world"
 
-
+    @pytest.mark.skip(
+        sys.version_info >= (3, 8) and sys.platform.startswith("darwin"),
+        reason="Hangs when using spawn instead of fork (macOS 3.8+ default)",
+    )
     def test_reverse_tunnel(self):
-
-        def serve_reverse_tunnel(queue):
-            s = socket.socket()
-            s.bind(("", 12222))
-            s.listen(1)
-            s2, _ = s.accept()
-            data = s2.recv(100).decode("ascii").strip()
-            queue.put(data)
-            s2.close()
-            s.close()
 
         with self._connect() as rem:
             get_unbound_socket_remote = """import sys, socket
@@ -505,18 +510,19 @@ s.close()
             queue = Queue()
             tunnel_server = Process(target=serve_reverse_tunnel, args=(queue,))
             tunnel_server.start()
-            message = str(time.time_ns())
-            with rem.tunnel(12222, remote_socket, dhost="localhost", reverse=True):
+            message = str(time.time())
+            with rem.tunnel(12223, remote_socket, dhost="localhost", reverse=True):
                 remote_send_af_inet = """import sys, socket
 s = socket.socket()
 s.connect(("localhost", {}))
 s.send("{}".encode("ascii"))
 s.close()
-""".format(remote_socket, message)
+""".format(
+                    remote_socket, message
+                )
                 (rem.python["-u"] << remote_send_af_inet).popen()
                 tunnel_server.join()
                 assert queue.get() == message
-
 
     def test_get(self):
         with self._connect() as rem:
