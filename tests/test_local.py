@@ -1073,3 +1073,14 @@ class TestLocalEncoding:
         os.chmod(name, st.st_mode | stat.S_IEXEC)
 
         assert "yes" in local[local.cwd / name]()
+
+
+def test_local_glob_path(tmpdir):
+    p = tmpdir.mkdir("a*b?c")
+    p2 = tmpdir.mkdir("aanythingbxc")
+    p2.join("something.txt").write("content")
+    p.join("hello.txt").write("content")
+    p.join("other.txt").write("content")
+
+    pp = LocalPath(str(p))
+    assert len(pp // "*.txt") == 2

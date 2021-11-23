@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import inspect
 import os
+import re
 import sys
 from contextlib import contextmanager
 
@@ -101,6 +102,20 @@ if sys.version_info >= (3, 0):
     from io import StringIO
 else:
     from StringIO import StringIO
+
+if sys.version_info >= (3,):
+    from glob import escape as glob_escape
+else:
+    _magic_check = re.compile(u"([*?[])")
+    _magic_check_bytes = re.compile(b"([*?[])")
+
+    def glob_escape(pathname):
+        drive, pathname = os.path.splitdrive(pathname)
+        if isinstance(pathname, str):
+            pathname = _magic_check_bytes.sub(r"[\1]", pathname)
+        else:
+            pathname = _magic_check.sub(u"[\\1]", pathname)
+        return drive + pathname
 
 
 @contextmanager
