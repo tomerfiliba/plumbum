@@ -380,6 +380,7 @@ s.close()
                 p = rem.which("dummy-executable")
                 assert p == rem.cwd / "not-in-path" / "dummy-executable"
 
+    @pytest.mark.xfail(env.PYPY, reason="PyPy sometimes fails here", strict=False)
     @pytest.mark.parametrize(
         "env",
         [
