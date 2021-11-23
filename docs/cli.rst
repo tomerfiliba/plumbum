@@ -83,15 +83,19 @@ Colors
 
 Colors are supported. You can use a colored string on ``PROGNAME``, ``VERSION`` and ``DESCRIPTION`` directly.
 If you set ``PROGNAME`` to a color, you can get auto-naming and color.
-The color of the usage string is available as ``COLOR_USAGE``, and the different groups can be colored with a
-dictionary ``COLOR_GROUPS``.
+The color of the usage string is available as ``COLOR_USAGE``. The color of ``Usage:`` line itself may be
+specified using ``COLOR_USAGE_TITLE``, otherwise it defaults to ``COLOR_USAGE``.
+
+Different groups can be colored with a
+dictionaries ``COLOR_GROUPS`` and ``COLOR_GROUP_TITLES``.
 
 For instance, the following is valid::
 
     class MyApp(cli.Application):
         PROGNAME = colors.green
         VERSION = colors.blue | "1.0.2"
-        COLOR_GROUPS = {"Meta-switches" : colors.bold & colors.yellow}
+        COLOR_GROUPS = {"Switches": colors.blue | "Meta-switches" : colors.yellow}
+        COLOR_GROUP_TITLES = {"Switches": colors.bold | colors.blue, "Meta-switches" : colors.bold & colors.yellow}
         opts =  cli.Flag("--ops", help=colors.magenta | "This is help")
 
 
@@ -101,16 +105,17 @@ For instance, the following is valid::
     <pre>
     <font color="#00C000">SimpleColorCLI.py</font> <font color="#0000C0">1.0.2</font>
 
-    Usage:
-        <font color="#00C000">SimpleColorCLI.py</font> [SWITCHES]
+    <font color="#00C000"><b>Usage:</b></font>
+        <font color="#00C000">SimpleColorCLI.py [SWITCHES] </font>
 
     <font color="#C0C000"><b>Meta-switches</b></font>
-        <font color="#C0C000"><b>-h, --help</b></font>         <font color="#C0C000"><b>Prints this help message and quits</b></font>
-        <font color="#C0C000"><b>--help-all</b></font>         <font color="#C0C000"><b>Print help messages of all subcommands and quit</b></font>
-        <font color="#C0C000"><b>-v, --version</b></font>      <font color="#C0C000"><b>Prints the program's version and quits</b></font>
+        <font color="#C0C000">-h, --help         Prints this help message and quits</font>
+        <font color="#C0C000">--help-all         Print help messages of all subcommands and quit
+        <font color="#C0C000">-v, --version      Prints the program's version and quits</font>
+    </font>
 
-    Switches
-        --ops              <font color="#C000C0">This is help</font>
+    <font color="#0000C0"><b>Switches:</b></font>
+        <font color="#0000C0"><b>--ops</b></font>              <font color="#C000C0">This is help</font>
     </pre>
 
 

@@ -164,8 +164,8 @@ class LocalPath(Path):
             raise ValueError("Invalid suffix %r" % (suffix))
         name = self.name
         depth = len(self.suffixes) if depth is None else min(depth, len(self.suffixes))
-        for i in range(depth):
-            name, ext = os.path.splitext(name)
+        for _ in range(depth):
+            name, _ = os.path.splitext(name)
         return LocalPath(self.dirname) / (name + suffix)
 
     @_setdoc(Path)

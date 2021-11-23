@@ -1,22 +1,20 @@
 # -*- coding: utf-8 -*-
 import atexit
 import heapq
+import sys
 import time
 from threading import Thread
 
 from plumbum.lib import IS_WIN32, six
 
-try:
+if sys.version_info >= (3,):
+    from io import StringIO
     from queue import Empty as QueueEmpty
     from queue import Queue
-except ImportError:
-    from Queue import Empty as QueueEmpty  # type: ignore
+else:
+    from cStringIO import StringIO
+    from Queue import Empty as QueueEmpty
     from Queue import Queue
-
-try:
-    from io import StringIO
-except ImportError:
-    from cStringIO import StringIO  # type: ignore
 
 
 # ===================================================================================================
@@ -267,7 +265,7 @@ def _timeout_thread_func():
 
 
 bgthd = Thread(target=_timeout_thread_func, name="PlumbumTimeoutThread")
-bgthd.setDaemon(True)
+bgthd.daemon = True
 bgthd.start()
 
 

@@ -2,7 +2,6 @@
 import inspect
 import os
 import sys
-from abc import ABCMeta
 from contextlib import contextmanager
 
 IS_WIN32 = sys.platform == "win32"
@@ -38,14 +37,12 @@ class six(object):
     """
 
     PY3 = sys.version_info[0] >= 3
-    try:
+    if sys.version_info >= (3, 4):
         from abc import ABC
-    except ImportError:
-        from abc import ABCMeta  # type: ignore
+    else:
+        from abc import ABCMeta
 
-        ABC = ABCMeta(
-            "ABC", (object,), {"__module__": __name__, "__slots__": ()}
-        )  # type: ignore
+        ABC = ABCMeta("ABC", (object,), {"__module__": __name__, "__slots__": ()})
 
     # Be sure to use named-tuple access, so that usage is not affected
     try:
@@ -100,10 +97,10 @@ class six(object):
 
 # Try/except fails because io has the wrong StringIO in Python2
 # You'll get str/unicode errors
-if six.PY3:
+if sys.version_info >= (3, 0):
     from io import StringIO
 else:
-    from StringIO import StringIO  # type: ignore
+    from StringIO import StringIO
 
 
 @contextmanager

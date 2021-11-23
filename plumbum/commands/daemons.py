@@ -49,7 +49,7 @@ def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
                 stderr=stderr.fileno(),
             )
             os.write(wfd, str(proc.pid).encode("utf8"))
-        except:
+        except Exception:
             rc = 1
             tbtext = "".join(traceback.format_exception(*sys.exc_info()))[-MAX_SIZE:]
             os.write(wfd, tbtext.encode("utf8"))

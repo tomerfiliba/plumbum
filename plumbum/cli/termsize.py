@@ -44,7 +44,7 @@ def get_terminal_size(default=(80, 25)):
 
 def _get_terminal_size_windows():  # pragma: no cover
     try:
-        from ctypes import create_string_buffer, windll  # type: ignore
+        from ctypes import create_string_buffer, windll
 
         STDERR_HANDLE = -12
         h = windll.kernel32.GetStdHandle(STDERR_HANDLE)

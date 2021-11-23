@@ -14,6 +14,9 @@ on:
     types:
     - published
 
+env:
+  FORCE_COLOR: 3
+
 jobs:
 
   pre-commit:
@@ -29,12 +32,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [2.7, 3.5, 3.7, 3.9]
+        python-version: ["2.7", "3.5", "3.7", "3.10"]
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
         - python-version: 'pypy-2.7'
           os: ubuntu-latest
-        - python-version: 'pypy-3.6'
+        - python-version: 'pypy-3.7'
+          os: ubuntu-latest
+        - python-version: 'pypy-3.8'
           os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
@@ -56,7 +61,7 @@ jobs:
 
     - name: Install
       run: |
-        pip install wheel coveralls
+        pip install wheel coveralls pytest-github-actions-annotate-failures
         pip install -e .[dev]
 
     - name: Setup SSH tests
@@ -74,7 +79,7 @@ jobs:
         ssh localhost -vvv "echo 'Worked!'"
 
     - name: Test with pytest
-      run: pytest --cov
+      run: pytest --cov --run-optional-tests=ssh,sudo
 
     - name: Upload coverage
       if: matrix.python-version != '2.7' && matrix.python-version != 'pypy-2.7'
@@ -91,7 +96,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build SDist and wheel
-      run: pipx run --spec build pyproject-build
+      run: pipx run build
     - uses: actions/upload-artifact@v2
       with:
         path: dist/*

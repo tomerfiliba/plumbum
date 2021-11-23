@@ -61,7 +61,9 @@ class TestNSApp:
         class NotSoSimpleApp(cli.Application):
             PROGNAME = colors.blue | "NSApp"
             VERSION = "1.2.3"
-            COLOR_GROUPS = {"Switches": colors.green}
+            COLOR_GROUPS = {"Switches": colors.cyan}
+            COLOR_GROUP_TITLES = {"Switches": colors.bold & colors.cyan}
+            COLOR_USAGE_TITLE = colors.bold & colors.cyan
 
             @cli.switch(["b"], help="this is a bacon switch")
             def bacon(self):
@@ -78,10 +80,9 @@ class TestNSApp:
         output = capsys.readouterr()[0]
         assert rc == 0
         expected = str((colors.blue | "NSApp") + " 1.2.3")
+        assert str(colors.bold & colors.cyan | "Switches:") in output
+        assert str(colors.bold & colors.cyan | "Usage:") in output
         assert "-b" in output
         assert str(colors.red | "crunchy") in output
+        assert str(colors.cyan | "this is a bacon switch") in output
         assert expected in output
-
-
-if __name__ == "__main__":
-    NotSoSimpleApp.run()
