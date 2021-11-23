@@ -452,6 +452,17 @@ s.close()
             rfile.delete()
 
 
+def serve_reverse_tunnel(queue):
+    s = socket.socket()
+    s.bind(("", 12223))
+    s.listen(1)
+    s2, _ = s.accept()
+    data = s2.recv(100).decode("ascii").strip()
+    queue.put(data)
+    s2.close()
+    s.close()
+
+
 @skip_on_windows
 class TestRemoteMachine(BaseRemoteMachineTest):
     def _connect(self):
@@ -480,15 +491,6 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                 assert data == b"hello world"
 
     def test_reverse_tunnel(self):
-        def serve_reverse_tunnel(queue):
-            s = socket.socket()
-            s.bind(("", 12223))
-            s.listen(1)
-            s2, _ = s.accept()
-            data = s2.recv(100).decode("ascii").strip()
-            queue.put(data)
-            s2.close()
-            s.close()
 
         with self._connect() as rem:
             get_unbound_socket_remote = """import sys, socket
