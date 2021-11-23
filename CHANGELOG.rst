@@ -1,8 +1,12 @@
-1.8.0
+1.7.1
 -----
 
+* Paths: glob with local paths no longer expands the existing path too (`#552 <https://github.com/tomerfiliba/plumbum/pull/552>`_)
+* SSH: support reverse tunnels with Paramiko (`#562 https://github.com/tomerfiliba/plumbum/pull/562>`_)
 * SSHMachine: support forwarding Unix sockets in ``.tunnel()`` (`#550 <https://github.com/tomerfiliba/plumbum/pull/550>`_)
-
+* CLI: Support ``COLOR_GROUP_TITLES`` (`#553 <https://github.com/tomerfiliba/plumbum/pull/553>`_)
+* Fix a deprecated in Python 3.10 warning (`#563 <https://github.com/tomerfiliba/plumbum/pull/563>`_)
+* Extended testing and checking on Python 3.10 and various PyPy versions. Nox is supported for easier new-user development.
 
 1.7.0
 -----
