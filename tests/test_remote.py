@@ -5,7 +5,8 @@ import socket
 import sys
 import time
 from copy import deepcopy
-from multiprocessing import Process, Queue
+from multiprocessing import Queue
+from threading import Thread
 
 import env
 import pytest
@@ -490,10 +491,6 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                 print(p.communicate())
                 assert data == b"hello world"
 
-    @pytest.mark.skip(
-        sys.version_info >= (3, 8) and sys.platform.startswith("darwin"),
-        reason="Hangs when using spawn instead of fork (macOS 3.8+ default)",
-    )
     def test_reverse_tunnel(self):
 
         with self._connect() as rem:
@@ -508,11 +505,11 @@ s.close()
             p = (rem.python["-u"] << get_unbound_socket_remote).popen()
             remote_socket = p.stdout.readline().decode("ascii").strip()
             queue = Queue()
-            tunnel_server = Process(target=serve_reverse_tunnel, args=(queue,))
+            tunnel_server = Thread(target=serve_reverse_tunnel, args=(queue,))
             tunnel_server.start()
             message = str(time.time())
             with rem.tunnel(12223, remote_socket, dhost="localhost", reverse=True):
-                remote_send_af_inet = """import sys, socket
+                remote_send_af_inet = """import socket
 s = socket.socket()
 s.connect(("localhost", {}))
 s.send("{}".encode("ascii"))
@@ -521,7 +518,7 @@ s.close()
                     remote_socket, message
                 )
                 (rem.python["-u"] << remote_send_af_inet).popen()
-                tunnel_server.join()
+                tunnel_server.join(timeout=1)
                 assert queue.get() == message
 
     def test_get(self):
