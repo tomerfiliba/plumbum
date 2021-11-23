@@ -71,16 +71,15 @@ def pytest_addoption(parser):
         default=None,
         help="Optional test markers to run, multiple and/or comma separated okay",
     )
+    parser.addini(
+        "optional_tests", "list of optional markers", type="linelist", default=""
+    )
 
 
 def pytest_configure(config):
     # register all optional tests declared in ini file as markers
     # https://docs.pytest.org/en/latest/writing_plugins.html#registering-custom-markers
-    ot_ini = config.inicfg.get("optional_tests")  # None if NA
-    if ot_ini:
-        ot_ini = ot_ini.split("\n")
-    else:
-        ot_ini = []
+    ot_ini = config.inicfg.get("optional_tests").splitlines()
     for ot in ot_ini:
         # ot should be a line like "optmarker: this is an opt marker", as with markers section
         config.addinivalue_line("markers", ot)
