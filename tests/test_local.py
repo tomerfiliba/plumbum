@@ -1075,6 +1075,9 @@ class TestLocalEncoding:
         assert "yes" in local[local.cwd / name]()
 
 
+@pytest.mark.skipif(
+    IS_WIN32, reason="Windows does not support these weird paths, so unambiguous there"
+)
 def test_local_glob_path(tmpdir):
     p = tmpdir.mkdir("a*b?c")
     p2 = tmpdir.mkdir("aanythingbxc")
