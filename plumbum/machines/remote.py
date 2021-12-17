@@ -325,7 +325,9 @@ class BaseRemoteMachine(BaseMachine):
     def tempdir(self):
         """A context manager that creates a remote temporary directory, which is removed when
         the context exits"""
-        _, out, _ = self._session.run("mktemp -d tmp.XXXXXXXXXX")
+        _, out, _ = self._session.run(
+            "mktemp -d 2>/dev/null || mktemp -d tmp.XXXXXXXXXX"
+        )
         dir = self.path(out.strip())  # @ReservedAssignment
         try:
             yield dir
