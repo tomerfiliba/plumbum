@@ -12,7 +12,7 @@ write_to = "plumbum/version.py"
 
 [tool.mypy]
 files = ["plumbum"]
-python_version = "2.7"
+python_version = "3.6"
 warn_unused_configs = true
 warn_unused_ignores = true
 
@@ -20,3 +20,31 @@ warn_unused_ignores = true
 [[tool.mypy.overrides]]
 module = ["IPython.*", "pywintypes.*", "win32con.*", "win32file.*", "PIL.*"]
 ignore_missing_imports = true
+
+
+[tool.pytest.ini_options]
+min_version = "6.0"
+addopts = "-v -ra --cov-config=setup.cfg"
+norecursedirs = ["examples", "experiments"]
+required_plugins = ["pytest-timeout", "pytest-mock"]
+timeout = 300
+optional_tests = """
+  ssh: requires self ssh access to run
+  sudo: requires sudo access to run
+"""
+
+[tool.isort]
+profile = "black"
+
+[tool.check-manifest]
+ignore = [
+  ".*",
+  "docs/**",
+  "examples/*",
+  "experiments/*",
+  "conda.recipe/*",
+  "CONTRIBUTING.rst",
+]
+
+[tool.pycln]
+all = true
