@@ -119,7 +119,7 @@ An example of the usage of unsafe ``colors`` manipulations inside a context mana
         colors.green.now()
         print('This is green ' + colors.underline + 'and now also underlined!')
         print('Underlined' + colors.underline.reset + ' and not underlined but still red')
-    print('This is completly restored, even if an exception is thrown!')
+    print('This is completely restored, even if an exception is thrown!')
 
 Output:
 
@@ -128,7 +128,7 @@ Output:
     <p><font color="#800000">This is in red</font><br/>
     <font color="#008000">This is in green <span style="text-decoration: underline;">and now also underlined!</span></font><br/>
     <font color="#008000"><span style="text-decoration: underline;">Underlined</span> and not underlined but still green.</font><br/>
-    This is completly restored, even if an exception is thrown! </p>
+    This is completely restored, even if an exception is thrown! </p>
 
 We can use ``colors`` instead of ``colors.fg`` for foreground colors.  If we had used ``colors.fg``
 as the context manager, then non-foreground properties, such as ``colors.underline`` or

@@ -58,7 +58,7 @@ class BaseMachine:
                 raise
 
     def __contains__(self, cmd):
-        """Tests for the existance of the command, e.g., ``"ls" in plumbum.local``.
+        """Tests for the existence of the command, e.g., ``"ls" in plumbum.local``.
         ``cmd`` can be anything acceptable by ``__getitem__``.
         """
         try:

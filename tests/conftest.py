@@ -72,9 +72,9 @@ def pytest_configure(config):
     # register all optional tests declared in ini file as markers
     # https://docs.pytest.org/en/latest/writing_plugins.html#registering-custom-markers
     ot_ini = config.inicfg.get("optional_tests").strip().splitlines()
-    for ot in ot_ini:
+    for ot_ in ot_ini:
         # ot should be a line like "optmarker: this is an opt marker", as with markers section
-        config.addinivalue_line("markers", ot)
+        config.addinivalue_line("markers", ot_)
     ot_markers = {marker_re.match(ln).group(1) for ln in ot_ini}
 
     # collect requested optional tests

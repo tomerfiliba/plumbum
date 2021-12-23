@@ -162,7 +162,7 @@ class TypedEnv(MutableMapping):
         if self._defined_keys:
             # return only defined
             return sorted(self._defined_keys)
-        # return whatever is in the environemnt (for convenience)
+        # return whatever is in the environment (for convenience)
         members = set(self._env.keys())
         members.update(dir(self.__class__))
         return sorted(members)

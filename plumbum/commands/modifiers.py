@@ -247,7 +247,7 @@ class _TF(ExecutionModifier):
     This is useful for checking true/false bash commands.
 
     If you wish to expect a different return code (other than the normal success indicate by 0),
-    use ``TF(retcode)``. If you want to run the process in the forground, then use
+    use ``TF(retcode)``. If you want to run the process in the foreground, then use
     ``TF(FG=True)``.
 
     Example::
@@ -297,7 +297,7 @@ class _RETCODE(ExecutionModifier):
     This is useful for working with bash commands that have important retcodes but not very
     useful output.
 
-    If you want to run the process in the forground, then use ``RETCODE(FG=True)``.
+    If you want to run the process in the foreground, then use ``RETCODE(FG=True)``.
 
     Example::
 
@@ -343,7 +343,7 @@ class _NOHUP(ExecutionModifier):
         sleep[5] & NOHUP                       # Outputs to nohup.out
         sleep[5] & NOHUP(stdout=os.devnull)    # No output
 
-    The equivelent bash command would be
+    The equivalent bash command would be
 
     .. code-block:: bash
 

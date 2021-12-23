@@ -232,7 +232,7 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
 class ProgressAuto(ProgressBase):
     """Automatically selects the best progress bar (IPython HTML or text). Does not work with qtconsole
     (as that is correctly identified as identical to notebook, since the kernel is the same); it will still
-    iterate, but no graphical indication will be diplayed.
+    iterate, but no graphical indication will be displayed.
 
     :param iterator: The iterator to wrap with a progress bar
     :param length: The length of the iterator (will use ``__len__`` if None)

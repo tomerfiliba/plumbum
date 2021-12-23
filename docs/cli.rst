@@ -572,10 +572,10 @@ Another common task of a cli application is provided by a configuration parser, 
 If no configuration file is present, this will create one and each call to ``.get`` will set the value with the given default.
 The file is created when the context manager exits.
 If the file is present, it is read and the values from the file are selected, and nothing is changed.
-You can also use ``[]`` syntax to forcably set a value, or to get a value with a standard ``ValueError`` if not present.
+You can also use ``[]`` syntax to forcibly set a value, or to get a value with a standard ``ValueError`` if not present.
 If you want to avoid the context manager, you can use ``.read`` and ``.write`` as well.
 
-The ini parser will default to using the ``[DEFAULT]`` section for values, just like Python's ConfigParser on which it is based. If you want to use a different section, simply seperate section and heading with a ``.`` in the key. ``conf['section.item']`` would place ``item`` under ``[section]``. All items stored in an ``ConfigINI`` are converted to ``str``, and ``str`` is always returned.
+The ini parser will default to using the ``[DEFAULT]`` section for values, just like Python's ConfigParser on which it is based. If you want to use a different section, simply separate section and heading with a ``.`` in the key. ``conf['section.item']`` would place ``item`` under ``[section]``. All items stored in an ``ConfigINI`` are converted to ``str``, and ``str`` is always returned.
 
 Terminal Utilities
 ------------------

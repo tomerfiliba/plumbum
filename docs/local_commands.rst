@@ -288,7 +288,7 @@ In fact, you can nest even command-chains (i.e., pipes and redirections), e.g.,
 ``sudo[ls | grep["\\.py"]]``; however, that would require that the top-level program be able
 to handle these shell operators, and this is not the case for ``sudo``. ``sudo`` expects its
 argument to be an executable program, and it would complain about ``|`` not being one.
-So, there's a inherent differnce between between ``sudo[ls | grep["\\.py"]]``
+So, there's a inherent difference between between ``sudo[ls | grep["\\.py"]]``
 and ``sudo[ls] | grep["\\.py"]`` (where the pipe is unnested) -- the first would fail,
 the latter would work as expected.
 

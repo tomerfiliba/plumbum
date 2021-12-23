@@ -9,7 +9,7 @@ IS_WIN32 = sys.platform == "win32"
 
 def _setdoc(super):  # @ReservedAssignment
     """This inherits the docs on the current class. Not really needed for Python 3.5,
-    due to new behavoir of inspect.getdoc, but still doesn't hurt."""
+    due to new behavior of inspect.getdoc, but still doesn't hurt."""
 
     def deco(func):
         func.__doc__ = getattr(getattr(super, func.__name__, None), "__doc__", None)
@@ -75,7 +75,7 @@ def getdoc(object):
 
 def read_fd_decode_safely(fd, size=4096):
     """
-    This reads a utf-8 file descriptor and returns a chunck, growing up to
+    This reads a utf-8 file descriptor and returns a chunk, growing up to
     three bytes if needed to decode the character at the end.
 
     Returns the data and the decoded text.
