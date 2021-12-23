@@ -1,3 +1,11 @@
+1.7.2
+-----
+
+* Commands: avoid issue mktemp issue on some BSD variants (`#571 <https://github.com/tomerfiliba/plumbum/pull/571>`_)
+* Better specification of dependency on pywin32 (`#568 <https://github.com/tomerfiliba/plumbum/pull/568>`_)
+* Some DeprecationWarnings changed to FutureWarnings (`#567 <https://github.com/tomerfiliba/plumbum/pull/567>`_)
+
+
 1.7.1
 -----
 
