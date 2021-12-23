@@ -198,7 +198,7 @@ class MinHeap:
         return self._items[0]
 
 
-_timeout_queue = Queue()
+_timeout_queue = Queue()  # type: ignore[var-annotated]
 _shutting_down = False
 
 

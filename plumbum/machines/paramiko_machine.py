@@ -188,7 +188,7 @@ class ParamikoMachine(BaseRemoteMachine):
     :param bool load_system_ssh_config: read system SSH config for ProxyCommand configuration. default: False
     """
 
-    class RemoteCommand(BaseRemoteMachine.RemoteCommand):
+    class RemoteCommand(BaseRemoteMachine.RemoteCommand):  # type: ignore[valid-type, misc]
         def __or__(self, *_):
             raise NotImplementedError("Not supported with ParamikoMachine")
 

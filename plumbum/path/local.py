@@ -6,7 +6,7 @@ import shutil
 import sys
 from contextlib import contextmanager
 
-from plumbum.lib import IS_WIN32, _setdoc, glob_escape
+from plumbum.lib import IS_WIN32, _setdoc
 from plumbum.path.base import FSUser, Path
 from plumbum.path.remote import RemotePath
 
@@ -165,7 +165,7 @@ class LocalPath(Path):
     @_setdoc(Path)
     def glob(self, pattern):
         fn = lambda pat: [
-            LocalPath(m) for m in glob.glob(os.path.join(glob_escape(str(self)), pat))
+            LocalPath(m) for m in glob.glob(os.path.join(glob.escape(str(self)), pat))
         ]
         return self._glob(pattern, fn)
 

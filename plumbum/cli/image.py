@@ -107,4 +107,4 @@ class ShowImageApp(cli.Application):
 
 
 if __name__ == "__main__":
-    ShowImageApp()
+    ShowImageApp.run()

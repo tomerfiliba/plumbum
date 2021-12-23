@@ -10,14 +10,6 @@ from contextlib import contextmanager
 
 from plumbum.machines.local import local
 
-if not hasattr(threading, "get_ident"):
-    try:
-        import thread
-    except ImportError:
-        import _thread as thread
-    threading.get_ident = thread.get_ident
-    del thread
-
 try:
     import fcntl
 except ImportError:
