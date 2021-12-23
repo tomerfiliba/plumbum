@@ -235,9 +235,10 @@ class SwitchAttr:
     """
 
     ATTR_NAME = "__plumbum_switchattr_dict__"
+    VALUE = _("VALUE")
 
     def __init__(
-        self, names, argtype=str, default=None, list=False, argname=_("VALUE"), **kwargs
+        self, names, argtype=str, default=None, list=False, argname=VALUE, **kwargs
     ):
         self.__doc__ = "Sets an attribute"  # to prevent the help message from showing SwitchAttr's docstring
         if default and argtype is not None:

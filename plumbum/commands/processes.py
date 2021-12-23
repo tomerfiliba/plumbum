@@ -1,6 +1,5 @@
 import atexit
 import heapq
-import sys
 import time
 from io import StringIO
 from queue import Empty as QueueEmpty
@@ -34,7 +33,7 @@ def _iter_lines_posix(proc, decode, linesize, line_timeout=None):
                     getattr(proc, "argv", None),
                     getattr(proc, "machine", None),
                 )
-            for key, mask in ready:
+            for key, _mask in ready:
                 yield key.data, decode(key.fileobj.readline(linesize))
 
     for ret in selector():

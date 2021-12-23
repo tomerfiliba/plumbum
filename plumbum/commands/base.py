@@ -1,7 +1,6 @@
 import functools
 import shlex
 import subprocess
-import sys
 from contextlib import contextmanager
 from subprocess import PIPE, Popen
 from tempfile import TemporaryFile
@@ -9,6 +8,26 @@ from types import MethodType
 
 import plumbum.commands.modifiers
 from plumbum.commands.processes import iter_lines, run_proc
+
+__all__ = (
+    "iter_lines",
+    "run_proc",
+    "shquote",
+    "shquote_list",
+    "RedirectionError",
+    "BaseCommand",
+    "Pipeline",
+    "BaseRedirection",
+    "BoundCommand",
+    "BoundEnvCommand",
+    "ConcreteCommand",
+    "ERROUT",
+    "StdinRedirection",
+    "StdoutRedirection",
+    "StderrRedirection",
+    "AppendingStdoutRedirection",
+    "StdinDataRedirection",
+)
 
 
 class RedirectionError(Exception):

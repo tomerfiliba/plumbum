@@ -5,6 +5,8 @@ import warnings
 from abc import ABC, abstractmethod, abstractproperty
 from functools import reduce
 
+FLAGS = {"f": os.F_OK, "w": os.W_OK, "r": os.R_OK, "x": os.X_OK}
+
 
 class FSUser(int):
     """A special object that represents a file-system user. It derives from ``int``, so it behaves
@@ -324,9 +326,7 @@ class Path(str, ABC):
         """
 
     @staticmethod
-    def _access_mode_to_flags(
-        mode, flags={"f": os.F_OK, "w": os.W_OK, "r": os.R_OK, "x": os.X_OK}
-    ):
+    def _access_mode_to_flags(mode, flags=FLAGS):
         if isinstance(mode, str):
             mode = reduce(operator.or_, [flags[m] for m in mode.lower()], 0)
         return mode

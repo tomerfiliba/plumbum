@@ -87,14 +87,14 @@ class RemotePath(Path):
     @property  # type: ignore
     @_setdoc(Path)
     def name(self):
-        if not "/" in str(self):
+        if "/" not in str(self):
             return str(self)
         return str(self).rsplit("/", 1)[1]
 
     @property  # type: ignore
     @_setdoc(Path)
     def dirname(self):
-        if not "/" in str(self):
+        if "/" not in str(self):
             return str(self)
         return self.__class__(self.remote, str(self).rsplit("/", 1)[0])
 
@@ -186,8 +186,8 @@ class RemotePath(Path):
             raise ValueError("Invalid suffix %r" % (suffix))
         name = self.name
         depth = len(self.suffixes) if depth is None else min(depth, len(self.suffixes))
-        for i in range(depth):
-            name, ext = name.rsplit(".", 1)
+        for _ in range(depth):
+            name, _ = name.rsplit(".", 1)
         return self.__class__(self.remote, self.dirname) / (name + suffix)
 
     @_setdoc(Path)

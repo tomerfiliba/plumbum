@@ -296,10 +296,10 @@ class Application:
 
     def _get_partial_matches(self, partialname):
         matches = []
-        for switch in self._switches_by_name:
-            if switch.startswith(partialname):
+        for switch_ in self._switches_by_name:
+            if switch_.startswith(partialname):
                 matches += [
-                    switch,
+                    switch_,
                 ]
         return matches
 
@@ -469,7 +469,7 @@ class Application:
         requirements = {}
         exclusions = {}
         for swinfo in self._switches_by_func.values():
-            if swinfo.mandatory and not swinfo.func in swfuncs:
+            if swinfo.mandatory and swinfo.func not in swfuncs:
                 raise MissingMandatorySwitch(
                     T_("Switch {0} is mandatory").format(
                         "/".join(
@@ -943,7 +943,7 @@ class Application:
                 )
 
             msg = indentation.join(
-                wrapper.wrap(" ".join(l.strip() for l in help.splitlines()))
+                wrapper.wrap(" ".join(ln.strip() for ln in help.splitlines()))
             )
 
             if len(prefix) + wrapper.width >= cols:
@@ -968,7 +968,7 @@ class Application:
                         help = doc if doc else ""  # @ReservedAssignment
 
                     msg = indentation.join(
-                        wrapper.wrap(" ".join(l.strip() for l in help.splitlines()))
+                        wrapper.wrap(" ".join(ln.strip() for ln in help.splitlines()))
                     )
 
                     if len(name) + wrapper.width >= cols:

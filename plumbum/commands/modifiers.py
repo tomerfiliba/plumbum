@@ -1,7 +1,4 @@
-import os
 import sys
-import time
-from itertools import chain
 from select import select
 from subprocess import PIPE
 

@@ -1,6 +1,3 @@
-import pytest
-
-import plumbum
 from plumbum import local
 from plumbum._testtools import skip_on_windows
 

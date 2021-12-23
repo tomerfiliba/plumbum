@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import sys
-
 import pytest
 
 from plumbum import colors
@@ -12,7 +10,6 @@ from plumbum.colorlib.styles import ColorNotFound
 
 class TestImportColors:
     def testDifferentImports(self):
-        import plumbum.colors
         from plumbum.colors import bold
         from plumbum.colors.fg import red
 
