@@ -31,70 +31,8 @@ class ProcInfo:
         )
 
 
-class six:
-    """
-    A light-weight version of six (which works on IronPython)
-    """
-
-    PY3 = sys.version_info[0] >= 3
-    from abc import ABC
-
-    # Be sure to use named-tuple access, so that usage is not affected
-    try:
-        getfullargspec = staticmethod(inspect.getfullargspec)
-    except AttributeError:
-        getfullargspec = staticmethod(
-            inspect.getargspec
-        )  # extra fields will not be available
-
-    if PY3:
-        integer_types = (int,)
-        string_types = (str,)
-        MAXSIZE = sys.maxsize
-        ascii = ascii  # @UndefinedVariable
-        bytes = bytes  # @ReservedAssignment
-        unicode_type = str
-
-        @staticmethod
-        def b(s):
-            return s.encode("latin-1", "replace")
-
-        @staticmethod
-        def u(s):
-            return s
-
-        @staticmethod
-        def get_method_function(m):
-            return m.__func__
-
-    else:
-        integer_types = (int, long)
-        string_types = (str, unicode)
-        MAXSIZE = getattr(sys, "maxsize", sys.maxint)
-        ascii = repr  # @ReservedAssignment
-        bytes = str  # @ReservedAssignment
-        unicode_type = unicode
-
-        @staticmethod
-        def b(st):
-            return st
-
-        @staticmethod
-        def u(s):
-            return s.decode("unicode-escape")
-
-        @staticmethod
-        def get_method_function(m):
-            return m.im_func
-
-    str = unicode_type
-
-
-# Try/except fails because io has the wrong StringIO in Python2
-# You'll get str/unicode errors
-from io import StringIO
-
 from glob import escape as glob_escape
+from io import StringIO
 
 
 @contextmanager

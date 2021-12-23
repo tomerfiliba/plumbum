@@ -5,7 +5,6 @@ import time
 
 from plumbum.commands import BaseCommand, run_proc
 from plumbum.commands.processes import ProcessExecutionError
-from plumbum.lib import six
 from plumbum.machines.base import PopenAddons
 
 
@@ -48,7 +47,7 @@ class MarkedPipe:
     def __init__(self, pipe, marker):
         self.pipe = pipe
         self.marker = marker
-        self.marker = six.bytes(self.marker, "ascii")
+        self.marker = bytes(self.marker, "ascii")
 
     def close(self):
         """'Closes' the marked pipe; following calls to ``readline`` will return """ ""

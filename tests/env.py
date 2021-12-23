@@ -9,9 +9,5 @@ WIN = sys.platform.startswith("win32") or sys.platform.startswith("cygwin")
 CPYTHON = platform.python_implementation() == "CPython"
 PYPY = platform.python_implementation() == "PyPy"
 
-PY2 = sys.version_info.major == 2
-
-PY = sys.version_info
-
 IS_A_TTY = sys.stdin.isatty()
 HAS_CHOWN = hasattr(os, "chown")

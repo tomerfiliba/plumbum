@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
 
 from plumbum.commands import CommandNotFound, ConcreteCommand, shquote
-from plumbum.lib import ProcInfo, _setdoc, six
+from plumbum.lib import ProcInfo, _setdoc
 from plumbum.machines.base import BaseMachine
 from plumbum.machines.env import BaseEnv
 from plumbum.machines.local import LocalPath
@@ -58,8 +58,7 @@ class RemoteEnv(BaseEnv):
     def update(self, *args, **kwargs):
         BaseEnv.update(self, *args, **kwargs)
         self.remote._session.run(
-            "export "
-            + " ".join(f"{k}={shquote(v)}" for k, v in self.getdict().items())
+            "export " + " ".join(f"{k}={shquote(v)}" for k, v in self.getdict().items())
         )
 
     def expand(self, expr):
@@ -346,9 +345,9 @@ class BaseRemoteMachine(BaseMachine):
         # shquote does not work here due to the way bash loops use space as a seperator
         pattern = pattern.replace(" ", r"\ ")
         fn = fn.replace(" ", r"\ ")
-        matches = self._session.run(
-            fr"for fn in {fn}/{pattern}; do echo $fn; done"
-        )[1].splitlines()
+        matches = self._session.run(fr"for fn in {fn}/{pattern}; do echo $fn; done")[
+            1
+        ].splitlines()
         if len(matches) == 1 and not self._path_stat(matches[0]):
             return []  # pattern expansion failed
         return matches
@@ -418,12 +417,12 @@ class BaseRemoteMachine(BaseMachine):
 
     def _path_read(self, fn):
         data = self["cat"](fn)
-        if self.custom_encoding and isinstance(data, six.unicode_type):
+        if self.custom_encoding and isinstance(data, str):
             data = data.encode(self.custom_encoding)
         return data
 
     def _path_write(self, fn, data):
-        if self.custom_encoding and isinstance(data, six.unicode_type):
+        if self.custom_encoding and isinstance(data, str):
             data = data.encode(self.custom_encoding)
         with NamedTemporaryFile() as f:
             f.write(data)

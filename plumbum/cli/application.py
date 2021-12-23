@@ -1,4 +1,5 @@
 import functools
+import inspect
 import os
 import sys
 from collections import defaultdict
@@ -6,7 +7,7 @@ from textwrap import TextWrapper
 
 from plumbum import colors, local
 from plumbum.cli.i18n import get_translation_for
-from plumbum.lib import getdoc, six
+from plumbum.lib import getdoc
 
 from .switches import (
     CountOf,
@@ -503,8 +504,8 @@ class Application:
                     )
                 )
 
-        m = six.getfullargspec(self.main)
-        max_args = six.MAXSIZE if m.varargs else len(m.args) - 1
+        m = inspect.getfullargspec(self.main)
+        max_args = sys.maxsize if m.varargs else len(m.args) - 1
         min_args = len(m.args) - 1 - (len(m.defaults) if m.defaults else 0)
         if len(tailargs) < min_args:
             raise PositionalArgumentsError(
@@ -523,7 +524,7 @@ class Application:
                 ).format(max_args, tailargs)
             )
 
-        # Positional arguement validataion
+        # Positional argument validation
         if hasattr(self.main, "positional"):
             tailargs = self._positional_validate(
                 tailargs,
@@ -850,7 +851,7 @@ class Application:
         for line in wrapped_paragraphs(self.DESCRIPTION_MORE, cols):
             print(line)
 
-        m = six.getfullargspec(self.main)
+        m = inspect.getfullargspec(self.main)
         tailargs = m.args[1:]  # skip self
         if m.defaults:
             for i, d in enumerate(reversed(m.defaults)):

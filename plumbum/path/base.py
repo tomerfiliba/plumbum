@@ -2,10 +2,8 @@ import itertools
 import operator
 import os
 import warnings
-from abc import abstractmethod, abstractproperty
+from abc import ABC, abstractmethod, abstractproperty
 from functools import reduce
-
-from plumbum.lib import six
 
 
 class FSUser(int):
@@ -20,7 +18,7 @@ class FSUser(int):
         return self
 
 
-class Path(str, six.ABC):
+class Path(str, ABC):
     """An abstraction over file system paths. This class is abstract, and the two implementations
     are :class:`LocalPath <plumbum.machines.local.LocalPath>` and
     :class:`RemotePath <plumbum.path.remote.RemotePath>`.

@@ -1,11 +1,6 @@
 import inspect
 import os
-
-try:
-    from collections.abc import MutableMapping
-except ImportError:
-    from collections import MutableMapping
-
+from collections.abc import MutableMapping
 
 NO_DEFAULT = object()
 
@@ -152,9 +147,7 @@ class TypedEnv(MutableMapping):
         try:
             return self._raw_get(name)
         except EnvironmentVariableError:
-            raise AttributeError(
-                f"{self.__class__} has no attribute {name!r}"
-            )
+            raise AttributeError(f"{self.__class__} has no attribute {name!r}")
 
     def __getitem__(self, key):
         return getattr(self, key)  # delegate through the descriptors

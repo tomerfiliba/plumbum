@@ -1,16 +1,12 @@
 import errno
 import os
 import sys
+import urllib.request as urllib
 from contextlib import contextmanager
 
 from plumbum.commands import ProcessExecutionError, shquote
-from plumbum.lib import _setdoc, six
+from plumbum.lib import _setdoc
 from plumbum.path.base import FSUser, Path
-
-try:  # Py3
-    import urllib.request as urllib
-except ImportError:
-    import urllib  # type: ignore
 
 
 class StatRes:
@@ -362,9 +358,7 @@ class RemoteWorkdir(RemotePath):
     """Remote working directory manipulator"""
 
     def __new__(cls, remote):
-        self = super().__new__(
-            cls, remote, remote._session.run("pwd")[1].strip()
-        )
+        self = super().__new__(cls, remote, remote._session.run("pwd")[1].strip())
         return self
 
     def __hash__(self):

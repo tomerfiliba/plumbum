@@ -1,7 +1,5 @@
 import struct
 
-from plumbum.lib import six
-
 LFANEW_OFFSET = 30 * 2
 FILE_HEADER_SIZE = 5 * 4
 SUBSYSTEM_OFFSET = 17 * 4

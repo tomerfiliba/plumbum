@@ -6,7 +6,7 @@ import stat
 
 from plumbum.commands.base import shquote
 from plumbum.commands.processes import ProcessLineTimedOut, iter_lines
-from plumbum.lib import _setdoc, six
+from plumbum.lib import _setdoc
 from plumbum.machines.base import PopenAddons
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
@@ -422,7 +422,7 @@ class ParamikoMachine(BaseRemoteMachine):
         return data
 
     def _path_write(self, fn, data):
-        if self.custom_encoding and isinstance(data, six.unicode_type):
+        if self.custom_encoding and isinstance(data, str):
             data = data.encode(self.custom_encoding)
         f = self.sftp.open(str(fn), "wb")
         f.write(data)
@@ -484,39 +484,22 @@ class SocketCompatibleChannel:
 ###################################################################################################
 def _iter_lines(proc, decode, linesize, line_timeout=None):
 
-    try:
-        from selectors import EVENT_READ, DefaultSelector
-    except ImportError:
-        # Pre Python 3.4 implementation
-        from select import select
+    from selectors import EVENT_READ, DefaultSelector
 
-        def selector():
-            while True:
-                rlist, _, _ = select([proc.stdout.channel], [], [], line_timeout)
-                if not rlist and line_timeout:
-                    raise ProcessLineTimedOut(
-                        "popen line timeout expired",
-                        getattr(proc, "argv", None),
-                        getattr(proc, "machine", None),
-                    )
-                for _ in rlist:
-                    yield
-
-    else:
-        # Python 3.4 implementation
-        def selector():
-            sel = DefaultSelector()
-            sel.register(proc.stdout.channel, EVENT_READ)
-            while True:
-                ready = sel.select(line_timeout)
-                if not ready and line_timeout:
-                    raise ProcessLineTimedOut(
-                        "popen line timeout expired",
-                        getattr(proc, "argv", None),
-                        getattr(proc, "machine", None),
-                    )
-                for key, mask in ready:
-                    yield
+    # Python 3.4+ implementation
+    def selector():
+        sel = DefaultSelector()
+        sel.register(proc.stdout.channel, EVENT_READ)
+        while True:
+            ready = sel.select(line_timeout)
+            if not ready and line_timeout:
+                raise ProcessLineTimedOut(
+                    "popen line timeout expired",
+                    getattr(proc, "argv", None),
+                    getattr(proc, "machine", None),
+                )
+            for key, mask in ready:
+                yield
 
     for _ in selector():
         if proc.stdout.channel.recv_ready():

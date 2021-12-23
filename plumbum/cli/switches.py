@@ -1,8 +1,9 @@
-from abc import abstractmethod
+import inspect
+from abc import ABC, abstractmethod
 
 from plumbum import local
 from plumbum.cli.i18n import get_translation_for
-from plumbum.lib import getdoc, six
+from plumbum.lib import getdoc
 
 _translation = get_translation_for(__name__)
 _, ngettext = _translation.gettext, _translation.ngettext
@@ -172,7 +173,7 @@ def switch(
 
     def deco(func):
         if argname is None:
-            argspec = six.getfullargspec(func).args
+            argspec = inspect.getfullargspec(func).args
             if len(argspec) == 2:
                 argname2 = argspec[1]
             else:
@@ -364,7 +365,7 @@ class positional:
         self.kargs = kargs
 
     def __call__(self, function):
-        m = six.getfullargspec(function)
+        m = inspect.getfullargspec(function)
         args_names = list(m.args[1:])
 
         positional = [None] * len(args_names)
@@ -388,7 +389,7 @@ class positional:
         return function
 
 
-class Validator(six.ABC):
+class Validator(ABC):
     __slots__ = ()
 
     @abstractmethod
@@ -497,14 +498,10 @@ class Set(Validator):
                 return opt(value)
             except ValueError:
                 pass
-        raise ValueError(
-            f"Invalid value: {value} (Expected one of {self.values})"
-        )
+        raise ValueError(f"Invalid value: {value} (Expected one of {self.values})")
 
     def choices(self, partial=""):
-        choices = {
-            opt if isinstance(opt, str) else f"({opt})" for opt in self.values
-        }
+        choices = {opt if isinstance(opt, str) else f"({opt})" for opt in self.values}
         if partial:
             choices = {opt for opt in choices if opt.lower().startswith(partial)}
         return choices
@@ -542,9 +539,7 @@ def ExistingDirectory(val):
 def MakeDirectory(val):
     p = local.path(val)
     if p.is_file():
-        raise ValueError(
-            f"{val} is a file, should be nonexistent, or a directory"
-        )
+        raise ValueError(f"{val} is a file, should be nonexistent, or a directory")
     elif not p.exists():
         p.mkdir()
     return p

@@ -27,10 +27,7 @@ else:
     except ImportError:
         pkg_resources = None
 
-    try:
-        from typing import Callable, List, Tuple
-    except ImportError:
-        pass
+    from typing import Callable, List, Tuple
 
     local_dir = os.path.basename(__file__)
 

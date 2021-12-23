@@ -148,9 +148,7 @@ class SshMachine(BaseRemoteMachine):
                 cmdline.extend(["cd", str(cwd), "&&"])
             if envdelta:
                 cmdline.append("env")
-                cmdline.extend(
-                    f"{k}={shquote(v)}" for k, v in envdelta.items()
-                )
+                cmdline.extend(f"{k}={shquote(v)}" for k, v in envdelta.items())
             if isinstance(args, (tuple, list)):
                 cmdline.extend(args)
             else:

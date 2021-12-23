@@ -28,7 +28,7 @@ from plumbum._testtools import (
     xfail_on_pypy,
 )
 from plumbum.fs.atomic import AtomicCounterFile, AtomicFile, PidFile
-from plumbum.lib import IS_WIN32, six
+from plumbum.lib import IS_WIN32
 from plumbum.machines.local import LocalCommand, PlumbumLocalPopen
 from plumbum.path import RelativePath
 
@@ -37,9 +37,6 @@ SDIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestLocalPopen:
-    @pytest.mark.skipif(
-        sys.version_info < (3, 2), reason="Context Manager was introduced in Python 3.2"
-    )
     def test_contextmanager(self):
         if IS_WIN32:
             command = ["dir"]
@@ -98,10 +95,6 @@ class TestLocalPath:
         p = local.path("/var/log/messages")
         p.split() == ["var", "log", "messages"]
 
-    @pytest.mark.xfail(
-        sys.platform == "win32" and (sys.version_info[0] == 2),
-        reason="Caseless comparison (at least in pytest) fails on Windows 2.7",
-    )
     def test_suffix(self):
         # This picks up the drive letter differently if not constructed here
         p1 = local.path("/some/long/path/to/file.txt")
@@ -119,10 +112,6 @@ class TestLocalPath:
         with pytest.raises(ValueError):
             p1.with_suffix("nodot")
 
-    @pytest.mark.xfail(
-        sys.platform == "win32" and (sys.version_info[0] == 2),
-        reason="Caseless comparison (at least in pytest) fails on Windows 2.7",
-    )
     def test_newname(self):
         # This picks up the drive letter differently if not constructed here
         p1 = local.path("/some/long/path/to/file.txt")
@@ -594,9 +583,9 @@ class TestLocalMachine:
                 pass
             assert i == 1
         assert (
-            "/bin/ls: unrecognized option '--bla'" in err.value.stderr
-            or "bin/ls: illegal option -- -" in err.value.stderr
-        )
+            "ls: unrecognized option" in err.value.stderr
+            and "--bla" in err.value.stderr
+        ) or "ls: illegal option -- -" in err.value.stderr
 
     @skip_on_windows
     def test_iter_lines_line_timeout(self):
@@ -1042,10 +1031,6 @@ class TestLocalEncoding:
         out = echo(self.richstr)
         assert self.richstr in out
 
-    @pytest.mark.xfail(
-        IS_WIN32 and sys.version_info < (3, 6),
-        reason="Unicode output on Windows requires Python 3.6+",
-    )
     @pytest.mark.usefixtures("cleandir")
     def test_out_rich(self):
         import io
@@ -1058,13 +1043,12 @@ class TestLocalEncoding:
         assert self.richstr in out
 
     @pytest.mark.xfail(IS_WIN32, reason="Unicode path not supported on Windows for now")
-    @pytest.mark.skipif(not six.PY3, reason="Unicode paths only supported on Python 3")
     @pytest.mark.usefixtures("cleandir")
     def test_runfile_rich(self):
         import os
         import stat
 
-        name = self.richstr + six.str("_program")
+        name = self.richstr + "_program"
         with open(name, "w") as f:
             f.write(f"#!{sys.executable}\nprint('yes')")
 

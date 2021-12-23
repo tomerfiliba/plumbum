@@ -8,7 +8,6 @@ import sys
 import threading
 from contextlib import contextmanager
 
-from plumbum.lib import six
 from plumbum.machines.local import local
 
 if not hasattr(threading, "get_ident"):
@@ -98,11 +97,7 @@ class AtomicFile:
         self.reopen()
 
     def __repr__(self):
-        return (
-            f"<AtomicFile: {self.path}>"
-            if self._fileobj
-            else "<AtomicFile: closed>"
-        )
+        return f"<AtomicFile: {self.path}>" if self._fileobj else "<AtomicFile: closed>"
 
     def __del__(self):
         self.close()

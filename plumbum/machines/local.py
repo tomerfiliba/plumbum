@@ -6,33 +6,18 @@ import subprocess
 import sys
 import time
 from contextlib import contextmanager
+from subprocess import PIPE, Popen
 from tempfile import mkdtemp
 
 from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.commands.daemons import posix_daemonize, win32_daemonize
 from plumbum.commands.processes import iter_lines
-from plumbum.lib import IS_WIN32, ProcInfo, StaticProperty, six
+from plumbum.lib import IS_WIN32, ProcInfo, StaticProperty
 from plumbum.machines.base import BaseMachine, PopenAddons
 from plumbum.machines.env import BaseEnv
 from plumbum.machines.session import ShellSession
 from plumbum.path.local import LocalPath, LocalWorkdir
 from plumbum.path.remote import RemotePath
-
-if sys.version_info[0] >= 3:
-    # python 3 has the new-and-improved subprocess module
-    from subprocess import PIPE, Popen
-
-    has_new_subprocess = True
-else:
-    # otherwise, see if we have subprocess32
-    try:
-        from subprocess32 import PIPE, Popen
-
-        has_new_subprocess = True
-    except ImportError:
-        from subprocess import PIPE, Popen
-
-        has_new_subprocess = False
 
 
 class PlumbumLocalPopen(PopenAddons):
@@ -131,7 +116,7 @@ class LocalCommand(ConcreteCommand):
             self.formulate(0, args),
             cwd=self.cwd if cwd is None else cwd,
             env=self.env if env is None else env,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -258,22 +243,10 @@ class LocalMachine(BaseMachine):
         cwd=None,
         env=None,
         new_session=False,
-        **kwargs
+        **kwargs,
     ):
         if new_session:
-            if has_new_subprocess:
-                kwargs["start_new_session"] = True
-            elif IS_WIN32:
-                kwargs["creationflags"] = (
-                    kwargs.get("creationflags", 0) | subprocess.CREATE_NEW_PROCESS_GROUP
-                )
-            else:
-
-                def preexec_fn(prev_fn=kwargs.get("preexec_fn", lambda: None)):
-                    os.setsid()
-                    prev_fn()
-
-                kwargs["preexec_fn"] = preexec_fn
+            kwargs["start_new_session"] = True
 
         if IS_WIN32 and "startupinfo" not in kwargs and stdin not in (sys.stdin, None):
             subsystem = get_pe_subsystem(str(executable))
@@ -292,15 +265,6 @@ class LocalMachine(BaseMachine):
                 else:
                     sui.dwFlags |= subprocess.STARTF_USESHOWWINDOW  # @UndefinedVariable
                     sui.wShowWindow = subprocess.SW_HIDE  # @UndefinedVariable
-
-        if not has_new_subprocess and "close_fds" not in kwargs:
-            if IS_WIN32 and (
-                stdin is not None or stdout is not None or stderr is not None
-            ):
-                # we can't close fds if we're on windows and we want to redirect any std handle
-                kwargs["close_fds"] = False
-            else:
-                kwargs["close_fds"] = True
 
         if cwd is None:
             cwd = self.cwd
@@ -326,7 +290,7 @@ class LocalMachine(BaseMachine):
             stderr=stderr,
             cwd=str(cwd),
             env=env,
-            **kwargs
+            **kwargs,
         )  # bufsize = 4096
         proc._start_time = time.time()
         proc.custom_encoding = self.custom_encoding
@@ -368,9 +332,6 @@ class LocalMachine(BaseMachine):
 
             tasklist = local["tasklist"]
             output = tasklist("/V", "/FO", "CSV")
-            if not six.PY3:
-                # The Py2 csv reader does not support non-ascii values
-                output = output.encode("ascii", "ignore")
             lines = output.splitlines()
             rows = csv.reader(lines)
             header = next(rows)
