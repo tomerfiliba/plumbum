@@ -83,7 +83,7 @@ you encounter or to request features. The library is released under the permissi
 Requirements
 ------------
 
-Plumbum supports **Python 2.7-3.9** and **PyPy** and is continually tested on
+Plumbum supports **Python 3.6-3.10** and **PyPy** and is continually tested on
 **Linux**, **Mac**, and **Windows** machines through `GitHub Actions
 <https://github.com/tomerfiliba/plumbum/actions>`_.  Any Unix-like machine
 should work fine out of the box, but on Windows, you'll probably want to

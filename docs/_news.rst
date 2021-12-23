@@ -1,3 +1,7 @@
+* **2021.12.23**: Version 1.7.2 released with very minor fixes, final version to support Python 2.7 and 3.5.
+
+* **2021.11.23**: Version 1.7.1 released with a few features like reverse tunnels, color group titles, and a glob path fix. Better Python 3.10 support.
+
 * **2021.02.08**: Version 1.7.0 released with a few new features like ``.with_cwd``, some useful bugfixes, and lots of cleanup.
 
 * **2020.03.23**: Version 1.6.9 released with several Path fixes, final version to support Python 2.6.
