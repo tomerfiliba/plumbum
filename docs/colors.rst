@@ -232,9 +232,7 @@ These produce strings that can be further manipulated or printed.
 
 Finally, you can also print a color to stdout directly using
 ``color.print("string")``. This
-has the same syntax as the Python 3 print function. In Python 2, if you do not have
-``from __future__ import print_function`` enabled, ``color.print_("string")`` is provided as
-an alternative, following the PyQT convention for method names that match reserved Python syntax.
+has the same syntax as the print function.
 
 An example of safe manipulations::
 
