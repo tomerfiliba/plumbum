@@ -6,13 +6,12 @@ Progress bar
 import datetime
 import sys
 import warnings
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 from plumbum.cli.termsize import get_terminal_size
-from plumbum.lib import six
 
 
-class ProgressBase(six.ABC):
+class ProgressBase(ABC):
     """Base class for progress bars. Customize for types of progress bars.
 
     :param iterator: The iterator to wrap with a progress bar

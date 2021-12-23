@@ -86,11 +86,7 @@ __all__ = (
 # ===================================================================================================
 import sys
 from types import ModuleType
-
-try:
-    from typing import List
-except ImportError:
-    pass
+from typing import List
 
 
 class LocalModule(ModuleType):

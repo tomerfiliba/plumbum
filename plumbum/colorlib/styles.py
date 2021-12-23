@@ -12,8 +12,9 @@ import os
 import platform
 import re
 import sys
-from abc import ABCMeta, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from copy import copy
+from typing import IO, Dict, Union
 
 from .names import (
     FindNearest,
@@ -23,13 +24,6 @@ from .names import (
     color_names,
     from_html,
 )
-
-from abc import ABC
-
-try:
-    from typing import IO, Dict, Union
-except ImportError:
-    pass
 
 __all__ = [
     "Color",

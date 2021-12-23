@@ -6,7 +6,7 @@ import shutil
 import sys
 from contextlib import contextmanager
 
-from plumbum.lib import IS_WIN32, _setdoc, glob_escape, six
+from plumbum.lib import IS_WIN32, _setdoc, glob_escape
 from plumbum.path.base import FSUser, Path
 from plumbum.path.remote import RemotePath
 
@@ -28,13 +28,8 @@ except ImportError:
         raise OSError("`getgrnam` not supported")
 
 
-try:  # Py3
-    import urllib.parse as urlparse
-    import urllib.request as urllib
-except ImportError:
-    import urllib  # type: ignore
-
-    import urlparse  # type: ignore
+import urllib.parse as urlparse
+import urllib.request as urllib
 
 logger = logging.getLogger("plumbum.local")
 
@@ -247,7 +242,7 @@ class LocalPath(Path):
         if encoding:
             data = data.encode(encoding)
         if mode is None:
-            if isinstance(data, six.unicode_type):
+            if isinstance(data, str):
                 mode = "w"
             else:
                 mode = "wb"

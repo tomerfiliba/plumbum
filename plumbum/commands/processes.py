@@ -2,13 +2,12 @@ import atexit
 import heapq
 import sys
 import time
-from threading import Thread
-
-from plumbum.lib import IS_WIN32, six
-
 from io import StringIO
 from queue import Empty as QueueEmpty
 from queue import Queue
+from threading import Thread
+
+from plumbum.lib import IS_WIN32
 
 
 # ===================================================================================================
@@ -20,40 +19,23 @@ def _check_process(proc, retcode, timeout, stdout, stderr):
 
 
 def _iter_lines_posix(proc, decode, linesize, line_timeout=None):
-    try:
-        from selectors import EVENT_READ, DefaultSelector
-    except ImportError:
-        # Pre Python 3.4 implementation
-        from select import select
+    from selectors import EVENT_READ, DefaultSelector
 
-        def selector():
-            while True:
-                rlist, _, _ = select([proc.stdout, proc.stderr], [], [], line_timeout)
-                if not rlist and line_timeout:
-                    raise ProcessLineTimedOut(
-                        "popen line timeout expired",
-                        getattr(proc, "argv", None),
-                        getattr(proc, "machine", None),
-                    )
-                for stream in rlist:
-                    yield (stream is proc.stderr), decode(stream.readline(linesize))
-
-    else:
-        # Python 3.4 implementation
-        def selector():
-            sel = DefaultSelector()
-            sel.register(proc.stdout, EVENT_READ, 0)
-            sel.register(proc.stderr, EVENT_READ, 1)
-            while True:
-                ready = sel.select(line_timeout)
-                if not ready and line_timeout:
-                    raise ProcessLineTimedOut(
-                        "popen line timeout expired",
-                        getattr(proc, "argv", None),
-                        getattr(proc, "machine", None),
-                    )
-                for key, mask in ready:
-                    yield key.data, decode(key.fileobj.readline(linesize))
+    # Python 3.4+ implementation
+    def selector():
+        sel = DefaultSelector()
+        sel.register(proc.stdout, EVENT_READ, 0)
+        sel.register(proc.stderr, EVENT_READ, 1)
+        while True:
+            ready = sel.select(line_timeout)
+            if not ready and line_timeout:
+                raise ProcessLineTimedOut(
+                    "popen line timeout expired",
+                    getattr(proc, "argv", None),
+                    getattr(proc, "machine", None),
+                )
+            for key, mask in ready:
+                yield key.data, decode(key.fileobj.readline(linesize))
 
     for ret in selector():
         yield ret
@@ -138,10 +120,10 @@ class ProcessExecutionError(EnvironmentError):
         self.message = message
         self.argv = argv
         self.retcode = retcode
-        if six.PY3 and isinstance(stdout, six.bytes):
-            stdout = six.ascii(stdout)
-        if six.PY3 and isinstance(stderr, six.bytes):
-            stderr = six.ascii(stderr)
+        if isinstance(stdout, bytes):
+            stdout = ascii(stdout)
+        if isinstance(stderr, bytes):
+            stderr = ascii(stderr)
         self.stdout = stdout
         self.stderr = stderr
 

@@ -306,15 +306,9 @@ _normal_html = [
 
 _base_pattern = [(n // 4, n // 2 % 2, n % 2) for n in range(8)]
 _base_html = (
-    [
-        f"#{x[2] * 192:02x}{x[1] * 192:02x}{x[0] * 192:02x}"
-        for x in _base_pattern
-    ]
+    [f"#{x[2] * 192:02x}{x[1] * 192:02x}{x[0] * 192:02x}" for x in _base_pattern]
     + ["#808080"]
-    + [
-        f"#{x[2] * 255:02x}{x[1] * 255:02x}{x[0] * 255:02x}"
-        for x in _base_pattern
-    ][1:]
+    + [f"#{x[2] * 255:02x}{x[1] * 255:02x}{x[0] * 255:02x}" for x in _base_pattern][1:]
 )
 color_html = _base_html + _normal_html + _grey_html
 

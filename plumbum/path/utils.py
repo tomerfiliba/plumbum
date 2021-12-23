@@ -1,6 +1,5 @@
 import os
 
-from plumbum.lib import six
 from plumbum.machines.local import LocalPath, local
 from plumbum.path.base import Path
 

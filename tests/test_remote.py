@@ -21,7 +21,6 @@ from plumbum import (
     local,
 )
 from plumbum._testtools import skip_on_windows, skip_without_chown
-from plumbum.lib import six
 from plumbum.machines.session import HostPublicKeyUnknown, IncorrectLogin
 
 try:
@@ -58,9 +57,6 @@ def test_connection():
     SshMachine(TEST_HOST)
 
 
-@pytest.mark.skip(
-    env.LINUX and env.PY[:2] == (3, 5), reason="Doesn't work on 3.5 on Linux on GHA"
-)
 def test_incorrect_login(sshpass):
     with pytest.raises(IncorrectLogin):
         SshMachine(

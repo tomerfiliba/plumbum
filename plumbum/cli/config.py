@@ -1,13 +1,11 @@
-import sys
-from abc import abstractmethod
-
-from plumbum import local
-from plumbum.lib import _setdoc, six
-
+from abc import ABC, abstractmethod
 from configparser import ConfigParser, NoOptionError, NoSectionError
 
+from plumbum import local
+from plumbum.lib import _setdoc
 
-class ConfigBase(six.ABC):
+
+class ConfigBase(ABC):
     """Base class for Config parsers.
 
     :param filename: The file to use

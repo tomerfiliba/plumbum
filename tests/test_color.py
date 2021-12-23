@@ -86,6 +86,4 @@ class TestNearestColor:
             for g in myrange:
                 for b in myrange:
                     near = FindNearest(r, g, b)
-                    assert (
-                        near.all_slow() == near.all_fast()
-                    ), f"Tested: {r}, {g}, {b}"
+                    assert near.all_slow() == near.all_fast(), f"Tested: {r}, {g}, {b}"

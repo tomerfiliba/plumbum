@@ -9,7 +9,6 @@ from types import MethodType
 
 import plumbum.commands.modifiers
 from plumbum.commands.processes import iter_lines, run_proc
-from plumbum.lib import six
 
 
 class RedirectionError(Exception):
@@ -27,7 +26,7 @@ _funnychars = '"`$\\'
 
 def shquote(text):
     """Quotes the given text with shell escaping (assumes as syntax similar to ``sh``)"""
-    text = six.str(text)
+    text = str(text)
     return shlex.quote(text)
 
 
@@ -341,7 +340,7 @@ class BoundEnvCommand(BaseCommand):
             args,
             cwd=self.cwd if cwd is None else cwd,
             env=dict(self.env, **env),
-            **kwargs
+            **kwargs,
         )
 
 
@@ -530,7 +529,7 @@ class StdinDataRedirection(BaseCommand):
         if "stdin" in kwargs and kwargs["stdin"] != PIPE:
             raise RedirectionError("stdin is already redirected")
         data = self.data
-        if isinstance(data, six.unicode_type) and self._get_encoding() is not None:
+        if isinstance(data, str) and self._get_encoding() is not None:
             data = data.encode(self._get_encoding())
         f = TemporaryFile()
         while data:
@@ -564,7 +563,7 @@ class ConcreteCommand(BaseCommand):
         return self.custom_encoding
 
     def formulate(self, level=0, args=()):
-        argv = [six.str(self.executable)]
+        argv = [str(self.executable)]
         for a in args:
             if a is None:
                 continue
@@ -575,10 +574,10 @@ class ConcreteCommand(BaseCommand):
                     argv.extend(a.formulate(level + 1))
             elif isinstance(a, (list, tuple)):
                 argv.extend(
-                    shquote(b) if level >= self.QUOTE_LEVEL else six.str(b) for b in a
+                    shquote(b) if level >= self.QUOTE_LEVEL else str(b) for b in a
                 )
             else:
-                argv.append(shquote(a) if level >= self.QUOTE_LEVEL else six.str(a))
+                argv.append(shquote(a) if level >= self.QUOTE_LEVEL else str(a))
         # if self.custom_encoding:
-        #    argv = [a.encode(self.custom_encoding) for a in argv if isinstance(a, six.string_types)]
+        #    argv = [a.encode(self.custom_encoding) for a in argv if isinstance(a, str)]
         return argv

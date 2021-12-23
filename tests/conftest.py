@@ -1,11 +1,7 @@
 import os
-import sys
 import tempfile
 
 import pytest
-
-if sys.version_info[0] < 3:
-    collect_ignore = ["test_3_cli.py"]
 
 SDIR = os.path.dirname(os.path.abspath(__file__))
 
