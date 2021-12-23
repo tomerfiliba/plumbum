@@ -2,7 +2,7 @@ import os
 import platform
 import sys
 
-import pytest
+import pytest  # type: ignore[import]
 
 skip_without_chown = pytest.mark.skipif(
     not hasattr(os, "chown"), reason="os.chown not supported"

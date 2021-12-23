@@ -59,8 +59,8 @@ repos:
   hooks:
   - id: mypy
     files: plumbum
-    stages: [manual]
-    additional_dependencies: [typed-ast, types-paramiko]
+    args: [--show-error-codes]
+    additional_dependencies: [typed-ast, types-paramiko, types-setuptools]
 
 # This wants the .mo files removed
 - repo: https://github.com/mgedmin/check-manifest

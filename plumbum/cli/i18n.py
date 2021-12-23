@@ -14,7 +14,7 @@ if loc is None or loc.startswith("en"):
             else:
                 return strN.replace("{0}", str(n))
 
-    def get_translation_for(package_name):
+    def get_translation_for(package_name: str) -> NullTranslation:
         return NullTranslation()
 
 else:
@@ -25,11 +25,11 @@ else:
     try:
         import pkg_resources
     except ImportError:
-        pkg_resources = None
+        pkg_resources = None  # type: ignore[assignment]
 
     local_dir = os.path.basename(__file__)
 
-    def get_translation_for(package_name):  # type: (str) -> gettext.NullTranslations
+    def get_translation_for(package_name: str) -> gettext.NullTranslations:  # type: ignore[misc]
         """Find and return gettext translation for package
         (Try to find folder manually if setuptools does not exist)
         """

@@ -18,7 +18,7 @@ warn_unused_ignores = true
 
 
 [[tool.mypy.overrides]]
-module = ["IPython.*", "pywintypes.*", "win32con.*", "win32file.*", "PIL.*"]
+module = ["IPython.*", "pywintypes.*", "win32con.*", "win32file.*", "PIL.*", "plumbum.cmd.*", "ipywidgets.*", "traitlets.*", "plumbum.version"]
 ignore_missing_imports = true
 
 
