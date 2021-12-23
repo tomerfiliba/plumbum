@@ -197,12 +197,12 @@ An example of the usage of unsafe ``colors`` manipulations inside a context mana
     <p><font color="#800000">This is in red</font><br/>
     <font color="#008000">This is in green <span style="text-decoration: underline;">and now also underlined!</span></font><br/>
     <font color="#008000"><span style="text-decoration: underline;">Underlined</span> and not underlined but still green.</font><br/>
-    This is completly restored, even if an exception is thrown! </p>
+    This is completely restored, even if an exception is thrown! </p>
 
         colors.green.now()
         print('This is green ' + colors.underline + 'and now also underlined!')
         print('Underlined' + colors.underline.reset + ' and not underlined but still red')
-    print('This is completly restored, even if an exception is thrown!')
+    print('This is completely restored, even if an exception is thrown!')
 
 Output:
 
@@ -211,7 +211,7 @@ Output:
     <p><font color="#800000">This is in red</font><br/>
     <font color="#008000">This is in green <span style="text-decoration: underline;">and now also underlined!</span></font><br/>
     <font color="#008000"><span style="text-decoration: underline;">Underlined</span> and not underlined but still green.</font><br/>
-    This is completly restored, even if an exception is thrown! </p>
+    This is completely restored, even if an exception is thrown! </p>
 
 We can use ``colors`` instead of ``colors.fg`` for foreground colors.  If we had used ``colors.fg``
 as the context manager, then non-foreground properties, such as ``colors.underline`` or
@@ -280,6 +280,7 @@ See Also
 ========
 
 * `colored <https://pypi.python.org/pypi/colored>`_ Another library with 256 color support
-* `colorful <https://github.com/timofurrer/colorful>`_ A fairly new libary with a similar feature set
+* `colorful <https://github.com/timofurrer/colorful>`_ A fairly new library with a similar feature set
 * `colorama <https://pypi.python.org/pypi/colorama>`_ A library that supports colored text on Windows,
     can be combined with Plumbum.colors (if you force ``use_color``, doesn't support all extended colors)
+* `rich <https://rich.readthedocs.io>`_ A very powerful modern library for all sorts of styling.

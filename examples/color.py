@@ -5,9 +5,9 @@ from plumbum import colors
 with colors.fg.red:
     print("This is in red")
 
-print("This is completly restored, even if an exception is thrown!")
+print("This is completely restored, even if an exception is thrown!")
 
-print("The library will restore color on exiting automatially.")
+print("The library will restore color on exiting automatically.")
 print(colors.bold["This is bold and exciting!"])
 print(colors.bg.cyan | "This is on a cyan background.")
 print(colors.fg[42] | "If your terminal supports 256 colors, this is colorful!")

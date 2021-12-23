@@ -264,4 +264,4 @@ renaming paths, etc. ::
 .. note::
    See the :ref:`guide-utils` guide for copying, moving and deleting remote paths
 
-For futher information, see the :ref:`api docs <api-remote-machines>`.
+For further information, see the :ref:`api docs <api-remote-machines>`.

@@ -342,7 +342,7 @@ class BaseRemoteMachine(BaseMachine):
         return files
 
     def _path_glob(self, fn, pattern):
-        # shquote does not work here due to the way bash loops use space as a seperator
+        # shquote does not work here due to the way bash loops use space as a separator
         pattern = pattern.replace(" ", r"\ ")
         fn = fn.replace(" ", r"\ ")
         matches = self._session.run(fr"for fn in {fn}/{pattern}; do echo $fn; done")[
