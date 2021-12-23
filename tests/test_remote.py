@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 import os
 import socket
@@ -93,7 +92,7 @@ class TestRemotePath:
 
     def test_name(self):
         name = RemotePath(self._connect(), "/some/long/path/to/file.txt").name
-        assert isinstance(name, six.string_types)
+        assert isinstance(name, str)
         assert "file.txt" == str(name)
 
     def test_dirname(self):
@@ -154,7 +153,7 @@ class TestRemotePath:
         with self._connect() as rem:
             with rem.tempdir() as dir:
                 p = dir / "foo.txt"
-                p.write(six.b("hello"))
+                p.write(b"hello")
                 # because we're connected to localhost, we expect UID and GID to be the same
                 assert p.uid == os.getuid()
                 assert p.gid == os.getgid()
@@ -271,7 +270,7 @@ class TestRemotePath:
             assert not tmp.exists()
 
 
-class BaseRemoteMachineTest(object):
+class BaseRemoteMachineTest:
     TUNNEL_PROG_AF_INET = r"""import sys, socket
 s = socket.socket()
 s.bind(("", 0))
@@ -408,7 +407,7 @@ s.close()
         with self._connect() as rem:
             with rem.tempdir() as dir:
                 assert dir.is_dir()
-                data = six.b("hello world")
+                data = b"hello world"
                 (dir / "foo.txt").write(data)
                 assert (dir / "foo.txt").read() == data
 
@@ -484,7 +483,7 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                 with rem.tunnel(12222, port_or_socket, dhost=dhost) as tun:
                     s = socket.socket()
                     s.connect(("localhost", 12222))
-                    s.send(six.b("world"))
+                    s.send(b"world")
                     data = s.recv(100)
                     s.close()
 
@@ -633,7 +632,7 @@ class TestParamikoMachine(BaseRemoteMachineTest):
                 with local.tempdir() as tmpdir:
                     assert remote_tmpdir.is_dir()
                     assert tmpdir.is_dir()
-                    data = six.b("hello world")
+                    data = b"hello world"
                     with (remote_tmpdir / "bar.txt").open("wb") as f:
                         f.write(data)
                     rem.download((remote_tmpdir / "bar.txt"), (tmpdir / "bar.txt"))
@@ -649,7 +648,7 @@ class TestParamikoMachine(BaseRemoteMachineTest):
                 with local.tempdir() as tmpdir:
                     assert remote_tmpdir.is_dir()
                     assert tmpdir.is_dir()
-                    data = six.b("hello world")
+                    data = b"hello world"
                     with (tmpdir / "bar.txt").open("wb") as f:
                         f.write(data)
                     rem.upload((tmpdir / "bar.txt"), (remote_tmpdir / "bar.txt"))

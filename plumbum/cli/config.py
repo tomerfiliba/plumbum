@@ -1,16 +1,10 @@
-# -*- coding: utf-8 -*-
-from __future__ import division, print_function
-
 import sys
 from abc import abstractmethod
 
 from plumbum import local
 from plumbum.lib import _setdoc, six
 
-if sys.version_info >= (3,):
-    from configparser import ConfigParser, NoOptionError, NoSectionError
-else:
-    from ConfigParser import ConfigParser, NoOptionError, NoSectionError
+from configparser import ConfigParser, NoOptionError, NoSectionError
 
 
 class ConfigBase(six.ABC):
@@ -90,19 +84,19 @@ class ConfigINI(ConfigBase):
     slots = "parser".split()
 
     def __init__(self, filename):
-        super(ConfigINI, self).__init__(filename)
+        super().__init__(filename)
         self.parser = ConfigParser()
 
     @_setdoc(ConfigBase)
     def read(self):
         self.parser.read(self.filename)
-        super(ConfigINI, self).read()
+        super().read()
 
     @_setdoc(ConfigBase)
     def write(self):
         with open(self.filename, "w") as f:
             self.parser.write(f)
-        super(ConfigINI, self).write()
+        super().write()
 
     @classmethod
     def _sec_opt(cls, option):
@@ -119,7 +113,7 @@ class ConfigINI(ConfigBase):
         try:
             return self.parser.get(sec, option)
         except (NoSectionError, NoOptionError):
-            raise KeyError("{sec}:{option}".format(sec=sec, option=option))
+            raise KeyError(f"{sec}:{option}")
 
     @_setdoc(ConfigBase)
     def _set(self, option, value):

@@ -18,7 +18,6 @@ repos:
   - id: mixed-line-ending
   - id: requirements-txt-fixer
   - id: trailing-whitespace
-  - id: fix-encoding-pragma
 
 - repo: https://github.com/psf/black
   rev: "21.12b0"
@@ -34,12 +33,12 @@ repos:
   rev: "v2.29.1"
   hooks:
   - id: pyupgrade
+    args: ["--py36-plus"]
 
 - repo: https://github.com/asottile/setup-cfg-fmt
   rev: "v1.20.0"
   hooks:
   - id: setup-cfg-fmt
-    args: [--min-py3-version=3.5]
 
 - repo: https://github.com/pycqa/flake8
   rev: "4.0.1"

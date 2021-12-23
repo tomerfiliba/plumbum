@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import sys
 import time
@@ -11,7 +10,7 @@ from plumbum.commands.processes import BY_TYPE, ProcessExecutionError, run_proc
 from plumbum.lib import read_fd_decode_safely
 
 
-class Future(object):
+class Future:
     """Represents a "future result" of a running process. It basically wraps a ``Popen``
     object and the expected exit code, and provides poll(), wait(), returncode, stdout,
     and stderr.
@@ -73,7 +72,7 @@ class Future(object):
 # ===================================================================================================
 
 
-class ExecutionModifier(object):
+class ExecutionModifier:
     __slots__ = ("__weakref__",)
 
     def __repr__(self):
@@ -87,7 +86,7 @@ class ExecutionModifier(object):
             for prop in slots_list:
                 if prop[0] != "_":
                     slots[prop] = getattr(self, prop)
-        mystrs = ("{} = {}".format(name, slots[name]) for name in slots)
+        mystrs = (f"{name} = {slots[name]}" for name in slots)
         return "{}({})".format(self.__class__.__name__, ", ".join(mystrs))
 
     @classmethod
@@ -446,7 +445,7 @@ class PipeToLoggerMixin:
         Optionally use `prefix` for each line.
         """
 
-        class LogPipe(object):
+        class LogPipe:
             def __rand__(_, cmd):
                 popen = cmd if hasattr(cmd, "iter_lines") else cmd.popen()
                 for typ, lines in popen.iter_lines(
@@ -457,7 +456,7 @@ class PipeToLoggerMixin:
                     level = levels[typ]
                     for line in lines.splitlines():
                         if prefix:
-                            line = "{}: {}".format(prefix, line)
+                            line = f"{prefix}: {line}"
                         self.log(level, line)
                 return popen.returncode
 

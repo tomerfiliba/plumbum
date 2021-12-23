@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import errno
 import logging
 import os
@@ -19,7 +18,7 @@ try:
     import paramiko
 except ImportError:
 
-    class paramiko(object):  # type: ignore
+    class paramiko:  # type: ignore
         def __nonzero__(self):
             return False
 
@@ -79,7 +78,7 @@ class ParamikoPopen(PopenAddons):
         # possible way to obtain pid:
         # "(cmd ; echo $?) & echo ?!"
         # and then client.exec_command("kill -9 %s" % (pid,))
-        raise EnvironmentError("Cannot kill remote processes, we don't have their PIDs")
+        raise OSError("Cannot kill remote processes, we don't have their PIDs")
 
     terminate = kill
 
@@ -99,7 +98,7 @@ class ParamikoPopen(PopenAddons):
             if infile:
                 try:
                     line = infile.readline()
-                except (ValueError, IOError):
+                except (ValueError, OSError):
                     line = None
                 logger.debug("communicate: %r", line)
                 if not line:
@@ -232,7 +231,7 @@ class ParamikoMachine(BaseRemoteMachine):
         self.host = host
         kwargs = {}
         if user:
-            self._fqhost = "{}@{}".format(user, host)
+            self._fqhost = f"{user}@{host}"
             kwargs["username"] = user
         else:
             self._fqhost = host
@@ -274,7 +273,7 @@ class ParamikoMachine(BaseRemoteMachine):
         BaseRemoteMachine.__init__(self, encoding, connect_timeout)
 
     def __str__(self):
-        return "paramiko://{}".format(self._fqhost)
+        return f"paramiko://{self._fqhost}"
 
     def close(self):
         BaseRemoteMachine.close(self)
@@ -327,7 +326,7 @@ class ParamikoMachine(BaseRemoteMachine):
         argv.extend(["cd", str(cwd or self.cwd), "&&"])
         if envdelta:
             argv.append("env")
-            argv.extend("{}={}".format(k, shquote(v)) for k, v in envdelta.items())
+            argv.extend(f"{k}={shquote(v)}" for k, v in envdelta.items())
         argv.extend(args.formulate())
         cmdline = " ".join(argv)
         logger.debug(cmdline)
@@ -346,11 +345,11 @@ class ParamikoMachine(BaseRemoteMachine):
     @_setdoc(BaseRemoteMachine)
     def download(self, src, dst):
         if isinstance(src, LocalPath):
-            raise TypeError("src of download cannot be {!r}".format(src))
+            raise TypeError(f"src of download cannot be {src!r}")
         if isinstance(src, RemotePath) and src.remote != self:
-            raise TypeError("src {!r} points to a different remote machine".format(src))
+            raise TypeError(f"src {src!r} points to a different remote machine")
         if isinstance(dst, RemotePath):
-            raise TypeError("dst of download cannot be {!r}".format(dst))
+            raise TypeError(f"dst of download cannot be {dst!r}")
         return self._download(
             src if isinstance(src, RemotePath) else self.path(src),
             dst if isinstance(dst, LocalPath) else LocalPath(dst),
@@ -370,11 +369,11 @@ class ParamikoMachine(BaseRemoteMachine):
     @_setdoc(BaseRemoteMachine)
     def upload(self, src, dst):
         if isinstance(src, RemotePath):
-            raise TypeError("src of upload cannot be {!r}".format(src))
+            raise TypeError(f"src of upload cannot be {src!r}")
         if isinstance(dst, LocalPath):
-            raise TypeError("dst of upload cannot be {!r}".format(dst))
+            raise TypeError(f"dst of upload cannot be {dst!r}")
         if isinstance(dst, RemotePath) and dst.remote != self:
-            raise TypeError("dst {!r} points to a different remote machine".format(dst))
+            raise TypeError(f"dst {dst!r} points to a different remote machine")
         return self._upload(
             src if isinstance(src, LocalPath) else LocalPath(src),
             dst if isinstance(dst, RemotePath) else self.path(dst),
@@ -432,7 +431,7 @@ class ParamikoMachine(BaseRemoteMachine):
     def _path_stat(self, fn):
         try:
             st = self.sftp.stat(str(fn))
-        except IOError as e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 return None
             raise OSError(e.errno)
@@ -462,7 +461,7 @@ class ParamikoMachine(BaseRemoteMachine):
 # Make paramiko.Channel adhere to the socket protocol, namely, send and recv should fail
 # when the socket has been closed
 ###################################################################################################
-class SocketCompatibleChannel(object):
+class SocketCompatibleChannel:
     def __init__(self, chan):
         self._chan = chan
 
@@ -471,12 +470,12 @@ class SocketCompatibleChannel(object):
 
     def send(self, s):
         if self._chan.closed:
-            raise socket.error(errno.EBADF, "Bad file descriptor")
+            raise OSError(errno.EBADF, "Bad file descriptor")
         return self._chan.send(s)
 
     def recv(self, count):
         if self._chan.closed:
-            raise socket.error(errno.EBADF, "Bad file descriptor")
+            raise OSError(errno.EBADF, "Bad file descriptor")
         return self._chan.recv(count)
 
 

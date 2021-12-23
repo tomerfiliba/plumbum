@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from plumbum import local
 from plumbum.paramiko_machine import ParamikoMachine as PM
 

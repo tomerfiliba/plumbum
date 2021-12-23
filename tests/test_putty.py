@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test that PuttyMachine initializes its SshMachine correctly"""
 
 import env
@@ -67,4 +66,4 @@ class TestPuttyMachine:
         user = local.env.user
 
         machine = PuttyMachine(host)
-        assert str(machine) == "putty-ssh://{}@{}".format(user, host)
+        assert str(machine) == f"putty-ssh://{user}@{host}"

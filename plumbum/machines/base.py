@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from plumbum.commands.processes import (
     CommandNotFound,
     ProcessExecutionError,
@@ -6,7 +5,7 @@ from plumbum.commands.processes import (
 )
 
 
-class PopenAddons(object):
+class PopenAddons:
     """This adds a verify to popen objects to that the correct command is attributed when
     an error is thrown."""
 
@@ -14,7 +13,7 @@ class PopenAddons(object):
         """This verifies that the correct command is attributed."""
         if getattr(self, "_timed_out", False):
             raise ProcessTimedOut(
-                "Process did not terminate within {} seconds".format(timeout),
+                f"Process did not terminate within {timeout} seconds",
                 getattr(self, "argv", None),
             )
 
@@ -30,7 +29,7 @@ class PopenAddons(object):
                 )
 
 
-class BaseMachine(object):
+class BaseMachine:
     """This is a base class for other machines. It contains common code to
     all machines in Plumbum."""
 
@@ -81,7 +80,7 @@ class BaseMachine(object):
     def daemonic_popen(self, command, cwd="/", stdout=None, stderr=None, append=True):
         raise NotImplementedError("This is not implemented on this machine!")
 
-    class Cmd(object):
+    class Cmd:
         def __init__(self, machine):
             self._machine = machine
 

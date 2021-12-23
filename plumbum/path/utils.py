@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 
 from plumbum.lib import six
@@ -15,12 +14,12 @@ def delete(*paths):
     for p in paths:
         if isinstance(p, Path):
             p.delete()
-        elif isinstance(p, six.string_types):
+        elif isinstance(p, str):
             local.path(p).delete()
         elif hasattr(p, "__iter__"):
             delete(*p)
         else:
-            raise TypeError("Cannot delete {!r}".format(p))
+            raise TypeError(f"Cannot delete {p!r}")
 
 
 def _move(src, dst):
@@ -45,7 +44,7 @@ def move(src, dst):
             dst.mkdir()
         elif not dst.is_dir():
             raise ValueError(
-                "When using multiple sources, dst {!r} must be a directory".format(dst)
+                f"When using multiple sources, dst {dst!r} must be a directory"
             )
         for src2 in src:
             move(src2, dst)
@@ -83,7 +82,7 @@ def copy(src, dst):
             dst.mkdir()
         elif not dst.is_dir():
             raise ValueError(
-                "When using multiple sources, dst {!r} must be a directory".format(dst)
+                f"When using multiple sources, dst {dst!r} must be a directory"
             )
         for src2 in src:
             copy(src2, dst)

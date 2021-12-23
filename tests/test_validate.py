@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
-from __future__ import division, print_function
-
 from plumbum import cli
 
 
 class TestValidator:
     def test_named(self):
-        class Try(object):
+        class Try:
             @cli.positional(x=abs, y=str)
             def main(selfy, x, y):
                 pass
@@ -15,7 +12,7 @@ class TestValidator:
         assert Try.main.positional_varargs is None
 
     def test_position(self):
-        class Try(object):
+        class Try:
             @cli.positional(abs, str)
             def main(selfy, x, y):
                 pass
@@ -24,7 +21,7 @@ class TestValidator:
         assert Try.main.positional_varargs is None
 
     def test_mix(self):
-        class Try(object):
+        class Try:
             @cli.positional(abs, str, d=bool)
             def main(selfy, x, y, z, d):
                 pass
@@ -33,7 +30,7 @@ class TestValidator:
         assert Try.main.positional_varargs is None
 
     def test_var(self):
-        class Try(object):
+        class Try:
             @cli.positional(abs, str, int)
             def main(selfy, x, y, *g):
                 pass
@@ -42,7 +39,7 @@ class TestValidator:
         assert Try.main.positional_varargs is int
 
     def test_defaults(self):
-        class Try(object):
+        class Try:
             @cli.positional(abs, str)
             def main(selfy, x, y="hello"):
                 pass

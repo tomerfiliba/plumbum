@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import pickle
 import signal
@@ -55,7 +54,7 @@ class TestLocalPath:
 
     def test_name(self):
         name = self.longpath.name
-        assert isinstance(name, six.string_types)
+        assert isinstance(name, str)
         assert "file.txt" == str(name)
 
     def test_dirname(self):
@@ -89,7 +88,7 @@ class TestLocalPath:
     def test_chown(self):
         with local.tempdir() as dir:
             p = dir / "foo.txt"
-            p.write(six.b("hello"))
+            p.write(b"hello")
             assert p.uid == os.getuid()
             assert p.gid == os.getgid()
             p.chown(p.uid.name)
@@ -154,7 +153,7 @@ class TestLocalPath:
     def test_read_write(self):
         with local.tempdir() as dir:
             f = dir / "test.txt"
-            text = six.b("hello world\xd7\xa9\xd7\x9c\xd7\x95\xd7\x9d").decode("utf8")
+            text = b"hello world\xd7\xa9\xd7\x9c\xd7\x95\xd7\x9d".decode("utf8")
             f.write(text, "utf8")
             text2 = f.read("utf8")
             assert text == text2
@@ -640,7 +639,7 @@ class TestLocalMachine:
     def test_tee_race(self, capfd):
         from plumbum.cmd import seq
 
-        EXPECT = "".join("{}\n".format(i) for i in range(1, 5001))
+        EXPECT = "".join(f"{i}\n" for i in range(1, 5001))
         for _ in range(5):
             result = seq["1", "5000"] & TEE
             assert result[1] == EXPECT
@@ -736,7 +735,7 @@ class TestLocalMachine:
 
         with local.tempdir() as dir:
             assert dir.is_dir()
-            data = six.b("hello world")
+            data = b"hello world"
             with open(str(dir / "test.txt"), "wb") as f:
                 f.write(data)
             with open(str(dir / "test.txt"), "rb") as f:
@@ -749,7 +748,7 @@ class TestLocalMachine:
 
         with local.tempdir() as dir:
             assert dir.is_dir()
-            data = six.b("hello world")
+            data = b"hello world"
             with open(dir / "test.txt", "wb") as f:
                 f.write(data)
             with open(dir / "test.txt", "rb") as f:
@@ -765,13 +764,13 @@ class TestLocalMachine:
 
     def test_read_write_unicode(self):
         with local.tempdir() as tmp:
-            data = six.u("hello world")
+            data = "hello world"
             (tmp / "foo.txt").write(data)
             assert (tmp / "foo.txt").read() == data
 
     def test_read_write_bin(self):
         with local.tempdir() as tmp:
-            data = six.b("hello world")
+            data = b"hello world"
             (tmp / "foo.txt").write(data)
             assert (tmp / "foo.txt").read(mode="rb") == data
 
@@ -840,10 +839,10 @@ class TestLocalMachine:
     def test_atomic_file(self):
         af1 = AtomicFile("tmp.txt")
         af2 = AtomicFile("tmp.txt")
-        af1.write_atomic(six.b("foo"))
-        af2.write_atomic(six.b("bar"))
-        assert af1.read_atomic() == six.b("bar")
-        assert af2.read_atomic() == six.b("bar")
+        af1.write_atomic(b"foo")
+        af2.write_atomic(b"bar")
+        assert af1.read_atomic() == b"bar"
+        assert af2.read_atomic() == b"bar"
         local.path("tmp.txt").delete()
 
     @skip_on_windows
@@ -1053,7 +1052,7 @@ class TestLocalEncoding:
 
         from plumbum.cmd import cat
 
-        with io.open("temp.txt", "w", encoding="utf8") as f:
+        with open("temp.txt", "w", encoding="utf8") as f:
             f.write(self.richstr)
         out = cat("temp.txt")
         assert self.richstr in out
@@ -1067,7 +1066,7 @@ class TestLocalEncoding:
 
         name = self.richstr + six.str("_program")
         with open(name, "w") as f:
-            f.write("#!{}\nprint('yes')".format(sys.executable))
+            f.write(f"#!{sys.executable}\nprint('yes')")
 
         st = os.stat(name)
         os.chmod(name, st.st_mode | stat.S_IEXEC)

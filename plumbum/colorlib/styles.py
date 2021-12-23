@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This file provides two classes, `Color` and `Style`.
 
@@ -8,7 +7,6 @@ but merely provides the workhorse for finding and manipulating colors.
 With the ``Style`` class, any color can be directly called or given to a with statement.
 """
 
-from __future__ import absolute_import, print_function
 
 import os
 import platform
@@ -26,14 +24,7 @@ from .names import (
     from_html,
 )
 
-if sys.version_info >= (3,):
-    from abc import ABC
-else:
-    from abc import ABCMeta
-
-    ABC = ABCMeta(
-        "ABC", (object,), {"__module__": __name__, "__slots__": ("__weakref__")}
-    )
+from abc import ABC
 
 try:
     from typing import IO, Dict, Union
@@ -355,7 +346,7 @@ class Color(ABC):
             return self.to_representation(val)
 
 
-class Style(object):
+class Style:
     """This class allows the color changes to be called directly
     to write them to stdout, ``[]`` calls to wrap colors (or the ``.wrap`` method)
     and can be called in a with statement.
@@ -684,7 +675,7 @@ class Style(object):
                     if filter_resets is False:
                         self.bg = self.color_class(fg=False)
                 else:
-                    raise ColorNotFound("The code {} is not recognised".format(value))
+                    raise ColorNotFound(f"The code {value} is not recognised")
         except StopIteration:
             return
 
@@ -785,9 +776,9 @@ class HTMLStyle(Style):
         result = ""
 
         if self.bg and not self.bg.isreset:
-            result += '<span style="background-color: {}">'.format(self.bg.hex_code)
+            result += f'<span style="background-color: {self.bg.hex_code}">'
         if self.fg and not self.fg.isreset:
-            result += '<font color="{}">'.format(self.fg.hex_code)
+            result += f'<font color="{self.fg.hex_code}">'
         for attr in sorted(self.attributes):
             if self.attributes[attr]:
                 result += "<" + self.attribute_names[attr] + ">"

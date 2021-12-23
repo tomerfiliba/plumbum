@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # If you are on macOS and using brew, you might need the following first:
 # export PATH="/usr/local/opt/gettext/bin:$PATH"

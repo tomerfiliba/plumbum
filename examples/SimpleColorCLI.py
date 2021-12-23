@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import plumbum
 from plumbum import cli, colors
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from plumbum.commands.base import BaseCommand
 from plumbum.commands.processes import CommandNotFound, ProcessExecutionError, run_proc
 
@@ -22,7 +21,7 @@ def make_concurrent(self, rhs):
 BaseCommand.__and__ = make_concurrent
 
 
-class ConcurrentPopen(object):
+class ConcurrentPopen:
     def __init__(self, procs):
         self.procs = procs
         self.stdin = None
@@ -87,7 +86,7 @@ class ConcurrentCommand(BaseCommand):
             return ConcurrentCommand(*(cmd[args] for cmd in self.commands))
 
 
-class Cluster(object):
+class Cluster:
     def __init__(self, *machines):
         self.machines = list(machines)
 
@@ -151,7 +150,7 @@ class Cluster(object):
         return ClusterSession(*(mach.session() for mach in self))
 
 
-class ClusterSession(object):
+class ClusterSession:
     def __init__(self, *sessions):
         self.sessions = sessions
 

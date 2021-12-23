@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
-
 import functools
 import os
 import sys
@@ -42,7 +39,7 @@ class ShowVersion(SwitchError):
     pass
 
 
-class SwitchParseInfo(object):
+class SwitchParseInfo:
     __slots__ = ["swname", "val", "index", "__weakref__"]
 
     def __init__(self, swname, val, index):
@@ -51,7 +48,7 @@ class SwitchParseInfo(object):
         self.index = index
 
 
-class Subcommand(object):
+class Subcommand:
     def __init__(self, name, subapplication):
         self.name = name
         self.subapplication = subapplication
@@ -63,7 +60,7 @@ class Subcommand(object):
             try:
                 cls = getattr(mod, clsname)
             except AttributeError:
-                raise ImportError("cannot import name {}".format(clsname))
+                raise ImportError(f"cannot import name {clsname}")
             self.subapplication = cls
         return self.subapplication
 
@@ -80,7 +77,7 @@ _switch_groups_l10n = [T_("Switches"), T_("Meta-switches")]
 # ===================================================================================================
 
 
-class Application(object):
+class Application:
     """The base class for CLI applications; your "entry point" class should derive from it,
     define the relevant switch functions and attributes, and the ``main()`` function.
     The class defines two overridable "meta switches" for version (``-v``, ``--version``)
@@ -178,7 +175,7 @@ class Application(object):
             return cls.run()
             # This return value was not a class instance, so __init__ is never called
         else:
-            return super(Application, cls).__new__(cls)
+            return super().__new__(cls)
 
     def __init__(self, executable):
         # Filter colors
@@ -428,7 +425,7 @@ class Application(object):
                 continue  # skip if overridden by command line arguments
 
             val = self._handle_argument(envval, swinfo.argtype, env)
-            envname = "${}".format(env)
+            envname = f"${env}"
             if swinfo.list:
                 # multiple values over environment variables are not supported,
                 # this will require some sort of escaping and separator convention
@@ -461,11 +458,11 @@ class Application(object):
             return NotImplemented
 
     def _validate_args(self, swfuncs, tailargs):
-        if six.get_method_function(self.help) in swfuncs:
+        if self.help.__func__ in swfuncs:
             raise ShowHelp()
-        if six.get_method_function(self.helpall) in swfuncs:
+        if self.helpall.__func__ in swfuncs:
             raise ShowHelpAll()
-        if six.get_method_function(self.version) in swfuncs:
+        if self.version.__func__ in swfuncs:
             raise ShowVersion()
 
         requirements = {}
@@ -729,7 +726,7 @@ class Application(object):
 
         if self._subcommands:
             for name, subcls in sorted(self._subcommands.items()):
-                subapp = (subcls.get())("{} {}".format(self.PROGNAME, name))
+                subapp = (subcls.get())(f"{self.PROGNAME} {name}")
                 subapp.parent = self
                 for si in subapp._switches_by_func.values():
                     if si.group == "Meta-switches":
@@ -783,8 +780,7 @@ class Application(object):
 
                 if len(line) == 0:
                     # Starting a new paragraph
-                    for item in current():
-                        yield item
+                    yield from current()
                     yield "", "", ""
 
                     paragraph = None
@@ -803,8 +799,7 @@ class Application(object):
 
                     if is_list_item(line):
                         # Done with current paragraph
-                        for item in current():
-                            yield item
+                        yield from current()
 
                         if has_invisible_bullet(line):
                             line = line[1:]
@@ -827,8 +822,7 @@ class Application(object):
                             # Add to current paragraph
                             paragraph = paragraph + " " + line
 
-            for item in current():
-                yield item
+            yield from current()
 
         def wrapped_paragraphs(text, width):
             """Yields each line of each paragraph of text after wrapping them on 'width' number of columns.
@@ -848,8 +842,7 @@ class Application(object):
                     subsequent_indent=subsequent_indent,
                 )
                 w = wrapper.wrap(paragraph)
-                for line in w:
-                    yield line
+                yield from w
                 if len(w) == 0:
                     yield ""
 
@@ -861,7 +854,7 @@ class Application(object):
         tailargs = m.args[1:]  # skip self
         if m.defaults:
             for i, d in enumerate(reversed(m.defaults)):
-                tailargs[-i - 1] = "[{}={}]".format(tailargs[-i - 1], d)
+                tailargs[-i - 1] = f"[{tailargs[-i - 1]}={d}]"
         if m.varargs:
             tailargs.append(
                 "{}...".format(
@@ -911,7 +904,7 @@ class Application(object):
                             typename = si.argtype.__name__
                         else:
                             typename = str(si.argtype)
-                        argtype = " {}:{}".format(si.argname.upper(), typename)
+                        argtype = f" {si.argname.upper()}:{typename}"
                     else:
                         argtype = ""
                     prefix = swnames + argtype
@@ -1012,4 +1005,4 @@ class Application(object):
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
         ver_name = ver if ver is not None else T_("(version not set)")
-        print("{} {}".format(self.PROGNAME, ver_name))
+        print(f"{self.PROGNAME} {ver_name}")

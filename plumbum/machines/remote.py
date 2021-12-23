@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import re
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
@@ -43,24 +42,24 @@ class RemoteEnv(BaseEnv):
     @_setdoc(BaseEnv)
     def __delitem__(self, name):
         BaseEnv.__delitem__(self, name)
-        self.remote._session.run("unset {}".format(name))
+        self.remote._session.run(f"unset {name}")
 
     @_setdoc(BaseEnv)
     def __setitem__(self, name, value):
         BaseEnv.__setitem__(self, name, value)
-        self.remote._session.run("export {}={}".format(name, shquote(value)))
+        self.remote._session.run(f"export {name}={shquote(value)}")
 
     @_setdoc(BaseEnv)
     def pop(self, name, *default):
         BaseEnv.pop(self, name, *default)
-        self.remote._session.run("unset {}".format(name))
+        self.remote._session.run(f"unset {name}")
 
     @_setdoc(BaseEnv)
     def update(self, *args, **kwargs):
         BaseEnv.update(self, *args, **kwargs)
         self.remote._session.run(
             "export "
-            + " ".join("{}={}".format(k, shquote(v)) for k, v in self.getdict().items())
+            + " ".join(f"{k}={shquote(v)}" for k, v in self.getdict().items())
         )
 
     def expand(self, expr):
@@ -119,7 +118,7 @@ class RemoteCommand(ConcreteCommand):
         return self.remote
 
     def __repr__(self):
-        return "RemoteCommand({!r}, {!r})".format(self.remote, self.executable)
+        return f"RemoteCommand({self.remote!r}, {self.executable!r})"
 
     def popen(self, args=(), **kwargs):
         return self.remote.popen(self[args], **kwargs)
@@ -133,7 +132,7 @@ class ClosedRemoteMachine(Exception):
     pass
 
 
-class ClosedRemote(object):
+class ClosedRemote:
     __slots__ = ["_obj", "__weakref__"]
 
     def __init__(self, obj):
@@ -143,7 +142,7 @@ class ClosedRemote(object):
         pass
 
     def __getattr__(self, name):
-        raise ClosedRemoteMachine("{!r} has been closed".format(self._obj))
+        raise ClosedRemoteMachine(f"{self._obj!r} has been closed")
 
 
 class BaseRemoteMachine(BaseMachine):
@@ -194,7 +193,7 @@ class BaseRemoteMachine(BaseMachine):
                 return "Windows"
 
     def __repr__(self):
-        return "<{} {}>".format(self.__class__.__name__, self)
+        return f"<{self.__class__.__name__} {self}>"
 
     def __enter__(self):
         return self
@@ -215,7 +214,7 @@ class BaseRemoteMachine(BaseMachine):
         parts2 = [str(self.cwd)]
         for p in parts:
             if isinstance(p, LocalPath):
-                raise TypeError("Cannot construct RemotePath from {!r}".format(p))
+                raise TypeError(f"Cannot construct RemotePath from {p!r}")
             parts2.append(self.expanduser(str(p)))
         return RemotePath(self, *parts2)
 
@@ -265,7 +264,7 @@ class BaseRemoteMachine(BaseMachine):
             else:
                 return self.RemoteCommand(self, self.which(cmd))
         else:
-            raise TypeError("cmd must not be a LocalPath: {!r}".format(cmd))
+            raise TypeError(f"cmd must not be a LocalPath: {cmd!r}")
 
     @property
     def python(self):
@@ -338,7 +337,7 @@ class BaseRemoteMachine(BaseMachine):
     # Path implementation
     #
     def _path_listdir(self, fn):
-        files = self._session.run("ls -a {}".format(shquote(fn)))[1].splitlines()
+        files = self._session.run(f"ls -a {shquote(fn)}")[1].splitlines()
         files.remove(".")
         files.remove("..")
         return files
@@ -348,7 +347,7 @@ class BaseRemoteMachine(BaseMachine):
         pattern = pattern.replace(" ", r"\ ")
         fn = fn.replace(" ", r"\ ")
         matches = self._session.run(
-            r"for fn in {}/{}; do echo $fn; done".format(fn, pattern)
+            fr"for fn in {fn}/{pattern}; do echo $fn; done"
         )[1].splitlines()
         if len(matches) == 1 and not self._path_stat(matches[0]):
             return []  # pattern expansion failed
@@ -385,35 +384,35 @@ class BaseRemoteMachine(BaseMachine):
         return res
 
     def _path_delete(self, fn):
-        self._session.run("rm -rf {}".format(shquote(fn)))
+        self._session.run(f"rm -rf {shquote(fn)}")
 
     def _path_move(self, src, dst):
-        self._session.run("mv {} {}".format(shquote(src), shquote(dst)))
+        self._session.run(f"mv {shquote(src)} {shquote(dst)}")
 
     def _path_copy(self, src, dst):
-        self._session.run("cp -r {} {}".format(shquote(src), shquote(dst)))
+        self._session.run(f"cp -r {shquote(src)} {shquote(dst)}")
 
     def _path_mkdir(self, fn, mode=None, minus_p=True):
         p_str = "-p " if minus_p else ""
-        cmd = "mkdir {}{}".format(p_str, shquote(fn))
+        cmd = f"mkdir {p_str}{shquote(fn)}"
         self._session.run(cmd)
 
     def _path_chmod(self, mode, fn):
-        self._session.run("chmod {:o} {}".format(mode, shquote(fn)))
+        self._session.run(f"chmod {mode:o} {shquote(fn)}")
 
     def _path_touch(self, path):
-        self._session.run("touch {path}".format(path=path))
+        self._session.run(f"touch {path}")
 
     def _path_chown(self, fn, owner, group, recursive):
         args = ["chown"]
         if recursive:
             args.append("-R")
         if owner is not None and group is not None:
-            args.append("{}:{}".format(owner, group))
+            args.append(f"{owner}:{group}")
         elif owner is not None:
             args.append(str(owner))
         elif group is not None:
-            args.append(":{}".format(group))
+            args.append(f":{group}")
         args.append(shquote(fn))
         self._session.run(" ".join(args))
 
@@ -439,7 +438,7 @@ class BaseRemoteMachine(BaseMachine):
 
     @_setdoc(BaseEnv)
     def expand(self, expr):
-        return self._session.run("echo {}".format(expr))[1].strip()
+        return self._session.run(f"echo {expr}")[1].strip()
 
     @_setdoc(BaseEnv)
     def expanduser(self, expr):

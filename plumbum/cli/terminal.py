@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Terminal-related utilities
 --------------------------
 """
 
-from __future__ import absolute_import, division, print_function
 
 import os
 import sys
@@ -108,7 +106,7 @@ def choose(question, options, default=None):
         sys.stdout.write("(%d) %s\n" % (i, text))
     if default is not None:
         if defindex is None:
-            msg = "Choice [{}]: ".format(default)
+            msg = f"Choice [{default}]: "
         else:
             msg = "Choice [%d]: " % (defindex,)
     else:
@@ -143,7 +141,7 @@ def prompt(question, type=str, default=NotImplemented, validator=lambda val: Tru
     """
     question = question.rstrip(" \t:")
     if default is not NotImplemented:
-        question += " [{}]".format(default)
+        question += f" [{default}]"
     question += ": "
     while True:
         try:
@@ -159,12 +157,12 @@ def prompt(question, type=str, default=NotImplemented, validator=lambda val: Tru
         try:
             ans = type(ans)
         except (TypeError, ValueError) as ex:
-            sys.stdout.write("Invalid value ({}), please try again\n".format(ex))
+            sys.stdout.write(f"Invalid value ({ex}), please try again\n")
             continue
         try:
             valid = validator(ans)
         except ValueError as ex:
-            sys.stdout.write("{}, please try again\n".format(ex))
+            sys.stdout.write(f"{ex}, please try again\n")
             continue
         if not valid:
             sys.stdout.write("Value not in specified range, please try again\n")
@@ -194,7 +192,7 @@ def hexdump(data_or_stream, bytes_per_line=16, aggregate=True):
     prev = None
     skipped = False
     for i, chunk in enumerate(read_chunk()):
-        hexd = " ".join("{:02x}".format(ord(ch)) for ch in chunk)
+        hexd = " ".join(f"{ord(ch):02x}" for ch in chunk)
         text = "".join(ch if 32 <= ord(ch) < 127 else "." for ch in chunk)
         if aggregate and prev == chunk:
             skipped = True
@@ -224,11 +222,11 @@ def pager(rows, pagercmd=None):  # pragma: no cover
     pg = pagercmd.popen(stdout=None, stderr=None)
     try:
         for row in rows:
-            line = "{}\n".format(row)
+            line = f"{row}\n"
             try:
                 pg.stdin.write(line)
                 pg.stdin.flush()
-            except IOError:
+            except OSError:
                 break
         pg.stdin.close()
         pg.wait()

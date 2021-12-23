@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 Progress bar
 ------------
 """
-from __future__ import division, print_function
 
 import datetime
 import sys
@@ -134,7 +132,7 @@ class ProgressBase(six.ABC):
 
 class Progress(ProgressBase):
     def start(self):
-        super(Progress, self).start()
+        super().start()
         self.display()
 
     def done(self):
@@ -155,21 +153,21 @@ class Progress(ProgressBase):
         ending = " " + (
             self.str_time_remaining()
             if self.timer
-            else "{} of {} complete".format(self.value, self.length)
+            else f"{self.value} of {self.length} complete"
         )
         if width - len(ending) < 10 or self.has_output:
             self.width = 0
             if self.timer:
-                return "{:.0%} complete: {}".format(percent, self.str_time_remaining())
+                return f"{percent:.0%} complete: {self.str_time_remaining()}"
             else:
-                return "{:.0%} complete".format(percent)
+                return f"{percent:.0%} complete"
 
         else:
             self.width = width - len(ending) - 2 - 1
             nstars = int(percent * self.width)
             pbar = "[" + "*" * nstars + " " * (self.width - nstars) + "]" + ending
 
-        str_percent = " {:.0%} ".format(percent)
+        str_percent = f" {percent:.0%} "
 
         return (
             pbar[: self.width // 2 - 2]
@@ -200,7 +198,7 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
             except ImportError:  # Support IPython < 4.0
                 from IPython.html.widgets import HTML, HBox, IntProgress
 
-        super(ProgressIPy, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
         self.prog = IntProgress(max=self.length)
         self._label = HTML()
         self._box = HBox((self.prog, self._label))
@@ -209,7 +207,7 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
         from IPython.display import display
 
         display(self._box)
-        super(ProgressIPy, self).start()
+        super().start()
 
     @property
     def value(self):
@@ -220,7 +218,7 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
     def value(self, val):
         self._value = val
         self.prog.value = max(val, 0)
-        self.prog.description = "{:.2%}".format(self.value / self.length)
+        self.prog.description = f"{self.value / self.length:.2%}"
         if self.timer and val > 0:
             self._label.value = self.HTMLBOX.format(self.str_time_remaining())
 

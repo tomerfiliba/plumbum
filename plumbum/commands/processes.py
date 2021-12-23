@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import atexit
 import heapq
 import sys
@@ -7,14 +6,9 @@ from threading import Thread
 
 from plumbum.lib import IS_WIN32, six
 
-if sys.version_info >= (3,):
-    from io import StringIO
-    from queue import Empty as QueueEmpty
-    from queue import Queue
-else:
-    from cStringIO import StringIO
-    from Queue import Empty as QueueEmpty
-    from Queue import Queue
+from io import StringIO
+from queue import Empty as QueueEmpty
+from queue import Queue
 
 
 # ===================================================================================================
@@ -205,7 +199,7 @@ class CommandNotFound(AttributeError):
 # ===================================================================================================
 # Timeout thread
 # ===================================================================================================
-class MinHeap(object):
+class MinHeap:
     def __init__(self, items=()):
         self._items = list(items)
         heapq.heapify(self._items)
@@ -254,7 +248,7 @@ def _timeout_thread_func():
                     if proc.poll() is None:
                         proc.kill()
                         proc._timed_out = True
-                except EnvironmentError:
+                except OSError:
                     pass
     except Exception:
         if _shutting_down:
@@ -312,9 +306,9 @@ def run_proc(proc, retcode, timeout=None):
     stdout, stderr = proc.communicate()
     proc._end_time = time.time()
     if not stdout:
-        stdout = six.b("")
+        stdout = b""
     if not stderr:
-        stderr = six.b("")
+        stderr = b""
     if getattr(proc, "custom_encoding", None):
         stdout = stdout.decode(proc.custom_encoding, "ignore")
         stderr = stderr.decode(proc.custom_encoding, "ignore")

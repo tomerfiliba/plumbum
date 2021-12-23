@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 import re
 
 
-class MountEntry(object):
+class MountEntry:
     """
     Represents a mount entry (device file, mount point and file system type)
     """

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from abc import abstractmethod
 
 from plumbum import local
@@ -61,7 +60,7 @@ class SubcommandError(SwitchError):
 # ===================================================================================================
 # The switch decorator
 # ===================================================================================================
-class SwitchInfo(object):
+class SwitchInfo:
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -165,7 +164,7 @@ def switch(
 
     :returns: The decorated function (with a ``_switch_info`` attribute)
     """
-    if isinstance(names, six.string_types):
+    if isinstance(names, str):
         names = [names]
     names = [n.lstrip("-") for n in names]
     requires = [n.lstrip("-") for n in requires]
@@ -216,7 +215,7 @@ def autoswitch(*args, **kwargs):
 # ===================================================================================================
 # Switch Attributes
 # ===================================================================================================
-class SwitchAttr(object):
+class SwitchAttr:
     """
     A switch that stores its result in an attribute (descriptor). Usage::
 
@@ -331,7 +330,7 @@ class CountOf(SwitchAttr):
 # ===================================================================================================
 
 
-class positional(object):
+class positional:
     """
     Runs a validator on the main function for a class.
     This should be used like this::
@@ -408,7 +407,7 @@ class Validator(six.ABC):
             for prop in getattr(cls, "__slots__", ()):
                 if prop[0] != "_":
                     slots[prop] = getattr(self, prop)
-        mystrs = ("{} = {}".format(name, slots[name]) for name in slots)
+        mystrs = (f"{name} = {slots[name]}" for name in slots)
         return "{}({})".format(self.__class__.__name__, ", ".join(mystrs))
 
 
@@ -434,7 +433,7 @@ class Range(Validator):
         self.end = end
 
     def __repr__(self):
-        return "[{:d}..{:d}]".format(self.start, self.end)
+        return f"[{self.start:d}..{self.end:d}]"
 
     def __call__(self, obj):
         obj = int(obj)
@@ -499,12 +498,12 @@ class Set(Validator):
             except ValueError:
                 pass
         raise ValueError(
-            "Invalid value: {} (Expected one of {})".format(value, self.values)
+            f"Invalid value: {value} (Expected one of {self.values})"
         )
 
     def choices(self, partial=""):
         choices = {
-            opt if isinstance(opt, str) else "({})".format(opt) for opt in self.values
+            opt if isinstance(opt, str) else f"({opt})" for opt in self.values
         }
         if partial:
             choices = {opt for opt in choices if opt.lower().startswith(partial)}
@@ -514,7 +513,7 @@ class Set(Validator):
 CSV = Set(str, csv=True)
 
 
-class Predicate(object):
+class Predicate:
     """A wrapper for a single-argument function with pretty printing"""
 
     def __init__(self, func):
@@ -544,7 +543,7 @@ def MakeDirectory(val):
     p = local.path(val)
     if p.is_file():
         raise ValueError(
-            "{} is a file, should be nonexistent, or a directory".format(val)
+            f"{val} is a file, should be nonexistent, or a directory"
         )
     elif not p.exists():
         p.mkdir()

@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 import locale
 
 # High performance method for English (no translation needed)
 loc = locale.getlocale()[0]
 if loc is None or loc.startswith("en"):
 
-    class NullTranslation(object):
+    class NullTranslation:
         def gettext(self, str):
             return str
 
