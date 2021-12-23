@@ -199,7 +199,7 @@ if __name__ == "__main__":
     except ProcessExecutionError as ex:
         print(ex)
     else:
-        assert False
+        raise AssertionError("Expected an ProcessExecutionError")
 
     clst = Cluster(local, local, local)
     print(clst["ls"]())

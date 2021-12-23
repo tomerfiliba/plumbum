@@ -8,6 +8,8 @@ import platform
 import warnings
 from struct import Struct
 
+from plumbum import local
+
 
 def get_terminal_size(default=(80, 25)):
     """

@@ -21,12 +21,7 @@ from plumbum import (
     ProcessTimedOut,
     local,
 )
-from plumbum._testtools import (
-    skip_on_windows,
-    skip_without_chown,
-    skip_without_tty,
-    xfail_on_pypy,
-)
+from plumbum._testtools import skip_on_windows, skip_without_chown, skip_without_tty
 from plumbum.fs.atomic import AtomicCounterFile, AtomicFile, PidFile
 from plumbum.lib import IS_WIN32
 from plumbum.machines.local import LocalCommand, PlumbumLocalPopen
@@ -93,7 +88,7 @@ class TestLocalPath:
 
     def test_split(self):
         p = local.path("/var/log/messages")
-        p.split() == ["var", "log", "messages"]
+        assert p.split() == ["var", "log", "messages"]
 
     def test_suffix(self):
         # This picks up the drive letter differently if not constructed here
@@ -330,7 +325,9 @@ class TestLocalMachine:
             local["non_exist1N9"]()
 
         with pytest.raises(ImportError):
-            from plumbum.cmd import non_exist1N9  # @UnresolvedImport @UnusedImport
+            from plumbum.cmd import non_exist1N9
+
+            assert non_exist1N9
 
     def test_get(self):
         assert str(local["ls"]) == str(local.get("ls"))
@@ -457,8 +454,6 @@ class TestLocalMachine:
             assert p == local.cwd / "not-in-path" / "dummy-executable"
 
     def test_local(self):
-        from plumbum.cmd import cat, head
-
         assert "plumbum" in str(local.cwd)
         assert "PATH" in local.env.getdict()
         assert local.path("foo") == os.path.join(os.getcwd(), "foo")
@@ -579,7 +574,7 @@ class TestLocalMachine:
         from plumbum.cmd import ls
 
         with pytest.raises(ProcessExecutionError) as err:
-            for i, lines in enumerate(ls["--bla"].popen()):
+            for i, _lines in enumerate(ls["--bla"].popen()):  # noqa: B007
                 pass
             assert i == 1
         assert (
@@ -720,8 +715,6 @@ class TestLocalMachine:
         assert execinfo.value.argv[-2:] == ["-a", ""]
 
     def test_tempdir(self):
-        from plumbum.cmd import cat
-
         with local.tempdir() as dir:
             assert dir.is_dir()
             data = b"hello world"
@@ -733,8 +726,6 @@ class TestLocalMachine:
         assert not dir.exists()
 
     def test_direct_open_tmpdir(self):
-        from plumbum.cmd import cat
-
         with local.tempdir() as dir:
             assert dir.is_dir()
             data = b"hello world"
@@ -939,7 +930,7 @@ for _ in range({}):
         c = ls["-l", ["-a", "*.py"]]
         assert c.formulate()[1:] == ["-l", "-a", "*.py"]
 
-    def test_contains(self):
+    def test_contains_ls(self):
         assert "ls" in local
 
     def test_issue_139(self):
@@ -998,7 +989,7 @@ for _ in range({}):
         from plumbum.cmd import ls
 
         f = ls["-l"].run_tf()
-        assert f == True
+        assert f is True
 
     def test_run_retcode(self):
         from plumbum.cmd import ls
@@ -1033,8 +1024,6 @@ class TestLocalEncoding:
 
     @pytest.mark.usefixtures("cleandir")
     def test_out_rich(self):
-        import io
-
         from plumbum.cmd import cat
 
         with open("temp.txt", "w", encoding="utf8") as f:

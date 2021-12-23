@@ -27,8 +27,6 @@ else:
     except ImportError:
         pkg_resources = None
 
-    from typing import Callable, List, Tuple
-
     local_dir = os.path.basename(__file__)
 
     def get_translation_for(package_name):  # type: (str) -> gettext.NullTranslations

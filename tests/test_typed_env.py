@@ -8,7 +8,7 @@ class TestTypedEnv:
         class E(TypedEnv):
             terminal = TypedEnv.Str("TERM")
             B = TypedEnv.Bool("BOOL", default=True)
-            I = TypedEnv.Int("INT INTEGER".split())
+            I = TypedEnv.Int("INT INTEGER".split())  # noqa: E741  # noqa: E741
             INTS = TypedEnv.CSV("CS_INTS", type=int)
 
         raw_env = dict(TERM="xterm", CS_INTS="1,2,3,4")
@@ -44,12 +44,12 @@ class TestTypedEnv:
             e.I
 
         raw_env["INTEGER"] = "4"
-        assert e.I == 4
+        assert e.I == 4  # noqa: E741
         assert e["I"] == 4
 
-        e.I = "5"
+        e.I = "5"  # noqa: E741
         assert raw_env["INT"] == "5"
-        assert e.I == 5
+        assert e.I == 5  # noqa: E741
         assert e["I"] == 5
 
         assert "{I} {B} {terminal}".format(**e) == "5 False foo"

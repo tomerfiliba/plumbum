@@ -1,4 +1,7 @@
+import itertools
+import logging
 import os
+import re
 import tempfile
 
 import pytest
@@ -46,12 +49,6 @@ THE SOFTWARE.
 """
 
 
-import itertools
-import logging
-import re
-
-import pytest
-
 _logger = logging.getLogger(__name__)
 
 marker_re = re.compile(r"^\s*(?P<marker>\w+)(:\s*(?P<description>.*))?")
@@ -78,7 +75,7 @@ def pytest_configure(config):
     for ot in ot_ini:
         # ot should be a line like "optmarker: this is an opt marker", as with markers section
         config.addinivalue_line("markers", ot)
-    ot_markers = {marker_re.match(l).group(1) for l in ot_ini}
+    ot_markers = {marker_re.match(ln).group(1) for ln in ot_ini}
 
     # collect requested optional tests
     ot_run = config.getoption("run_optional_tests")

@@ -8,6 +8,18 @@ underlined text. It also provides ``reset`` to recover the normal font.
 from .factories import StyleFactory
 from .styles import ANSIStyle, ColorNotFound, HTMLStyle, Style
 
+__all__ = (
+    "ANSIStyle",
+    "ColorNotFound",
+    "HTMLStyle",
+    "Style",
+    "StyleFactory",
+    "ansicolors",
+    "htmlcolors",
+    "load_ipython_extension",
+    "main",
+)
+
 ansicolors = StyleFactory(ANSIStyle)
 htmlcolors = StyleFactory(HTMLStyle)
 

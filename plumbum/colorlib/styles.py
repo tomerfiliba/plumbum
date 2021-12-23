@@ -12,7 +12,7 @@ import os
 import platform
 import re
 import sys
-from abc import ABC, ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from copy import copy
 from typing import IO, Dict, Union
 

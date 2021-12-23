@@ -265,6 +265,8 @@ grey_85
 grey_89
 grey_93""".split()
 
+EMPTY_SLICE = slice(None, None, None)
+
 _greys = (
     3.4,
     7.4,
@@ -364,7 +366,7 @@ class FindNearest:
             + (self.b >= midlevel) * 4
         )
 
-    def all_slow(self, color_slice=slice(None, None, None)):
+    def all_slow(self, color_slice=EMPTY_SLICE):
         """This is a slow way to find the nearest color."""
         distances = [
             self._distance_to_color(color) for color in color_html[color_slice]

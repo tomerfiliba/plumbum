@@ -1,10 +1,7 @@
 import sys
-import time
 from collections import OrderedDict
 from contextlib import contextmanager
 from io import StringIO
-
-import pytest
 
 from plumbum.cli.terminal import Progress, ask, choose, hexdump, prompt
 
@@ -141,9 +138,9 @@ class TestTerminal:
         assert "\n".join(hexdump(StringIO(data))) == output
 
     def test_progress(self, capsys):
-        for i in Progress.range(4, has_output=True, timer=False):
+        for _ in Progress.range(4, has_output=True, timer=False):
             print("hi")
-        stdout, stderr = capsys.readouterr()
+        stdout, _stderr = capsys.readouterr()
         output = """\
 0% complete
 0% complete
@@ -160,8 +157,8 @@ hi
         assert stdout == output
 
     def test_progress_empty(self, capsys):
-        for i in Progress.range(0, has_output=True, timer=False):
+        for _ in Progress.range(0, has_output=True, timer=False):
             print("hi")
-        stdout, stderr = capsys.readouterr()
+        stdout = capsys.readouterr().out
         output = "0/0 complete"
         assert output in stdout

@@ -265,7 +265,7 @@ def main():
     import time
 
     tst = Progress.range(20)
-    for i in tst:
+    for _ in tst:
         time.sleep(1)
 
 

@@ -1,5 +1,3 @@
-import sys
-
 from plumbum import colors
 
 from .. import cli

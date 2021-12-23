@@ -70,11 +70,11 @@ class LocalEnv(BaseEnv):
 
         :returns: The expanded string"""
         prev = os.environ
-        os.environ = self.getdict()
+        os.environ = self.getdict()  # noqa: B003
         try:
             output = os.path.expanduser(os.path.expandvars(expr))
         finally:
-            os.environ = prev
+            os.environ = prev  # noqa: B003
         return output
 
     def expanduser(self, expr):
@@ -84,11 +84,11 @@ class LocalEnv(BaseEnv):
 
         :returns: The expanded string"""
         prev = os.environ
-        os.environ = self.getdict()
+        os.environ = self.getdict()  # noqa: B003
         try:
             output = os.path.expanduser(expr)
         finally:
-            os.environ = prev
+            os.environ = prev  # noqa: B003
         return output
 
 

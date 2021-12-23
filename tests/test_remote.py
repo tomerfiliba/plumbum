@@ -3,7 +3,6 @@ import os
 import socket
 import sys
 import time
-from copy import deepcopy
 from multiprocessing import Queue
 from threading import Thread
 
@@ -416,7 +415,7 @@ s.close()
     def test_iter_lines_timeout(self):
         with self._connect() as rem:
             try:
-                for i, (out, err) in enumerate(
+                for i, (out, err) in enumerate(  # noqa: B007
                     rem["ping"]["-i", 0.5, "127.0.0.1"].popen().iter_lines(timeout=4)
                 ):
                     print("out:", out)
@@ -434,7 +433,7 @@ s.close()
     def test_iter_lines_error(self):
         with self._connect() as rem:
             with pytest.raises(ProcessExecutionError) as ex:
-                for i, lines in enumerate(rem["ls"]["--bla"].popen()):
+                for i, _lines in enumerate(rem["ls"]["--bla"].popen()):  # noqa: B007
                     pass
                 assert i == 1
             assert "/bin/ls: " in ex.value.stderr
@@ -476,7 +475,7 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                 except ValueError:
                     dhost = None
 
-                with rem.tunnel(12222, port_or_socket, dhost=dhost) as tun:
+                with rem.tunnel(12222, port_or_socket, dhost=dhost):
                     s = socket.socket()
                     s.connect(("localhost", 12222))
                     s.send(b"world")
@@ -603,7 +602,7 @@ class TestParamikoMachine(BaseRemoteMachineTest):
     def test_piping(self):
         with self._connect() as rem:
             try:
-                cmd = rem["ls"] | rem["cat"]
+                rem["ls"] | rem["cat"]
             except NotImplementedError:
                 pass
             else:

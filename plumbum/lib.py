@@ -1,8 +1,8 @@
 import inspect
 import os
-import re
 import sys
 from contextlib import contextmanager
+from io import StringIO
 
 IS_WIN32 = sys.platform == "win32"
 
@@ -29,10 +29,6 @@ class ProcInfo:
         return "ProcInfo({!r}, {!r}, {!r}, {!r})".format(
             self.pid, self.uid, self.stat, self.args
         )
-
-
-from glob import escape as glob_escape
-from io import StringIO
 
 
 @contextmanager

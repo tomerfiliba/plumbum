@@ -6,7 +6,6 @@ all the standard syntax for colors.
 
 
 import atexit
-import os
 import sys
 
 from plumbum.colorlib import ansicolors, main

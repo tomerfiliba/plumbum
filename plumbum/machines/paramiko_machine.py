@@ -1,7 +1,6 @@
 import errno
 import logging
 import os
-import socket
 import stat
 
 from plumbum.commands.base import shquote
@@ -498,7 +497,7 @@ def _iter_lines(proc, decode, linesize, line_timeout=None):
                     getattr(proc, "argv", None),
                     getattr(proc, "machine", None),
                 )
-            for key, mask in ready:
+            for _key, _mask in ready:
                 yield
 
     for _ in selector():
