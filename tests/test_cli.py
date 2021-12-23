@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys
 
 import pytest
@@ -57,7 +56,7 @@ class Geet(cli.Application):
 
     def cleanup(self, retcode):
         self.cleanups.append(1)
-        print("geet cleaning up with rc = {}".format(retcode))
+        print(f"geet cleaning up with rc = {retcode}")
 
 
 @Geet.subcommand("add")
@@ -78,7 +77,7 @@ class GeetCommit(cli.Application):
 
     def cleanup(self, retcode):
         self.parent.cleanups.append(2)
-        print("geet commit cleaning up with rc = {}".format(retcode))
+        print(f"geet commit cleaning up with rc = {retcode}")
 
 
 class Sample(cli.Application):

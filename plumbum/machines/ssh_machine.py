@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import warnings
 
 from plumbum.commands import ProcessExecutionError, shquote
@@ -10,7 +9,7 @@ from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath
 
 
-class SshTunnel(object):
+class SshTunnel:
     """An object representing an SSH tunnel (created by
     :func:`SshMachine.tunnel <plumbum.machines.remote.SshMachine.tunnel>`)"""
 
@@ -21,7 +20,7 @@ class SshTunnel(object):
 
     def __repr__(self):
         if self._session.alive():
-            return "<SshTunnel {}>".format(self._session.proc)
+            return f"<SshTunnel {self._session.proc}>"
         else:
             return "<SshTunnel (defunct)>"
 
@@ -108,7 +107,7 @@ class SshMachine(BaseRemoteMachine):
         scp_args = []
         ssh_args = []
         if user:
-            self._fqhost = "{}@{}".format(user, host)
+            self._fqhost = f"{user}@{host}"
         else:
             self._fqhost = host
         if port:
@@ -130,7 +129,7 @@ class SshMachine(BaseRemoteMachine):
         )
 
     def __str__(self):
-        return "ssh://{}".format(self._fqhost)
+        return f"ssh://{self._fqhost}"
 
     @_setdoc(BaseRemoteMachine)
     def popen(self, args, ssh_opts=(), env=None, cwd=None, **kwargs):
@@ -150,7 +149,7 @@ class SshMachine(BaseRemoteMachine):
             if envdelta:
                 cmdline.append("env")
                 cmdline.extend(
-                    "{}={}".format(k, shquote(v)) for k, v in envdelta.items()
+                    f"{k}={shquote(v)}" for k, v in envdelta.items()
                 )
             if isinstance(args, (tuple, list)):
                 cmdline.extend(args)
@@ -275,17 +274,17 @@ class SshMachine(BaseRemoteMachine):
                 sock.connect(("localhost", 1234))
                 # sock is now tunneled to the MySQL socket on megazord
         """
-        formatted_lhost = "" if lhost is None else "[{}]:".format(lhost)
-        formatted_dhost = "" if dhost is None else "[{}]:".format(dhost)
+        formatted_lhost = "" if lhost is None else f"[{lhost}]:"
+        formatted_dhost = "" if dhost is None else f"[{dhost}]:"
         ssh_opts = (
             [
                 "-L",
-                "{}{}:{}{}".format(formatted_lhost, lport, formatted_dhost, dport),
+                f"{formatted_lhost}{lport}:{formatted_dhost}{dport}",
             ]
             if not reverse
             else [
                 "-R",
-                "{}{}:{}{}".format(formatted_dhost, dport, formatted_lhost, lport),
+                f"{formatted_dhost}{dport}:{formatted_lhost}{lport}",
             ]
         )
         proc = self.popen((), ssh_opts=ssh_opts, new_session=True)
@@ -305,28 +304,28 @@ class SshMachine(BaseRemoteMachine):
     @_setdoc(BaseRemoteMachine)
     def download(self, src, dst):
         if isinstance(src, LocalPath):
-            raise TypeError("src of download cannot be {!r}".format(src))
+            raise TypeError(f"src of download cannot be {src!r}")
         if isinstance(src, RemotePath) and src.remote != self:
-            raise TypeError("src {!r} points to a different remote machine".format(src))
+            raise TypeError(f"src {src!r} points to a different remote machine")
         if isinstance(dst, RemotePath):
-            raise TypeError("dst of download cannot be {!r}".format(dst))
+            raise TypeError(f"dst of download cannot be {dst!r}")
         if IS_WIN32:
             src = self._translate_drive_letter(src)
             dst = self._translate_drive_letter(dst)
-        self._scp_command("{}:{}".format(self._fqhost, shquote(src)), dst)
+        self._scp_command(f"{self._fqhost}:{shquote(src)}", dst)
 
     @_setdoc(BaseRemoteMachine)
     def upload(self, src, dst):
         if isinstance(src, RemotePath):
-            raise TypeError("src of upload cannot be {!r}".format(src))
+            raise TypeError(f"src of upload cannot be {src!r}")
         if isinstance(dst, LocalPath):
-            raise TypeError("dst of upload cannot be {!r}".format(dst))
+            raise TypeError(f"dst of upload cannot be {dst!r}")
         if isinstance(dst, RemotePath) and dst.remote != self:
-            raise TypeError("dst {!r} points to a different remote machine".format(dst))
+            raise TypeError(f"dst {dst!r} points to a different remote machine")
         if IS_WIN32:
             src = self._translate_drive_letter(src)
             dst = self._translate_drive_letter(dst)
-        self._scp_command(src, "{}:{}".format(self._fqhost, shquote(dst)))
+        self._scp_command(src, f"{self._fqhost}:{shquote(dst)}")
 
 
 class PuttyMachine(SshMachine):
@@ -379,7 +378,7 @@ class PuttyMachine(SshMachine):
         )
 
     def __str__(self):
-        return "putty-ssh://{}".format(self._fqhost)
+        return f"putty-ssh://{self._fqhost}"
 
     def _translate_drive_letter(self, path):
         # pscp takes care of windows paths automatically

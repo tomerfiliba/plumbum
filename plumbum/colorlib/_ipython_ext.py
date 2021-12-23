@@ -1,16 +1,9 @@
-# -*- coding: utf-8 -*-
 import sys
 
 import IPython.display
 from IPython.core.magic import Magics, cell_magic, magics_class, needs_local_scope
 
-if sys.version_info >= (3,):
-    from io import StringIO
-else:
-    try:
-        from cStringIO import StringIO
-    except ImportError:
-        from StringIO import StringIO  # type: ignore
+from io import StringIO
 
 
 valid_choices = [x[8:] for x in dir(IPython.display) if "display_" == x[:8]]

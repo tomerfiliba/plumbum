@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Names for the standard and extended color set.
 Extended set is similar to `vim wiki <http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim>`_, `colored <https://pypi.python.org/pypi/colored>`_, etc. Colors based on `wikipedia <https://en.wikipedia.org/wiki/ANSI_escape_code#Colors>`_.
@@ -7,7 +6,6 @@ You can access the index of the colors with names.index(name). You can access th
 rgb values with ``r=int(html[n][1:3],16)``, etc.
 """
 
-from __future__ import division, print_function
 
 color_names = """\
 black
@@ -309,12 +307,12 @@ _normal_html = [
 _base_pattern = [(n // 4, n // 2 % 2, n % 2) for n in range(8)]
 _base_html = (
     [
-        "#{2:02x}{1:02x}{0:02x}".format(x[0] * 192, x[1] * 192, x[2] * 192)
+        f"#{x[2] * 192:02x}{x[1] * 192:02x}{x[0] * 192:02x}"
         for x in _base_pattern
     ]
     + ["#808080"]
     + [
-        "#{2:02x}{1:02x}{0:02x}".format(x[0] * 255, x[1] * 255, x[2] * 255)
+        f"#{x[2] * 255:02x}{x[1] * 255:02x}{x[0] * 255:02x}"
         for x in _base_pattern
     ][1:]
 )
@@ -347,7 +345,7 @@ default_styles = dict(
 # Functions to be used for color name operations
 
 
-class FindNearest(object):
+class FindNearest:
     """This is a class for finding the nearest color given rgb values.
     Different find methods are available."""
 
@@ -431,4 +429,4 @@ def from_html(color):
 
 def to_html(r, g, b):
     """Convert rgb to html hex code."""
-    return "#{:02x}{:02x}{:02x}".format(r, g, b)
+    return f"#{r:02x}{g:02x}{b:02x}"

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 $ python simple_cli.py --help
 simple_cli.py v1.0
@@ -35,7 +34,6 @@ Verbose: True
 Include dirs: ['foo/bar', 'spam/eggs']
 Compiling: ('x.cpp', 'y.cpp', 'z.cpp')
 """
-from __future__ import print_function
 
 import logging
 

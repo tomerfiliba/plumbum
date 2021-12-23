@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import errno
 import os
 import signal
@@ -10,7 +9,7 @@ import traceback
 from plumbum.commands.processes import ProcessExecutionError
 
 
-class _fake_lock(object):
+class _fake_lock:
     """Needed to allow normal os.exit() to work without error"""
 
     def acquire(self, val):
@@ -37,7 +36,7 @@ def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
         try:
             os.setsid()
             os.umask(0)
-            stdin = open(os.devnull, "r")
+            stdin = open(os.devnull)
             stdout = open(stdout, "a" if append else "w")
             stderr = open(stderr, "a" if append else "w")
             signal.signal(signal.SIGHUP, signal.SIG_IGN)
@@ -114,7 +113,7 @@ def win32_daemonize(command, cwd, stdout=None, stderr=None, append=True):
     if stderr is None:
         stderr = stdout
     DETACHED_PROCESS = 0x00000008
-    stdin = open(os.devnull, "r")
+    stdin = open(os.devnull)
     stdout = open(stdout, "a" if append else "w")
     stderr = open(stderr, "a" if append else "w")
     return command.popen(

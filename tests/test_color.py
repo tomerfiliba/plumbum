@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import pytest
 
 # Just check to see if this file is importable
@@ -89,4 +88,4 @@ class TestNearestColor:
                     near = FindNearest(r, g, b)
                     assert (
                         near.all_slow() == near.all_fast()
-                    ), "Tested: {}, {}, {}".format(r, g, b)
+                    ), f"Tested: {r}, {g}, {b}"

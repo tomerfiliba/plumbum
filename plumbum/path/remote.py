@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import errno
 import os
 import sys
@@ -14,7 +13,7 @@ except ImportError:
     import urllib  # type: ignore
 
 
-class StatRes(object):
+class StatRes:
     """POSIX-like stat result"""
 
     def __init__(self, tup):
@@ -73,10 +72,10 @@ class RemotePath(Path):
                 else:
                     normed.append(item)
         if windows:
-            self = super(RemotePath, cls).__new__(cls, "\\".join(normed))
+            self = super().__new__(cls, "\\".join(normed))
             self.CASE_SENSITIVE = False  # On this object only
         else:
-            self = super(RemotePath, cls).__new__(cls, "/" + "/".join(normed))
+            self = super().__new__(cls, "/" + "/".join(normed))
             self.CASE_SENSITIVE = True
 
         self.remote = remote
@@ -215,7 +214,7 @@ class RemotePath(Path):
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
-        elif not isinstance(dst, six.string_types):
+        elif not isinstance(dst, str):
             raise TypeError(
                 "dst must be a string or a RemotePath (to the same remote machine), "
                 "got %r" % (dst,)
@@ -227,17 +226,17 @@ class RemotePath(Path):
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
-        elif not isinstance(dst, six.string_types):
+        elif not isinstance(dst, str):
             raise TypeError(
                 "dst must be a string or a RemotePath (to the same remote machine), "
                 "got %r" % (dst,)
             )
         if override:
-            if isinstance(dst, six.string_types):
+            if isinstance(dst, str):
                 dst = RemotePath(self.remote, dst)
             dst.delete()
         else:
-            if isinstance(dst, six.string_types):
+            if isinstance(dst, str):
                 dst = RemotePath(self.remote, dst)
             if dst.exists():
                 raise TypeError("Override not specified and dst exists")
@@ -304,7 +303,7 @@ class RemotePath(Path):
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
-        elif not isinstance(dst, six.string_types):
+        elif not isinstance(dst, str):
             raise TypeError(
                 "dst must be a string or a RemotePath (to the same remote machine), "
                 "got %r" % (dst,)
@@ -316,7 +315,7 @@ class RemotePath(Path):
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
-        elif not isinstance(dst, six.string_types):
+        elif not isinstance(dst, str):
             raise TypeError(
                 "dst must be a string or a RemotePath (to the same remote machine), "
                 "got %r" % (dst,)
@@ -363,7 +362,7 @@ class RemoteWorkdir(RemotePath):
     """Remote working directory manipulator"""
 
     def __new__(cls, remote):
-        self = super(RemoteWorkdir, cls).__new__(
+        self = super().__new__(
             cls, remote, remote._session.run("pwd")[1].strip()
         )
         return self
@@ -373,7 +372,7 @@ class RemoteWorkdir(RemotePath):
 
     def chdir(self, newdir):
         """Changes the current working directory to the given one"""
-        self.remote._session.run("cd {}".format(shquote(newdir)))
+        self.remote._session.run(f"cd {shquote(newdir)}")
         if hasattr(self.remote, "_cwd"):
             del self.remote._cwd
         return self.__class__(self.remote)

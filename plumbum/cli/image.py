@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import division, print_function
-
 import sys
 
 from plumbum import colors
@@ -9,7 +6,7 @@ from .. import cli
 from .termsize import get_terminal_size
 
 
-class Image(object):
+class Image:
 
     __slots__ = "size char_ratio".split()
 
@@ -77,7 +74,7 @@ class Image(object):
                 pixl = new_im.getpixel((x, y * 2 + 1))
                 print(
                     colors.bg.rgb(*pixl) & colors.fg.rgb(*pix),
-                    u"\u2580",
+                    "\u2580",
                     sep="",
                     end="",
                 )

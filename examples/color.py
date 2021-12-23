@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import print_function
 
 from plumbum import colors
 
@@ -15,7 +13,7 @@ print(colors.bg.cyan | "This is on a cyan background.")
 print(colors.fg[42] | "If your terminal supports 256 colors, this is colorful!")
 print()
 for c in colors:
-    print(c + u"\u2588", end="")
+    print(c + "\u2588", end="")
 colors.reset()
 print()
 print("Colors can be reset " + colors.underline["Too!"])

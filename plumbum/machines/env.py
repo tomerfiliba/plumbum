@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 from contextlib import contextmanager
 
@@ -35,7 +34,7 @@ class EnvPathList(list):
         return self._pathsep.join(str(p) for p in self)
 
 
-class BaseEnv(object):
+class BaseEnv:
     """The base class of LocalEnv and RemoteEnv"""
 
     __slots__ = ["_curr", "_path", "_path_factory", "__weakref__"]

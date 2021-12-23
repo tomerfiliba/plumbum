@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import logging
 import os
 import platform
@@ -125,7 +124,7 @@ class LocalCommand(ConcreteCommand):
         return local
 
     def popen(self, args=(), cwd=None, env=None, **kwargs):
-        if isinstance(args, six.string_types):
+        if isinstance(args, str):
             args = (args,)
         return self.machine._popen(
             self.executable,
@@ -216,7 +215,7 @@ class LocalMachine(BaseMachine):
         parts2 = [str(self.cwd)]
         for p in parts:
             if isinstance(p, RemotePath):
-                raise TypeError("Cannot construct LocalPath from {!r}".format(p))
+                raise TypeError(f"Cannot construct LocalPath from {p!r}")
             parts2.append(self.env.expanduser(str(p)))
         return LocalPath(os.path.join(*parts2))
 
@@ -247,7 +246,7 @@ class LocalMachine(BaseMachine):
                 # search for command
                 return LocalCommand(self.which(cmd))
         else:
-            raise TypeError("cmd must not be a RemotePath: {!r}".format(cmd))
+            raise TypeError(f"cmd must not be a RemotePath: {cmd!r}")
 
     def _popen(
         self,
@@ -444,7 +443,7 @@ class LocalMachine(BaseMachine):
                     [
                         "runas",
                         "/savecred",
-                        "/user:{}".format(username),
+                        f"/user:{username}",
                         '"' + " ".join(str(a) for a in argv) + '"',
                     ],
                     self.which("runas"),

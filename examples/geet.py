@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Examples::
 
@@ -109,7 +108,7 @@ class GeetPush(cli.Application):
     tags = cli.Flag("--tags", help="whether to push tags (default is False)")
 
     def main(self, remote, branch="master"):
-        print("pushing to {}/{}...".format(remote, branch))
+        print(f"pushing to {remote}/{branch}...")
 
 
 if __name__ == "__main__":

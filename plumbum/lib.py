@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import inspect
 import os
 import re
@@ -19,7 +18,7 @@ def _setdoc(super):  # @ReservedAssignment
     return deco
 
 
-class ProcInfo(object):
+class ProcInfo:
     def __init__(self, pid, uid, stat, args):
         self.pid = pid
         self.uid = uid
@@ -32,18 +31,13 @@ class ProcInfo(object):
         )
 
 
-class six(object):
+class six:
     """
     A light-weight version of six (which works on IronPython)
     """
 
     PY3 = sys.version_info[0] >= 3
-    if sys.version_info >= (3, 4):
-        from abc import ABC
-    else:
-        from abc import ABCMeta
-
-        ABC = ABCMeta("ABC", (object,), {"__module__": __name__, "__slots__": ()})
+    from abc import ABC
 
     # Be sure to use named-tuple access, so that usage is not affected
     try:
@@ -98,24 +92,9 @@ class six(object):
 
 # Try/except fails because io has the wrong StringIO in Python2
 # You'll get str/unicode errors
-if sys.version_info >= (3, 0):
-    from io import StringIO
-else:
-    from StringIO import StringIO
+from io import StringIO
 
-if sys.version_info >= (3,):
-    from glob import escape as glob_escape
-else:
-    _magic_check = re.compile(u"([*?[])")
-    _magic_check_bytes = re.compile(b"([*?[])")
-
-    def glob_escape(pathname):
-        drive, pathname = os.path.splitdrive(pathname)
-        if isinstance(pathname, str):
-            pathname = _magic_check_bytes.sub(r"[\1]", pathname)
-        else:
-            pathname = _magic_check.sub(u"[\\1]", pathname)
-        return drive + pathname
+from glob import escape as glob_escape
 
 
 @contextmanager
@@ -125,7 +104,7 @@ def captured_stdout(stdin=""):
     """
     prevstdin = sys.stdin
     prevstdout = sys.stdout
-    sys.stdin = StringIO(six.u(stdin))
+    sys.stdin = StringIO(stdin)
     sys.stdout = StringIO()
     try:
         yield sys.stdout
@@ -134,7 +113,7 @@ def captured_stdout(stdin=""):
         sys.stdout = prevstdout
 
 
-class StaticProperty(object):
+class StaticProperty:
     """This acts like a static property, allowing access via class or object.
     This is a non-data descriptor."""
 

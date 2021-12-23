@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 """\
 The ``ansicolor`` object provides ``bg`` and ``fg`` to access colors,
 and attributes like bold and
 underlined text. It also provides ``reset`` to recover the normal font.
 """
 
-from __future__ import absolute_import, print_function
 
 from .factories import StyleFactory
 from .styles import ANSIStyle, ColorNotFound, HTMLStyle, Style
