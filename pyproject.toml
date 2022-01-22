@@ -23,9 +23,11 @@ ignore_missing_imports = true
 
 
 [tool.pytest.ini_options]
-min_version = "6.0"
-addopts = "-v -ra --cov-config=setup.cfg"
+minversion = "6.0"
+addopts = ["-ra", "--cov-config=setup.cfg", "--strict-markers", "--strict-config"]
 norecursedirs = ["examples", "experiments"]
+# filterwarnings = ["error"]
+log_cli_level = "info"
 required_plugins = ["pytest-timeout", "pytest-mock"]
 timeout = 300
 optional_tests = """
