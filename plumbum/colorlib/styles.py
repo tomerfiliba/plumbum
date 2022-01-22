@@ -39,8 +39,12 @@ _lower_camel_names = [n.replace("_", "") for n in color_names]
 
 def get_color_repr():
     """Gets best colors for current system."""
-    if not sys.stdout.isatty():
-        return False
+    if "NO_COLOR" in os.environ:
+        return 0
+    elif os.environ.get("FORCE_COLOR", "0") in {"0", "1", "2", "3", "4"}:
+        return int(os.environ["FORCE_COLOR"])
+    elif not sys.stdout.isatty():
+        return 0
 
     term = os.environ.get("TERM", "")
 
