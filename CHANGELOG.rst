@@ -1,3 +1,11 @@
+1.8.0
+-----
+
+* Drop Python 2.7 and 3.5 support (`#573 <https://github.com/tomerfiliba/plumbum/pull/573>`_)
+* Color: support ``NO_COLOR``/``FORCE_COLOR`` (`#575 <https://github.com/tomerfiliba/plumbum/pull/575>`_)
+
+
+
 1.7.2
 -----
 
