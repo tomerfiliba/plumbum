@@ -18,10 +18,8 @@ try:
 except ImportError:
 
     class paramiko:  # type: ignore
-        def __nonzero__(self):
+        def __bool__(self):
             return False
-
-        __bool__ = __nonzero__
 
         def __getattr__(self, name):
             raise ImportError("No module named paramiko")
@@ -433,7 +431,7 @@ class ParamikoMachine(BaseRemoteMachine):
         except OSError as e:
             if e.errno == errno.ENOENT:
                 return None
-            raise OSError(e.errno)
+            raise
         res = StatRes(
             (
                 st.st_mode,

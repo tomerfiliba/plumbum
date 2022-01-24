@@ -39,22 +39,26 @@ _lower_camel_names = [n.replace("_", "") for n in color_names]
 
 def get_color_repr():
     """Gets best colors for current system."""
+    if "NO_COLOR" in os.environ:
+        return 0
+    if os.environ.get("FORCE_COLOR", "0") in {"0", "1", "2", "3", "4"}:
+        return int(os.environ["FORCE_COLOR"])
     if not sys.stdout.isatty():
-        return False
+        return 0
 
     term = os.environ.get("TERM", "")
 
     # Some terminals set TERM=xterm for compatibility
     if term.endswith("256color") or term == "xterm":
         return 3 if platform.system() == "Darwin" else 4
-    elif term.endswith("16color"):
+    if term.endswith("16color"):
         return 2
-    elif term == "screen":
+    if term == "screen":
         return 1
-    elif os.name == "nt":
+    if os.name == "nt":
         return 0
-    else:
-        return 3
+
+    return 3
 
 
 class ColorNotFound(Exception):

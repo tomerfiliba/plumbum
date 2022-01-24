@@ -356,6 +356,7 @@ s.close()
                 _, out, _ = sh.run("ls -a")
                 assert ".bashrc" in out or ".bash_profile" in out
 
+    @pytest.mark.xfail(env.PYPY, reason="PyPy sometimes fails here", strict=False)
     def test_env(self):
         with self._connect() as rem:
             with pytest.raises(ProcessExecutionError):

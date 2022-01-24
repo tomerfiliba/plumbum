@@ -31,11 +31,9 @@ class Path(str, ABC):
     def __repr__(self):
         return f"<{self.__class__.__name__} {str(self)}>"
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         """Joins two paths"""
         return self.join(other)
-
-    __truediv__ = __div__
 
     def __getitem__(self, key):
         if type(key) == str or isinstance(key, Path):
