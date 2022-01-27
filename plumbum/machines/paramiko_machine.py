@@ -70,7 +70,8 @@ class ParamikoPopen(PopenAddons):
         self.channel.shutdown_write()
         self.channel.close()
 
-    def kill(self):
+    @staticmethod
+    def kill():
         # possible way to obtain pid:
         # "(cmd ; echo $?) & echo ?!"
         # and then client.exec_command("kill -9 %s" % (pid,))
@@ -106,7 +107,7 @@ class ParamikoPopen(PopenAddons):
                     self.stdin.flush()
 
             i = (i + 1) % len(sources)
-            name, coll, pipe, outfile = sources[i]
+            _name, coll, pipe, outfile = sources[i]
             line = pipe.readline()
             # logger.debug("%s> %r", name, line)
             if not line:
@@ -255,7 +256,7 @@ class ParamikoMachine(BaseRemoteMachine):
             kwargs["gss_host"] = gss_host
         if load_system_ssh_config:
             ssh_config = paramiko.SSHConfig()
-            with open(os.path.expanduser("~/.ssh/config")) as f:
+            with open(os.path.expanduser("~/.ssh/config"), encoding="utf-8") as f:
                 ssh_config.parse(f)
             try:
                 hostConfig = ssh_config.lookup(host)
@@ -308,7 +309,7 @@ class ParamikoMachine(BaseRemoteMachine):
         stdin=None,
         stdout=None,
         stderr=None,
-        new_session=False,
+        new_session=False,  # pylint: disable=unused-argument
         env=None,
         cwd=None,
     ):
@@ -474,7 +475,12 @@ class SocketCompatibleChannel:
 ###################################################################################################
 # Custom iter_lines for paramiko.Channel
 ###################################################################################################
-def _iter_lines(proc, decode, linesize, line_timeout=None):
+def _iter_lines(
+    proc,
+    decode,  # pylint: disable=unused-argument
+    linesize,
+    line_timeout=None,
+):
 
     from selectors import EVENT_READ, DefaultSelector
 

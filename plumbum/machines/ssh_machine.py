@@ -19,10 +19,8 @@ class SshTunnel:
         self._session = session
 
     def __repr__(self):
-        if self._session.alive():
-            return f"<SshTunnel {self._session.proc}>"
-        else:
-            return "<SshTunnel (defunct)>"
+        tunnel = self._session.proc if self._session.alive() else "(defunct)"
+        return f"<SshTunnel {tunnel}>"
 
     def __enter__(self):
         return self
@@ -218,7 +216,7 @@ class SshMachine(BaseRemoteMachine):
         dport,
         lhost="localhost",
         dhost="localhost",
-        connect_timeout=5,
+        connect_timeout=5,  # pylint: disable=unused-argument
         reverse=False,
     ):
         r"""Creates an SSH tunnel from the TCP port (``lport``) of the local machine
@@ -290,7 +288,7 @@ class SshMachine(BaseRemoteMachine):
             )
         )
 
-    def _translate_drive_letter(self, path):
+    def _translate_drive_letter(self, path):  # pylint: disable=no-self-use
         # replace c:\some\path with /c/some/path
         path = str(path)
         if ":" in path:

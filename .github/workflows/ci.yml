@@ -26,6 +26,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
     - uses: pre-commit/action@v2.0.3
+    - name: pylint
+      run: pipx run nox -s pylint
 
   tests:
     name: Tests on 🐍 ${{ matrix.python-version }} ${{ matrix.os }}

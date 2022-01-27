@@ -64,20 +64,14 @@ def get_color_repr():
 class ColorNotFound(Exception):
     """Thrown when a color is not valid for a particular method."""
 
-    pass
-
 
 class AttributeNotFound(Exception):
     """Similar to color not found, only for attributes."""
-
-    pass
 
 
 class ResetNotSupported(Exception):
     """An exception indicating that Reset is not available
     for this Style."""
-
-    pass
 
 
 class Color(ABC):
@@ -203,7 +197,7 @@ class Color(ABC):
         if color == "reset":
             return
 
-        elif color in _lower_camel_names[:16]:
+        if color in _lower_camel_names[:16]:
             self.number = _lower_camel_names.index(color)
             self.rgb = from_html(color_html[self.number])
 
@@ -235,7 +229,7 @@ class Color(ABC):
         if color == "reset":
             return
 
-        elif color in _lower_camel_names:
+        if color in _lower_camel_names:
             self.number = _lower_camel_names.index(color)
             self.rgb = from_html(color_html[self.number])
 
@@ -261,7 +255,7 @@ class Color(ABC):
         try:
             self.rgb = from_html(color)
         except (TypeError, ValueError):
-            raise ColorNotFound("Did not find htmlcode: " + repr(color))
+            raise ColorNotFound("Did not find htmlcode: " + repr(color)) from None
 
         self.representation = 4
         self._init_number()
@@ -269,10 +263,7 @@ class Color(ABC):
     @property
     def name(self):
         """The (closest) name of the current color"""
-        if self.isreset:
-            return "reset"
-        else:
-            return color_names[self.number]
+        return "reset" if self.isreset else color_names[self.number]
 
     @property
     def name_camelcase(self):
@@ -289,10 +280,7 @@ class Color(ABC):
 
     def __eq__(self, other):
         """Reset colors are equal, otherwise rgb have to match."""
-        if self.isreset:
-            return other.isreset
-        else:
-            return self.rgb == other.rgb
+        return other.isreset if self.isreset else self.rgb == other.rgb
 
     @property
     def ansi_sequence(self):
@@ -306,20 +294,22 @@ class Color(ABC):
 
         if self.isreset:
             return (ansi_addition + 9,)
-        elif self.representation < 3:
+        if self.representation < 3:
             return (color_codes_simple[self.number] + ansi_addition,)
-        elif self.representation == 3:
+        if self.representation == 3:
             return (ansi_addition + 8, 5, self.number)
-        else:
-            return (ansi_addition + 8, 2, self.rgb[0], self.rgb[1], self.rgb[2])
+
+        return (ansi_addition + 8, 2, self.rgb[0], self.rgb[1], self.rgb[2])
 
     @property
     def hex_code(self):
         """This is the hex code of the current color, html style notation."""
-        if self.isreset:
-            return "#000000"
-        else:
-            return "#" + "{0[0]:02X}{0[1]:02X}{0[2]:02X}".format(self.rgb)
+
+        return (
+            "#000000"
+            if self.isreset
+            else f"#{self.rgb[0]:02X}{self.rgb[1]:02X}{self.rgb[2]:02X}"
+        )
 
     def __str__(self):
         """This just prints it's simple name"""
@@ -338,10 +328,7 @@ class Color(ABC):
     def limit_representation(self, val):
         """Only converts if val is lower than representation"""
 
-        if self.representation <= val:
-            return self
-        else:
-            return self.to_representation(val)
+        return self if self.representation <= val else self.to_representation(val)
 
 
 class Style:
@@ -372,7 +359,7 @@ class Style:
         Unfortunately, it only works on an instance..
         """
         # Import sys repeated here to make calling this stable in atexit function
-        import sys
+        import sys  # pylint: disable=reimported, redefined-outer-name, import-outside-toplevel
 
         return (
             self.__class__._stdout if self.__class__._stdout is not None else sys.stdout
@@ -388,7 +375,7 @@ class Style:
             for item in ("attributes", "fg", "bg", "isreset"):
                 setattr(self, item, copy(getattr(attributes, item)))
             return
-        self.attributes = attributes if attributes is not None else dict()
+        self.attributes = attributes if attributes is not None else {}
         self.fg = fgcolor
         self.bg = bgcolor
         self.isreset = reset
@@ -400,10 +387,7 @@ class Style:
 
     @classmethod
     def from_color(cls, color):
-        if color.fg:
-            self = cls(fgcolor=color)
-        else:
-            self = cls(bgcolor=color)
+        self = cls(fgcolor=color) if color.fg else cls(bgcolor=color)
         return self
 
     def invert(self):
@@ -468,8 +452,8 @@ class Style:
             if not result.bg:
                 result.bg = self.bg
             return result
-        else:
-            return other.__class__(self) + other
+
+        return other.__class__(self) + other
 
     def __radd__(self, other):
         """This only gets called if the string is on the left side. (Not safe)"""
@@ -484,8 +468,8 @@ class Style:
         and ``color & "String" syntax too.``"""
         if type(self) == type(other):
             return self + other
-        else:
-            return self.wrap(other)
+
+        return self.wrap(other)
 
     def __rand__(self, other):
         """This class supports ``"String:" & color`` syntax."""
@@ -536,7 +520,7 @@ class Style:
         self.stdout.write(str(self))
         self.stdout.flush()
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, _value, _traceback):
         """Runs even if exception occurred, does not catch it."""
         self.stdout.write(str(~self))
         self.stdout.flush()
@@ -573,37 +557,37 @@ class Style:
     @property
     def ansi_sequence(self):
         """This is the string ANSI sequence."""
-        codes = self.ansi_codes
-        if codes:
-            return "\033[" + ";".join(map(str, self.ansi_codes)) + "m"
-        else:
-            return ""
+        codes = ";".join(str(c) for c in self.ansi_codes)
+        return f"\033[{codes}m" if codes else ""
 
     def __repr__(self):
         name = self.__class__.__name__
         attributes = ", ".join(a for a in self.attributes if self.attributes[a])
         neg_attributes = ", ".join(
-            "-" + a for a in self.attributes if not self.attributes[a]
+            f"-{a}" for a in self.attributes if not self.attributes[a]
         )
         colors = ", ".join(repr(c) for c in [self.fg, self.bg] if c)
-        string = "; ".join(s for s in [attributes, neg_attributes, colors] if s)
+        string = (
+            "; ".join(s for s in [attributes, neg_attributes, colors] if s) or "empty"
+        )
         if self.isreset:
             string = "reset"
-        return "<{}: {}>".format(name, string if string else "empty")
+        return f"<{name}: {string}>"
 
     def __eq__(self, other):
         """Equality is true only if reset, or if attributes, fg, and bg match."""
         if type(self) == type(other):
+
             if self.isreset:
                 return other.isreset
-            else:
-                return (
-                    self.attributes == other.attributes
-                    and self.fg == other.fg
-                    and self.bg == other.bg
-                )
-        else:
-            return str(self) == other
+
+            return (
+                self.attributes == other.attributes
+                and self.fg == other.fg
+                and self.bg == other.bg
+            )
+
+        return str(self) == other
 
     @abstractmethod
     def __str__(self):
@@ -627,7 +611,7 @@ class Style:
         try:
             while True:
                 value = next(values)
-                if value == 38 or value == 48:
+                if value in {38, 48}:
                     fg = value == 38
                     value = next(values)
                     if value == 5:
@@ -650,13 +634,13 @@ class Style:
                     if filter_resets is False:
                         self.isreset = True
                 elif value in attributes_ansi.values():
-                    for name in attributes_ansi:
-                        if value == attributes_ansi[name]:
+                    for name, att_value in attributes_ansi.items():
+                        if value == att_value:
                             self.attributes[name] = True
                 elif value in (20 + n for n in attributes_ansi.values()):
                     if filter_resets is False:
-                        for name in attributes_ansi:
-                            if value == attributes_ansi[name] + 20:
+                        for name, att_value in attributes_ansi.items():
+                            if value == att_value + 20:
                                 self.attributes[name] = False
                 elif 30 <= value <= 37:
                     self.fg = self.color_class.from_simple(value - 30)
@@ -743,10 +727,11 @@ class ANSIStyle(Style):
     attribute_names = attributes_ansi
 
     def __str__(self):
-        if not self.use_color:
-            return ""
-        else:
-            return self.limit_representation(self.use_color).ansi_sequence
+        return (
+            self.limit_representation(self.use_color).ansi_sequence
+            if self.use_color
+            else ""
+        )
 
 
 class HTMLStyle(Style):

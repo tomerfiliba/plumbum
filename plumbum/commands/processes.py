@@ -49,7 +49,7 @@ def _iter_lines_posix(proc, decode, linesize, line_timeout=None):
 def _iter_lines_win32(proc, decode, linesize, line_timeout=None):
     class Piper(Thread):
         def __init__(self, fd, pipe):
-            super().__init__(name="PlumbumPiper%sThread" % fd)
+            super().__init__(name=f"PlumbumPiper{fd}Thread")
             self.pipe = pipe
             self.fd = fd
             self.empty = False
@@ -115,7 +115,7 @@ class ProcessExecutionError(EnvironmentError):
     """
 
     def __init__(self, argv, retcode, stdout, stderr, message=None):
-        Exception.__init__(self, argv, retcode, stdout, stderr)
+        super().__init__(self, argv, retcode, stdout, stderr)
         self.message = message
         self.argv = argv
         self.retcode = retcode
@@ -172,7 +172,7 @@ class CommandNotFound(AttributeError):
     command was not found in the system's ``PATH``"""
 
     def __init__(self, program, path):
-        Exception.__init__(self, program, path)
+        super().__init__(self, program, path)
         self.program = program
         self.path = path
 
@@ -250,7 +250,7 @@ def _register_proc_timeout(proc, timeout):
 
 
 def _shutdown_bg_threads():
-    global _shutting_down
+    global _shutting_down  # pylint: disable=global-statement
     _shutting_down = True
     # Make sure this still exists (don't throw error in atexit!)
     if _timeout_queue:

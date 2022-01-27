@@ -83,7 +83,6 @@ class ProgressBase(ABC):
     @abstractmethod
     def display(self):
         """Called to update the progress bar"""
-        pass
 
     def increment(self):
         """Sets next value and displays the bar"""
@@ -107,16 +106,15 @@ class ProgressBase(ABC):
         """Returns a string version of time remaining"""
         if self.value < 1:
             return "Starting...                         "
-        else:
-            elapsed_time, time_remaining = list(map(str, self.time_remaining()))
-            return "{} completed, {} remaining".format(
-                elapsed_time.split(".")[0], time_remaining.split(".")[0]
-            )
+
+        elapsed_time, time_remaining = list(map(str, self.time_remaining()))
+        completed = elapsed_time.split(".")[0]
+        remaining = time_remaining.split(".")[0]
+        return f"{completed} completed, {remaining} remaining"
 
     @abstractmethod
     def done(self):
         """Is called when the iterator is done."""
-        pass
 
     @classmethod
     def range(cls, *value, **kargs):
@@ -156,15 +154,15 @@ class Progress(ProgressBase):
         )
         if width - len(ending) < 10 or self.has_output:
             self.width = 0
+
             if self.timer:
                 return f"{percent:.0%} complete: {self.str_time_remaining()}"
-            else:
-                return f"{percent:.0%} complete"
 
-        else:
-            self.width = width - len(ending) - 2 - 1
-            nstars = int(percent * self.width)
-            pbar = "[" + "*" * nstars + " " * (self.width - nstars) + "]" + ending
+            return f"{percent:.0%} complete"
+
+        self.width = width - len(ending) - 2 - 1
+        nstars = int(percent * self.width)
+        pbar = "[" + "*" * nstars + " " * (self.width - nstars) + "]" + ending
 
         str_percent = f" {percent:.0%} "
 
@@ -243,7 +241,7 @@ class ProgressAuto(ProgressBase):
     def __new__(cls, *args, **kargs):
         """Uses the generator trick that if a cls instance is returned, the __init__ method is not called."""
         try:  # pragma: no cover
-            __IPYTHON__
+            __IPYTHON__  # pylint: disable=pointless-statement
             try:
                 from traitlets import TraitError
             except ImportError:  # Support for IPython < 4.0
@@ -252,7 +250,7 @@ class ProgressAuto(ProgressBase):
             try:
                 return ProgressIPy(*args, **kargs)
             except TraitError:
-                raise NameError()
+                raise NameError() from None
         except (NameError, ImportError):
             return Progress(*args, **kargs)
 

@@ -1,4 +1,5 @@
 import sys
+from logging import DEBUG, INFO
 from select import select
 from subprocess import PIPE
 
@@ -22,10 +23,8 @@ class Future:
         self._stderr = None
 
     def __repr__(self):
-        return "<Future {!r} ({})>".format(
-            self.proc.argv,
-            self._returncode if self.ready() else "running",
-        )
+        running = self._returncode if self.ready() else "running"
+        return f"<Future {self.proc.argv!r} ({running})>"
 
     def poll(self):
         """Polls the underlying process for termination; returns ``False`` if still running,
@@ -83,8 +82,9 @@ class ExecutionModifier:
             for prop in slots_list:
                 if prop[0] != "_":
                     slots[prop] = getattr(self, prop)
-        mystrs = (f"{name} = {slots[name]}" for name in slots)
-        return "{}({})".format(self.__class__.__name__, ", ".join(mystrs))
+        mystrs = (f"{name} = {value}" for name, value in slots.items())
+        mystrs_str = ", ".join(mystrs)
+        return f"{self.__class__.__name__}({mystrs_str})"
 
     @classmethod
     def __call__(cls, *args, **kwargs):
@@ -121,9 +121,6 @@ class _BG(ExecutionModifier):
         return Future(cmd.popen(**self.kargs), self.retcode, timeout=self.timeout)
 
 
-BG = _BG()
-
-
 class _FG(ExecutionModifier):
     """
     An execution modifier that runs the given command in the foreground, passing it the
@@ -152,9 +149,6 @@ class _FG(ExecutionModifier):
             stderr=None,
             timeout=self.timeout,
         )
-
-
-FG = _FG()
 
 
 class _TEE(ExecutionModifier):
@@ -237,9 +231,6 @@ class _TEE(ExecutionModifier):
             return p.returncode, stdout, stderr
 
 
-TEE = _TEE()
-
-
 class _TF(ExecutionModifier):
     """
     An execution modifier that runs the given command, but returns True/False depending on the retcode.
@@ -259,7 +250,12 @@ class _TF(ExecutionModifier):
 
     __slots__ = ("retcode", "FG", "timeout")
 
-    def __init__(self, retcode=0, FG=False, timeout=None):
+    def __init__(
+        self,
+        retcode=0,
+        FG=False,  # pylint: disable=redefined-outer-name
+        timeout=None,
+    ):
         """`retcode` is the return code to expect to mean "success".  Set
         `FG` to True to run in the foreground.
         """
@@ -288,9 +284,6 @@ class _TF(ExecutionModifier):
             return False
 
 
-TF = _TF()
-
-
 class _RETCODE(ExecutionModifier):
     """
     An execution modifier that runs the given command, causing it to run and return the retcode.
@@ -307,7 +300,11 @@ class _RETCODE(ExecutionModifier):
 
     __slots__ = ("foreground", "timeout")
 
-    def __init__(self, FG=False, timeout=None):
+    def __init__(
+        self,
+        FG=False,  # pylint: disable=redefined-outer-name
+        timeout=None,
+    ):
         """`FG` to True to run in the foreground."""
         self.foreground = FG
         self.timeout = timeout
@@ -318,14 +315,12 @@ class _RETCODE(ExecutionModifier):
 
     def __rand__(self, cmd):
         if self.foreground:
-            return cmd.run(
+            result = cmd.run(
                 retcode=None, stdin=None, stdout=None, stderr=None, timeout=self.timeout
-            )[0]
-        else:
-            return cmd.run(retcode=None, timeout=self.timeout)[0]
+            )
+            return result[0]
 
-
-RETCODE = _RETCODE()
+        return cmd.run(retcode=None, timeout=self.timeout)[0]
 
 
 class _NOHUP(ExecutionModifier):
@@ -377,9 +372,6 @@ class _NOHUP(ExecutionModifier):
         return cmd.nohup(self.cwd, stdout, self.stderr, append)
 
 
-NOHUP = _NOHUP()
-
-
 class PipeToLoggerMixin:
     """
     This mixin allows piping plumbum commands' output into a logger.
@@ -424,11 +416,11 @@ class PipeToLoggerMixin:
 
     """
 
-    from logging import DEBUG, INFO
-
     DEFAULT_LINE_TIMEOUT = 10 * 60
     DEFAULT_STDOUT = "INFO"
     DEFAULT_STDERR = "DEBUG"
+    INFO = INFO
+    DEBUG = DEBUG
 
     def pipe(
         self, out_level=None, err_level=None, prefix=None, line_timeout=None, **kw
@@ -443,7 +435,7 @@ class PipeToLoggerMixin:
         """
 
         class LogPipe:
-            def __rand__(_, cmd):
+            def __rand__(self, cmd):
                 popen = cmd if hasattr(cmd, "iter_lines") else cmd.popen()
                 for typ, lines in popen.iter_lines(
                     line_timeout=line_timeout, mode=BY_TYPE, **kw
@@ -493,3 +485,11 @@ class PipeToLoggerMixin:
         return cmd & self.pipe(
             getattr(self, self.DEFAULT_STDOUT), getattr(self, self.DEFAULT_STDERR)
         )
+
+
+BG = _BG()
+FG = _FG()
+NOHUP = _NOHUP()
+RETCODE = _RETCODE()
+TEE = _TEE()
+TF = _TF()

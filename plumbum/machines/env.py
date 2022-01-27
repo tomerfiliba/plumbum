@@ -6,6 +6,7 @@ class EnvPathList(list):
     __slots__ = ["_path_factory", "_pathsep", "__weakref__"]
 
     def __init__(self, path_factory, pathsep):
+        super().__init__()
         self._path_factory = path_factory
         self._pathsep = pathsep
 
@@ -41,6 +42,7 @@ class BaseEnv:
     CASE_SENSITIVE = True
 
     def __init__(self, path_factory, pathsep):
+        self._curr = {}
         self._path_factory = path_factory
         self._path = EnvPathList(path_factory, pathsep)
         self._update_path()
@@ -150,9 +152,9 @@ class BaseEnv:
     def _get_home(self):
         if "HOME" in self:
             return self._path_factory(self["HOME"])
-        elif "USERPROFILE" in self:  # pragma: no cover
+        if "USERPROFILE" in self:  # pragma: no cover
             return self._path_factory(self["USERPROFILE"])
-        elif "HOMEPATH" in self:  # pragma: no cover
+        if "HOMEPATH" in self:  # pragma: no cover
             return self._path_factory(self.get("HOMEDRIVE", ""), self["HOMEPATH"])
         return None
 

@@ -49,13 +49,11 @@ class BaseMachine:
             command = self[cmd]
             if not command.executable.exists():
                 raise CommandNotFound(cmd, command.executable)
-            else:
-                return command
+            return command
         except CommandNotFound:
             if othercommands:
                 return self.get(othercommands[0], *othercommands[1:])
-            else:
-                raise
+            raise
 
     def __contains__(self, cmd):
         """Tests for the existence of the command, e.g., ``"ls" in plumbum.local``.
@@ -88,7 +86,7 @@ class BaseMachine:
             try:
                 return self._machine[name]
             except CommandNotFound:
-                raise AttributeError(name)
+                raise AttributeError(name) from None
 
     @property
     def cmd(self):

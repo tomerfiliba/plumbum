@@ -101,10 +101,11 @@ class BaseCommand:
         """Creates a bound-command with the given arguments"""
         if not args:
             return self
+
         if isinstance(self, BoundCommand):
             return BoundCommand(self.cmd, self.args + list(args))
-        else:
-            return BoundCommand(self, args)
+
+        return BoundCommand(self, args)
 
     def __call__(self, *args, **kwargs):
         """A shortcut for `run(args)`, returning only the process' stdout"""
@@ -207,7 +208,7 @@ class BaseCommand:
 
         def runner():
             if was_run[0]:
-                return  # already done
+                return None  # already done
             was_run[0] = True
             try:
                 return run_proc(p, retcode, timeout)
@@ -333,7 +334,7 @@ class BoundCommand(BaseCommand):
 
 
 class BoundEnvCommand(BaseCommand):
-    __slots__ = ("cmd", "env", "cwd")
+    __slots__ = ("cmd",)
 
     def __init__(self, cmd, env=None, cwd=None):
         self.cmd = cmd
@@ -441,7 +442,7 @@ class BaseRedirection(BaseCommand):
     __slots__ = ("cmd", "file")
     SYM = None  # type: str
     KWARG = None  # type: str
-    MODE = None  # type: str
+    MODE = "r"  # type: str
 
     def __init__(self, cmd, file):
         self.cmd = cmd
@@ -471,8 +472,8 @@ class BaseRedirection(BaseCommand):
             raise RedirectionError(f"{self.KWARG} is already redirected")
         if isinstance(self.file, RemotePath):
             raise TypeError("Cannot redirect to/from remote paths")
-        if isinstance(self.file, (str,) + (LocalPath,)):
-            f = kwargs[self.KWARG] = open(str(self.file), self.MODE)
+        if isinstance(self.file, (str, LocalPath)):
+            f = kwargs[self.KWARG] = open(str(self.file), self.MODE, encoding="utf-8")
         else:
             kwargs[self.KWARG] = self.file
             f = None

@@ -61,7 +61,7 @@ class Subcommand:
             try:
                 cls = getattr(mod, clsname)
             except AttributeError:
-                raise ImportError(f"cannot import name {clsname}")
+                raise ImportError(f"cannot import name {clsname}") from None
             self.subapplication = cls
         return self.subapplication
 
@@ -173,10 +173,10 @@ class Application:
         instead of an expression with a dot in it."""
 
         if executable is None:
-            return cls.run()
             # This return value was not a class instance, so __init__ is never called
-        else:
-            return super().__new__(cls)
+            return cls.run()
+
+        return super().__new__(cls)
 
     def __init__(self, executable):
         # Filter colors
@@ -193,7 +193,7 @@ class Application:
         # Allow None for the colors
         self.COLOR_GROUPS = defaultdict(
             lambda: colors.do_nothing,
-            dict() if type(self).COLOR_GROUPS is None else type(self).COLOR_GROUPS,
+            {} if type(self).COLOR_GROUPS is None else type(self).COLOR_GROUPS,
         )
 
         self.COLOR_GROUP_TITLES = defaultdict(
@@ -286,9 +286,8 @@ class Application:
         """
 
         def wrapper(subapp):
-            attrname = "_subcommand_{}".format(
-                subapp if isinstance(subapp, str) else subapp.__name__
-            )
+            subname = subapp if isinstance(subapp, str) else subapp.__name__
+            attrname = f"_subcommand_{subname}"
             setattr(cls, attrname, Subcommand(name, subapp))
             return subapp
 
@@ -325,7 +324,7 @@ class Application:
                 )
                 break
 
-            elif a.startswith("--") and len(a) >= 3:
+            if a.startswith("--") and len(a) >= 3:
                 # [--name], [--name=XXX], [--name, XXX], [--name, ==, XXX],
                 # [--name=, XXX], [--name, =XXX]
                 eqsign = a.find("=")
@@ -400,12 +399,11 @@ class Application:
                 else:
                     if swfuncs[swinfo.func].swname == swname:
                         raise SwitchError(T_("Switch {0} already given").format(swname))
-                    else:
-                        raise SwitchError(
-                            T_("Switch {0} already given ({1} is equivalent)").format(
-                                swfuncs[swinfo.func].swname, swname
-                            )
+                    raise SwitchError(
+                        T_("Switch {0} already given ({1} is equivalent)").format(
+                            swfuncs[swinfo.func].swname, swname
                         )
+                    )
             else:
                 if swinfo.list:
                     swfuncs[swinfo.func] = SwitchParseInfo(swname, ([val],), index)
@@ -441,7 +439,6 @@ class Application:
     @classmethod
     def autocomplete(cls, argv):
         """This is supplied to make subclassing and testing argument completion methods easier"""
-        pass
 
     @staticmethod
     def _handle_argument(val, argtype, name):
@@ -454,7 +451,7 @@ class Application:
                     T_(
                         "Argument of {name} expected to be {argtype}, not {val!r}:\n    {ex!r}"
                     ).format(name=name, argtype=argtype, val=val, ex=ex)
-                )
+                ) from None
         else:
             return NotImplemented
 
@@ -515,7 +512,7 @@ class Application:
                     min_args,
                 ).format(min_args, tailargs)
             )
-        elif len(tailargs) > max_args:
+        if len(tailargs) > max_args:
             raise PositionalArgumentsError(
                 ngettext(
                     "Expected at most {0} positional argument, got {1}",
@@ -579,7 +576,11 @@ class Application:
         return out_args
 
     @classmethod
-    def run(cls, argv=None, exit=True):  # @ReservedAssignment
+    def run(
+        cls,
+        argv=None,
+        exit=True,  # pylint: disable=redefined-builtin
+    ):
         """
         Runs the application, taking the arguments from ``sys.argv`` by default if
         nothing is passed. If ``exit`` is
@@ -673,9 +674,9 @@ class Application:
         """Parses keywords (positional arguments), used by invoke."""
         swfuncs = {}
         for index, (swname, val) in enumerate(switches.items(), 1):
-            switch = getattr(type(self), swname)
-            swinfo = self._switches_by_func[switch._switch_info.func]
-            if isinstance(switch, CountOf):
+            switch_local = getattr(type(self), swname)
+            swinfo = self._switches_by_func[switch_local._switch_info.func]
+            if isinstance(switch_local, CountOf):
                 p = (range(val),)
             elif swinfo.list and not hasattr(val, "__iter__"):
                 raise SwitchError(
@@ -704,9 +705,10 @@ class Application:
                 print(T_("------"))
                 self.help()
                 return 1
-        else:
-            print(T_("main() not implemented"))
-            return 1
+            return 0
+
+        print(T_("main() not implemented"))
+        return 1
 
     def cleanup(self, retcode):
         """Called after ``main()`` and all sub-applications have executed, to perform any necessary cleanup.
@@ -857,11 +859,7 @@ class Application:
             for i, d in enumerate(reversed(m.defaults)):
                 tailargs[-i - 1] = f"[{tailargs[-i - 1]}={d}]"
         if m.varargs:
-            tailargs.append(
-                "{}...".format(
-                    m.varargs,
-                )
-            )
+            tailargs.append(f"{m.varargs}...")
         tailargs = " ".join(tailargs)
 
         utc = self.COLOR_USAGE_TITLE if self.COLOR_USAGE_TITLE else self.COLOR_USAGE
@@ -922,20 +920,20 @@ class Application:
         indentation = "\n" + " " * (cols - wrapper.width)
 
         for switch_info, prefix, color in switchs(by_groups, True):
-            help = switch_info.help  # @ReservedAssignment
+            help_txt = switch_info.help
             if switch_info.list:
-                help += T_("; may be given multiple times")
+                help_txt += T_("; may be given multiple times")
             if switch_info.mandatory:
-                help += T_("; required")
+                help_txt += T_("; required")
             if switch_info.requires:
-                help += T_("; requires {0}").format(
+                help_txt += T_("; requires {0}").format(
                     ", ".join(
                         (("-" if len(switch) == 1 else "--") + switch)
                         for switch in switch_info.requires
                     )
                 )
             if switch_info.excludes:
-                help += T_("; excludes {0}").format(
+                help_txt += T_("; excludes {0}").format(
                     ", ".join(
                         (("-" if len(switch) == 1 else "--") + switch)
                         for switch in switch_info.excludes
@@ -943,7 +941,7 @@ class Application:
                 )
 
             msg = indentation.join(
-                wrapper.wrap(" ".join(ln.strip() for ln in help.splitlines()))
+                wrapper.wrap(" ".join(ln.strip() for ln in help_txt.splitlines()))
             )
 
             if len(prefix) + wrapper.width >= cols:
@@ -960,15 +958,17 @@ class Application:
                     subapp = subcls.get()
                     doc = subapp.DESCRIPTION if subapp.DESCRIPTION else getdoc(subapp)
                     if self.SUBCOMMAND_HELPMSG:
-                        help = doc + "; " if doc else ""  # @ReservedAssignment
-                        help += self.SUBCOMMAND_HELPMSG.format(
+                        help_str = doc + "; " if doc else ""
+                        help_str += self.SUBCOMMAND_HELPMSG.format(
                             parent=self.PROGNAME, sub=name
                         )
                     else:
-                        help = doc if doc else ""  # @ReservedAssignment
+                        help_str = doc if doc else ""
 
                     msg = indentation.join(
-                        wrapper.wrap(" ".join(ln.strip() for ln in help.splitlines()))
+                        wrapper.wrap(
+                            " ".join(ln.strip() for ln in help_str.splitlines())
+                        )
                     )
 
                     if len(name) + wrapper.width >= cols:

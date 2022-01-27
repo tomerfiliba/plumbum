@@ -18,12 +18,12 @@ class OutputMagics(Magics):  # pragma: no cover
         )
         display_fn = getattr(IPython.display, "display_" + choice)
 
-        "Captures stdout and renders it in the notebook with some ."
+        # Captures stdout and renders it in the notebook
         with StringIO() as out:
             old_out = sys.stdout
             try:
                 sys.stdout = out
-                exec(cell, self.shell.user_ns, local_ns)
+                exec(cell, self.shell.user_ns, local_ns)  # pylint: disable=exec-used
                 out.seek(0)
                 display_fn(out.getvalue(), raw=True)
             finally:

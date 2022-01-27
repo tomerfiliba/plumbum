@@ -33,7 +33,7 @@ class ColorFactory:
         try:
             return self._style.from_color(self._style.color_class(item, fg=self._fg))
         except ColorNotFound:
-            raise AttributeError(item)
+            raise AttributeError(item) from None
 
     def full(self, name):
         """Gets the style for a color, using standard name procedure: either full
@@ -52,8 +52,8 @@ class ColorFactory:
         """Return the extended color scheme color for a value."""
         if g is None and b is None:
             return self.hex(r)
-        else:
-            return self._style.from_color(self._style.color_class(r, g, b, fg=self._fg))
+
+        return self._style.from_color(self._style.color_class(r, g, b, fg=self._fg))
 
     def hex(self, hexcode):
         """Return the extended color scheme color for a value."""
@@ -73,9 +73,10 @@ class ColorFactory:
             (start, stop, stride) = val.indices(256)
             if stop <= 16:
                 return [self.simple(v) for v in range(start, stop, stride)]
-            else:
-                return [self.full(v) for v in range(start, stop, stride)]
-        elif isinstance(val, tuple):
+
+            return [self.full(v) for v in range(start, stop, stride)]
+
+        if isinstance(val, tuple):
             return self.rgb(*val)
 
         try:
@@ -107,13 +108,12 @@ class ColorFactory:
         """This will reset the color on leaving the with statement."""
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, _value, _traceback) -> None:
         """This resets a FG/BG color or all styles,
         due to different definition of RESET for the
         factories."""
 
         self.reset.now()
-        return False
 
     def __repr__(self):
         """Simple representation of the class by name."""
@@ -200,6 +200,8 @@ class StyleFactory(ColorFactory):
         """Gets colors from an ansi string, returns those colors"""
         return self._style.from_ansi(colored_string, True)
 
-    def load_stylesheet(self, stylesheet=default_styles):
+    def load_stylesheet(self, stylesheet=None):
+        if stylesheet is None:
+            stylesheet = default_styles
         for item in stylesheet:
             setattr(self, item, self.get_colors_from_string(stylesheet[item]))

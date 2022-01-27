@@ -59,7 +59,7 @@ class RemotePath(Path):
                 plist.pop(0)
                 del normed[:]
             for item in plist:
-                if item == "" or item == ".":
+                if item in {"", "."}:
                     continue
                 if item == "..":
                     if normed:
@@ -166,7 +166,7 @@ class RemotePath(Path):
 
     def with_suffix(self, suffix, depth=1):
         if suffix and not suffix.startswith(".") or suffix == ".":
-            raise ValueError("Invalid suffix %r" % (suffix))
+            raise ValueError(f"Invalid suffix {suffix!r}")
         name = self.name
         depth = len(self.suffixes) if depth is None else min(depth, len(self.suffixes))
         for _ in range(depth):
@@ -192,8 +192,7 @@ class RemotePath(Path):
                 raise TypeError("dst points to a different remote machine")
         elif not isinstance(dst, str):
             raise TypeError(
-                "dst must be a string or a RemotePath (to the same remote machine), "
-                "got %r" % (dst,)
+                f"dst must be a string or a RemotePath (to the same remote machine), got {dst!r}"
             )
         self.remote._path_move(self, dst)
 
@@ -203,8 +202,7 @@ class RemotePath(Path):
                 raise TypeError("dst points to a different remote machine")
         elif not isinstance(dst, str):
             raise TypeError(
-                "dst must be a string or a RemotePath (to the same remote machine), "
-                "got %r" % (dst,)
+                f"dst must be a string or a RemotePath (to the same remote machine), got {dst!r}"
             )
         if override:
             if isinstance(dst, str):
@@ -228,13 +226,13 @@ class RemotePath(Path):
                 self.remote._path_mkdir(self, mode=mode, minus_p=False)
             except ProcessExecutionError:
                 _, ex, _ = sys.exc_info()
-                if "File exists" in ex.stderr:
-                    if not exist_ok:
-                        raise OSError(
-                            errno.EEXIST, "File exists (on remote end)", str(self)
-                        )
-                else:
+                if "File exists" not in ex.stderr:
                     raise
+
+                if not exist_ok:
+                    raise OSError(
+                        errno.EEXIST, "File exists (on remote end)", str(self)
+                    ) from None
 
     def read(self, encoding=None):
         data = self.remote._path_read(self)
@@ -272,8 +270,7 @@ class RemotePath(Path):
                 raise TypeError("dst points to a different remote machine")
         elif not isinstance(dst, str):
             raise TypeError(
-                "dst must be a string or a RemotePath (to the same remote machine), "
-                "got %r" % (dst,)
+                f"dst must be a string or a RemotePath (to the same remote machine), got {dst!r}"
             )
         self.remote._path_link(self, dst, False)
 
@@ -283,8 +280,7 @@ class RemotePath(Path):
                 raise TypeError("dst points to a different remote machine")
         elif not isinstance(dst, str):
             raise TypeError(
-                "dst must be a string or a RemotePath (to the same remote machine), "
-                "got %r" % (dst,)
+                "dst must be a string or a RemotePath (to the same remote machine), got {dst!r}"
             )
         self.remote._path_link(self, dst, True)
 
@@ -296,16 +292,14 @@ class RemotePath(Path):
         """
         if hasattr(self.remote, "sftp") and hasattr(self.remote.sftp, "open"):
             return self.remote.sftp.open(self, mode, bufsize)
-        else:
-            raise NotImplementedError(
-                "RemotePath.open only works for ParamikoMachine-associated "
-                "paths for now"
-            )
+
+        raise NotImplementedError(
+            "RemotePath.open only works for ParamikoMachine-associated paths for now"
+        )
 
     def as_uri(self, scheme="ssh"):
-        return "{}://{}{}".format(
-            scheme, self.remote._fqhost, urllib.pathname2url(str(self))
-        )
+        suffix = urllib.pathname2url(str(self))
+        return f"{scheme}://{self.remote._fqhost}{suffix}"
 
     @property
     def stem(self):

@@ -34,18 +34,19 @@ class Image:
 
         import PIL.Image
 
-        if double:
-            return self.show_pil_double(PIL.Image.open(filename))
-        else:
-            return self.show_pil(PIL.Image.open(filename))
+        return (
+            self.show_pil_double(PIL.Image.open(filename))
+            if double
+            else self.show_pil(PIL.Image.open(filename))
+        )
 
     def _init_size(self, im):
         """Return the expected image size"""
         if self.size is None:
             term_size = get_terminal_size()
             return self.best_aspect(im.size, term_size)
-        else:
-            return self.size
+
+        return self.size
 
     def show_pil(self, im):
         "Standard show routine"
@@ -87,7 +88,7 @@ class ShowImageApp(cli.Application):
     )
 
     @cli.switch(["-c", "--colors"], cli.Range(1, 4), help="Level of color, 1-4")
-    def colors_set(self, n):
+    def colors_set(self, n):  # pylint: disable=no-self-use
         colors.use_color = n
 
     size = cli.SwitchAttr(["-s", "--size"], help="Size, should be in the form 100x150")

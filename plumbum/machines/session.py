@@ -12,8 +12,6 @@ class ShellSessionError(Exception):
     """Raises when something goes wrong when calling
     :func:`ShellSession.popen <plumbum.session.ShellSession.popen>`"""
 
-    pass
-
 
 class SSHCommsError(ProcessExecutionError, EOFError):
     """Raises when the communication channel can't be created on the
@@ -87,17 +85,14 @@ class SessionPopen(PopenAddons):
 
     def poll(self):
         """Returns the process' exit code or ``None`` if it's still running"""
-        if self._done:
-            return self.returncode
-        else:
-            return None
+        return self.returncode if self._done else None
 
     def wait(self):
         """Waits for the process to terminate and returns its exit code"""
         self.communicate()
         return self.returncode
 
-    def communicate(self, input=None):
+    def communicate(self, input=None):  # pylint: disable=redefined-builtin
         """Consumes the process' stdout and stderr until the it terminates.
 
         :param input: An optional bytes/buffer object to send to the process over stdin
@@ -121,7 +116,7 @@ class SessionPopen(PopenAddons):
             try:
                 line = pipe.readline()
                 shell_logger.debug("%s> %r", name, line)
-            except EOFError:
+            except EOFError as err:
                 shell_logger.debug("%s> Nothing returned.", name)
 
                 self.proc.poll()
@@ -137,39 +132,39 @@ class SessionPopen(PopenAddons):
                         stdout,
                         stderr,
                         message="Incorrect username or password provided",
-                    )
-                elif returncode == 6:
+                    ) from None
+                if returncode == 6:
                     raise HostPublicKeyUnknown(
                         argv,
                         returncode,
                         stdout,
                         stderr,
                         message="The authenticity of the host can't be established",
-                    )
-                elif returncode != 0:
+                    ) from None
+                if returncode != 0:
                     raise SSHCommsError(
                         argv,
                         returncode,
                         stdout,
                         stderr,
                         message="SSH communication failed",
-                    )
-                elif name == "2":
+                    ) from None
+                if name == "2":
                     raise SSHCommsChannel2Error(
                         argv,
                         returncode,
                         stdout,
                         stderr,
                         message="No stderr result detected. Does the remote have Bash as the default shell?",
-                    )
-                else:
-                    raise SSHCommsError(
-                        argv,
-                        returncode,
-                        stdout,
-                        stderr,
-                        message="No communication channel detected. Does the remote exist?",
-                    )
+                    ) from None
+
+                raise SSHCommsError(
+                    argv,
+                    returncode,
+                    stdout,
+                    stderr,
+                    message="No communication channel detected. Does the remote exist?",
+                ) from err
             if not line:
                 del sources[i]
             else:
@@ -221,7 +216,7 @@ class ShellSession:
                 )
                 self.close()
 
-            timer = threading.Timer(connect_timeout, self.close)
+            timer = threading.Timer(connect_timeout, closer)
             timer.start()
         try:
             self.run("")
