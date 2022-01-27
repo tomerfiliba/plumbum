@@ -41,8 +41,8 @@ class BaseEnv:
     __slots__ = ["_curr", "_path", "_path_factory", "__weakref__"]
     CASE_SENSITIVE = True
 
-    def __init__(self, path_factory, pathsep):
-        self._curr = {}
+    def __init__(self, path_factory, pathsep, *, _curr):
+        self._curr = _curr
         self._path_factory = path_factory
         self._path = EnvPathList(path_factory, pathsep)
         self._update_path()

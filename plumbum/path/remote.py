@@ -284,12 +284,17 @@ class RemotePath(Path):
             )
         self.remote._path_link(self, dst, True)
 
-    def open(self, mode="r", bufsize=-1):
+    def open(self, mode="r", bufsize=-1, *, encoding=None):
         """
         Opens this path as a file.
 
         Only works for ParamikoMachine-associated paths for now.
         """
+        if encoding is not None:
+            raise NotImplementedError(
+                "encoding not supported for ParamikoMachine paths"
+            )
+
         if hasattr(self.remote, "sftp") and hasattr(self.remote.sftp, "open"):
             return self.remote.sftp.open(self, mode, bufsize)
 

@@ -56,8 +56,7 @@ class LocalEnv(BaseEnv):
 
     def __init__(self):
         # os.environ already takes care of upper'ing on windows
-        self._curr = os.environ.copy()
-        BaseEnv.__init__(self, LocalPath, os.path.pathsep)
+        super().__init__(LocalPath, os.path.pathsep, _curr=os.environ.copy())
         if IS_WIN32 and "HOME" not in self and self.home is not None:
             self["HOME"] = self.home
 

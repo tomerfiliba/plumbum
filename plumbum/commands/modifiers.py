@@ -372,6 +372,29 @@ class _NOHUP(ExecutionModifier):
         return cmd.nohup(self.cwd, stdout, self.stderr, append)
 
 
+class LogPipe:
+    def __init__(self, line_timeout, kw, levels, prefix, log):
+        self.line_timeout = line_timeout
+        self.kw = kw
+        self.levels = levels
+        self.prefix = prefix
+        self.log = log
+
+    def __rand__(self, cmd):
+        popen = cmd if hasattr(cmd, "iter_lines") else cmd.popen()
+        for typ, lines in popen.iter_lines(
+            line_timeout=self.line_timeout, mode=BY_TYPE, **self.kw
+        ):
+            if not lines:
+                continue
+            level = self.levels[typ]
+            for line in lines.splitlines():
+                if self.prefix:
+                    line = f"{self.prefix}: {line}"
+                self.log(level, line)
+        return popen.returncode
+
+
 class PipeToLoggerMixin:
     """
     This mixin allows piping plumbum commands' output into a logger.
@@ -434,21 +457,6 @@ class PipeToLoggerMixin:
         Optionally use `prefix` for each line.
         """
 
-        class LogPipe:
-            def __rand__(self, cmd):
-                popen = cmd if hasattr(cmd, "iter_lines") else cmd.popen()
-                for typ, lines in popen.iter_lines(
-                    line_timeout=line_timeout, mode=BY_TYPE, **kw
-                ):
-                    if not lines:
-                        continue
-                    level = levels[typ]
-                    for line in lines.splitlines():
-                        if prefix:
-                            line = f"{prefix}: {line}"
-                        self.log(level, line)
-                return popen.returncode
-
         levels = {
             1: getattr(self, self.DEFAULT_STDOUT),
             2: getattr(self, self.DEFAULT_STDERR),
@@ -463,7 +471,7 @@ class PipeToLoggerMixin:
         if err_level is not None:
             levels[2] = err_level
 
-        return LogPipe()
+        return LogPipe(line_timeout, kw, levels, prefix, self.log)
 
     def pipe_info(self, prefix=None, **kw):
         """

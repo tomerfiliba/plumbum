@@ -32,6 +32,8 @@ except ImportError:
 
 logger = logging.getLogger("plumbum.local")
 
+_EMPTY = object()
+
 
 # ===================================================================================================
 # Local Paths
@@ -201,8 +203,12 @@ class LocalPath(Path):
                 if ex.errno != errno.EEXIST or not exist_ok:
                     raise
 
-    def open(self, mode="r"):
-        return open(str(self), mode, encoding="utf-8")
+    def open(self, mode="r", encoding=None):
+        return open(
+            str(self),
+            mode,
+            encoding=encoding,
+        )
 
     def read(self, encoding=None, mode="r"):
         if encoding and "b" not in mode:

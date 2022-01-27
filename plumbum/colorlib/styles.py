@@ -41,7 +41,7 @@ def get_color_repr():
     """Gets best colors for current system."""
     if "NO_COLOR" in os.environ:
         return 0
-    if os.environ.get("FORCE_COLOR", "0") in {"0", "1", "2", "3", "4"}:
+    if os.environ.get("FORCE_COLOR", "") in {"0", "1", "2", "3", "4"}:
         return int(os.environ["FORCE_COLOR"])
     if not sys.stdout.isatty():
         return 0

@@ -16,14 +16,13 @@ class RemoteEnv(BaseEnv):
     __slots__ = ["_orig", "remote"]
 
     def __init__(self, remote):
-        self.remote = remote
         session = remote._session
         # GNU env has a -0 argument; use it if present. Otherwise,
         # fall back to calling printenv on each (possible) variable
         # from plain env.
         env0 = session.run("env -0; echo")
         if env0[0] == 0 and not env0[2].rstrip():
-            self._curr = dict(
+            _curr = dict(
                 line.split("=", 1) for line in env0[1].split("\x00") if "=" in line
             )
         else:
@@ -31,13 +30,15 @@ class RemoteEnv(BaseEnv):
             split = (line.split("=", 1) for line in lines)
             keys = (line[0] for line in split if len(line) > 1)
             runs = ((key, session.run(f'printenv "{key}"; echo')) for key in keys)
-            self._curr = {
+            _curr = {
                 key: run[1].rstrip("\n")
                 for (key, run) in runs
                 if run[0] == 0 and run[1].rstrip("\n") and not run[2]
             }
+
+        super().__init__(remote.path, ":", _curr=_curr)
+        self.remote = remote
         self._orig = self._curr.copy()
-        BaseEnv.__init__(self, self.remote.path, ":")
 
     def __delitem__(self, name):
         BaseEnv.__delitem__(self, name)
@@ -386,8 +387,11 @@ class BaseRemoteMachine(BaseMachine):
         self._session.run(f"cp -r {shquote(src)} {shquote(dst)}")
 
     def _path_mkdir(
-        self, fn, mode=None, minus_p=True
-    ):  # pylint: disable=unused-argument
+        self,
+        fn,
+        mode=None,  # pylint: disable=unused-argument
+        minus_p=True,
+    ):
         p_str = "-p " if minus_p else ""
         cmd = f"mkdir {p_str}{shquote(fn)}"
         self._session.run(cmd)
