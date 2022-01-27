@@ -16,6 +16,16 @@ def lint(session):
     session.run("pre-commit", "run", "--all-files", *session.posargs)
 
 
+@nox.session
+def pylint(session):
+    """
+    Run pylint.
+    """
+
+    session.install(".", "paramiko", "ipython", "pylint")
+    session.run("pylint", "plumbum", *session.posargs)
+
+
 @nox.session(python=ALL_PYTHONS, reuse_venv=True)
 def tests(session):
     """

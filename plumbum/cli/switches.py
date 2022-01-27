@@ -12,50 +12,34 @@ _, ngettext = _translation.gettext, _translation.ngettext
 class SwitchError(Exception):
     """A general switch related-error (base class of all other switch errors)"""
 
-    pass
-
 
 class PositionalArgumentsError(SwitchError):
     """Raised when an invalid number of positional arguments has been given"""
-
-    pass
 
 
 class SwitchCombinationError(SwitchError):
     """Raised when an invalid combination of switches has been given"""
 
-    pass
-
 
 class UnknownSwitch(SwitchError):
     """Raised when an unrecognized switch has been given"""
-
-    pass
 
 
 class MissingArgument(SwitchError):
     """Raised when a switch requires an argument, but one was not provided"""
 
-    pass
-
 
 class MissingMandatorySwitch(SwitchError):
     """Raised when a mandatory switch has not been given"""
-
-    pass
 
 
 class WrongArgumentType(SwitchError):
     """Raised when a switch expected an argument of some type, but an argument of a wrong
     type has been given"""
 
-    pass
-
 
 class SubcommandError(SwitchError):
     """Raised when there's something wrong with sub-commands"""
-
-    pass
 
 
 # ===================================================================================================
@@ -71,11 +55,11 @@ def switch(
     names,
     argtype=None,
     argname=None,
-    list=False,
+    list=False,  # pylint: disable=redefined-builtin
     mandatory=False,
     requires=(),
     excludes=(),
-    help=None,
+    help=None,  # pylint: disable=redefined-builtin
     overridable=False,
     group="Switches",
     envname=None,
@@ -238,7 +222,13 @@ class SwitchAttr:
     VALUE = _("VALUE")
 
     def __init__(
-        self, names, argtype=str, default=None, list=False, argname=VALUE, **kwargs
+        self,
+        names,
+        argtype=str,
+        default=None,
+        list=False,  # pylint: disable=redefined-builtin
+        argname=VALUE,
+        **kwargs,
     ):
         self.__doc__ = "Sets an attribute"  # to prevent the help message from showing SwitchAttr's docstring
         if default and argtype is not None:
@@ -266,17 +256,16 @@ class SwitchAttr:
     def __get__(self, inst, cls):
         if inst is None:
             return self
-        else:
-            return getattr(inst, self.ATTR_NAME, {}).get(self, self._default_value)
+        return getattr(inst, self.ATTR_NAME, {}).get(self, self._default_value)
 
     def __set__(self, inst, val):
         if inst is None:
             raise AttributeError("cannot set an unbound SwitchAttr")
+
+        if not hasattr(inst, self.ATTR_NAME):
+            setattr(inst, self.ATTR_NAME, {self: val})
         else:
-            if not hasattr(inst, self.ATTR_NAME):
-                setattr(inst, self.ATTR_NAME, {self: val})
-            else:
-                getattr(inst, self.ATTR_NAME)[self] = val
+            getattr(inst, self.ATTR_NAME)[self] = val
 
 
 class Flag(SwitchAttr):
@@ -369,23 +358,23 @@ class positional:
         m = inspect.getfullargspec(function)
         args_names = list(m.args[1:])
 
-        positional = [None] * len(args_names)
+        positional_list = [None] * len(args_names)
         varargs = None
 
-        for i in range(min(len(positional), len(self.args))):
-            positional[i] = self.args[i]
+        for i in range(min(len(positional_list), len(self.args))):
+            positional_list[i] = self.args[i]
 
         if len(args_names) + 1 == len(self.args):
             varargs = self.args[-1]
 
         # All args are positional, so convert kargs to positional
-        for item in self.kargs:
+        for item, value in self.kargs.items():
             if item == m.varargs:
-                varargs = self.kargs[item]
+                varargs = value
             else:
-                positional[args_names.index(item)] = self.kargs[item]
+                positional_list[args_names.index(item)] = value
 
-        function.positional = positional
+        function.positional = positional_list
         function.positional_varargs = varargs
         return function
 
@@ -397,7 +386,7 @@ class Validator(ABC):
     def __call__(self, obj):
         "Must be implemented for a Validator to work"
 
-    def choices(self, partial=""):
+    def choices(self, partial=""):  # pylint: disable=no-self-use, unused-argument
         """Should return set of valid choices, can be given optional partial info"""
         return set()
 
@@ -409,8 +398,9 @@ class Validator(ABC):
             for prop in getattr(cls, "__slots__", ()):
                 if prop[0] != "_":
                     slots[prop] = getattr(self, prop)
-        mystrs = (f"{name} = {slots[name]}" for name in slots)
-        return "{}({})".format(self.__class__.__name__, ", ".join(mystrs))
+        mystrs = (f"{name} = {value}" for name, value in slots.items())
+        mystrs_str = ", ".join(mystrs)
+        return f"{self.__class__.__name__}({mystrs_str})"
 
 
 # ===================================================================================================
@@ -479,9 +469,8 @@ class Set(Validator):
         self.values = values
 
     def __repr__(self):
-        return "{{{0}}}".format(
-            ", ".join(v if isinstance(v, str) else v.__name__ for v in self.values)
-        )
+        items = ", ".join(v if isinstance(v, str) else v.__name__ for v in self.values)
+        return f"{{{items}}}"
 
     def __call__(self, value, check_csv=True):
         if self.csv and check_csv:
@@ -523,7 +512,7 @@ class Predicate:
     def __call__(self, val):
         return self.func(val)
 
-    def choices(self, partial=""):
+    def choices(self, partial=""):  # pylint: disable=no-self-use, unused-argument
         return set()
 
 
@@ -541,7 +530,7 @@ def MakeDirectory(val):
     p = local.path(val)
     if p.is_file():
         raise ValueError(f"{val} is a file, should be nonexistent, or a directory")
-    elif not p.exists():
+    if not p.exists():
         p.mkdir()
     return p
 

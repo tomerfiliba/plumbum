@@ -24,7 +24,7 @@ class PlumbumLocalPopen(PopenAddons):
     iter_lines = iter_lines
 
     def __init__(self, *args, **kwargs):
-        self._proc = Popen(*args, **kwargs)
+        self._proc = Popen(*args, **kwargs)  # pylint: disable=consider-using-with
 
     def __iter__(self):
         return self.iter_lines()
@@ -56,8 +56,7 @@ class LocalEnv(BaseEnv):
 
     def __init__(self):
         # os.environ already takes care of upper'ing on windows
-        self._curr = os.environ.copy()
-        BaseEnv.__init__(self, LocalPath, os.path.pathsep)
+        super().__init__(LocalPath, os.path.pathsep, _curr=os.environ.copy())
         if IS_WIN32 and "HOME" not in self and self.home is not None:
             self["HOME"] = self.home
 
@@ -223,15 +222,15 @@ class LocalMachine(BaseMachine):
 
         if isinstance(cmd, LocalPath):
             return LocalCommand(cmd)
-        elif not isinstance(cmd, RemotePath):
+
+        if not isinstance(cmd, RemotePath):
             if "/" in cmd or "\\" in cmd:
                 # assume path
                 return LocalCommand(local.path(cmd))
-            else:
-                # search for command
-                return LocalCommand(self.which(cmd))
-        else:
-            raise TypeError(f"cmd must not be a RemotePath: {cmd!r}")
+            # search for command
+            return LocalCommand(self.which(cmd))
+
+        raise TypeError(f"cmd must not be a RemotePath: {cmd!r}")
 
     def _popen(
         self,
@@ -317,12 +316,12 @@ class LocalMachine(BaseMachine):
         """
         if IS_WIN32:
             return win32_daemonize(command, cwd, stdout, stderr, append)
-        else:
-            return posix_daemonize(command, cwd, stdout, stderr, append)
+
+        return posix_daemonize(command, cwd, stdout, stderr, append)
 
     if IS_WIN32:
 
-        def list_processes(self):
+        def list_processes(self):  # pylint: disable=no-self-use
             """
             Returns information about all running processes (on Windows: using ``tasklist``)
 
@@ -379,11 +378,11 @@ class LocalMachine(BaseMachine):
     def tempdir(self):
         """A context manager that creates a temporary directory, which is removed when the context
         exits"""
-        dir = self.path(mkdtemp())  # @ReservedAssignment
+        new_dir = self.path(mkdtemp())
         try:
-            yield dir
+            yield new_dir
         finally:
-            dir.delete()
+            new_dir.delete()
 
     @contextmanager
     def as_user(self, username=None):

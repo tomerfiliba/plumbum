@@ -35,6 +35,10 @@ of command-line interface (CLI) programs.
 See https://plumbum.readthedocs.io for full details
 """
 
+import sys
+from types import ModuleType
+from typing import List
+
 # Avoids a circular import error later
 import plumbum.path  # noqa: F401
 from plumbum.commands import (
@@ -83,10 +87,8 @@ __all__ = (
 
 # ===================================================================================================
 # Module hack: ``from plumbum.cmd import ls``
+# Can be replaced by a real module with __getattr__ after Python 3.6 is dropped
 # ===================================================================================================
-import sys
-from types import ModuleType
-from typing import List
 
 
 class LocalModule(ModuleType):
@@ -99,7 +101,7 @@ class LocalModule(ModuleType):
         try:
             return local[name]
         except CommandNotFound:
-            raise AttributeError(name)
+            raise AttributeError(name) from None
 
     __path__ = []  # type: List[str]
     __file__ = __file__
@@ -107,10 +109,6 @@ class LocalModule(ModuleType):
 
 cmd = LocalModule(__name__ + ".cmd", LocalModule.__doc__)
 sys.modules[cmd.__name__] = cmd
-
-del sys
-del ModuleType
-del LocalModule
 
 
 def __dir__():

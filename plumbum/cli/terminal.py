@@ -57,14 +57,13 @@ def ask(question, default=None):
             answer = readline(question).strip().lower()
         except EOFError:
             answer = None
-        if answer in ("y", "yes"):
+        if answer in {"y", "yes"}:
             return True
-        elif answer in ("n", "no"):
+        if answer in {"n", "no"}:
             return False
-        elif not answer and default is not None:
+        if not answer and default is not None:
             return default
-        else:
-            sys.stdout.write("Invalid response, please try again\n")
+        sys.stdout.write("Invalid response, please try again\n")
 
 
 def choose(question, options, default=None):
@@ -93,7 +92,7 @@ def choose(question, options, default=None):
     choices = {}
     defindex = None
     for i, item in enumerate(options):
-        i = i + 1  # python2.5
+        i += 1
         if isinstance(item, (tuple, list)) and len(item) == 2:
             text = item[0]
             val = item[1]
@@ -103,12 +102,12 @@ def choose(question, options, default=None):
         choices[i] = val
         if default is not None and default == val:
             defindex = i
-        sys.stdout.write("(%d) %s\n" % (i, text))
+        sys.stdout.write(f"({i}) {text}\n")
     if default is not None:
         if defindex is None:
             msg = f"Choice [{default}]: "
         else:
-            msg = "Choice [%d]: " % (defindex,)
+            msg = f"Choice [{defindex}]: "
     else:
         msg = "Choice: "
     while True:
@@ -128,7 +127,12 @@ def choose(question, options, default=None):
         return choices[choice]
 
 
-def prompt(question, type=str, default=NotImplemented, validator=lambda val: True):
+def prompt(
+    question,
+    type=str,  # pylint: disable=redefined-builtin
+    default=NotImplemented,
+    validator=lambda val: True,
+):
     """
     Presents the user with a validated question, keeps asking if validation does not pass.
 
@@ -148,22 +152,24 @@ def prompt(question, type=str, default=NotImplemented, validator=lambda val: Tru
             ans = readline(question).strip()
         except EOFError:
             ans = ""
+
         if not ans:
             if default is not NotImplemented:
                 # sys.stdout.write("\b%s\n" % (default,))
                 return default
-            else:
-                continue
+            continue
         try:
             ans = type(ans)
         except (TypeError, ValueError) as ex:
             sys.stdout.write(f"Invalid value ({ex}), please try again\n")
             continue
+
         try:
             valid = validator(ans)
         except ValueError as ex:
             sys.stdout.write(f"{ex}, please try again\n")
             continue
+
         if not valid:
             sys.stdout.write("Value not in specified range, please try again\n")
             continue
@@ -200,11 +206,8 @@ def hexdump(data_or_stream, bytes_per_line=16, aggregate=True):
         prev = chunk
         if skipped:
             yield "*"
-        yield "{:06x} | {}| {}".format(
-            i * bytes_per_line,
-            hexd.ljust(bytes_per_line * 3, " "),
-            text,
-        )
+        hexd_ljust = hexd.ljust(bytes_per_line * 3, " ")
+        yield f"{i*bytes_per_line:06x} | {hexd_ljust}| {text}"
         skipped = False
 
 

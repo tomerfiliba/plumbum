@@ -2,7 +2,7 @@ import itertools
 import operator
 import os
 import warnings
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from functools import reduce
 
 FLAGS = {"f": os.F_OK, "w": os.W_OK, "r": os.R_OK, "x": os.X_OK}
@@ -51,16 +51,16 @@ class Path(str, ABC):
     def __eq__(self, other):
         if isinstance(other, Path):
             return self._get_info() == other._get_info()
-        elif isinstance(other, str):
+        if isinstance(other, str):
             if self.CASE_SENSITIVE:
                 return str(self) == other
-            else:
-                return str(self).lower() == other.lower()
-        else:
-            return NotImplemented
+
+            return str(self).lower() == other.lower()
+
+        return NotImplemented
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self == other
 
     def __gt__(self, other):
         return str(self) > str(other)
@@ -75,10 +75,7 @@ class Path(str, ABC):
         return str(self) <= str(other)
 
     def __hash__(self):
-        if self.CASE_SENSITIVE:
-            return hash(str(self))
-        else:
-            return hash(str(self).lower())
+        return hash(str(self)) if self.CASE_SENSITIVE else hash(str(self).lower())
 
     def __bool__(self):
         return bool(str(self))
@@ -103,8 +100,10 @@ class Path(str, ABC):
         return self.join("../" * count)
 
     def walk(
-        self, filter=lambda p: True, dir_filter=lambda p: True
-    ):  # @ReservedAssignment
+        self,
+        filter=lambda p: True,  # pylint: disable=redefined-builtin
+        dir_filter=lambda p: True,
+    ):
         """traverse all (recursive) sub-elements under this directory, that match the given filter.
         By default, the filter accepts everything; you can provide a custom filter function that
         takes a path as an argument and returns a boolean
@@ -120,7 +119,8 @@ class Path(str, ABC):
             if p.is_dir() and dir_filter(p):
                 yield from p.walk(filter, dir_filter)
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def name(self):
         """The basename component of this path"""
 
@@ -130,37 +130,45 @@ class Path(str, ABC):
         warnings.warn("Use .name instead", FutureWarning)
         return self.name
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def stem(self):
         """The name without an extension, or the last component of the path"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def dirname(self):
         """The dirname component of this path"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def root(self):
         """The root of the file tree (`/` on Unix)"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def drive(self):
         """The drive letter (on Windows)"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def suffix(self):
         """The suffix of this file"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def suffixes(self):
         """This is a list of all suffixes"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def uid(self):
         """The user that owns this path. The returned value is a :class:`FSUser <plumbum.path.FSUser>`
         object which behaves like an ``int`` (as expected from ``uid``), but it also has a ``.name``
         attribute that holds the string-name of the user"""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def gid(self):
         """The group that owns this path. The returned value is a :class:`FSUser <plumbum.path.FSUser>`
         object which behaves like an ``int`` (as expected from ``gid``), but it also has a ``.name``
@@ -220,7 +228,6 @@ class Path(str, ABC):
     @abstractmethod
     def stat(self):
         """Returns the os.stats for a file"""
-        pass
 
     @abstractmethod
     def with_name(self, name):
@@ -236,10 +243,7 @@ class Path(str, ABC):
     def preferred_suffix(self, suffix):
         """Adds a suffix if one does not currently exist (otherwise, no change). Useful
         for loading files with a default suffix"""
-        if len(self.suffixes) > 0:
-            return self
-        else:
-            return self.with_suffix(suffix)
+        return self if len(self.suffixes) > 0 else self.with_suffix(suffix)
 
     @abstractmethod
     def glob(self, pattern):
@@ -285,7 +289,7 @@ class Path(str, ABC):
         """
 
     @abstractmethod
-    def open(self, mode="r"):
+    def open(self, mode="r", *, encoding=None):
         """opens this path as a file"""
 
     @abstractmethod
@@ -322,9 +326,13 @@ class Path(str, ABC):
         """
 
     @staticmethod
-    def _access_mode_to_flags(mode, flags=FLAGS):
+    def _access_mode_to_flags(mode, flags=None):
+        if flags is None:
+            flags = FLAGS
+
         if isinstance(mode, str):
             mode = reduce(operator.or_, [flags[m] for m in mode.lower()], 0)
+
         return mode
 
     @abstractmethod
@@ -354,7 +362,7 @@ class Path(str, ABC):
     def unlink(self):
         """Deletes a symbolic link"""
 
-    def split(self, *dummy_args, **dummy_kargs):
+    def split(self, *_args, **_kargs):
         """Splits the path on directory separators, yielding a list of directories, e.g,
         ``"/var/log/messages"`` will yield ``['var', 'log', 'messages']``.
         """
@@ -394,17 +402,18 @@ class Path(str, ABC):
         """Same as ``self.relative_to(other)``"""
         return self.relative_to(other)
 
-    def _glob(self, pattern, fn):
+    @staticmethod
+    def _glob(pattern, fn):
         """Applies a glob string or list/tuple/iterable to the current path, using ``fn``"""
         if isinstance(pattern, str):
             return fn(pattern)
-        else:
-            results = []
-            for single_pattern in pattern:
-                results.extend(fn(single_pattern))
-            return sorted(list(set(results)))
 
-    def resolve(self, strict=False):
+        results = []
+        for single_pattern in pattern:
+            results.extend(fn(single_pattern))
+        return sorted(list(set(results)))
+
+    def resolve(self, strict=False):  # pylint:disable=unused-argument
         """Added to allow pathlib like syntax. Does nothing since
         Plumbum paths are always absolute. Does not (currently) resolve
         symlinks."""
@@ -459,7 +468,7 @@ class RelativePath:
         return str(self) == str(other)
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self == other
 
     def __gt__(self, other):
         return str(self) > str(other)

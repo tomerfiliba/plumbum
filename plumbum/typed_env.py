@@ -47,7 +47,7 @@ class TypedEnv(MutableMapping):
             self.name = self.names[0]
             self.default = default
 
-        def convert(self, value):
+        def convert(self, value):  # pylint:disable=no-self-use
             return value
 
         def __get__(self, instance, owner):
@@ -72,11 +72,11 @@ class TypedEnv(MutableMapping):
         Case-insensitive. Throws a ``ValueError`` for any other value.
         """
 
-        def convert(self, s):
-            s = s.lower()
-            if s not in ("yes", "no", "true", "false", "1", "0"):
-                raise ValueError(f"Unrecognized boolean value: {s!r}")
-            return s in ("yes", "true", "1")
+        def convert(self, value):
+            value = value.lower()
+            if value not in {"yes", "no", "true", "false", "1", "0"}:
+                raise ValueError(f"Unrecognized boolean value: {value!r}")
+            return value in {"yes", "true", "1"}
 
         def __set__(self, instance, value):
             instance[self.name] = "yes" if value else "no"
@@ -93,7 +93,9 @@ class TypedEnv(MutableMapping):
         a list of objects of type ``type`` (``str`` by default).
         """
 
-        def __init__(self, name, default=NO_DEFAULT, type=str, separator=","):
+        def __init__(
+            self, name, default=NO_DEFAULT, type=str, separator=","
+        ):  # pylint:disable=redefined-builtin
             super(TypedEnv.CSV, self).__init__(name, default=default)
             self.type = type
             self.separator = separator
@@ -106,7 +108,9 @@ class TypedEnv(MutableMapping):
 
     # =========
 
-    def __init__(self, env=os.environ):
+    def __init__(self, env=None):
+        if env is None:
+            env = os.environ
         self._env = env
         self._defined_keys = {
             k
@@ -131,8 +135,7 @@ class TypedEnv(MutableMapping):
             value = self._env.get(key, NO_DEFAULT)
             if value is not NO_DEFAULT:
                 return value
-        else:
-            raise EnvironmentVariableError(key_names[0])
+        raise EnvironmentVariableError(key_names[0])
 
     def __contains__(self, key):
         try:
@@ -147,7 +150,9 @@ class TypedEnv(MutableMapping):
         try:
             return self._raw_get(name)
         except EnvironmentVariableError:
-            raise AttributeError(f"{self.__class__} has no attribute {name!r}")
+            raise AttributeError(
+                f"{self.__class__} has no attribute {name!r}"
+            ) from None
 
     def __getitem__(self, key):
         return getattr(self, key)  # delegate through the descriptors

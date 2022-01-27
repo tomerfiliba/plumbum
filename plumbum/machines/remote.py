@@ -16,28 +16,29 @@ class RemoteEnv(BaseEnv):
     __slots__ = ["_orig", "remote"]
 
     def __init__(self, remote):
-        self.remote = remote
         session = remote._session
         # GNU env has a -0 argument; use it if present. Otherwise,
         # fall back to calling printenv on each (possible) variable
         # from plain env.
         env0 = session.run("env -0; echo")
         if env0[0] == 0 and not env0[2].rstrip():
-            self._curr = dict(
+            _curr = dict(
                 line.split("=", 1) for line in env0[1].split("\x00") if "=" in line
             )
         else:
             lines = session.run("env; echo")[1].splitlines()
             split = (line.split("=", 1) for line in lines)
             keys = (line[0] for line in split if len(line) > 1)
-            runs = ((key, session.run('printenv "%s"; echo' % key)) for key in keys)
-            self._curr = {
+            runs = ((key, session.run(f'printenv "{key}"; echo')) for key in keys)
+            _curr = {
                 key: run[1].rstrip("\n")
                 for (key, run) in runs
                 if run[0] == 0 and run[1].rstrip("\n") and not run[2]
             }
+
+        super().__init__(remote.path, ":", _curr=_curr)
+        self.remote = remote
         self._orig = self._curr.copy()
-        BaseEnv.__init__(self, self.remote.path, ":")
 
     def __delitem__(self, name):
         BaseEnv.__delitem__(self, name)
@@ -177,15 +178,15 @@ class BaseRemoteMachine(BaseMachine):
         rc, out, _ = self._session.run("uname", retcode=None)
         if rc == 0:
             return out.strip()
-        else:
-            rc, out, _ = self._session.run(
-                "python -c 'import platform;print(platform.uname()[0])'", retcode=None
-            )
-            if rc == 0:
-                return out.strip()
-            else:
-                # all POSIX systems should have uname. make an educated guess it's Windows
-                return "Windows"
+
+        rc, out, _ = self._session.run(
+            "python -c 'import platform;print(platform.uname()[0])'", retcode=None
+        )
+        if rc == 0:
+            return out.strip()
+
+        # all POSIX systems should have uname. make an educated guess it's Windows
+        return "Windows"
 
     def __repr__(self):
         return f"<{self.__class__.__name__} {self}>"
@@ -247,19 +248,17 @@ class BaseRemoteMachine(BaseMachine):
         if isinstance(cmd, RemotePath):
             if cmd.remote is self:
                 return self.RemoteCommand(self, cmd)
-            else:
-                raise TypeError(
-                    "Given path does not belong to this remote machine: {!r}".format(
-                        cmd
-                    )
-                )
-        elif not isinstance(cmd, LocalPath):
-            if "/" in cmd or "\\" in cmd:
-                return self.RemoteCommand(self, self.path(cmd))
-            else:
-                return self.RemoteCommand(self, self.which(cmd))
-        else:
-            raise TypeError(f"cmd must not be a LocalPath: {cmd!r}")
+
+            raise TypeError(
+                f"Given path does not belong to this remote machine: {cmd!r}"
+            )
+
+        if not isinstance(cmd, LocalPath):
+            return self.RemoteCommand(
+                self, self.path(cmd) if "/" in cmd or "\\" in cmd else self.which(cmd)
+            )
+
+        raise TypeError(f"cmd must not be a LocalPath: {cmd!r}")
 
     @property
     def python(self):
@@ -322,11 +321,11 @@ class BaseRemoteMachine(BaseMachine):
         _, out, _ = self._session.run(
             "mktemp -d 2>/dev/null || mktemp -d tmp.XXXXXXXXXX"
         )
-        dir = self.path(out.strip())  # @ReservedAssignment
+        local_dir = self.path(out.strip())
         try:
-            yield dir
+            yield local_dir
         finally:
-            dir.delete()
+            local_dir.delete()
 
     #
     # Path implementation
@@ -387,7 +386,12 @@ class BaseRemoteMachine(BaseMachine):
     def _path_copy(self, src, dst):
         self._session.run(f"cp -r {shquote(src)} {shquote(dst)}")
 
-    def _path_mkdir(self, fn, mode=None, minus_p=True):
+    def _path_mkdir(
+        self,
+        fn,
+        mode=None,  # pylint: disable=unused-argument
+        minus_p=True,
+    ):
         p_str = "-p " if minus_p else ""
         cmd = f"mkdir {p_str}{shquote(fn)}"
         self._session.run(cmd)
@@ -427,9 +431,8 @@ class BaseRemoteMachine(BaseMachine):
             self.upload(f.name, fn)
 
     def _path_link(self, src, dst, symlink):
-        self._session.run(
-            "ln {} {} {}".format("-s" if symlink else "", shquote(src), shquote(dst))
-        )
+        symlink_str = "-s " if symlink else ""
+        self._session.run(f"ln {symlink_str}{shquote(src)} {shquote(dst)}")
 
     def expand(self, expr):
         return self._session.run(f"echo {expr}")[1].strip()
@@ -438,4 +441,5 @@ class BaseRemoteMachine(BaseMachine):
         if not any(part.startswith("~") for part in expr.split("/")):
             return expr
         # we escape all $ signs to avoid expanding env-vars
-        return self._session.run("echo {}".format(expr.replace("$", "\\$")))[1].strip()
+        expr_repl = expr.replace("$", "\\$")
+        return self._session.run(f"echo {expr_repl}")[1].strip()

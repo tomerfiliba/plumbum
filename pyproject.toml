@@ -50,3 +50,44 @@ ignore = [
 
 [tool.pycln]
 all = true
+
+
+[tool.pylint]
+master.py-version = "3.6"
+master.jobs = "0"
+master.fail-under = "9.97"
+reports.output-format = "colorized"
+similarities.ignore-imports = "yes"
+messages_control.enable = [
+  "useless-suppression",
+]
+messages_control.disable = [
+  "arguments-differ", # TODO: investigate
+  "attribute-defined-outside-init", # TODO: investigate
+  "broad-except", # TODO: investigate
+  "cyclic-import",
+  "duplicate-code",  # TODO: check
+  "fixme",
+  "import-error",
+  "import-outside-toplevel",  # TODO: see if this can be limited to certain imports
+  "invalid-name",
+  "line-too-long",
+  "missing-class-docstring",
+  "missing-function-docstring",
+  "missing-module-docstring",
+  "no-member",
+  "protected-access",
+  "too-few-public-methods",
+  "too-many-arguments",
+  "too-many-branches",
+  "too-many-function-args",
+  "too-many-instance-attributes",
+  "too-many-lines",
+  "too-many-locals",
+  "too-many-nested-blocks",
+  "too-many-public-methods",
+  "too-many-return-statements",
+  "too-many-statements",
+  "non-parent-init-called", # TODO: should be looked at
+  "unidiomatic-typecheck", # TODO: might be able to remove
+]

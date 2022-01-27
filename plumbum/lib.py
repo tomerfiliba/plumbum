@@ -15,9 +15,7 @@ class ProcInfo:
         self.args = args
 
     def __repr__(self):
-        return "ProcInfo({!r}, {!r}, {!r}, {!r})".format(
-            self.pid, self.uid, self.stat, self.args
-        )
+        return f"ProcInfo({self.pid!r}, {self.uid!r}, {self.stat!r}, {self.args!r})"
 
 
 @contextmanager
@@ -48,13 +46,13 @@ class StaticProperty:
         return self._function()
 
 
-def getdoc(object):
+def getdoc(obj):
     """
     This gets a docstring if available, and cleans it, but does not look up docs in
-    inheritance tree (Pre 3.5 behavior of ``inspect.getdoc``).
+    inheritance tree (Pre Python 3.5 behavior of ``inspect.getdoc``).
     """
     try:
-        doc = object.__doc__
+        doc = obj.__doc__
     except AttributeError:
         return None
     if not isinstance(doc, str):
@@ -70,12 +68,12 @@ def read_fd_decode_safely(fd, size=4096):
     Returns the data and the decoded text.
     """
     data = os.read(fd.fileno(), size)
-    for i in range(4):
+    for _ in range(3):
         try:
             return data, data.decode("utf-8")
         except UnicodeDecodeError as e:
             if e.reason != "unexpected end of data":
                 raise
-            if i == 3:
-                raise
             data += os.read(fd.fileno(), 1)
+
+    return data, data.decode("utf-8")

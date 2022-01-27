@@ -39,7 +39,6 @@ class ConfigBase(ABC):
     @abstractmethod
     def read(self):
         """Read in the linked file"""
-        pass
 
     @abstractmethod
     def write(self):
@@ -49,12 +48,10 @@ class ConfigBase(ABC):
     @abstractmethod
     def _get(self, option):
         """Internal get function for subclasses"""
-        pass
 
     @abstractmethod
     def _set(self, option, value):
         """Internal set function for subclasses. Must return the value that was set."""
-        pass
 
     def get(self, option, default=None):
         "Get an item from the store, returns default if fails"
@@ -89,7 +86,7 @@ class ConfigINI(ConfigBase):
         super().read()
 
     def write(self):
-        with open(self.filename, "w") as f:
+        with open(self.filename, "w", encoding="utf-8") as f:
             self.parser.write(f)
         super().write()
 
@@ -107,7 +104,7 @@ class ConfigINI(ConfigBase):
         try:
             return self.parser.get(sec, option)
         except (NoSectionError, NoOptionError):
-            raise KeyError(f"{sec}:{option}")
+            raise KeyError(f"{sec}:{option}") from None
 
     def _set(self, option, value):
         sec, option = self._sec_opt(option)

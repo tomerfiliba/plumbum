@@ -4,6 +4,8 @@ import logging
 import os
 import shutil
 import sys
+import urllib.parse as urlparse
+import urllib.request as urllib
 from contextlib import contextmanager
 
 from plumbum.lib import IS_WIN32
@@ -15,23 +17,22 @@ try:
     from pwd import getpwnam, getpwuid
 except ImportError:
 
-    def getpwuid(x):  # type: ignore
+    def getpwuid(_x):  # type: ignore
         return (None,)
 
-    def getgrgid(x):  # type: ignore
+    def getgrgid(_x):  # type: ignore
         return (None,)
 
-    def getpwnam(x):  # type: ignore
+    def getpwnam(_x):  # type: ignore
         raise OSError("`getpwnam` not supported")
 
-    def getgrnam(x):  # type: ignore
+    def getgrnam(_x):  # type: ignore
         raise OSError("`getgrnam` not supported")
 
 
-import urllib.parse as urlparse
-import urllib.request as urllib
-
 logger = logging.getLogger("plumbum.local")
+
+_EMPTY = object()
 
 
 # ===================================================================================================
@@ -139,7 +140,7 @@ class LocalPath(Path):
 
     def with_suffix(self, suffix, depth=1):
         if suffix and not suffix.startswith(os.path.extsep) or suffix == os.path.extsep:
-            raise ValueError("Invalid suffix %r" % (suffix))
+            raise ValueError(f"Invalid suffix {suffix!r}")
         name = self.name
         depth = len(self.suffixes) if depth is None else min(depth, len(self.suffixes))
         for _ in range(depth):
@@ -202,8 +203,12 @@ class LocalPath(Path):
                 if ex.errno != errno.EEXIST or not exist_ok:
                     raise
 
-    def open(self, mode="r"):
-        return open(str(self), mode)
+    def open(self, mode="r", encoding=None):
+        return open(
+            str(self),
+            mode,
+            encoding=encoding,
+        )
 
     def read(self, encoding=None, mode="r"):
         if encoding and "b" not in mode:
@@ -226,7 +231,7 @@ class LocalPath(Path):
             f.write(data)
 
     def touch(self):
-        with open(str(self), "a"):
+        with open(str(self), "a", encoding="utf-8"):
             os.utime(str(self), None)
 
     def chown(self, owner=None, group=None, recursive=None):

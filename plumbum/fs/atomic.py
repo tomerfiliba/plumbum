@@ -20,9 +20,8 @@ except ImportError:
         from win32con import LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY
         from win32file import OVERLAPPED, LockFileEx, UnlockFile
     except ImportError:
-        raise ImportError(
-            "On Windows, we require Python for Windows Extensions (pywin32)"
-        )
+        print("On Windows, Plumbum requires Python for Windows Extensions (pywin32)")
+        raise
 
     @contextmanager
     def locked_file(fileno, blocking=True):
@@ -38,7 +37,7 @@ except ImportError:
             )
         except WinError:
             _, ex, _ = sys.exc_info()
-            raise OSError(*ex.args)
+            raise OSError(*ex.args) from None
         try:
             yield
         finally:
@@ -277,7 +276,7 @@ class PidFile:
     def __del__(self):
         try:
             self.release()
-        except Exception:
+        except Exception:  # pylint:disable=broad-except
             pass
 
     def close(self):
@@ -303,7 +302,7 @@ class PidFile:
             raise PidFileTaken(
                 f"PID file {self.atomicfile.path!r} taken by process {pid}",
                 pid,
-            )
+            ) from None
         else:
             self.atomicfile.write_atomic(str(os.getpid()).encode("utf8"))
             atexit.register(self.release)

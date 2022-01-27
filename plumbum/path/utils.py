@@ -48,20 +48,17 @@ def move(src, dst):
         for src2 in src:
             move(src2, dst)
         return dst
-    elif not isinstance(src, Path):
+    if not isinstance(src, Path):
         src = local.path(src)
 
     if isinstance(src, LocalPath):
-        if isinstance(dst, LocalPath):
-            return src.move(dst)
-        else:
-            return _move(src, dst)
-    elif isinstance(dst, LocalPath):
+        return src.move(dst) if isinstance(dst, LocalPath) else _move(src, dst)
+    if isinstance(dst, LocalPath):
         return _move(src, dst)
-    elif src.remote == dst.remote:
+    if src.remote == dst.remote:
         return src.move(dst)
-    else:
-        return _move(src, dst)
+
+    return _move(src, dst)
 
 
 def copy(src, dst):
@@ -86,25 +83,27 @@ def copy(src, dst):
         for src2 in src:
             copy(src2, dst)
         return dst
-    elif not isinstance(src, Path):
+
+    if not isinstance(src, Path):
         src = local.path(src)
 
     if isinstance(src, LocalPath):
         if isinstance(dst, LocalPath):
             return src.copy(dst)
-        else:
-            dst.remote.upload(src, dst)
-            return dst
-    elif isinstance(dst, LocalPath):
+        dst.remote.upload(src, dst)
+        return dst
+
+    if isinstance(dst, LocalPath):
         src.remote.download(src, dst)
         return dst
-    elif src.remote == dst.remote:
+
+    if src.remote == dst.remote:
         return src.copy(dst)
-    else:
-        with local.tempdir() as tmp:
-            copy(src, tmp)
-            copy(tmp / src.name, dst)
-        return dst
+
+    with local.tempdir() as tmp:
+        copy(src, tmp)
+        copy(tmp / src.name, dst)
+    return dst
 
 
 def gui_open(filename):
