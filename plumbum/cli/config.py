@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from configparser import ConfigParser, NoOptionError, NoSectionError
 
 from plumbum import local
-from plumbum.lib import _setdoc
 
 
 class ConfigBase(ABC):
@@ -85,12 +84,10 @@ class ConfigINI(ConfigBase):
         super().__init__(filename)
         self.parser = ConfigParser()
 
-    @_setdoc(ConfigBase)
     def read(self):
         self.parser.read(self.filename)
         super().read()
 
-    @_setdoc(ConfigBase)
     def write(self):
         with open(self.filename, "w") as f:
             self.parser.write(f)
@@ -104,7 +101,6 @@ class ConfigINI(ConfigBase):
             sec, option = option.split(".", 1)
         return sec, option
 
-    @_setdoc(ConfigBase)
     def _get(self, option):
         sec, option = self._sec_opt(option)
 
@@ -113,7 +109,6 @@ class ConfigINI(ConfigBase):
         except (NoSectionError, NoOptionError):
             raise KeyError(f"{sec}:{option}")
 
-    @_setdoc(ConfigBase)
     def _set(self, option, value):
         sec, option = self._sec_opt(option)
         try:

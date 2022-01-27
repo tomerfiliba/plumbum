@@ -6,7 +6,7 @@ import shutil
 import sys
 from contextlib import contextmanager
 
-from plumbum.lib import IS_WIN32, _setdoc
+from plumbum.lib import IS_WIN32
 from plumbum.path.base import FSUser, Path
 from plumbum.path.remote import RemotePath
 
@@ -68,18 +68,15 @@ class LocalPath(Path):
     def _form(self, *parts):
         return LocalPath(*parts)
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def name(self):
         return os.path.basename(str(self))
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def dirname(self):
         return LocalPath(os.path.dirname(str(self)))
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def suffix(self):
         return os.path.splitext(str(self))[1]
 
@@ -94,65 +91,52 @@ class LocalPath(Path):
             else:
                 return list(reversed(exts))
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def uid(self):
         uid = self.stat().st_uid
         name = getpwuid(uid)[0]
         return FSUser(uid, name)
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def gid(self):
         gid = self.stat().st_gid
         name = getgrgid(gid)[0]
         return FSUser(gid, name)
 
-    @_setdoc(Path)
     def join(self, *others):
         return LocalPath(self, *others)
 
-    @_setdoc(Path)
     def list(self):
         return [self / fn for fn in os.listdir(str(self))]
 
-    @_setdoc(Path)
     def iterdir(self):
         try:
             return (self / fn.name for fn in os.scandir(str(self)))
         except AttributeError:
             return (self / fn for fn in os.listdir(str(self)))
 
-    @_setdoc(Path)
     def is_dir(self):
         return os.path.isdir(str(self))
 
-    @_setdoc(Path)
     def is_file(self):
         return os.path.isfile(str(self))
 
-    @_setdoc(Path)
     def is_symlink(self):
         return os.path.islink(str(self))
 
-    @_setdoc(Path)
     def exists(self):
         return os.path.exists(str(self))
 
-    @_setdoc(Path)
     def stat(self):
         return os.stat(str(self))
 
-    @_setdoc(Path)
     def with_name(self, name):
         return LocalPath(self.dirname) / name
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def stem(self):
         return self.name.rsplit(os.path.extsep)[0]
 
-    @_setdoc(Path)
     def with_suffix(self, suffix, depth=1):
         if suffix and not suffix.startswith(os.path.extsep) or suffix == os.path.extsep:
             raise ValueError("Invalid suffix %r" % (suffix))
@@ -162,14 +146,12 @@ class LocalPath(Path):
             name, _ = os.path.splitext(name)
         return LocalPath(self.dirname) / (name + suffix)
 
-    @_setdoc(Path)
     def glob(self, pattern):
         fn = lambda pat: [
             LocalPath(m) for m in glob.glob(os.path.join(glob.escape(str(self)), pat))
         ]
         return self._glob(pattern, fn)
 
-    @_setdoc(Path)
     def delete(self):
         if not self.exists():
             return
@@ -184,14 +166,12 @@ class LocalPath(Path):
                 if ex.errno != errno.ENOENT:
                     raise
 
-    @_setdoc(Path)
     def move(self, dst):
         if isinstance(dst, RemotePath):
             raise TypeError(f"Cannot move local path {self} to {dst!r}")
         shutil.move(str(self), str(dst))
         return LocalPath(dst)
 
-    @_setdoc(Path)
     def copy(self, dst, override=None):
         if isinstance(dst, RemotePath):
             raise TypeError(f"Cannot copy local path {self} to {dst!r}")
@@ -209,7 +189,6 @@ class LocalPath(Path):
             shutil.copy2(str(self), str(dst))
         return dst
 
-    @_setdoc(Path)
     def mkdir(self, mode=0o777, parents=True, exist_ok=True):
         if not self.exists() or not exist_ok:
             try:
@@ -223,11 +202,9 @@ class LocalPath(Path):
                 if ex.errno != errno.EEXIST or not exist_ok:
                     raise
 
-    @_setdoc(Path)
     def open(self, mode="r"):
         return open(str(self), mode)
 
-    @_setdoc(Path)
     def read(self, encoding=None, mode="r"):
         if encoding and "b" not in mode:
             mode = mode + "b"
@@ -237,7 +214,6 @@ class LocalPath(Path):
                 data = data.decode(encoding)
             return data
 
-    @_setdoc(Path)
     def write(self, data, encoding=None, mode=None):
         if encoding:
             data = data.encode(encoding)
@@ -249,12 +225,10 @@ class LocalPath(Path):
         with self.open(mode) as f:
             f.write(data)
 
-    @_setdoc(Path)
     def touch(self):
         with open(str(self), "a"):
             os.utime(str(self), None)
 
-    @_setdoc(Path)
     def chown(self, owner=None, group=None, recursive=None):
         if not hasattr(os, "chown"):
             raise OSError("os.chown() not supported")
@@ -273,17 +247,14 @@ class LocalPath(Path):
             for subpath in self.walk():
                 os.chown(str(subpath), uid, gid)
 
-    @_setdoc(Path)
     def chmod(self, mode):
         if not hasattr(os, "chmod"):
             raise OSError("os.chmod() not supported")
         os.chmod(str(self), mode)
 
-    @_setdoc(Path)
     def access(self, mode=0):
         return os.access(str(self), self._access_mode_to_flags(mode))
 
-    @_setdoc(Path)
     def link(self, dst):
         if isinstance(dst, RemotePath):
             raise TypeError(
@@ -300,7 +271,6 @@ class LocalPath(Path):
             else:
                 local["cmd"]("/C", "mklink", "/H", str(dst), str(self))
 
-    @_setdoc(Path)
     def symlink(self, dst):
         if isinstance(dst, RemotePath):
             raise TypeError(
@@ -317,7 +287,6 @@ class LocalPath(Path):
             else:
                 local["cmd"]("/C", "mklink", str(dst), str(self))
 
-    @_setdoc(Path)
     def unlink(self):
         try:
             if hasattr(os, "symlink") or not self.is_dir():
@@ -331,17 +300,14 @@ class LocalPath(Path):
             if ex.errno != errno.ENOENT:
                 raise
 
-    @_setdoc(Path)
     def as_uri(self, scheme="file"):
         return urlparse.urljoin(str(scheme) + ":", urllib.pathname2url(str(self)))
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def drive(self):
         return os.path.splitdrive(str(self))[0]
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def root(self):
         return os.path.sep
 

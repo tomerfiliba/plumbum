@@ -420,8 +420,7 @@ pass the validators in the decorator matching the names in the main function. Fo
         def main(self, infile, *outfiles):
             "infile is a path, outfiles are a list of paths, proper errors are given"
 
-If you only want to run your application in Python 3, you can also use annotations to
-specify the validators. For example::
+You can also use annotations to specify the validators. For example::
 
     class MyApp(cli.Application):
         def main(self, infile : cli.ExistingFile, *outfiles : cli.NonexistentPath):

@@ -1,7 +1,7 @@
 import warnings
 
 from plumbum.commands import ProcessExecutionError, shquote
-from plumbum.lib import IS_WIN32, _setdoc
+from plumbum.lib import IS_WIN32
 from plumbum.machines.local import local
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
@@ -131,7 +131,6 @@ class SshMachine(BaseRemoteMachine):
     def __str__(self):
         return f"ssh://{self._fqhost}"
 
-    @_setdoc(BaseRemoteMachine)
     def popen(self, args, ssh_opts=(), env=None, cwd=None, **kwargs):
         cmdline = []
         cmdline.extend(ssh_opts)
@@ -203,7 +202,6 @@ class SshMachine(BaseRemoteMachine):
             proc.stdout.close()
             proc.stderr.close()
 
-    @_setdoc(BaseRemoteMachine)
     def session(self, isatty=False, new_session=False):
         return ShellSession(
             self.popen(
@@ -299,7 +297,6 @@ class SshMachine(BaseRemoteMachine):
             path = "/" + path.replace(":", "").replace("\\", "/")
         return path
 
-    @_setdoc(BaseRemoteMachine)
     def download(self, src, dst):
         if isinstance(src, LocalPath):
             raise TypeError(f"src of download cannot be {src!r}")
@@ -312,7 +309,6 @@ class SshMachine(BaseRemoteMachine):
             dst = self._translate_drive_letter(dst)
         self._scp_command(f"{self._fqhost}:{shquote(src)}", dst)
 
-    @_setdoc(BaseRemoteMachine)
     def upload(self, src, dst):
         if isinstance(src, RemotePath):
             raise TypeError(f"src of upload cannot be {src!r}")
@@ -382,7 +378,6 @@ class PuttyMachine(SshMachine):
         # pscp takes care of windows paths automatically
         return path
 
-    @_setdoc(BaseRemoteMachine)
     def session(self, isatty=False, new_session=False):
         return ShellSession(
             self.popen((), (["-t"] if isatty else ["-T"]), new_session=new_session),

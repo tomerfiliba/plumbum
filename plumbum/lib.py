@@ -7,17 +7,6 @@ from io import StringIO
 IS_WIN32 = sys.platform == "win32"
 
 
-def _setdoc(super):  # @ReservedAssignment
-    """This inherits the docs on the current class. Not really needed for Python 3.5,
-    due to new behavior of inspect.getdoc, but still doesn't hurt."""
-
-    def deco(func):
-        func.__doc__ = getattr(getattr(super, func.__name__, None), "__doc__", None)
-        return func
-
-    return deco
-
-
 class ProcInfo:
     def __init__(self, pid, uid, stat, args):
         self.pid = pid

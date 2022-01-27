@@ -80,10 +80,8 @@ class Path(str, ABC):
         else:
             return hash(str(self).lower())
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(str(self))
-
-    __bool__ = __nonzero__
 
     def __fspath__(self):
         """Added for Python 3.6 support"""
@@ -478,10 +476,8 @@ class RelativePath:
     def __hash__(self):
         return hash(str(self))
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(str(self))
-
-    __bool__ = __nonzero__
 
     def up(self, count=1):
         return RelativePath(self.parts[:-count])
