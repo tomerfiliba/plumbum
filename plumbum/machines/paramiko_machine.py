@@ -5,7 +5,6 @@ import stat
 
 from plumbum.commands.base import shquote
 from plumbum.commands.processes import ProcessLineTimedOut, iter_lines
-from plumbum.lib import _setdoc
 from plumbum.machines.base import PopenAddons
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
@@ -286,7 +285,6 @@ class ParamikoMachine(BaseRemoteMachine):
             self._sftp = self._client.open_sftp()
         return self._sftp
 
-    @_setdoc(BaseRemoteMachine)
     def session(
         self, isatty=False, term="vt100", width=80, height=24, new_session=False
     ):
@@ -304,7 +302,6 @@ class ParamikoMachine(BaseRemoteMachine):
         proc = ParamikoPopen(["<shell>"], stdin, stdout, stderr, self.custom_encoding)
         return ShellSession(proc, self.custom_encoding, isatty)
 
-    @_setdoc(BaseRemoteMachine)
     def popen(
         self,
         args,
@@ -339,7 +336,6 @@ class ParamikoMachine(BaseRemoteMachine):
             stderr_file=stderr,
         )
 
-    @_setdoc(BaseRemoteMachine)
     def download(self, src, dst):
         if isinstance(src, LocalPath):
             raise TypeError(f"src of download cannot be {src!r}")
@@ -363,7 +359,6 @@ class ParamikoMachine(BaseRemoteMachine):
         else:
             self.sftp.get(str(src), str(dst))
 
-    @_setdoc(BaseRemoteMachine)
     def upload(self, src, dst):
         if isinstance(src, RemotePath):
             raise TypeError(f"src of upload cannot be {src!r}")

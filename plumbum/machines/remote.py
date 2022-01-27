@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
 
 from plumbum.commands import CommandNotFound, ConcreteCommand, shquote
-from plumbum.lib import ProcInfo, _setdoc
+from plumbum.lib import ProcInfo
 from plumbum.machines.base import BaseMachine
 from plumbum.machines.env import BaseEnv
 from plumbum.machines.local import LocalPath
@@ -39,22 +39,18 @@ class RemoteEnv(BaseEnv):
         self._orig = self._curr.copy()
         BaseEnv.__init__(self, self.remote.path, ":")
 
-    @_setdoc(BaseEnv)
     def __delitem__(self, name):
         BaseEnv.__delitem__(self, name)
         self.remote._session.run(f"unset {name}")
 
-    @_setdoc(BaseEnv)
     def __setitem__(self, name, value):
         BaseEnv.__setitem__(self, name, value)
         self.remote._session.run(f"export {name}={shquote(value)}")
 
-    @_setdoc(BaseEnv)
     def pop(self, name, *default):
         BaseEnv.pop(self, name, *default)
         self.remote._session.run(f"unset {name}")
 
-    @_setdoc(BaseEnv)
     def update(self, *args, **kwargs):
         BaseEnv.update(self, *args, **kwargs)
         self.remote._session.run(
@@ -435,11 +431,9 @@ class BaseRemoteMachine(BaseMachine):
             "ln {} {} {}".format("-s" if symlink else "", shquote(src), shquote(dst))
         )
 
-    @_setdoc(BaseEnv)
     def expand(self, expr):
         return self._session.run(f"echo {expr}")[1].strip()
 
-    @_setdoc(BaseEnv)
     def expanduser(self, expr):
         if not any(part.startswith("~") for part in expr.split("/")):
             return expr
