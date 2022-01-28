@@ -26,7 +26,9 @@ ignore_missing_imports = true
 minversion = "6.0"
 addopts = ["-ra", "--cov-config=setup.cfg", "--strict-markers", "--strict-config"]
 norecursedirs = ["examples", "experiments"]
-# filterwarnings = ["error"]
+filterwarnings = [
+  "always"
+]
 log_cli_level = "info"
 required_plugins = ["pytest-timeout", "pytest-mock"]
 timeout = 300

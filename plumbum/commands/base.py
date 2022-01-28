@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from subprocess import PIPE, Popen
 from tempfile import TemporaryFile
 from types import MethodType
+from typing import ClassVar
 
 import plumbum.commands.modifiers
 from plumbum.commands.processes import iter_lines, run_proc
@@ -440,9 +441,9 @@ class Pipeline(BaseCommand):
 
 class BaseRedirection(BaseCommand):
     __slots__ = ("cmd", "file")
-    SYM = None  # type: str
-    KWARG = None  # type: str
-    MODE = "r"  # type: str
+    SYM: ClassVar[str]
+    KWARG: ClassVar[str]
+    MODE: ClassVar[str]
 
     def __init__(self, cmd, file):
         self.cmd = cmd
@@ -564,7 +565,7 @@ class StdinDataRedirection(BaseCommand):
 
 
 class ConcreteCommand(BaseCommand):
-    QUOTE_LEVEL = None  # type: int
+    QUOTE_LEVEL: ClassVar[int]
     __slots__ = ("executable", "custom_encoding")
 
     def __init__(self, executable, encoding):

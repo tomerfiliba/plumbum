@@ -16,14 +16,14 @@ try:
     import paramiko
 except ImportError:
 
-    class paramiko:  # type: ignore
+    class paramiko:  # type: ignore[no-redef]
         def __bool__(self):
             return False
 
         def __getattr__(self, name):
             raise ImportError("No module named paramiko")
 
-    paramiko = paramiko()  # type: ignore
+    paramiko = paramiko()  # type: ignore[operator]
 
 logger = logging.getLogger("plumbum.paramiko")
 

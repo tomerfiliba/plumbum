@@ -103,7 +103,7 @@ class LocalModule(ModuleType):
         except CommandNotFound:
             raise AttributeError(name) from None
 
-    __path__ = []  # type: List[str]
+    __path__: List[str] = []
     __file__ = __file__
 
 

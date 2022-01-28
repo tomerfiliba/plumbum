@@ -17,16 +17,16 @@ try:
     from pwd import getpwnam, getpwuid
 except ImportError:
 
-    def getpwuid(_x):  # type: ignore
+    def getpwuid(_x):  # type: ignore[misc]
         return (None,)
 
-    def getgrgid(_x):  # type: ignore
+    def getgrgid(_x):  # type: ignore[misc]
         return (None,)
 
-    def getpwnam(_x):  # type: ignore
+    def getpwnam(_x):  # type: ignore[misc]
         raise OSError("`getpwnam` not supported")
 
-    def getgrnam(_x):  # type: ignore
+    def getgrnam(_x):  # type: ignore[misc]
         raise OSError("`getgrnam` not supported")
 
 
