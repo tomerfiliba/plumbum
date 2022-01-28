@@ -36,8 +36,6 @@ See https://plumbum.readthedocs.io for full details
 """
 
 import sys
-from types import ModuleType
-from typing import List
 
 # Avoids a circular import error later
 import plumbum.path  # noqa: F401
@@ -91,24 +89,29 @@ __all__ = (
 # ===================================================================================================
 
 
-class LocalModule(ModuleType):
-    """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
+if sys.version_info < (3, 7):
+    from types import ModuleType
+    from typing import List
 
-    __all__ = ()  # to make help() happy
-    __package__ = __name__
+    class LocalModule(ModuleType):
+        """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
 
-    def __getattr__(self, name):
-        try:
-            return local[name]
-        except CommandNotFound:
-            raise AttributeError(name) from None
+        __all__ = ()  # to make help() happy
+        __package__ = __name__
 
-    __path__: List[str] = []
-    __file__ = __file__
+        def __getattr__(self, name):
+            try:
+                return local[name]
+            except CommandNotFound:
+                raise AttributeError(name) from None
 
+        __path__: List[str] = []
+        __file__ = __file__
 
-cmd = LocalModule(__name__ + ".cmd", LocalModule.__doc__)
-sys.modules[cmd.__name__] = cmd
+    cmd = LocalModule(__name__ + ".cmd", LocalModule.__doc__)
+    sys.modules[cmd.__name__] = cmd
+else:
+    from . import cmd
 
 
 def __dir__():
