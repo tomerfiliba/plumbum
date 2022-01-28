@@ -1,4 +1,7 @@
 include LICENSE
 include README.rst
-recursive-include plumbum *.mo
-recursive-include plumbum *.mo
+include CHANGELOG.rst
+include translations.py
+include tests/not-in-path/dummy-executable
+recursive-include plumbum *.mo *.po *.py py.typed
+recursive-include tests *.bash *.py *.txt

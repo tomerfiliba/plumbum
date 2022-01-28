@@ -34,45 +34,86 @@ of command-line interface (CLI) programs.
 
 See https://plumbum.readthedocs.io for full details
 """
-from plumbum.commands import ProcessExecutionError, CommandNotFound, ProcessTimedOut, ProcessLineTimedOut
-from plumbum.commands import FG, BG, TEE, TF, RETCODE, ERROUT, NOHUP
-from plumbum.path import Path, LocalPath, RemotePath
-from plumbum.machines import local, BaseRemoteMachine, SshMachine, PuttyMachine
+
+import sys
+
+# Avoids a circular import error later
+import plumbum.path  # noqa: F401
+from plumbum.commands import (
+    BG,
+    ERROUT,
+    FG,
+    NOHUP,
+    RETCODE,
+    TEE,
+    TF,
+    CommandNotFound,
+    ProcessExecutionError,
+    ProcessLineTimedOut,
+    ProcessTimedOut,
+)
+from plumbum.machines import BaseRemoteMachine, PuttyMachine, SshMachine, local
+from plumbum.path import LocalPath, Path, RemotePath
 from plumbum.version import version
 
 __author__ = "Tomer Filiba (tomerfiliba@gmail.com)"
 __version__ = version
 
-#===================================================================================================
+__all__ = (
+    "BG",
+    "ERROUT",
+    "FG",
+    "NOHUP",
+    "RETCODE",
+    "TEE",
+    "TF",
+    "CommandNotFound",
+    "ProcessExecutionError",
+    "ProcessLineTimedOut",
+    "ProcessTimedOut",
+    "BaseRemoteMachine",
+    "PuttyMachine",
+    "SshMachine",
+    "local",
+    "LocalPath",
+    "Path",
+    "RemotePath",
+    "__author__",
+    "__version__",
+    "cmd",
+)
+
+# ===================================================================================================
 # Module hack: ``from plumbum.cmd import ls``
-#===================================================================================================
-import sys
-from types import ModuleType
+# Can be replaced by a real module with __getattr__ after Python 3.6 is dropped
+# ===================================================================================================
 
-try:
+
+if sys.version_info < (3, 7):
+    from types import ModuleType
     from typing import List
-except ImportError:
-    pass
+
+    class LocalModule(ModuleType):
+        """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
+
+        __all__ = ()  # to make help() happy
+        __package__ = __name__
+
+        def __getattr__(self, name):
+            try:
+                return local[name]
+            except CommandNotFound:
+                raise AttributeError(name) from None
+
+        __path__: List[str] = []
+        __file__ = __file__
+
+    cmd = LocalModule(__name__ + ".cmd", LocalModule.__doc__)
+    sys.modules[cmd.__name__] = cmd
+else:
+    from . import cmd
 
 
-class LocalModule(ModuleType):
-    """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
-    __all__ = ()  # to make help() happy
-    __package__ = __name__
-
-    def __getattr__(self, name):
-        try:
-            return local[name]
-        except CommandNotFound:
-            raise AttributeError(name)
-
-    __path__ = []  # type: List[str]
-    __file__ = __file__
-
-
-cmd = LocalModule(__name__ + ".cmd", LocalModule.__doc__)
-sys.modules[cmd.__name__] = cmd
-
-del sys
-del ModuleType
-del LocalModule
+def __dir__():
+    "Support nice tab completion"
+    return __all__

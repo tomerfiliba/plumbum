@@ -42,47 +42,73 @@ Examples::
 
 try:
     import colorama
+
     colorama.init()
 except ImportError:
     pass
 
 from plumbum import cli, colors
 
+
 class Geet(cli.Application):
     SUBCOMMAND_HELPMSG = False
     DESCRIPTION = colors.yellow | """The l33t version control"""
     PROGNAME = colors.green
     VERSION = colors.blue | "1.7.2"
+    COLOR_USAGE_TITLE = colors.bold | colors.magenta
     COLOR_USAGE = colors.magenta
-    COLOR_GROUPS = {"Meta-switches":colors.bold, "Switches":colors.skyblue1, "Subcommands":colors.yellow}
 
-    verbosity = cli.SwitchAttr("--verbosity", cli.Set("low", "high", "some-very-long-name", "to-test-wrap-around"),
-        help = colors.cyan | "sets the verbosity level of the geet tool. doesn't really do anything except for testing line-wrapping "
-        "in help " * 3)
-    verbositie = cli.SwitchAttr("--verbositie", cli.Set("low", "high", "some-very-long-name", "to-test-wrap-around"),
-        help = colors.hotpink | "sets the verbosity level of the geet tool. doesn't really do anything except for testing line-wrapping "
-        "in help " * 3)
+    _group_names = ["Meta-switches", "Switches", "Sub-commands"]
+
+    COLOR_GROUPS = dict(
+        zip(_group_names, [colors.do_nothing, colors.skyblue1, colors.yellow])
+    )
+
+    COLOR_GROUP_TITLES = dict(
+        zip(
+            _group_names,
+            [colors.bold, colors.bold | colors.skyblue1, colors.bold | colors.yellow],
+        )
+    )
+
+    verbosity = cli.SwitchAttr(
+        "--verbosity",
+        cli.Set("low", "high", "some-very-long-name", "to-test-wrap-around"),
+        help=colors.cyan
+        | "sets the verbosity level of the geet tool. doesn't really do anything except for testing line-wrapping "
+        "in help " * 3,
+    )
+    verbositie = cli.SwitchAttr(
+        "--verbositie",
+        cli.Set("low", "high", "some-very-long-name", "to-test-wrap-around"),
+        help=colors.hotpink
+        | "sets the verbosity level of the geet tool. doesn't really do anything except for testing line-wrapping "
+        "in help " * 3,
+    )
+
 
 @Geet.subcommand(colors.red | "commit")
 class GeetCommit(cli.Application):
     """creates a new commit in the current branch"""
 
-    auto_add = cli.Flag("-a", help = "automatically add changed files")
-    message = cli.SwitchAttr("-m", str, mandatory = True, help = "sets the commit message")
+    auto_add = cli.Flag("-a", help="automatically add changed files")
+    message = cli.SwitchAttr("-m", str, mandatory=True, help="sets the commit message")
 
     def main(self):
         print("committing...")
 
+
 GeetCommit.unbind_switches("-v", "--version")
+
 
 @Geet.subcommand("push")
 class GeetPush(cli.Application):
     """pushes the current local branch to the remote one"""
 
-    tags = cli.Flag("--tags", help = "whether to push tags (default is False)")
+    tags = cli.Flag("--tags", help="whether to push tags (default is False)")
 
-    def main(self, remote, branch = "master"):
-        print("pushing to %s/%s..." % (remote, branch))
+    def main(self, remote, branch="master"):
+        print(f"pushing to {remote}/{branch}...")
 
 
 if __name__ == "__main__":

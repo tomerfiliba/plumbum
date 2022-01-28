@@ -1,18 +1,14 @@
 import errno
-from contextlib import contextmanager
-from plumbum.path.base import Path, FSUser
-from plumbum.lib import _setdoc, six
-from plumbum.commands import shquote, ProcessExecutionError
 import os
 import sys
+import urllib.request as urllib
+from contextlib import contextmanager
 
-try:  # Py3
-    import urllib.request as urllib
-except ImportError:
-    import urllib  # type: ignore
+from plumbum.commands import ProcessExecutionError, shquote
+from plumbum.path.base import FSUser, Path
 
 
-class StatRes(object):
+class StatRes:
     """POSIX-like stat result"""
 
     def __init__(self, tup):
@@ -39,15 +35,20 @@ class RemotePath(Path):
     def __new__(cls, remote, *parts):
         if not parts:
             raise TypeError("At least one path part is required (none given)")
-        windows = (remote.uname.lower() == "windows")
+        windows = remote.uname.lower() == "windows"
         normed = []
 
-        parts = tuple(map(str, parts))  # force the paths into string, so subscription works properly
+        parts = tuple(
+            map(str, parts)
+        )  # force the paths into string, so subscription works properly
         # Simple skip if path is absolute
         if parts[0] and parts[0][0] not in ("/", "\\"):
-            cwd = (remote._cwd if hasattr(remote, '_cwd') else
-                   remote._session.run("pwd")[1].strip())
-            parts = (cwd, ) + parts
+            cwd = (
+                remote._cwd
+                if hasattr(remote, "_cwd")
+                else remote._session.run("pwd")[1].strip()
+            )
+            parts = (cwd,) + parts
 
         for p in parts:
             if windows:
@@ -58,7 +59,7 @@ class RemotePath(Path):
                 plist.pop(0)
                 del normed[:]
             for item in plist:
-                if item == "" or item == ".":
+                if item in {"", "."}:
                     continue
                 if item == "..":
                     if normed:
@@ -66,10 +67,10 @@ class RemotePath(Path):
                 else:
                     normed.append(item)
         if windows:
-            self = super(RemotePath, cls).__new__(cls, "\\".join(normed))
+            self = super().__new__(cls, "\\".join(normed))
             self.CASE_SENSITIVE = False  # On this object only
         else:
-            self = super(RemotePath, cls).__new__(cls, "/" + "/".join(normed))
+            self = super().__new__(cls, "/" + "/".join(normed))
             self.CASE_SENSITIVE = True
 
         self.remote = remote
@@ -82,43 +83,37 @@ class RemotePath(Path):
     def _path(self):
         return str(self)
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def name(self):
-        if not "/" in str(self):
+        if "/" not in str(self):
             return str(self)
         return str(self).rsplit("/", 1)[1]
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def dirname(self):
-        if not "/" in str(self):
+        if "/" not in str(self):
             return str(self)
         return self.__class__(self.remote, str(self).rsplit("/", 1)[0])
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def suffix(self):
-        return '.' + self.name.rsplit('.', 1)[1]
+        return "." + self.name.rsplit(".", 1)[1]
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def suffixes(self):
         name = self.name
         exts = []
-        while '.' in name:
-            name, ext = name.rsplit('.', 1)
-            exts.append('.' + ext)
+        while "." in name:
+            name, ext = name.rsplit(".", 1)
+            exts.append("." + ext)
         return list(reversed(exts))
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def uid(self):
         uid, name = self.remote._path_getuid(self)
         return FSUser(int(uid), name)
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def gid(self):
         gid, name = self.remote._path_getgid(self)
         return FSUser(int(gid), name)
@@ -126,75 +121,64 @@ class RemotePath(Path):
     def _get_info(self):
         return (self.remote, self._path)
 
-    @_setdoc(Path)
     def join(self, *parts):
         return RemotePath(self.remote, self, *parts)
 
-    @_setdoc(Path)
     def list(self):
         if not self.is_dir():
             return []
         return [self.join(fn) for fn in self.remote._path_listdir(self)]
 
-    @_setdoc(Path)
     def iterdir(self):
         if not self.is_dir():
             return ()
         return (self.join(fn) for fn in self.remote._path_listdir(self))
 
-    @_setdoc(Path)
     def is_dir(self):
         res = self.remote._path_stat(self)
         if not res:
             return False
         return res.text_mode == "directory"
 
-    @_setdoc(Path)
     def is_file(self):
         res = self.remote._path_stat(self)
         if not res:
             return False
         return res.text_mode in ("regular file", "regular empty file")
 
-    @_setdoc(Path)
     def is_symlink(self):
         res = self.remote._path_stat(self)
         if not res:
             return False
         return res.text_mode == "symbolic link"
 
-    @_setdoc(Path)
     def exists(self):
         return self.remote._path_stat(self) is not None
 
-    @_setdoc(Path)
     def stat(self):
         res = self.remote._path_stat(self)
         if res is None:
-            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), '')
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), "")
         return res
 
-    @_setdoc(Path)
     def with_name(self, name):
         return self.__class__(self.remote, self.dirname) / name
 
-    @_setdoc(Path)
     def with_suffix(self, suffix, depth=1):
-        if (suffix and not suffix.startswith('.') or suffix == '.'):
-            raise ValueError("Invalid suffix %r" % (suffix))
+        if suffix and not suffix.startswith(".") or suffix == ".":
+            raise ValueError(f"Invalid suffix {suffix!r}")
         name = self.name
-        depth = len(self.suffixes) if depth is None else min(
-            depth, len(self.suffixes))
-        for i in range(depth):
-            name, ext = name.rsplit('.', 1)
+        depth = len(self.suffixes) if depth is None else min(depth, len(self.suffixes))
+        for _ in range(depth):
+            name, _ = name.rsplit(".", 1)
         return self.__class__(self.remote, self.dirname) / (name + suffix)
 
-    @_setdoc(Path)
     def glob(self, pattern):
-        fn = lambda pat: [RemotePath(self.remote, m) for m in self.remote._path_glob(self, pat)]
+        fn = lambda pat: [
+            RemotePath(self.remote, m) for m in self.remote._path_glob(self, pat)
+        ]
         return self._glob(pattern, fn)
 
-    @_setdoc(Path)
     def delete(self):
         if not self.exists():
             return
@@ -202,39 +186,36 @@ class RemotePath(Path):
 
     unlink = delete
 
-    @_setdoc(Path)
     def move(self, dst):
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
-        elif not isinstance(dst, six.string_types):
+        elif not isinstance(dst, str):
             raise TypeError(
-                "dst must be a string or a RemotePath (to the same remote machine), "
-                "got %r" % (dst, ))
+                f"dst must be a string or a RemotePath (to the same remote machine), got {dst!r}"
+            )
         self.remote._path_move(self, dst)
 
-    @_setdoc(Path)
     def copy(self, dst, override=False):
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
-        elif not isinstance(dst, six.string_types):
+        elif not isinstance(dst, str):
             raise TypeError(
-                "dst must be a string or a RemotePath (to the same remote machine), "
-                "got %r" % (dst, ))
+                f"dst must be a string or a RemotePath (to the same remote machine), got {dst!r}"
+            )
         if override:
-            if isinstance(dst, six.string_types):
+            if isinstance(dst, str):
                 dst = RemotePath(self.remote, dst)
-            dst.remove()
+            dst.delete()
         else:
-            if isinstance(dst, six.string_types):
+            if isinstance(dst, str):
                 dst = RemotePath(self.remote, dst)
             if dst.exists():
                 raise TypeError("Override not specified and dst exists")
 
         self.remote._path_copy(self, dst)
 
-    @_setdoc(Path)
     def mkdir(self, mode=None, parents=True, exist_ok=True):
         if parents and exist_ok:
             self.remote._path_mkdir(self, mode=mode, minus_p=True)
@@ -245,113 +226,104 @@ class RemotePath(Path):
                 self.remote._path_mkdir(self, mode=mode, minus_p=False)
             except ProcessExecutionError:
                 _, ex, _ = sys.exc_info()
-                if "File exists" in ex.stderr:
-                    if not exist_ok:
-                        raise OSError(
-                            errno.EEXIST, "File exists (on remote end)",
-                            str(self))
-                else:
+                if "File exists" not in ex.stderr:
                     raise
 
-    @_setdoc(Path)
+                if not exist_ok:
+                    raise OSError(
+                        errno.EEXIST, "File exists (on remote end)", str(self)
+                    ) from None
+
     def read(self, encoding=None):
         data = self.remote._path_read(self)
         if encoding:
             data = data.decode(encoding)
         return data
 
-    @_setdoc(Path)
     def write(self, data, encoding=None):
         if encoding:
             data = data.encode(encoding)
         self.remote._path_write(self, data)
 
-    @_setdoc(Path)
     def touch(self):
         self.remote._path_touch(str(self))
 
-    @_setdoc(Path)
     def chown(self, owner=None, group=None, recursive=None):
         self.remote._path_chown(
-            self, owner, group,
-            self.is_dir() if recursive is None else recursive)
+            self, owner, group, self.is_dir() if recursive is None else recursive
+        )
 
-    @_setdoc(Path)
     def chmod(self, mode):
         self.remote._path_chmod(mode, self)
 
-    @_setdoc(Path)
     def access(self, mode=0):
         mode = self._access_mode_to_flags(mode)
         res = self.remote._path_stat(self)
         if res is None:
             return False
-        mask = res.st_mode & 0x1ff
+        mask = res.st_mode & 0x1FF
         return ((mask >> 6) & mode) or ((mask >> 3) & mode)
 
-    @_setdoc(Path)
     def link(self, dst):
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
-        elif not isinstance(dst, six.string_types):
+        elif not isinstance(dst, str):
             raise TypeError(
-                "dst must be a string or a RemotePath (to the same remote machine), "
-                "got %r" % (dst, ))
+                f"dst must be a string or a RemotePath (to the same remote machine), got {dst!r}"
+            )
         self.remote._path_link(self, dst, False)
 
-    @_setdoc(Path)
     def symlink(self, dst):
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
-        elif not isinstance(dst, six.string_types):
+        elif not isinstance(dst, str):
             raise TypeError(
-                "dst must be a string or a RemotePath (to the same remote machine), "
-                "got %r" % (dst, ))
+                "dst must be a string or a RemotePath (to the same remote machine), got {dst!r}"
+            )
         self.remote._path_link(self, dst, True)
 
-    def open(self, mode="r", bufsize=-1):
+    def open(self, mode="r", bufsize=-1, *, encoding=None):
         """
         Opens this path as a file.
 
         Only works for ParamikoMachine-associated paths for now.
         """
+        if encoding is not None:
+            raise NotImplementedError(
+                "encoding not supported for ParamikoMachine paths"
+            )
+
         if hasattr(self.remote, "sftp") and hasattr(self.remote.sftp, "open"):
             return self.remote.sftp.open(self, mode, bufsize)
-        else:
-            raise NotImplementedError(
-                "RemotePath.open only works for ParamikoMachine-associated "
-                "paths for now")
 
-    @_setdoc(Path)
-    def as_uri(self, scheme='ssh'):
-        return '{0}://{1}{2}'.format(scheme, self.remote._fqhost,
-                                     urllib.pathname2url(str(self)))
+        raise NotImplementedError(
+            "RemotePath.open only works for ParamikoMachine-associated paths for now"
+        )
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    def as_uri(self, scheme="ssh"):
+        suffix = urllib.pathname2url(str(self))
+        return f"{scheme}://{self.remote._fqhost}{suffix}"
+
+    @property
     def stem(self):
-        return self.name.rsplit('.')[0]
+        return self.name.rsplit(".")[0]
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def root(self):
-        return '/'
+        return "/"
 
-    @property  # type: ignore
-    @_setdoc(Path)
+    @property
     def drive(self):
-        return ''
+        return ""
 
 
 class RemoteWorkdir(RemotePath):
     """Remote working directory manipulator"""
 
     def __new__(cls, remote):
-        self = super(RemoteWorkdir, cls).__new__(
-            cls, remote,
-            remote._session.run("pwd")[1].strip())
+        self = super().__new__(cls, remote, remote._session.run("pwd")[1].strip())
         return self
 
     def __hash__(self):
@@ -359,8 +331,8 @@ class RemoteWorkdir(RemotePath):
 
     def chdir(self, newdir):
         """Changes the current working directory to the given one"""
-        self.remote._session.run("cd %s" % (shquote(newdir), ))
-        if hasattr(self.remote, '_cwd'):
+        self.remote._session.run(f"cd {shquote(newdir)}")
+        if hasattr(self.remote, "_cwd"):
             del self.remote._cwd
         return self.__class__(self.remote)
 

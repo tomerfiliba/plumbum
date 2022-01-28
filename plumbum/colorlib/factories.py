@@ -3,16 +3,17 @@ Color-related factories. They produce Styles.
 
 """
 
-from __future__ import print_function, absolute_import
+
 import sys
 from functools import reduce
+
 from .names import color_names, default_styles
 from .styles import ColorNotFound
 
-__all__ = ['ColorFactory', 'StyleFactory']
+__all__ = ["ColorFactory", "StyleFactory"]
 
 
-class ColorFactory(object):
+class ColorFactory:
     """This creates color names given fg = True/False. It usually will
     be called as part of a StyleFactory."""
 
@@ -24,40 +25,41 @@ class ColorFactory(object):
         # Adding the color name shortcuts for foreground colors
         for item in color_names[:16]:
             setattr(
-                self, item,
-                style.from_color(style.color_class.from_simple(item, fg=fg)))
+                self, item, style.from_color(style.color_class.from_simple(item, fg=fg))
+            )
 
     def __getattr__(self, item):
         """Full color names work, but do not populate __dir__."""
         try:
-            return self._style.from_color(
-                self._style.color_class(item, fg=self._fg))
+            return self._style.from_color(self._style.color_class(item, fg=self._fg))
         except ColorNotFound:
-            raise AttributeError(item)
+            raise AttributeError(item) from None
 
     def full(self, name):
         """Gets the style for a color, using standard name procedure: either full
         color name, html code, or number."""
         return self._style.from_color(
-            self._style.color_class.from_full(name, fg=self._fg))
+            self._style.color_class.from_full(name, fg=self._fg)
+        )
 
     def simple(self, name):
         """Return the extended color scheme color for a value or name."""
         return self._style.from_color(
-            self._style.color_class.from_simple(name, fg=self._fg))
+            self._style.color_class.from_simple(name, fg=self._fg)
+        )
 
     def rgb(self, r, g=None, b=None):
         """Return the extended color scheme color for a value."""
         if g is None and b is None:
             return self.hex(r)
-        else:
-            return self._style.from_color(
-                self._style.color_class(r, g, b, fg=self._fg))
+
+        return self._style.from_color(self._style.color_class(r, g, b, fg=self._fg))
 
     def hex(self, hexcode):
         """Return the extended color scheme color for a value."""
         return self._style.from_color(
-            self._style.color_class.from_hex(hexcode, fg=self._fg))
+            self._style.color_class.from_hex(hexcode, fg=self._fg)
+        )
 
     def ansi(self, ansiseq):
         """Make a style from an ansi text sequence"""
@@ -71,9 +73,10 @@ class ColorFactory(object):
             (start, stop, stride) = val.indices(256)
             if stop <= 16:
                 return [self.simple(v) for v in range(start, stop, stride)]
-            else:
-                return [self.full(v) for v in range(start, stop, stride)]
-        elif isinstance(val, tuple):
+
+            return [self.full(v) for v in range(start, stop, stride)]
+
+        if isinstance(val, tuple):
             return self.rgb(*val)
 
         try:
@@ -83,14 +86,15 @@ class ColorFactory(object):
 
     def __call__(self, val_or_r=None, g=None, b=None):
         """Shortcut to provide way to access colors."""
-        if val_or_r is None or (isinstance(val_or_r, str) and val_or_r == ''):
+        if val_or_r is None or (isinstance(val_or_r, str) and val_or_r == ""):
             return self._style()
         if isinstance(val_or_r, self._style):
             return self._style(val_or_r)
-        if isinstance(val_or_r, str) and '\033' in val_or_r:
+        if isinstance(val_or_r, str) and "\033" in val_or_r:
             return self.ansi(val_or_r)
         return self._style.from_color(
-            self._style.color_class(val_or_r, g, b, fg=self._fg))
+            self._style.color_class(val_or_r, g, b, fg=self._fg)
+        )
 
     def __iter__(self):
         """Iterates through all colors in extended colorset."""
@@ -104,17 +108,16 @@ class ColorFactory(object):
         """This will reset the color on leaving the with statement."""
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, _value, _traceback) -> None:
         """This resets a FG/BG color or all styles,
         due to different definition of RESET for the
         factories."""
 
         self.reset.now()
-        return False
 
     def __repr__(self):
         """Simple representation of the class by name."""
-        return "<{0}>".format(self.__class__.__name__)
+        return f"<{self.__class__.__name__}>"
 
 
 class StyleFactory(ColorFactory):
@@ -122,7 +125,7 @@ class StyleFactory(ColorFactory):
     imitates the FG ColorFactory to a large degree."""
 
     def __init__(self, style):
-        super(StyleFactory, self).__init__(True, style)
+        super().__init__(True, style)
 
         self.fg = ColorFactory(True, style)
         self.bg = ColorFactory(False, style)
@@ -157,13 +160,13 @@ class StyleFactory(ColorFactory):
     def stdout(self, newout):
         self._style._stdout = newout
 
-    def get_colors_from_string(self, color=''):
+    def get_colors_from_string(self, color=""):
         """
         Sets color based on string, use `.` or space for separator,
         and numbers, fg/bg, htmlcodes, etc all accepted (as strings).
         """
 
-        names = color.replace('.', ' ').split()
+        names = color.replace(".", " ").split()
         prev = self
         styleslist = []
         for name in names:
@@ -197,6 +200,8 @@ class StyleFactory(ColorFactory):
         """Gets colors from an ansi string, returns those colors"""
         return self._style.from_ansi(colored_string, True)
 
-    def load_stylesheet(self, stylesheet=default_styles):
+    def load_stylesheet(self, stylesheet=None):
+        if stylesheet is None:
+            stylesheet = default_styles
         for item in stylesheet:
             setattr(self, item, self.get_colors_from_string(stylesheet[item]))

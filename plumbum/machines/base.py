@@ -1,9 +1,11 @@
-from plumbum.commands.processes import CommandNotFound
-from plumbum.commands.processes import ProcessExecutionError
-from plumbum.commands.processes import ProcessTimedOut
+from plumbum.commands.processes import (
+    CommandNotFound,
+    ProcessExecutionError,
+    ProcessTimedOut,
+)
 
 
-class PopenAddons(object):
+class PopenAddons:
     """This adds a verify to popen objects to that the correct command is attributed when
     an error is thrown."""
 
@@ -11,22 +13,23 @@ class PopenAddons(object):
         """This verifies that the correct command is attributed."""
         if getattr(self, "_timed_out", False):
             raise ProcessTimedOut(
-                "Process did not terminate within %s seconds" % (timeout, ),
-                getattr(self, "argv", None))
+                f"Process did not terminate within {timeout} seconds",
+                getattr(self, "argv", None),
+            )
 
         if retcode is not None:
             if hasattr(retcode, "__contains__"):
                 if self.returncode not in retcode:
                     raise ProcessExecutionError(
-                        getattr(self, "argv", None), self.returncode, stdout,
-                        stderr)
+                        getattr(self, "argv", None), self.returncode, stdout, stderr
+                    )
             elif self.returncode != retcode:
                 raise ProcessExecutionError(
-                    getattr(self, "argv", None), self.returncode, stdout,
-                    stderr)
+                    getattr(self, "argv", None), self.returncode, stdout, stderr
+                )
 
 
-class BaseMachine(object):
+class BaseMachine:
     """This is a base class for other machines. It contains common code to
     all machines in Plumbum."""
 
@@ -46,16 +49,14 @@ class BaseMachine(object):
             command = self[cmd]
             if not command.executable.exists():
                 raise CommandNotFound(cmd, command.executable)
-            else:
-                return command
+            return command
         except CommandNotFound:
             if othercommands:
                 return self.get(othercommands[0], *othercommands[1:])
-            else:
-                raise
+            raise
 
     def __contains__(self, cmd):
-        """Tests for the existance of the command, e.g., ``"ls" in plumbum.local``.
+        """Tests for the existence of the command, e.g., ``"ls" in plumbum.local``.
         ``cmd`` can be anything acceptable by ``__getitem__``.
         """
         try:
@@ -67,23 +68,17 @@ class BaseMachine(object):
 
     @property
     def encoding(self):
-        'This is a wrapper for custom_encoding'
+        "This is a wrapper for custom_encoding"
         return self.custom_encoding
 
     @encoding.setter
     def encoding(self, value):
         self.custom_encoding = value
 
-    def daemonic_popen(self,
-                       command,
-                       cwd="/",
-                       stdout=None,
-                       stderr=None,
-                       append=True):
+    def daemonic_popen(self, command, cwd="/", stdout=None, stderr=None, append=True):
         raise NotImplementedError("This is not implemented on this machine!")
 
-    class Cmd(object):
-
+    class Cmd:
         def __init__(self, machine):
             self._machine = machine
 
@@ -91,7 +86,7 @@ class BaseMachine(object):
             try:
                 return self._machine[name]
             except CommandNotFound:
-                raise AttributeError(name)
+                raise AttributeError(name) from None
 
     @property
     def cmd(self):

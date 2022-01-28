@@ -1,55 +1,39 @@
-import time
 import atexit
 import heapq
+import time
+from queue import Empty as QueueEmpty
+from queue import Queue
 from threading import Thread
-from plumbum.lib import IS_WIN32, six
 
-try:
-    from queue import Queue, Empty as QueueEmpty
-except ImportError:
-    from Queue import Queue, Empty as QueueEmpty  # type: ignore
-
-try:
-    from io import StringIO
-except ImportError:
-    from cStringIO import StringIO  # type: ignore
+from plumbum.lib import IS_WIN32
 
 
-#===================================================================================================
+# ===================================================================================================
 # utility functions
-#===================================================================================================
+# ===================================================================================================
 def _check_process(proc, retcode, timeout, stdout, stderr):
     proc.verify(retcode, timeout, stdout, stderr)
     return proc.returncode, stdout, stderr
 
 
 def _iter_lines_posix(proc, decode, linesize, line_timeout=None):
-    try:
-        from selectors import DefaultSelector, EVENT_READ
-    except ImportError:
-        # Pre Python 3.4 implementation
-        from select import select
+    from selectors import EVENT_READ, DefaultSelector
 
-        def selector():
-            while True:
-                rlist, _, _ = select([proc.stdout, proc.stderr], [], [], line_timeout)
-                if not rlist and line_timeout:
-                    raise ProcessLineTimedOut("popen line timeout expired", getattr(proc, "argv", None), getattr(proc, "machine", None))
-                for stream in rlist:
-                    yield (stream is proc.stderr), decode(
-                        stream.readline(linesize))
-    else:
-        # Python 3.4 implementation
-        def selector():
-            sel = DefaultSelector()
-            sel.register(proc.stdout, EVENT_READ, 0)
-            sel.register(proc.stderr, EVENT_READ, 1)
-            while True:
-                ready = sel.select(line_timeout)
-                if not ready and line_timeout:
-                    raise ProcessLineTimedOut("popen line timeout expired", getattr(proc, "argv", None), getattr(proc, "machine", None))
-                for key, mask in ready:
-                    yield key.data, decode(key.fileobj.readline(linesize))
+    # Python 3.4+ implementation
+    def selector():
+        sel = DefaultSelector()
+        sel.register(proc.stdout, EVENT_READ, 0)
+        sel.register(proc.stderr, EVENT_READ, 1)
+        while True:
+            ready = sel.select(line_timeout)
+            if not ready and line_timeout:
+                raise ProcessLineTimedOut(
+                    "popen line timeout expired",
+                    getattr(proc, "argv", None),
+                    getattr(proc, "machine", None),
+                )
+            for key, _mask in ready:
+                yield key.data, decode(key.fileobj.readline(linesize))
 
     for ret in selector():
         yield ret
@@ -62,11 +46,9 @@ def _iter_lines_posix(proc, decode, linesize, line_timeout=None):
 
 
 def _iter_lines_win32(proc, decode, linesize, line_timeout=None):
-
     class Piper(Thread):
-
         def __init__(self, fd, pipe):
-            super().__init__(name="PlumbumPiper%sThread" % fd)
+            super().__init__(name=f"PlumbumPiper{fd}Thread")
             self.pipe = pipe
             self.fd = fd
             self.empty = False
@@ -77,7 +59,7 @@ def _iter_lines_win32(proc, decode, linesize, line_timeout=None):
             return self.pipe.readline(linesize)
 
         def run(self):
-            for line in iter(self.read_from_pipe, b''):
+            for line in iter(self.read_from_pipe, b""):
                 queue.put((self.fd, decode(line)))
             # self.pipe.close()
 
@@ -95,7 +77,11 @@ def _iter_lines_win32(proc, decode, linesize, line_timeout=None):
         except QueueEmpty:
             empty = True
         if time.time() - last_line_ts > line_timeout:
-            raise ProcessLineTimedOut("popen line timeout expired", getattr(proc, "argv", None), getattr(proc, "machine", None))
+            raise ProcessLineTimedOut(
+                "popen line timeout expired",
+                getattr(proc, "argv", None),
+                getattr(proc, "machine", None),
+            )
         if proc.poll() is not None:
             break
         if empty:
@@ -117,9 +103,9 @@ else:
     _iter_lines = _iter_lines_posix
 
 
-#===================================================================================================
+# ===================================================================================================
 # Exceptions
-#===================================================================================================
+# ===================================================================================================
 class ProcessExecutionError(EnvironmentError):
     """Represents the failure of a process. When the exit code of a terminated process does not
     match the expected result, this exception is raised by :func:`run_proc
@@ -128,33 +114,32 @@ class ProcessExecutionError(EnvironmentError):
     """
 
     def __init__(self, argv, retcode, stdout, stderr, message=None, host=None):
-        Exception.__init__(self, argv, retcode, stdout, stderr)
+        super().__init__(self, argv, retcode, stdout, stderr)
         self.message = message
         self.host = host
         self.argv = argv
         self.retcode = retcode
-        if six.PY3 and isinstance(stdout, six.bytes):
-            stdout = six.ascii(stdout)
-        if six.PY3 and isinstance(stderr, six.bytes):
-            stderr = six.ascii(stderr)
+        if isinstance(stdout, bytes):
+            stdout = ascii(stdout)
+        if isinstance(stderr, bytes):
+            stderr = ascii(stderr)
         self.stdout = stdout
         self.stderr = stderr
 
     def __str__(self):
         # avoid an import cycle
         from plumbum.commands.base import shquote_list
-        stdout =      "\n              | ".join(str(self.stdout).splitlines())
-        stderr =      "\n              | ".join(str(self.stderr).splitlines())
+
+        stdout = "\n              | ".join(str(self.stdout).splitlines())
+        stderr = "\n              | ".join(str(self.stderr).splitlines())
         cmd = " ".join(shquote_list(self.argv))
         lines = []
         if self.message:
-            lines = [
-                self.message,
-                      "\nReturn code:  | ", str(self.retcode)]
+            lines = [self.message, "\nReturn code:  | ", str(self.retcode)]
         else:
             lines = ["Unexpected exit code: ", str(self.retcode)]
-        cmd =         "\n              | ".join(cmd.splitlines())
-        lines +=     ["\nCommand line: | ", cmd]
+        cmd = "\n              | ".join(cmd.splitlines())
+        lines += ["\nCommand line: | ", cmd]
         if self.host:
             lines += ["\nHost:         | ", self.host]
         if stdout:
@@ -176,6 +161,7 @@ class ProcessTimedOut(Exception):
 class ProcessLineTimedOut(Exception):
     """Raises by :func:`iter_lines <plumbum.commands.iter_lines>` when a ``line_timeout`` has been
     specified and it has elapsed before the process yielded another line"""
+
     def __init__(self, msg, argv, machine):
         Exception.__init__(self, msg, argv, machine)
         self.argv = argv
@@ -188,15 +174,15 @@ class CommandNotFound(AttributeError):
     command was not found in the system's ``PATH``"""
 
     def __init__(self, program, path):
-        Exception.__init__(self, program, path)
+        super().__init__(self, program, path)
         self.program = program
         self.path = path
 
 
-#===================================================================================================
+# ===================================================================================================
 # Timeout thread
-#===================================================================================================
-class MinHeap(object):
+# ===================================================================================================
+class MinHeap:
     def __init__(self, items=()):
         self._items = list(items)
         heapq.heapify(self._items)
@@ -214,7 +200,7 @@ class MinHeap(object):
         return self._items[0]
 
 
-_timeout_queue = Queue()
+_timeout_queue = Queue()  # type: ignore[var-annotated]
 _shutting_down = False
 
 
@@ -245,7 +231,7 @@ def _timeout_thread_func():
                     if proc.poll() is None:
                         proc.kill()
                         proc._timed_out = True
-                except EnvironmentError:
+                except OSError:
                     pass
     except Exception:
         if _shutting_down:
@@ -256,7 +242,7 @@ def _timeout_thread_func():
 
 
 bgthd = Thread(target=_timeout_thread_func, name="PlumbumTimeoutThread")
-bgthd.setDaemon(True)
+bgthd.daemon = True
 bgthd.start()
 
 
@@ -266,7 +252,7 @@ def _register_proc_timeout(proc, timeout):
 
 
 def _shutdown_bg_threads():
-    global _shutting_down
+    global _shutting_down  # pylint: disable=global-statement
     _shutting_down = True
     # Make sure this still exists (don't throw error in atexit!)
     if _timeout_queue:
@@ -278,9 +264,9 @@ def _shutdown_bg_threads():
 atexit.register(_shutdown_bg_threads)
 
 
-#===================================================================================================
+# ===================================================================================================
 # run_proc
-#===================================================================================================
+# ===================================================================================================
 def run_proc(proc, retcode, timeout=None):
     """Waits for the given process to terminate, with the expected exit code
 
@@ -303,9 +289,9 @@ def run_proc(proc, retcode, timeout=None):
     stdout, stderr = proc.communicate()
     proc._end_time = time.time()
     if not stdout:
-        stdout = six.b("")
+        stdout = b""
     if not stderr:
-        stderr = six.b("")
+        stderr = b""
     if getattr(proc, "custom_encoding", None):
         stdout = stdout.decode(proc.custom_encoding, "ignore")
         stderr = stderr.decode(proc.custom_encoding, "ignore")
@@ -313,23 +299,26 @@ def run_proc(proc, retcode, timeout=None):
     return _check_process(proc, retcode, timeout, stdout, stderr)
 
 
-#===================================================================================================
+# ===================================================================================================
 # iter_lines
-#===================================================================================================
+# ===================================================================================================
 
 BY_POSITION = object()
 BY_TYPE = object()
 DEFAULT_ITER_LINES_MODE = BY_POSITION
+DEFAULT_BUFFER_SIZE = _INFINITE = float("inf")
 
 
-def iter_lines(proc,
-               retcode=0,
-               timeout=None,
-               linesize=-1,
-               line_timeout=None,
-               mode=None,
-               _iter_lines=_iter_lines,
-               ):
+def iter_lines(
+    proc,
+    retcode=0,
+    timeout=None,
+    linesize=-1,
+    line_timeout=None,
+    buffer_size=None,
+    mode=None,
+    _iter_lines=_iter_lines,
+):
     """Runs the given process (equivalent to run_proc()) and yields a tuples of (out, err) line pairs.
     If the exit code of the process does not match the expected one, :class:`ProcessExecutionError
     <plumbum.commands.ProcessExecutionError>` is raised.
@@ -350,25 +339,40 @@ def iter_lines(proc,
                     Raise an :class:`ProcessLineTimedOut <plumbum.commands.ProcessLineTimedOut>` if the timeout has
                     been reached. ``None`` means no timeout is imposed.
 
+    :param buffer_size: Maximum number of lines to keep in the stdout/stderr buffers, in case of a ProcessExecutionError.
+                    Default is ``None``, which defaults to DEFAULT_BUFFER_SIZE (which is infinite by default).
+                    ``0`` will disable bufferring completely.
+
+    :param mode: Controls what the generator yields. Defaults to DEFAULT_ITER_LINES_MODE (which is BY_POSITION by default)
+                - BY_POSITION (default): yields ``(out, err)`` line tuples, where either item may be ``None``
+                - BY_TYPE: yields ``(fd, line)`` tuples, where ``fd`` is 1 (stdout) or 2 (stderr)
+
     :returns: An iterator of (out, err) line tuples.
     """
     if mode is None:
         mode = DEFAULT_ITER_LINES_MODE
 
+    if buffer_size is None:
+        buffer_size = DEFAULT_BUFFER_SIZE
+
     assert mode in (BY_POSITION, BY_TYPE)
 
-    encoding = getattr(proc, "custom_encoding", None) or 'utf-8'
-    decode = lambda s: s.decode(encoding, errors='replace').rstrip()
+    encoding = getattr(proc, "custom_encoding", None) or "utf-8"
+    decode = lambda s: s.decode(encoding, errors="replace").rstrip()
 
     _register_proc_timeout(proc, timeout)
 
-    buffers = [StringIO(), StringIO()]
+    buffers = [[], []]
     for t, line in _iter_lines(proc, decode, linesize, line_timeout):
 
         # verify that the proc hasn't timed out yet
         proc.verify(timeout=timeout, retcode=None, stdout=None, stderr=None)
 
-        buffers[t].write(line + "\n")
+        buffer = buffers[t]
+        if buffer_size > 0:
+            buffer.append(line)
+            if buffer_size < _INFINITE:
+                del buffer[:-buffer_size]
 
         if mode is BY_POSITION:
             ret = [None, None]
@@ -378,4 +382,4 @@ def iter_lines(proc,
             yield (t + 1), line  # 1=stdout, 2=stderr
 
     # this will take care of checking return code and timeouts
-    _check_process(proc, retcode, timeout, *(s.getvalue() for s in buffers))
+    _check_process(proc, retcode, timeout, *("\n".join(s) + "\n" for s in buffers))

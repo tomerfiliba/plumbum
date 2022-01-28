@@ -1,12 +1,9 @@
 .. image:: https://readthedocs.org/projects/plumbum/badge/
    :target: https://plumbum.readthedocs.io/en/latest/
    :alt: Documentation Status
-.. image:: https://travis-ci.org/tomerfiliba/plumbum.svg?branch=master
-   :target: https://travis-ci.org/tomerfiliba/plumbum
-   :alt: Linux and Mac Build Status
-.. image:: https://ci.appveyor.com/api/projects/status/github/tomerfiliba/plumbum?branch=master&svg=true
-   :target: https://ci.appveyor.com/project/HenrySchreiner/plumbum/branch/master
-   :alt: Windows Build Status
+.. image:: https://github.com/tomerfiliba/plumbum/workflows/CI/badge.svg
+   :target: https://github.com/tomerfiliba/plumbum/actions
+   :alt: Build Status
 .. image:: https://coveralls.io/repos/tomerfiliba/plumbum/badge.svg?branch=master&service=github
    :target: https://coveralls.io/github/tomerfiliba/plumbum?branch=master
    :alt: Coverage Status
@@ -25,6 +22,9 @@
 .. image:: https://badges.gitter.im/plumbumpy/Lobby.svg
    :alt: Join the chat at https://gitter.im/plumbumpy/Lobby
    :target: https://gitter.im/plumbumpy/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :alt: Code styled with Black
+   :target: https://github.com/psf/black
 
 
 Plumbum: Shell Combinators
@@ -57,7 +57,7 @@ Basics
     >>> local.cmd.ls
     LocalCommand(/bin/ls)
     >>> local.cmd.ls()
-    'build.py\nCHANGELOG.rst\nconda.recipe\nCONTRIBUTING.rst\ndev-requirements.txt\ndocs\nexamples\nexperiments\nLICENSE\nMANIFEST.in\nPipfile\nplumbum\nplumbum.egg-info\npytest.ini\nREADME.rst\nsetup.cfg\nsetup.py\ntests\ntranslations.py\n'
+    'build.py\nCHANGELOG.rst\nconda.recipe\nCONTRIBUTING.rst\ndocs\nexamples\nexperiments\nLICENSE\nMANIFEST.in\nPipfile\nplumbum\nplumbum.egg-info\npytest.ini\nREADME.rst\nsetup.cfg\nsetup.py\ntests\ntranslations.py\n'
     >>> notepad = local["c:\\windows\\notepad.exe"]
     >>> notepad()                                   # Notepad window pops up
     ''                                              # Notepad window is closed by user, command returns
@@ -193,5 +193,3 @@ Colors and Styles
           colors.rgb(18, 146, 64) | "or full rgb colors",
           'can be used.')
     print("Unsafe " + colors.bg.dark_khaki + "color access" + colors.bg.reset + " is available too.")
-
-

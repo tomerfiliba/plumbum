@@ -1,7 +1,95 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4.3"]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "setuptools_scm[toml]>=3.4.3"
+]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 write_to = "plumbum/version.py"
-write_to_template = "__version__ = version_string = \"{version}\"\nversion = tuple(int(n) for n in version_string.split(\".\")[:3])\n"
+
+
+[tool.mypy]
+files = ["plumbum"]
+python_version = "3.6"
+warn_unused_configs = true
+warn_unused_ignores = true
+
+
+[[tool.mypy.overrides]]
+module = ["IPython.*", "pywintypes.*", "win32con.*", "win32file.*", "PIL.*", "plumbum.cmd.*", "ipywidgets.*", "traitlets.*", "plumbum.version"]
+ignore_missing_imports = true
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = ["-ra", "--cov-config=setup.cfg", "--strict-markers", "--strict-config"]
+norecursedirs = ["examples", "experiments"]
+filterwarnings = [
+  "always"
+]
+log_cli_level = "info"
+required_plugins = ["pytest-timeout", "pytest-mock"]
+timeout = 300
+optional_tests = """
+  ssh: requires self ssh access to run
+  sudo: requires sudo access to run
+"""
+
+[tool.isort]
+profile = "black"
+
+[tool.check-manifest]
+ignore = [
+  ".*",
+  "docs/**",
+  "examples/*",
+  "experiments/*",
+  "conda.recipe/*",
+  "CONTRIBUTING.rst",
+]
+
+[tool.pycln]
+all = true
+
+
+[tool.pylint]
+master.py-version = "3.6"
+master.jobs = "0"
+master.fail-under = "9.97"
+reports.output-format = "colorized"
+similarities.ignore-imports = "yes"
+messages_control.enable = [
+  "useless-suppression",
+]
+messages_control.disable = [
+  "arguments-differ", # TODO: investigate
+  "attribute-defined-outside-init", # TODO: investigate
+  "broad-except", # TODO: investigate
+  "cyclic-import",
+  "duplicate-code",  # TODO: check
+  "fixme",
+  "import-error",
+  "import-outside-toplevel",  # TODO: see if this can be limited to certain imports
+  "invalid-name",
+  "line-too-long",
+  "missing-class-docstring",
+  "missing-function-docstring",
+  "missing-module-docstring",
+  "no-member",
+  "protected-access",
+  "too-few-public-methods",
+  "too-many-arguments",
+  "too-many-branches",
+  "too-many-function-args",
+  "too-many-instance-attributes",
+  "too-many-lines",
+  "too-many-locals",
+  "too-many-nested-blocks",
+  "too-many-public-methods",
+  "too-many-return-statements",
+  "too-many-statements",
+  "non-parent-init-called", # TODO: should be looked at
+  "unidiomatic-typecheck", # TODO: might be able to remove
+]

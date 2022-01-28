@@ -31,9 +31,3 @@ Remote Machines
 .. automodule:: plumbum.machines.paramiko_machine
    :members:
    :special-members:
-
-
-
-
-
-

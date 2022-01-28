@@ -1,17 +1,10 @@
-from __future__ import print_function, division
+from abc import ABC, abstractmethod
+from configparser import ConfigParser, NoOptionError, NoSectionError
 
-from abc import abstractmethod
-from plumbum.lib import six, _setdoc
 from plumbum import local
-import os
-
-try:
-    from configparser import ConfigParser, NoOptionError, NoSectionError  # Py3
-except ImportError:
-    from ConfigParser import ConfigParser, NoOptionError, NoSectionError  # type: ignore
 
 
-class ConfigBase(six.ABC):
+class ConfigBase(ABC):
     """Base class for Config parsers.
 
     :param filename: The file to use
@@ -45,23 +38,20 @@ class ConfigBase(six.ABC):
 
     @abstractmethod
     def read(self):
-        '''Read in the linked file'''
-        pass
+        """Read in the linked file"""
 
     @abstractmethod
     def write(self):
-        '''Write out the linked file'''
+        """Write out the linked file"""
         self.changed = False
 
     @abstractmethod
     def _get(self, option):
-        '''Internal get function for subclasses'''
-        pass
+        """Internal get function for subclasses"""
 
     @abstractmethod
     def _set(self, option, value):
-        '''Internal set function for subclasses. Must return the value that was set.'''
-        pass
+        """Internal set function for subclasses. Must return the value that was set."""
 
     def get(self, option, default=None):
         "Get an item from the store, returns default if fails"
@@ -84,42 +74,38 @@ class ConfigBase(six.ABC):
 
 
 class ConfigINI(ConfigBase):
-    DEFAULT_SECTION = 'DEFAULT'
+    DEFAULT_SECTION = "DEFAULT"
     slots = "parser".split()
 
     def __init__(self, filename):
-        super(ConfigINI, self).__init__(filename)
+        super().__init__(filename)
         self.parser = ConfigParser()
 
-    @_setdoc(ConfigBase)
     def read(self):
         self.parser.read(self.filename)
-        super(ConfigINI, self).read()
+        super().read()
 
-    @_setdoc(ConfigBase)
     def write(self):
-        with open(self.filename, 'w') as f:
+        with open(self.filename, "w", encoding="utf-8") as f:
             self.parser.write(f)
-        super(ConfigINI, self).write()
+        super().write()
 
     @classmethod
     def _sec_opt(cls, option):
-        if '.' not in option:
+        if "." not in option:
             sec = cls.DEFAULT_SECTION
         else:
-            sec, option = option.split('.', 1)
+            sec, option = option.split(".", 1)
         return sec, option
 
-    @_setdoc(ConfigBase)
     def _get(self, option):
         sec, option = self._sec_opt(option)
 
         try:
             return self.parser.get(sec, option)
         except (NoSectionError, NoOptionError):
-            raise KeyError("{sec}:{option}".format(sec=sec, option=option))
+            raise KeyError(f"{sec}:{option}") from None
 
-    @_setdoc(ConfigBase)
     def _set(self, option, value):
         sec, option = self._sec_opt(option)
         try:

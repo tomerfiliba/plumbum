@@ -1,7 +1,7 @@
-from plumbum.path.base import Path
-from plumbum.lib import six
-from plumbum.machines.local import local, LocalPath
 import os
+
+from plumbum.machines.local import LocalPath, local
+from plumbum.path.base import Path
 
 
 def delete(*paths):
@@ -13,12 +13,12 @@ def delete(*paths):
     for p in paths:
         if isinstance(p, Path):
             p.delete()
-        elif isinstance(p, six.string_types):
+        elif isinstance(p, str):
             local.path(p).delete()
         elif hasattr(p, "__iter__"):
             delete(*p)
         else:
-            raise TypeError("Cannot delete %r" % (p, ))
+            raise TypeError(f"Cannot delete {p!r}")
 
 
 def _move(src, dst):
@@ -43,25 +43,22 @@ def move(src, dst):
             dst.mkdir()
         elif not dst.is_dir():
             raise ValueError(
-                "When using multiple sources, dst %r must be a directory" %
-                (dst, ))
+                f"When using multiple sources, dst {dst!r} must be a directory"
+            )
         for src2 in src:
             move(src2, dst)
         return dst
-    elif not isinstance(src, Path):
+    if not isinstance(src, Path):
         src = local.path(src)
 
     if isinstance(src, LocalPath):
-        if isinstance(dst, LocalPath):
-            return src.move(dst)
-        else:
-            return _move(src, dst)
-    elif isinstance(dst, LocalPath):
+        return src.move(dst) if isinstance(dst, LocalPath) else _move(src, dst)
+    if isinstance(dst, LocalPath):
         return _move(src, dst)
-    elif src.remote == dst.remote:
+    if src.remote == dst.remote:
         return src.move(dst)
-    else:
-        return _move(src, dst)
+
+    return _move(src, dst)
 
 
 def copy(src, dst):
@@ -81,36 +78,38 @@ def copy(src, dst):
             dst.mkdir()
         elif not dst.is_dir():
             raise ValueError(
-                "When using multiple sources, dst %r must be a directory" %
-                (dst, ))
+                f"When using multiple sources, dst {dst!r} must be a directory"
+            )
         for src2 in src:
             copy(src2, dst)
         return dst
-    elif not isinstance(src, Path):
+
+    if not isinstance(src, Path):
         src = local.path(src)
 
     if isinstance(src, LocalPath):
         if isinstance(dst, LocalPath):
             return src.copy(dst)
-        else:
-            dst.remote.upload(src, dst)
-            return dst
-    elif isinstance(dst, LocalPath):
+        dst.remote.upload(src, dst)
+        return dst
+
+    if isinstance(dst, LocalPath):
         src.remote.download(src, dst)
         return dst
-    elif src.remote == dst.remote:
+
+    if src.remote == dst.remote:
         return src.copy(dst)
-    else:
-        with local.tempdir() as tmp:
-            copy(src, tmp)
-            copy(tmp / src.name, dst)
-        return dst
+
+    with local.tempdir() as tmp:
+        copy(src, tmp)
+        copy(tmp / src.name, dst)
+    return dst
 
 
 def gui_open(filename):
     """This selects the proper gui open function. This can
-       also be achieved with webbrowser, but that is not supported."""
-    if (hasattr(os, "startfile")):
+    also be achieved with webbrowser, but that is not supported."""
+    if hasattr(os, "startfile"):
         os.startfile(filename)
     else:
-        local.get('xdg-open', 'open')(filename)
+        local.get("xdg-open", "open")(filename)

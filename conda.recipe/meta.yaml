@@ -12,8 +12,7 @@ requirements:
 
   run:
     - python
-    - paramiko<2.4 # [py26]
-    - paramiko # [not py26]
+    - paramiko
 
 build:
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
@@ -35,11 +34,9 @@ test:
   requires:
     # Put any additional test requirements here.  For example
     - pytest
-    - paramiko<2.4 # [py26]
-    - paramiko # [not py26]
+    - paramiko
 
 about:
   home: https://plumbum.readthedocs.io
   license: MIT License
   summary: 'Plumbum: shell combinators library'
-

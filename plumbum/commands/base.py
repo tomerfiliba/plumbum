@@ -1,14 +1,34 @@
+import functools
 import shlex
 import subprocess
-import sys
-import functools
 from contextlib import contextmanager
-from plumbum.commands.processes import run_proc, iter_lines
-import plumbum.commands.modifiers
-from plumbum.lib import six
-from tempfile import TemporaryFile
 from subprocess import PIPE, Popen
+from tempfile import TemporaryFile
 from types import MethodType
+from typing import ClassVar
+
+import plumbum.commands.modifiers
+from plumbum.commands.processes import iter_lines, run_proc
+
+__all__ = (
+    "iter_lines",
+    "run_proc",
+    "shquote",
+    "shquote_list",
+    "RedirectionError",
+    "BaseCommand",
+    "Pipeline",
+    "BaseRedirection",
+    "BoundCommand",
+    "BoundEnvCommand",
+    "ConcreteCommand",
+    "ERROUT",
+    "StdinRedirection",
+    "StdoutRedirection",
+    "StderrRedirection",
+    "AppendingStdoutRedirection",
+    "StdinDataRedirection",
+)
 
 
 class RedirectionError(Exception):
@@ -16,32 +36,28 @@ class RedirectionError(Exception):
     which was already redirected to/from a file"""
 
 
-#===================================================================================================
+# ===================================================================================================
 # Utilities
-#===================================================================================================
+# ===================================================================================================
 # modified from the stdlib pipes module for windows
-_safechars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@%_-+=:,./'
+_safechars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@%_-+=:,./"
 _funnychars = '"`$\\'
 
 
 def shquote(text):
     """Quotes the given text with shell escaping (assumes as syntax similar to ``sh``)"""
-    text = six.str(text)
-    if sys.version_info >= (3, 3):
-        return shlex.quote(text)
-    else:
-        import pipes
-        return pipes.quote(text)
+    text = str(text)
+    return shlex.quote(text)
 
 
 def shquote_list(seq):
     return [shquote(item) for item in seq]
 
 
-#===================================================================================================
+# ===================================================================================================
 # Commands
-#===================================================================================================
-class BaseCommand(object):
+# ===================================================================================================
+class BaseCommand:
     """Base of all command objects"""
 
     __slots__ = ("cwd", "env", "custom_encoding", "__weakref__")
@@ -86,10 +102,11 @@ class BaseCommand(object):
         """Creates a bound-command with the given arguments"""
         if not args:
             return self
+
         if isinstance(self, BoundCommand):
             return BoundCommand(self.cmd, self.args + list(args))
-        else:
-            return BoundCommand(self, args)
+
+        return BoundCommand(self, args)
 
     def __call__(self, *args, **kwargs):
         """A shortcut for `run(args)`, returning only the process' stdout"""
@@ -105,7 +122,10 @@ class BaseCommand(object):
         return BoundEnvCommand(self, env=env)
 
     def with_cwd(self, path):
-        """Returns a BoundEnvCommand with the specified working directory"""
+        """
+        Returns a BoundEnvCommand with the specified working directory.
+        This overrides a cwd specified in a wrapping `machine.cwd()` context manager.
+        """
         if not path:
             return self
         return BoundEnvCommand(self, cwd=path)
@@ -148,11 +168,7 @@ class BaseCommand(object):
         """
         raise NotImplementedError()
 
-    def nohup(self,
-              cwd='.',
-              stdout='nohup.out',
-              stderr=None,
-              append=True):
+    def nohup(self, cwd=".", stdout="nohup.out", stderr=None, append=True):
         """Runs a command detached."""
         return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)
 
@@ -193,7 +209,7 @@ class BaseCommand(object):
 
         def runner():
             if was_run[0]:
-                return  # already done
+                return None  # already done
             was_run[0] = True
             try:
                 return run_proc(p, retcode, timeout)
@@ -298,7 +314,7 @@ class BoundCommand(BaseCommand):
         self.args = list(args)
 
     def __repr__(self):
-        return "BoundCommand(%r, %r)" % (self.cmd, self.args)
+        return f"BoundCommand({self.cmd!r}, {self.args!r})"
 
     def _get_encoding(self):
         return self.cmd._get_encoding()
@@ -311,7 +327,7 @@ class BoundCommand(BaseCommand):
         return self.cmd.machine
 
     def popen(self, args=(), **kwargs):
-        if isinstance(args, six.string_types):
+        if isinstance(args, str):
             args = [
                 args,
             ]
@@ -321,13 +337,13 @@ class BoundCommand(BaseCommand):
 class BoundEnvCommand(BaseCommand):
     __slots__ = ("cmd", "env", "cwd")
 
-    def __init__(self, cmd, env={}, cwd=None):
+    def __init__(self, cmd, env=None, cwd=None):
         self.cmd = cmd
-        self.env = env
+        self.env = env or {}
         self.cwd = cwd
 
     def __repr__(self):
-        return "BoundEnvCommand(%r, %r)" % (self.cmd, self.env)
+        return f"BoundEnvCommand({self.cmd!r}, {self.env!r})"
 
     def _get_encoding(self):
         return self.cmd._get_encoding()
@@ -339,12 +355,14 @@ class BoundEnvCommand(BaseCommand):
     def machine(self):
         return self.cmd.machine
 
-    def popen(self, args=(), cwd=None, env={}, **kwargs):
+    def popen(self, args=(), cwd=None, env=None, **kwargs):
+        env = env or {}
         return self.cmd.popen(
             args,
             cwd=self.cwd if cwd is None else cwd,
             env=dict(self.env, **env),
-            **kwargs)
+            **kwargs,
+        )
 
 
 class Pipeline(BaseCommand):
@@ -355,15 +373,17 @@ class Pipeline(BaseCommand):
         self.dstcmd = dstcmd
 
     def __repr__(self):
-        return "Pipeline(%r, %r)" % (self.srccmd, self.dstcmd)
+        return f"Pipeline({self.srccmd!r}, {self.dstcmd!r})"
 
     def _get_encoding(self):
         return self.srccmd._get_encoding() or self.dstcmd._get_encoding()
 
     def formulate(self, level=0, args=()):
-        return self.srccmd.formulate(level + 1) + ["|"
-                                                   ] + self.dstcmd.formulate(
-                                                       level + 1, args)
+        return (
+            self.srccmd.formulate(level + 1)
+            + ["|"]
+            + self.dstcmd.formulate(level + 1, args)
+        )
 
     @property
     def machine(self):
@@ -382,7 +402,7 @@ class Pipeline(BaseCommand):
         srcproc.stdout.close()
         if srcproc.stderr is not None:
             dstproc.stderr = srcproc.stderr
-        if srcproc.stdin and src_kwargs.get('stdin') != PIPE:
+        if srcproc.stdin and src_kwargs.get("stdin") != PIPE:
             srcproc.stdin.close()
         dstproc.srcproc = srcproc
 
@@ -401,12 +421,12 @@ class Pipeline(BaseCommand):
         dstproc_verify = dstproc.verify
 
         def verify(proc, retcode, timeout, stdout, stderr):
-            #TODO: right now it's impossible to specify different expected
+            # TODO: right now it's impossible to specify different expected
             # return codes for different stages of the pipeline
             try:
                 or_retcode = [0] + list(retcode)
             except TypeError:
-                if (retcode is None):
+                if retcode is None:
                     or_retcode = None  # no-retcode-verification acts "greedily"
                 else:
                     or_retcode = [0, retcode]
@@ -421,9 +441,9 @@ class Pipeline(BaseCommand):
 
 class BaseRedirection(BaseCommand):
     __slots__ = ("cmd", "file")
-    SYM = None  # type: str
-    KWARG = None  # type: str
-    MODE = None  # type: str
+    SYM: ClassVar[str]
+    KWARG: ClassVar[str]
+    MODE: ClassVar[str]
 
     def __init__(self, cmd, file):
         self.cmd = cmd
@@ -433,11 +453,12 @@ class BaseRedirection(BaseCommand):
         return self.cmd._get_encoding()
 
     def __repr__(self):
-        return "%s(%r, %r)" % (self.__class__.__name__, self.cmd, self.file)
+        return f"{self.__class__.__name__}({self.cmd!r}, {self.file!r})"
 
     def formulate(self, level=0, args=()):
         return self.cmd.formulate(level + 1, args) + [
-            self.SYM, shquote(getattr(self.file, "name", self.file))
+            self.SYM,
+            shquote(getattr(self.file, "name", self.file)),
         ]
 
     @property
@@ -449,11 +470,11 @@ class BaseRedirection(BaseCommand):
         from plumbum.machines.remote import RemotePath
 
         if self.KWARG in kwargs and kwargs[self.KWARG] not in (PIPE, None):
-            raise RedirectionError("%s is already redirected" % (self.KWARG, ))
+            raise RedirectionError(f"{self.KWARG} is already redirected")
         if isinstance(self.file, RemotePath):
             raise TypeError("Cannot redirect to/from remote paths")
-        if isinstance(self.file, six.string_types + (LocalPath, )):
-            f = kwargs[self.KWARG] = open(str(self.file), self.MODE)
+        if isinstance(self.file, (str, LocalPath)):
+            f = kwargs[self.KWARG] = open(str(self.file), self.MODE, encoding="utf-8")
         else:
             kwargs[self.KWARG] = self.file
             f = None
@@ -516,8 +537,9 @@ class StdinDataRedirection(BaseCommand):
 
     def formulate(self, level=0, args=()):
         return [
-            "echo %s" % (shquote(self.data), ), "|",
-            self.cmd.formulate(level + 1, args)
+            f"echo {shquote(self.data)}",
+            "|",
+            self.cmd.formulate(level + 1, args),
         ]
 
     @property
@@ -528,14 +550,13 @@ class StdinDataRedirection(BaseCommand):
         if "stdin" in kwargs and kwargs["stdin"] != PIPE:
             raise RedirectionError("stdin is already redirected")
         data = self.data
-        if isinstance(data,
-                      six.unicode_type) and self._get_encoding() is not None:
+        if isinstance(data, str) and self._get_encoding() is not None:
             data = data.encode(self._get_encoding())
         f = TemporaryFile()
         while data:
-            chunk = data[:self.CHUNK_SIZE]
+            chunk = data[: self.CHUNK_SIZE]
             f.write(chunk)
-            data = data[self.CHUNK_SIZE:]
+            data = data[self.CHUNK_SIZE :]
         f.seek(0)
         # try:
         return self.cmd.popen(args, stdin=f, **kwargs)
@@ -544,7 +565,7 @@ class StdinDataRedirection(BaseCommand):
 
 
 class ConcreteCommand(BaseCommand):
-    QUOTE_LEVEL = None  # type: int
+    QUOTE_LEVEL: ClassVar[int]
     __slots__ = ("executable", "custom_encoding")
 
     def __init__(self, executable, encoding):
@@ -557,13 +578,13 @@ class ConcreteCommand(BaseCommand):
         return str(self.executable)
 
     def __repr__(self):
-        return "{0}({1})".format(type(self).__name__, self.executable)
+        return f"{type(self).__name__}({self.executable})"
 
     def _get_encoding(self):
         return self.custom_encoding
 
     def formulate(self, level=0, args=()):
-        argv = [six.str(self.executable)]
+        argv = [str(self.executable)]
         for a in args:
             if a is None:
                 continue
@@ -574,11 +595,10 @@ class ConcreteCommand(BaseCommand):
                     argv.extend(a.formulate(level + 1))
             elif isinstance(a, (list, tuple)):
                 argv.extend(
-                    shquote(b) if level >= self.QUOTE_LEVEL else six.str(b)
-                    for b in a)
+                    shquote(b) if level >= self.QUOTE_LEVEL else str(b) for b in a
+                )
             else:
-                argv.append(
-                    shquote(a) if level >= self.QUOTE_LEVEL else six.str(a))
+                argv.append(shquote(a) if level >= self.QUOTE_LEVEL else str(a))
         # if self.custom_encoding:
-        #    argv = [a.encode(self.custom_encoding) for a in argv if isinstance(a, six.string_types)]
+        #    argv = [a.encode(self.custom_encoding) for a in argv if isinstance(a, str)]
         return argv

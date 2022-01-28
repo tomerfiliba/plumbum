@@ -1,3 +1,9 @@
+* **2021.12.23**: Version 1.7.2 released with very minor fixes, final version to support Python 2.7 and 3.5.
+
+* **2021.11.23**: Version 1.7.1 released with a few features like reverse tunnels, color group titles, and a glob path fix. Better Python 3.10 support.
+
+* **2021.02.08**: Version 1.7.0 released with a few new features like ``.with_cwd``, some useful bugfixes, and lots of cleanup.
+
 * **2020.03.23**: Version 1.6.9 released with several Path fixes, final version to support Python 2.6.
 
 * **2019.10.30**: Version 1.6.8 released with ``local.cmd``, a few command updates, ``Set`` improvements, and ``TypedEnv``.
@@ -21,4 +27,3 @@
 * **2015.10.16**: Version 1.6.0 released. Highlights include Python 3.5 compatibility, the ``plumbum.colors`` package, ``Path`` becoming a subclass of ``str`` and a host of bugfixes. Special thanks go to Henry for his efforts.
 
 * **2015.07.17**: Version 1.5.0 released. This release brings a host of bug fixes, code cleanups and some experimental new features (be sure to check the changelog). Also, say hi to `Henry Schreiner <https://github.com/henryiii>`_, who has joined as a member of the project.
-

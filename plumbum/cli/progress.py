@@ -2,16 +2,16 @@
 Progress bar
 ------------
 """
-from __future__ import print_function, division
-import warnings
-from abc import abstractmethod
+
 import datetime
-from plumbum.lib import six
-from plumbum.cli.termsize import get_terminal_size
 import sys
+import warnings
+from abc import ABC, abstractmethod
+
+from plumbum.cli.termsize import get_terminal_size
 
 
-class ProgressBase(six.ABC):
+class ProgressBase(ABC):
     """Base class for progress bars. Customize for types of progress bars.
 
     :param iterator: The iterator to wrap with a progress bar
@@ -22,13 +22,15 @@ class ProgressBase(six.ABC):
     :param clear: Clear the progress bar afterwards, if applicable.
     """
 
-    def __init__(self,
-                 iterator=None,
-                 length=None,
-                 timer=True,
-                 body=False,
-                 has_output=False,
-                 clear=True):
+    def __init__(
+        self,
+        iterator=None,
+        length=None,
+        timer=True,
+        body=False,
+        has_output=False,
+        clear=True,
+    ):
         if length is None:
             length = len(iterator)
         elif iterator is None:
@@ -81,7 +83,6 @@ class ProgressBase(six.ABC):
     @abstractmethod
     def display(self):
         """Called to update the progress bar"""
-        pass
 
     def increment(self):
         """Sets next value and displays the bar"""
@@ -93,8 +94,11 @@ class ProgressBase(six.ABC):
         if self.value < 1:
             return None, None
         elapsed_time = datetime.datetime.now() - self._start_time
-        time_each = (elapsed_time.days * 24 * 60 * 60 + elapsed_time.seconds +
-                     elapsed_time.microseconds / 1000000.0) / self.value
+        time_each = (
+            elapsed_time.days * 24 * 60 * 60
+            + elapsed_time.seconds
+            + elapsed_time.microseconds / 1000000.0
+        ) / self.value
         time_remaining = time_each * (self.length - self.value)
         return elapsed_time, datetime.timedelta(0, time_remaining, 0)
 
@@ -102,17 +106,15 @@ class ProgressBase(six.ABC):
         """Returns a string version of time remaining"""
         if self.value < 1:
             return "Starting...                         "
-        else:
-            elapsed_time, time_remaining = list(
-                map(str, self.time_remaining()))
-            return "{0} completed, {1} remaining".format(
-                elapsed_time.split('.')[0],
-                time_remaining.split('.')[0])
+
+        elapsed_time, time_remaining = list(map(str, self.time_remaining()))
+        completed = elapsed_time.split(".")[0]
+        remaining = time_remaining.split(".")[0]
+        return f"{completed} completed, {remaining} remaining"
 
     @abstractmethod
     def done(self):
         """Is called when the iterator is done."""
-        pass
 
     @classmethod
     def range(cls, *value, **kargs):
@@ -127,14 +129,14 @@ class ProgressBase(six.ABC):
 
 class Progress(ProgressBase):
     def start(self):
-        super(Progress, self).start()
+        super().start()
         self.display()
 
     def done(self):
         self.value = self.length
         self.display()
         if self.clear and not self.has_output:
-            print("\r", len(str(self)) * " ", "\r", end='', sep='')
+            print("\r", len(str(self)) * " ", "\r", end="", sep="")
         else:
             print()
 
@@ -145,36 +147,38 @@ class Progress(ProgressBase):
             return "0/0 complete"
 
         percent = max(self.value, 0) / self.length
-        ending = ' ' + (self.str_time_remaining()
-                        if self.timer else '{0} of {1} complete'.format(
-                            self.value, self.length))
+        ending = " " + (
+            self.str_time_remaining()
+            if self.timer
+            else f"{self.value} of {self.length} complete"
+        )
         if width - len(ending) < 10 or self.has_output:
             self.width = 0
+
             if self.timer:
-                return "{0:.0%} complete: {1}".format(
-                    percent, self.str_time_remaining())
-            else:
-                return "{0:.0%} complete".format(percent)
+                return f"{percent:.0%} complete: {self.str_time_remaining()}"
 
-        else:
-            self.width = width - len(ending) - 2 - 1
-            nstars = int(percent * self.width)
-            pbar = '[' + '*' * nstars + ' ' * (
-                self.width - nstars) + ']' + ending
+            return f"{percent:.0%} complete"
 
-        str_percent = ' {0:.0%} '.format(percent)
+        self.width = width - len(ending) - 2 - 1
+        nstars = int(percent * self.width)
+        pbar = "[" + "*" * nstars + " " * (self.width - nstars) + "]" + ending
 
-        return pbar[:self.width // 2 -
-                    2] + str_percent + pbar[self.width // 2 +
-                                            len(str_percent) - 2:]
+        str_percent = f" {percent:.0%} "
+
+        return (
+            pbar[: self.width // 2 - 2]
+            + str_percent
+            + pbar[self.width // 2 + len(str_percent) - 2 :]
+        )
 
     def display(self):
         disptxt = str(self)
         if self.width == 0 or self.has_output:
             print(disptxt)
         else:
-            print("\r", end='')
-            print(disptxt, end='')
+            print("\r", end="")
+            print(disptxt, end="")
             sys.stdout.flush()
 
 
@@ -187,19 +191,20 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             try:
-                from ipywidgets import IntProgress, HTML, HBox  # type: ignore
+                from ipywidgets import HTML, HBox, IntProgress
             except ImportError:  # Support IPython < 4.0
-                from IPython.html.widgets import IntProgress, HTML, HBox  # type: ignore
+                from IPython.html.widgets import HTML, HBox, IntProgress
 
-        super(ProgressIPy, self).__init__(*args, **kargs)
+        super().__init__(*args, **kargs)
         self.prog = IntProgress(max=self.length)
         self._label = HTML()
         self._box = HBox((self.prog, self._label))
 
     def start(self):
-        from IPython.display import display  # type: ignore
+        from IPython.display import display
+
         display(self._box)
-        super(ProgressIPy, self).start()
+        super().start()
 
     @property
     def value(self):
@@ -210,7 +215,7 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
     def value(self, val):
         self._value = val
         self.prog.value = max(val, 0)
-        self.prog.description = "{0:.2%}".format(self.value / self.length)
+        self.prog.description = f"{self.value / self.length:.2%}"
         if self.timer and val > 0:
             self._label.value = self.HTMLBOX.format(self.str_time_remaining())
 
@@ -225,7 +230,7 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
 class ProgressAuto(ProgressBase):
     """Automatically selects the best progress bar (IPython HTML or text). Does not work with qtconsole
     (as that is correctly identified as identical to notebook, since the kernel is the same); it will still
-    iterate, but no graphical indication will be diplayed.
+    iterate, but no graphical indication will be displayed.
 
     :param iterator: The iterator to wrap with a progress bar
     :param length: The length of the iterator (will use ``__len__`` if None)
@@ -236,16 +241,16 @@ class ProgressAuto(ProgressBase):
     def __new__(cls, *args, **kargs):
         """Uses the generator trick that if a cls instance is returned, the __init__ method is not called."""
         try:  # pragma: no cover
-            __IPYTHON__
+            __IPYTHON__  # pylint: disable=pointless-statement
             try:
-                from traitlets import TraitError  # type: ignore
+                from traitlets import TraitError
             except ImportError:  # Support for IPython < 4.0
-                from IPython.utils.traitlets import TraitError  # type: ignore
+                from IPython.utils.traitlets import TraitError
 
             try:
                 return ProgressIPy(*args, **kargs)
             except TraitError:
-                raise NameError()
+                raise NameError() from None
         except (NameError, ImportError):
             return Progress(*args, **kargs)
 
@@ -256,10 +261,11 @@ ProgressAuto.register(Progress)
 
 def main():
     import time
+
     tst = Progress.range(20)
-    for i in tst:
+    for _ in tst:
         time.sleep(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

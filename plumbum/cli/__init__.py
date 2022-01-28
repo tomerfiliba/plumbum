@@ -1,6 +1,38 @@
-from __future__ import absolute_import
-
-from .switches import SwitchError, switch, autoswitch, SwitchAttr, Flag, CountOf, positional
-from .switches import Range, Set, ExistingDirectory, ExistingFile, NonexistentPath, Predicate, CSV
 from .application import Application
-from .config import ConfigINI, Config
+from .config import Config, ConfigINI
+from .switches import (
+    CSV,
+    CountOf,
+    ExistingDirectory,
+    ExistingFile,
+    Flag,
+    NonexistentPath,
+    Predicate,
+    Range,
+    Set,
+    SwitchAttr,
+    SwitchError,
+    autoswitch,
+    positional,
+    switch,
+)
+
+__all__ = (
+    "Application",
+    "Config",
+    "ConfigINI",
+    "CSV",
+    "CountOf",
+    "ExistingDirectory",
+    "ExistingFile",
+    "Flag",
+    "NonexistentPath",
+    "Predicate",
+    "Range",
+    "Set",
+    "SwitchAttr",
+    "SwitchError",
+    "autoswitch",
+    "positional",
+    "switch",
+)

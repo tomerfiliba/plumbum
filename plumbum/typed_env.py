@@ -1,12 +1,7 @@
-import os
 import inspect
+import os
+from collections.abc import MutableMapping
 
-try:
-    from collections.abc import MutableMapping
-except ImportError:
-    from collections import MutableMapping
-
-    
 NO_DEFAULT = object()
 
 
@@ -46,14 +41,13 @@ class TypedEnv(MutableMapping):
 
     __slots__ = ["_env", "_defined_keys"]
 
-    class _BaseVar(object):
-
+    class _BaseVar:
         def __init__(self, name, default=NO_DEFAULT):
             self.names = tuple(name) if isinstance(name, (tuple, list)) else (name,)
             self.name = self.names[0]
             self.default = default
 
-        def convert(self, value):
+        def convert(self, value):  # pylint:disable=no-self-use
             return value
 
         def __get__(self, instance, owner):
@@ -78,11 +72,11 @@ class TypedEnv(MutableMapping):
         Case-insensitive. Throws a ``ValueError`` for any other value.
         """
 
-        def convert(self, s):
-            s = s.lower()
-            if s not in ("yes", "no", "true", "false", "1", "0"):
-                raise ValueError("Unrecognized boolean value: %r" % (s,))
-            return s in ("yes", "true", "1")
+        def convert(self, value):
+            value = value.lower()
+            if value not in {"yes", "no", "true", "false", "1", "0"}:
+                raise ValueError(f"Unrecognized boolean value: {value!r}")
+            return value in {"yes", "true", "1"}
 
         def __set__(self, instance, value):
             instance[self.name] = "yes" if value else "no"
@@ -99,7 +93,9 @@ class TypedEnv(MutableMapping):
         a list of objects of type ``type`` (``str`` by default).
         """
 
-        def __init__(self, name, default=NO_DEFAULT, type=str, separator=","):
+        def __init__(
+            self, name, default=NO_DEFAULT, type=str, separator=","
+        ):  # pylint:disable=redefined-builtin
             super(TypedEnv.CSV, self).__init__(name, default=default)
             self.type = type
             self.separator = separator
@@ -112,9 +108,15 @@ class TypedEnv(MutableMapping):
 
     # =========
 
-    def __init__(self, env=os.environ):
+    def __init__(self, env=None):
+        if env is None:
+            env = os.environ
         self._env = env
-        self._defined_keys = set(k for (k, v) in inspect.getmembers(self.__class__) if isinstance(v, self._BaseVar))
+        self._defined_keys = {
+            k
+            for (k, v) in inspect.getmembers(self.__class__)
+            if isinstance(v, self._BaseVar)
+        }
 
     def __iter__(self):
         return iter(dir(self))
@@ -133,8 +135,7 @@ class TypedEnv(MutableMapping):
             value = self._env.get(key, NO_DEFAULT)
             if value is not NO_DEFAULT:
                 return value
-        else:
-            raise EnvironmentVariableError(key_names[0])
+        raise EnvironmentVariableError(key_names[0])
 
     def __contains__(self, key):
         try:
@@ -149,7 +150,9 @@ class TypedEnv(MutableMapping):
         try:
             return self._raw_get(name)
         except EnvironmentVariableError:
-            raise AttributeError("%s has no attribute %r" % (self.__class__, name))
+            raise AttributeError(
+                f"{self.__class__} has no attribute {name!r}"
+            ) from None
 
     def __getitem__(self, key):
         return getattr(self, key)  # delegate through the descriptors
@@ -164,7 +167,7 @@ class TypedEnv(MutableMapping):
         if self._defined_keys:
             # return only defined
             return sorted(self._defined_keys)
-        # return whatever is in the environemnt (for convenience)
+        # return whatever is in the environment (for convenience)
         members = set(self._env.keys())
         members.update(dir(self.__class__))
         return sorted(members)

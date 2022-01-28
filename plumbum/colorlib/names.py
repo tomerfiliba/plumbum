@@ -1,14 +1,13 @@
-'''
+"""
 Names for the standard and extended color set.
 Extended set is similar to `vim wiki <http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim>`_, `colored <https://pypi.python.org/pypi/colored>`_, etc. Colors based on `wikipedia <https://en.wikipedia.org/wiki/ANSI_escape_code#Colors>`_.
 
 You can access the index of the colors with names.index(name). You can access the
 rgb values with ``r=int(html[n][1:3],16)``, etc.
-'''
+"""
+from typing import Tuple
 
-from __future__ import division, print_function
-
-color_names = '''\
+color_names = """\
 black
 red
 green
@@ -264,29 +263,55 @@ grey_78
 grey_82
 grey_85
 grey_89
-grey_93'''.split()
+grey_93""".split()
 
-_greys = (3.4, 7.4, 11, 15, 19, 23, 26.7, 30.49, 34.6, 38.6, 42.4, 46.4, 50,
-          54, 58, 62, 66, 69.8, 73.8, 77.7, 81.6, 85.3, 89.3, 93)
+EMPTY_SLICE = slice(None, None, None)
+
+_greys = (
+    3.4,
+    7.4,
+    11,
+    15,
+    19,
+    23,
+    26.7,
+    30.49,
+    34.6,
+    38.6,
+    42.4,
+    46.4,
+    50,
+    54,
+    58,
+    62,
+    66,
+    69.8,
+    73.8,
+    77.7,
+    81.6,
+    85.3,
+    89.3,
+    93,
+)
 _grey_vals = [int(x / 100.0 * 16 * 16) for x in _greys]
 
-_grey_html = ['#' + format(x, '02x') * 3 for x in _grey_vals]
+_grey_html = ["#" + format(x, "02x") * 3 for x in _grey_vals]
 
-_normals = [int(x, 16) for x in '0 5f 87 af d7 ff'.split()]
+_normals = [int(x, 16) for x in "0 5f 87 af d7 ff".split()]
 _normal_html = [
-    '#' + format(_normals[n // 36], '02x') + format(
-        _normals[n // 6 % 6], '02x') + format(_normals[n % 6], '02x')
+    "#"
+    + format(_normals[n // 36], "02x")
+    + format(_normals[n // 6 % 6], "02x")
+    + format(_normals[n % 6], "02x")
     for n in range(16 - 16, 232 - 16)
 ]
 
 _base_pattern = [(n // 4, n // 2 % 2, n % 2) for n in range(8)]
-_base_html = ([
-    '#{2:02x}{1:02x}{0:02x}'.format(x[0] * 192, x[1] * 192, x[2] * 192)
-    for x in _base_pattern
-] + ['#808080'] + [
-    '#{2:02x}{1:02x}{0:02x}'.format(x[0] * 255, x[1] * 255, x[2] * 255)
-    for x in _base_pattern
-][1:])
+_base_html = (
+    [f"#{x[2] * 192:02x}{x[1] * 192:02x}{x[0] * 192:02x}" for x in _base_pattern]
+    + ["#808080"]
+    + [f"#{x[2] * 255:02x}{x[1] * 255:02x}{x[0] * 255:02x}" for x in _base_pattern][1:]
+)
 color_html = _base_html + _normal_html + _grey_html
 
 color_codes_simple = list(range(8)) + list(range(60, 68))
@@ -313,14 +338,14 @@ default_styles = dict(
     success="fg green",
 )
 
-#Functions to be used for color name operations
+# Functions to be used for color name operations
 
 
-class FindNearest(object):
+class FindNearest:
     """This is a class for finding the nearest color given rgb values.
     Different find methods are available."""
 
-    def __init__(self, r, g, b):
+    def __init__(self, r: int, g: int, b: int) -> None:
         self.r = r
         self.b = b
         self.g = g
@@ -335,66 +360,69 @@ class FindNearest(object):
         # Compressed to linear_integers r,g,b
         # [[[0,1],[2,3]],[[4,5],[6,7]]]
         # r*1 + g*2 + b*4
-        return (self.r >= midlevel) * 1 + (self.g >= midlevel) * 2 + (
-            self.b >= midlevel) * 4
+        return (
+            (self.r >= midlevel) * 1
+            + (self.g >= midlevel) * 2
+            + (self.b >= midlevel) * 4
+        )
 
-    def all_slow(self, color_slice=slice(None, None, None)):
+    def all_slow(self, color_slice: slice = EMPTY_SLICE) -> int:
         """This is a slow way to find the nearest color."""
         distances = [
             self._distance_to_color(color) for color in color_html[color_slice]
         ]
         return min(range(len(distances)), key=distances.__getitem__)
 
-    def _distance_to_color(self, color):
+    def _distance_to_color(self, color: str) -> int:
         """This computes the distance to a color, should be minimized."""
         rgb = (int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16))
-        return (self.r - rgb[0])**2 + (self.g - rgb[1])**2 + (
-            self.b - rgb[2])**2
+        return (self.r - rgb[0]) ** 2 + (self.g - rgb[1]) ** 2 + (self.b - rgb[2]) ** 2
 
-    def _distance_to_color_number(self, n):
+    def _distance_to_color_number(self, n: int) -> int:
         color = color_html[n]
         return self._distance_to_color(color)
 
-    def only_colorblock(self):
+    def only_colorblock(self) -> int:
         """This finds the nearest color based on block system, only works
         for 17-232 color values."""
         rint = min(
-            range(len(_normals)),
-            key=[abs(x - self.r) for x in _normals].__getitem__)
+            range(len(_normals)), key=[abs(x - self.r) for x in _normals].__getitem__
+        )
         bint = min(
-            range(len(_normals)),
-            key=[abs(x - self.b) for x in _normals].__getitem__)
+            range(len(_normals)), key=[abs(x - self.b) for x in _normals].__getitem__
+        )
         gint = min(
-            range(len(_normals)),
-            key=[abs(x - self.g) for x in _normals].__getitem__)
-        return (16 + 36 * rint + 6 * gint + bint)
+            range(len(_normals)), key=[abs(x - self.g) for x in _normals].__getitem__
+        )
+        return 16 + 36 * rint + 6 * gint + bint
 
-    def only_simple(self):
+    def only_simple(self) -> int:
         """Finds the simple color-block color."""
         return self.all_slow(slice(0, 16, None))
 
-    def only_grey(self):
+    def only_grey(self) -> int:
         """Finds the greyscale color."""
         rawval = (self.r + self.b + self.g) / 3
         n = min(
             range(len(_grey_vals)),
-            key=[abs(x - rawval) for x in _grey_vals].__getitem__)
+            key=[abs(x - rawval) for x in _grey_vals].__getitem__,
+        )
         return n + 232
 
-    def all_fast(self):
+    def all_fast(self) -> int:
         """Runs roughly 8 times faster than the slow version."""
         colors = [self.only_simple(), self.only_colorblock(), self.only_grey()]
         distances = [self._distance_to_color_number(n) for n in colors]
         return colors[min(range(len(distances)), key=distances.__getitem__)]
 
 
-def from_html(color):
+def from_html(color: str) -> Tuple[int, int, int]:
     """Convert html hex code to rgb."""
-    if len(color) != 7 or color[0] != '#':
+    if len(color) != 7 or color[0] != "#":
         raise ValueError("Invalid length of html code")
     return (int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16))
 
 
 def to_html(r, g, b):
     """Convert rgb to html hex code."""
-    return "#{0:02x}{1:02x}{2:02x}".format(r, g, b)
+    return f"#{r:02x}{g:02x}{b:02x}"

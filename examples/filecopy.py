@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 import logging
-from plumbum import cli, local
-from plumbum.path.utils import delete, copy
 
+from plumbum import cli, local
+from plumbum.path.utils import copy, delete
 
 logger = logging.getLogger("FileCopier")
 
-class FileCopier(cli.Application):
-    overwrite = cli.Flag("-o", help = "If given, overwrite existing files")
 
-    @cli.switch(["-l", "--log-to-file"], argtype = str)
+class FileCopier(cli.Application):
+    overwrite = cli.Flag("-o", help="If given, overwrite existing files")
+
+    @cli.switch(["-l", "--log-to-file"], argtype=str)
     def log_to_file(self, filename):
         """logs all output to the given file"""
         handler = logging.FileHandler(filename)

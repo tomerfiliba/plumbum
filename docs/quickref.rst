@@ -14,7 +14,7 @@ Optional arguments
 ================ =========================
 Utility          Usage
 ================ =========================
-``Flag``         True or False descriptor 
+``Flag``         True or False descriptor
 ``SwitchAttr``   A value as a descriptor
 ``CountOf``      Counting version of ``Flag``
 ``@switch``      A function that runs when passed
@@ -42,7 +42,7 @@ Common options
 **************
 
 ================== ============================ ==================
-Option             Used in                      Usage  
+Option             Used in                      Usage
 ================== ============================ ==================
 First argument     Non-auto                     The name, or list of names, includes dash(es)
 Second argument    All                          The validator
@@ -64,13 +64,15 @@ Special member variables
 ====================== =====================================
 Utility                Usage
 ====================== =====================================
-``PROGNAME=``          Custom program name and/or color
-``VERSION=``           Custom version
-``DESCRIPTION=``       Custom description (or use docstring)
-``DESCRIPTION_MORE=``  Custom description with whitespace
-``ALLOW_ABREV=True``   Allow argparse style abbreviations
-``COLOR_USAGE=``       Custom color for usage statement
-``COLOR_GROUPS=``      Colors of groups (dictionary)
+``PROGNAME=``           Custom program name and/or color
+``VERSION=``            Custom version
+``DESCRIPTION=``        Custom description (or use docstring)
+``DESCRIPTION_MORE=``   Custom description with whitespace
+``ALLOW_ABREV=True``    Allow argparse style abbreviations
+``COLOR_USAGE=``        Custom color for usage statement
+``COLOR_USAGE_TITLE=``  Custom color for usage statement's title
+``COLOR_GROUPS=``       Colors of groups (dictionary)
+``COLOR_GROUP_TITLES=`` Colors of group titles (dictionary)
 ====================== =====================================
 
 Paths
@@ -96,7 +98,7 @@ Subtraction       Relative path
 Property                                            Description                 Compare to Pathlib
 =================================================== =========================== ==================
 ``.name``                                           The file name               ✓
-``.basename``                                       DEPRECATED                  
+``.basename``                                       DEPRECATED
 ``.stem``                                           Name without extension      ✓
 ``.dirname``                                        Directory name              ✗
 ``.root``                                           The file tree root          ✓
@@ -114,7 +116,7 @@ Property                                            Description                 
     Missing:
              .anchor
 
-    
+
 
 =================================================== =========================== ==================
 Method                                              Description                 Compare to Pathlib
@@ -197,5 +199,3 @@ Main colors: ``black`` ``red`` ``green`` ``yellow`` ``blue`` ``magenta`` ``cyan`
 Default styles: ``warn`` ``title`` ``fatal`` ``highlight`` ``info`` ``success``
 
 Attrs: ``bold`` ``dim`` ``underline`` ``italics`` ``reverse`` ``strikeout`` ``hidden``
-
-

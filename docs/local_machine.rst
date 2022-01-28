@@ -3,9 +3,9 @@
 The Local Object
 ================
 So far we've only seen running local commands, but there's more to the ``local`` object than
-this; it aims to "fully represent" the *local machine*. 
+this; it aims to "fully represent" the *local machine*.
 
-First, you should get acquainted with ``which``, which performs program name resolution in 
+First, you should get acquainted with ``which``, which performs program name resolution in
 the system ``PATH`` and returns the first match (or raises an exception if no match is found)::
 
     >>> local.which("ls")
@@ -15,7 +15,7 @@ the system ``PATH`` and returns the first match (or raises an exception if no ma
        [...]
     plumbum.commands.CommandNotFound: ('nonexistent', [...])
 
-Another member is ``python``, which is a command object that points to the current interpreter 
+Another member is ``python``, which is a command object that points to the current interpreter
 (``sys.executable``)::
 
     >>> local.python
@@ -33,8 +33,7 @@ The ``local.cwd`` attribute represents the current working directory. You can ch
     >>> local.cwd
     <Workdir d:\workspace\plumbum\docs>
 
-But a much more useful pattern is to use it as a *context manager*, so it behaves like 
-``pushd``/``popd``::
+You can also use it as a *context manager*, so it behaves like ``pushd``/``popd``::
 
     >>> with local.cwd("c:\\windows"):
     ...     print "%s:%s" % (local.cwd, (ls | wc["-l"])())
@@ -46,9 +45,16 @@ But a much more useful pattern is to use it as a *context manager*, so it behave
     >>> print "%s:%s" % (local.cwd, (ls | wc["-l"])())
     d:\workspace\plumbum: 9
 
+Finally, A more explicit and thread-safe way of running a command in a different directory is using the ``.with_cwd()`` method:
+
+    >>> ls_in_docs = local.cmd.ls.with_cwd("docs")
+    >>> ls_in_docs()
+    'api\nchangelog.rst\n_cheatsheet.rst\ncli.rst\ncolorlib.rst\n_color_list.html\ncolors.rst\nconf.py\nindex.rst\nlocal_commands.rst\nlocal_machine.rst\nmake.bat\nMakefile\n_news.rst\npaths.rst\nquickref.rst\nremote.rst\n_static\n_templates\ntyped_env.rst\nutils.rst\n'
+
+
 Environment
 -----------
-Much like ``cwd``, ``local.env`` represents the *local environment*. It is a dictionary-like 
+Much like ``cwd``, ``local.env`` represents the *local environment*. It is a dictionary-like
 object that holds **environment variables**, which you can get/set intuitively::
 
     >>> local.env["JAVA_HOME"]
@@ -78,7 +84,7 @@ it's own private copy of the environment::
                   |     raise KeyError(key) from None
                   | KeyError: 'FOO'
 
-In order to make cross-platform-ness easier, the ``local.env`` object provides some convenience 
+In order to make cross-platform-ness easier, the ``local.env`` object provides some convenience
 properties for getting the username (``.user``), the home path (``.home``), and the executable path
 (``path``) as a list. For instance::
 

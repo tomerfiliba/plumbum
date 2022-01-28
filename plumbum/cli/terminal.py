@@ -3,12 +3,28 @@ Terminal-related utilities
 --------------------------
 """
 
-from __future__ import division, print_function, absolute_import
-import sys
+
 import os
+import sys
+
 from plumbum import local
-from .termsize import get_terminal_size
+
 from .progress import Progress
+from .termsize import get_terminal_size
+
+__all__ = (
+    "readline",
+    "ask",
+    "choose",
+    "prompt",
+    "get_terminal_size",
+    "Progress",
+    "get_terminal_size",
+)
+
+
+def __dir__():
+    return __all__
 
 
 def readline(message=""):
@@ -41,14 +57,13 @@ def ask(question, default=None):
             answer = readline(question).strip().lower()
         except EOFError:
             answer = None
-        if answer in ("y", "yes"):
+        if answer in {"y", "yes"}:
             return True
-        elif answer in ("n", "no"):
+        if answer in {"n", "no"}:
             return False
-        elif not answer and default is not None:
+        if not answer and default is not None:
             return default
-        else:
-            sys.stdout.write("Invalid response, please try again\n")
+        sys.stdout.write("Invalid response, please try again\n")
 
 
 def choose(question, options, default=None):
@@ -77,7 +92,7 @@ def choose(question, options, default=None):
     choices = {}
     defindex = None
     for i, item in enumerate(options):
-        i = i + 1  # python2.5
+        i += 1
         if isinstance(item, (tuple, list)) and len(item) == 2:
             text = item[0]
             val = item[1]
@@ -87,12 +102,12 @@ def choose(question, options, default=None):
         choices[i] = val
         if default is not None and default == val:
             defindex = i
-        sys.stdout.write("(%d) %s\n" % (i, text))
+        sys.stdout.write(f"({i}) {text}\n")
     if default is not None:
         if defindex is None:
-            msg = "Choice [%s]: " % (default, )
+            msg = f"Choice [{default}]: "
         else:
-            msg = "Choice [%d]: " % (defindex, )
+            msg = f"Choice [{defindex}]: "
     else:
         msg = "Choice: "
     while True:
@@ -112,10 +127,12 @@ def choose(question, options, default=None):
         return choices[choice]
 
 
-def prompt(question,
-           type=str,
-           default=NotImplemented,
-           validator=lambda val: True):
+def prompt(
+    question,
+    type=str,  # pylint: disable=redefined-builtin
+    default=NotImplemented,
+    validator=lambda val: True,
+):
     """
     Presents the user with a validated question, keeps asking if validation does not pass.
 
@@ -128,32 +145,33 @@ def prompt(question,
     """
     question = question.rstrip(" \t:")
     if default is not NotImplemented:
-        question += " [%s]" % (default, )
+        question += f" [{default}]"
     question += ": "
     while True:
         try:
             ans = readline(question).strip()
         except EOFError:
             ans = ""
+
         if not ans:
             if default is not NotImplemented:
-                #sys.stdout.write("\b%s\n" % (default,))
+                # sys.stdout.write("\b%s\n" % (default,))
                 return default
-            else:
-                continue
+            continue
         try:
             ans = type(ans)
         except (TypeError, ValueError) as ex:
-            sys.stdout.write("Invalid value (%s), please try again\n" % (ex, ))
+            sys.stdout.write(f"Invalid value ({ex}), please try again\n")
             continue
+
         try:
             valid = validator(ans)
         except ValueError as ex:
-            sys.stdout.write("%s, please try again\n" % (ex, ))
+            sys.stdout.write(f"{ex}, please try again\n")
             continue
+
         if not valid:
-            sys.stdout.write(
-                "Value not in specified range, please try again\n")
+            sys.stdout.write("Value not in specified range, please try again\n")
             continue
         return ans
 
@@ -170,16 +188,17 @@ def hexdump(data_or_stream, bytes_per_line=16, aggregate=True):
                 if not buf:
                     break
                 yield buf
+
     else:
 
         def read_chunk():
             for i in range(0, len(data_or_stream), bytes_per_line):
-                yield data_or_stream[i:i + bytes_per_line]
+                yield data_or_stream[i : i + bytes_per_line]
 
     prev = None
     skipped = False
     for i, chunk in enumerate(read_chunk()):
-        hexd = " ".join("%02x" % (ord(ch), ) for ch in chunk)
+        hexd = " ".join(f"{ord(ch):02x}" for ch in chunk)
         text = "".join(ch if 32 <= ord(ch) < 127 else "." for ch in chunk)
         if aggregate and prev == chunk:
             skipped = True
@@ -187,8 +206,8 @@ def hexdump(data_or_stream, bytes_per_line=16, aggregate=True):
         prev = chunk
         if skipped:
             yield "*"
-        yield "%06x | %s| %s" % (i * bytes_per_line,
-                                 hexd.ljust(bytes_per_line * 3, " "), text)
+        hexd_ljust = hexd.ljust(bytes_per_line * 3, " ")
+        yield f"{i*bytes_per_line:06x} | {hexd_ljust}| {text}"
         skipped = False
 
 
@@ -206,11 +225,11 @@ def pager(rows, pagercmd=None):  # pragma: no cover
     pg = pagercmd.popen(stdout=None, stderr=None)
     try:
         for row in rows:
-            line = "%s\n" % (row, )
+            line = f"{row}\n"
             try:
                 pg.stdin.write(line)
                 pg.stdin.flush()
-            except IOError:
+            except OSError:
                 break
         pg.stdin.close()
         pg.wait()

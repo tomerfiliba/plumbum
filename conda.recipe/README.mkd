@@ -5,7 +5,7 @@ Change to the `conda.recipies` directory. Run
 ```bash
 $ conda install conda-build
 ```
-to aquire the conda build tools. Then you can build with
+to acquire the conda build tools. Then you can build with
 ```bash
 conda build --python 3.5 .
 ```
@@ -31,5 +31,3 @@ anaconda login
 for f in `ls outputdir/*/*.tar.bz2`; do anaconda upload $f; done
 anaconda logout
 ```
-
-

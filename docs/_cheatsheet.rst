@@ -14,12 +14,21 @@ Basics
     >>> notepad()                                   # Notepad window pops up
     u''                                             # Notepad window is closed by user, command returns
 
-Instead of writing ``xxx = local["xxx"]`` for every program you wish to use, you can 
+Instead of writing ``xxx = local["xxx"]`` for every program you wish to use, you can
 also :ref:`import commands <import-hack>`:
-    
+
     >>> from plumbum.cmd import grep, wc, cat, head
     >>> grep
     LocalCommand(<LocalPath /bin/grep>)
+
+Or, use the ``local.cmd`` syntactic-sugar:
+
+.. code-block:: python
+
+    >>> local.cmd.ls
+    LocalCommand(<LocalPath /bin/ls>)
+    >>> local.cmd.ls()
+    u'build.py\ndist\ndocs\nLICENSE\nplumbum\nREADME.rst\nsetup.py\ntests\ntodo.txt\n'
 
 See :ref:`guide-local-commands`.
 
@@ -27,7 +36,7 @@ Piping
 ------
 
 .. code-block:: python
-    
+
     >>> chain = ls["-a"] | grep["-v", "\\.py"] | wc["-l"]
     >>> print chain
     /bin/ls -a | /bin/grep -v '\.py' | /usr/bin/wc -l
@@ -54,13 +63,21 @@ Working-directory manipulation
 ------------------------------
 
 .. code-block:: python
-    
+
     >>> local.cwd
     <Workdir /home/tomer/workspace/plumbum>
     >>> with local.cwd(local.cwd / "docs"):
     ...     chain()
     ...
     u'15\n'
+
+A more explicit, and thread-safe way of running a command in a differet directory is using the ``.with_cwd()`` method:
+
+.. code-block:: python
+
+    >>> ls_in_docs = local.cmd.ls.with_cwd("docs")
+    >>> ls_in_docs()
+    'api\nchangelog.rst\n_cheatsheet.rst\ncli.rst\ncolorlib.rst\n_color_list.html\ncolors.rst\nconf.py\nindex.rst\nlocal_commands.rst\nlocal_machine.rst\nmake.bat\nMakefile\n_news.rst\npaths.rst\nquickref.rst\nremote.rst\n_static\n_templates\ntyped_env.rst\nutils.rst\n'
 
 See :ref:`guide-paths` and :ref:`guide-local-machine`.
 
@@ -81,7 +98,7 @@ See :ref:`guide-local-commands-bgfg`.
 
 
 Command nesting
----------------   
+---------------
 
 .. code-block:: python
 
@@ -89,7 +106,7 @@ Command nesting
     >>> print sudo[ifconfig["-a"]]
     /usr/bin/sudo /sbin/ifconfig -a
     >>> (sudo[ifconfig["-a"]] | grep["-i", "loop"]) & FG
-    lo        Link encap:Local Loopback  
+    lo        Link encap:Local Loopback
               UP LOOPBACK RUNNING  MTU:16436  Metric:1
 
 
@@ -98,7 +115,7 @@ See :ref:`guide-local-commands-nesting`.
 Remote commands (over SSH)
 --------------------------
 
-Supports `openSSH <http://www.openssh.org/>`_-compatible clients, 
+Supports `openSSH <http://www.openssh.org/>`_-compatible clients,
 `PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/>`_ (on Windows)
 and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implementation of SSH2)
 

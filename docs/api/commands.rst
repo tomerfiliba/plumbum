@@ -13,7 +13,7 @@ Package plumbum.commands
 .. automodule:: plumbum.commands.modifiers
    :members:
    :special-members:
-   
+
 .. automodule:: plumbum.commands.processes
    :members:
    :special-members:

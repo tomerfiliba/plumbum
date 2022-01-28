@@ -6,6 +6,7 @@ class EnvPathList(list):
     __slots__ = ["_path_factory", "_pathsep", "__weakref__"]
 
     def __init__(self, path_factory, pathsep):
+        super().__init__()
         self._path_factory = path_factory
         self._pathsep = pathsep
 
@@ -34,12 +35,14 @@ class EnvPathList(list):
         return self._pathsep.join(str(p) for p in self)
 
 
-class BaseEnv(object):
+class BaseEnv:
     """The base class of LocalEnv and RemoteEnv"""
+
     __slots__ = ["_curr", "_path", "_path_factory", "__weakref__"]
     CASE_SENSITIVE = True
 
-    def __init__(self, path_factory, pathsep):
+    def __init__(self, path_factory, pathsep, *, _curr):
+        self._curr = _curr
         self._path_factory = path_factory
         self._path = EnvPathList(path_factory, pathsep)
         self._update_path()
@@ -99,8 +102,7 @@ class BaseEnv(object):
 
     def get(self, name, *default):
         """Returns the keys of the current environment (like dict.keys)"""
-        return self._curr.get((name if self.CASE_SENSITIVE else name.upper()),
-                              *default)
+        return self._curr.get((name if self.CASE_SENSITIVE else name.upper()), *default)
 
     def __delitem__(self, name):
         """Deletes an environment variable from the current environment"""
@@ -140,7 +142,7 @@ class BaseEnv(object):
     def getdict(self):
         """Returns the environment as a real dictionary"""
         self._curr["PATH"] = self.path.join()
-        return dict((k, str(v)) for k, v in self._curr.items())
+        return {k: str(v) for k, v in self._curr.items()}
 
     @property
     def path(self):
@@ -150,11 +152,10 @@ class BaseEnv(object):
     def _get_home(self):
         if "HOME" in self:
             return self._path_factory(self["HOME"])
-        elif "USERPROFILE" in self:  # pragma: no cover
+        if "USERPROFILE" in self:  # pragma: no cover
             return self._path_factory(self["USERPROFILE"])
-        elif "HOMEPATH" in self:  # pragma: no cover
-            return self._path_factory(
-                self.get("HOMEDRIVE", ""), self["HOMEPATH"])
+        if "HOMEPATH" in self:  # pragma: no cover
+            return self._path_factory(self.get("HOMEDRIVE", ""), self["HOMEPATH"])
         return None
 
     def _set_home(self, p):
@@ -174,8 +175,7 @@ class BaseEnv(object):
     def user(self):
         """Return the user name, or ``None`` if it is not set"""
         # adapted from getpass.getuser()
-        for name in ('LOGNAME', 'USER', 'LNAME',
-                     'USERNAME'):  # pragma: no branch
+        for name in ("LOGNAME", "USER", "LNAME", "USERNAME"):  # pragma: no branch
             if name in self:
                 return self[name]
         try:

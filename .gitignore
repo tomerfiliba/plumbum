@@ -23,3 +23,5 @@ tests/.cache/*
 /*venv*
 *.mypy_cache
 .eggs
+/plumbum/version.py
+/tests/nohup.out
