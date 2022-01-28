@@ -58,7 +58,7 @@
 * Paths: support composing paths using subscription operations (`#455 <https://github.com/tomerfiliba/plumbum/pull/455>`_)
 * CLI: Improved 'Set' validator to allow non-string types, and CSV params (`#452 <https://github.com/tomerfiliba/plumbum/pull/452>`_)
 * TypedEnv: Facility for modeling environment-variables into python data types (`#451 <https://github.com/tomerfiliba/plumbum/pull/451>`_)
-* Commands: execute local/remote commands via a magic `.cmd` attribute (`#450 <https://github.com/tomerfiliba/plumbum/pull/450>`_)
+* Commands: execute local/remote commands via a magic ``.cmd`` attribute (`#450 <https://github.com/tomerfiliba/plumbum/pull/450>`_)
 
 1.6.7
 -----
@@ -138,7 +138,7 @@
 * Bugfix: Getting an executable no longer returns a directory  (`#234 <https://ithub.com/tomerfiliba/plumbum/issues/234>`_)
 * Bugfix: Iterdir now works on Python <3.5
 * Testing is now expanded and fully written in Pytest, with coverage reporting.
-* Added support for Conda ( as of 1.6.2, use the `-c conda-forge` channel)
+* Added support for Conda ( as of 1.6.2, use the ``-c conda-forge`` channel)
 
 1.6.0
 -----
@@ -164,7 +164,7 @@
 * CLI: add ``--help-all`` and various cosmetic fixes: (`#125 <https://github.com/tomerfiliba/plumbum/pull/125>`_),
   (`#126 <https://github.com/tomerfiliba/plumbum/pull/126>`_), (`#127 <https://github.com/tomerfiliba/plumbum/pull/127>`_)
 * CLI: add ``root_app`` property (`#141 <https://github.com/tomerfiliba/plumbum/pull/141>`_)
-* Machines: ``getattr`` now raises ``AttributeError`` instead of `CommandNotFound` (`#135 <https://github.com/tomerfiliba/plumbum/pull/135>`_)
+* Machines: ``getattr`` now raises ``AttributeError`` instead of ``CommandNotFound`` (`#135 <https://github.com/tomerfiliba/plumbum/pull/135>`_)
 * Paramiko: ``keep_alive`` support (`#186 <https://github.com/tomerfiliba/plumbum/pull/186>`_)
 * Paramiko: does not support piping explicitly now (`#160 <https://github.com/tomerfiliba/plumbum/pull/160>`_)
 * Parmaiko: Added pure SFTP backend, gives STFP v4+ support (`#188 <https://github.com/tomerfiliba/plumbum/pull/188>`_)

@@ -219,9 +219,9 @@ these values. Here's an example ::
         ValueError("Expected one of ['UDP', 'TCP']",)
 
 .. note::
-   The toolkit also provides some other useful validators: `ExistingFile` (ensures the given
-   argument is an existing file), `ExistingDirectory` (ensures the given argument is an existing
-   directory), and `NonexistentPath` (ensures the given argument is not an existing path).
+   The toolkit also provides some other useful validators: ``ExistingFile`` (ensures the given
+   argument is an existing file), ``ExistingDirectory`` (ensures the given argument is an existing
+   directory), and ``NonexistentPath`` (ensures the given argument is not an existing path).
    All of these convert the argument to a :ref:`local path <guide-paths>`.
 
 
@@ -598,9 +598,15 @@ A command line image plotter (``Image``) is provided in ``plumbum.cli.image``. I
 
     Image().show_pil(im)
 
-The Image constructor can take an optional size (defaults to the current terminal size if None), and a `char_ratio`, a height to width measure for your current font. It defaults to a common value of 2.45. If set to None, the ratio is ignored and the image will no longer be constrained to scale proportionately. To directly plot an image, the ``show`` method takes a filename and a double parameter, which doubles the vertical resolution on some fonts. The `show_pil` and `show_pil_double`
-methods directly take a PIL-like object. To plot an image from the command line,
-the module can be run directly: ``python -m plumbum.cli.image myimage.png``.
+The Image constructor can take an optional size (defaults to the current
+terminal size if None), and a ``char_ratio``, a height to width measure for your
+current font. It defaults to a common value of 2.45. If set to None, the ratio
+is ignored and the image will no longer be constrained to scale proportionately.
+To directly plot an image, the ``show`` method takes a filename and a double
+parameter, which doubles the vertical resolution on some fonts. The ``show_pil``
+and ``show_pil_double`` methods directly take a PIL-like object. To plot an image
+from the command line, the module can be run directly: ``python -m
+plumbum.cli.image myimage.png``.
 
 For the full list of helpers or more information, see the :ref:`api docs <api-cli>`.
 

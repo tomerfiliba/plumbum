@@ -14,7 +14,7 @@ import re
 import sys
 from abc import ABC, abstractmethod
 from copy import copy
-from typing import IO, Dict, Union
+from typing import IO, Dict, Optional, Union
 
 from .names import (
     FindNearest,
@@ -343,8 +343,9 @@ class Style:
     """The class of color to use. Never hardcode ``Color`` call when writing a Style
     method."""
 
-    attribute_names = None  # type: Union[Dict[str,str], Dict[str,int]]
-    _stdout = None  # type: IO
+    attribute_names: Union[Dict[str, str], Dict[str, int]]
+
+    _stdout: Optional[IO] = None
     end = "\n"
     """The endline character. Override if needed in subclasses."""
 

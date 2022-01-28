@@ -6,7 +6,7 @@ Colors
 .. versionadded:: 1.6
 
 
-The purpose of the `plumbum.colors` library is to make adding
+The purpose of the ``plumbum.colors`` library is to make adding
 text styles (such as color) to Python easy and safe. Color is often a great
 addition to shell scripts, but not a necessity, and implementing it properly
 is tricky. It is easy to end up with an unreadable color stuck on your terminal or
