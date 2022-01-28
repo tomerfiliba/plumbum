@@ -1,7 +1,6 @@
 import atexit
 import heapq
 import time
-from io import StringIO
 from queue import Empty as QueueEmpty
 from queue import Queue
 from threading import Thread
@@ -304,6 +303,7 @@ def run_proc(proc, retcode, timeout=None):
 BY_POSITION = object()
 BY_TYPE = object()
 DEFAULT_ITER_LINES_MODE = BY_POSITION
+DEFAULT_BUFFER_SIZE = _INFINITE = float("inf")
 
 
 def iter_lines(
@@ -312,6 +312,7 @@ def iter_lines(
     timeout=None,
     linesize=-1,
     line_timeout=None,
+    buffer_size=None,
     mode=None,
     _iter_lines=_iter_lines,
 ):
@@ -335,10 +336,22 @@ def iter_lines(
                     Raise an :class:`ProcessLineTimedOut <plumbum.commands.ProcessLineTimedOut>` if the timeout has
                     been reached. ``None`` means no timeout is imposed.
 
+    :param buffer_size: Maximum number of lines to keep in the stdout/stderr buffers, in case of a ProcessExecutionError.
+                    Default is ``None``, which defaults to DEFAULT_BUFFER_SIZE (which is infinite by default).
+                    ``0`` will disable bufferring completely.
+
+    :param mode: Controls what the generator yields. Defaults to DEFAULT_ITER_LINES_MODE (which is BY_POSITION by default)
+                - BY_POSITION (default): yields ``(out, err)`` line tuples, where either item may be ``None``
+                - BY_TYPE: yields ``(fd, line)`` tuples, where ``fd`` is 1 (stdout) or 2 (stderr)
+
     :returns: An iterator of (out, err) line tuples.
     """
     if mode is None:
         mode = DEFAULT_ITER_LINES_MODE
+
+    if buffer_size is None:
+        buffer_size = DEFAULT_BUFFER_SIZE
+    buffer_size: int
 
     assert mode in (BY_POSITION, BY_TYPE)
 
@@ -347,13 +360,17 @@ def iter_lines(
 
     _register_proc_timeout(proc, timeout)
 
-    buffers = [StringIO(), StringIO()]
+    buffers = [[], []]
     for t, line in _iter_lines(proc, decode, linesize, line_timeout):
 
         # verify that the proc hasn't timed out yet
         proc.verify(timeout=timeout, retcode=None, stdout=None, stderr=None)
 
-        buffers[t].write(line + "\n")
+        buffer = buffers[t]
+        if buffer_size > 0:
+            buffer.append(line)
+            if buffer_size < _INFINITE:
+                del buffer[:-buffer_size]
 
         if mode is BY_POSITION:
             ret = [None, None]
@@ -363,4 +380,4 @@ def iter_lines(
             yield (t + 1), line  # 1=stdout, 2=stderr
 
     # this will take care of checking return code and timeouts
-    _check_process(proc, retcode, timeout, *(s.getvalue() for s in buffers))
+    _check_process(proc, retcode, timeout, *("\n".join(s) + "\n" for s in buffers))

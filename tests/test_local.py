@@ -552,6 +552,16 @@ class TestLocalMachine:
         assert i in (2, 3)  # Mac is a bit flakey
 
     @skip_on_windows
+    def test_iter_lines_buffer_size(self):
+        from plumbum.cmd import bash
+
+        cmd = bash["-ce", "for ((i=0;i<100;i++)); do echo $i; done; false"]
+        with pytest.raises(ProcessExecutionError) as e:
+            for _ in cmd.popen().iter_lines(timeout=1, buffer_size=5):
+                pass
+        assert e.value.stdout == "\n".join(map(str, range(95, 100))) + "\n"
+
+    @skip_on_windows
     def test_iter_lines_timeout_by_type(self):
         from plumbum.cmd import bash
         from plumbum.commands.processes import BY_TYPE
