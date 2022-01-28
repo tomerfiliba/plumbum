@@ -5,7 +5,7 @@ Extended set is similar to `vim wiki <http://vim.wikia.com/wiki/Xterm256_color_n
 You can access the index of the colors with names.index(name). You can access the
 rgb values with ``r=int(html[n][1:3],16)``, etc.
 """
-
+from typing import Tuple
 
 color_names = """\
 black
@@ -345,7 +345,7 @@ class FindNearest:
     """This is a class for finding the nearest color given rgb values.
     Different find methods are available."""
 
-    def __init__(self, r, g, b):
+    def __init__(self, r: int, g: int, b: int) -> None:
         self.r = r
         self.b = b
         self.g = g
@@ -366,23 +366,23 @@ class FindNearest:
             + (self.b >= midlevel) * 4
         )
 
-    def all_slow(self, color_slice=EMPTY_SLICE):
+    def all_slow(self, color_slice: slice = EMPTY_SLICE) -> int:
         """This is a slow way to find the nearest color."""
         distances = [
             self._distance_to_color(color) for color in color_html[color_slice]
         ]
         return min(range(len(distances)), key=distances.__getitem__)
 
-    def _distance_to_color(self, color):
+    def _distance_to_color(self, color: str) -> int:
         """This computes the distance to a color, should be minimized."""
         rgb = (int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16))
         return (self.r - rgb[0]) ** 2 + (self.g - rgb[1]) ** 2 + (self.b - rgb[2]) ** 2
 
-    def _distance_to_color_number(self, n):
+    def _distance_to_color_number(self, n: int) -> int:
         color = color_html[n]
         return self._distance_to_color(color)
 
-    def only_colorblock(self):
+    def only_colorblock(self) -> int:
         """This finds the nearest color based on block system, only works
         for 17-232 color values."""
         rint = min(
@@ -396,11 +396,11 @@ class FindNearest:
         )
         return 16 + 36 * rint + 6 * gint + bint
 
-    def only_simple(self):
+    def only_simple(self) -> int:
         """Finds the simple color-block color."""
         return self.all_slow(slice(0, 16, None))
 
-    def only_grey(self):
+    def only_grey(self) -> int:
         """Finds the greyscale color."""
         rawval = (self.r + self.b + self.g) / 3
         n = min(
@@ -409,14 +409,14 @@ class FindNearest:
         )
         return n + 232
 
-    def all_fast(self):
+    def all_fast(self) -> int:
         """Runs roughly 8 times faster than the slow version."""
         colors = [self.only_simple(), self.only_colorblock(), self.only_grey()]
         distances = [self._distance_to_color_number(n) for n in colors]
         return colors[min(range(len(distances)), key=distances.__getitem__)]
 
 
-def from_html(color):
+def from_html(color: str) -> Tuple[int, int, int]:
     """Convert html hex code to rgb."""
     if len(color) != 7 or color[0] != "#":
         raise ValueError("Invalid length of html code")

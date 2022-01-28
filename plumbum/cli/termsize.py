@@ -7,11 +7,12 @@ import os
 import platform
 import warnings
 from struct import Struct
+from typing import Optional, Tuple
 
 from plumbum import local
 
 
-def get_terminal_size(default=(80, 25)):
+def get_terminal_size(default: Tuple[int, int] = (80, 25)) -> Tuple[int, int]:
     """
     Get width and height of console; works on linux, os x, windows and cygwin
 
@@ -71,18 +72,19 @@ def _get_terminal_size_tput():  # pragma: no cover
         return None
 
 
-def _ioctl_GWINSZ(fd):
+def _ioctl_GWINSZ(fd: int) -> Optional[Tuple[int, int]]:
     yx = Struct("hh")
     try:
         import fcntl
         import termios
 
-        return yx.unpack(fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234"))
+        # TODO: Clean this up. Problems could be hidden by the broad except.
+        return yx.unpack(fcntl.ioctl(fd, termios.TIOCGWINSZ, b"1234"))  # type: ignore[return-value]
     except Exception:
         return None
 
 
-def _get_terminal_size_linux():
+def _get_terminal_size_linux() -> Optional[Tuple[int, int]]:
     cr = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(1) or _ioctl_GWINSZ(2)
     if not cr:
         try:

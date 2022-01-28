@@ -5,7 +5,7 @@ loc = locale.getlocale()[0]
 if loc is None or loc.startswith("en"):
 
     class NullTranslation:
-        def gettext(self, str1):  # pylint: disable=no-self-use
+        def gettext(self, str1: str) -> str:  # pylint: disable=no-self-use
             return str1
 
         def ngettext(self, str1, strN, n):  # pylint: disable=no-self-use
