@@ -1,5 +1,6 @@
 import atexit
 import heapq
+import math
 import time
 from queue import Empty as QueueEmpty
 from queue import Queue
@@ -310,7 +311,7 @@ def run_proc(proc, retcode, timeout=None):
 BY_POSITION = object()
 BY_TYPE = object()
 DEFAULT_ITER_LINES_MODE = BY_POSITION
-DEFAULT_BUFFER_SIZE = _INFINITE = float("inf")
+DEFAULT_BUFFER_SIZE = math.inf
 
 
 def iter_lines(
@@ -376,7 +377,7 @@ def iter_lines(
         buffer = buffers[t]
         if buffer_size > 0:
             buffer.append(line)
-            if buffer_size < _INFINITE:
+            if buffer_size < math.inf:
                 del buffer[:-buffer_size]
 
         if mode is BY_POSITION:
