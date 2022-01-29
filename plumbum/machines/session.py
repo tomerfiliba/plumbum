@@ -72,7 +72,7 @@ class SessionPopen(PopenAddons):
     """A shell-session-based ``Popen``-like object (has the following attributes: ``stdin``,
     ``stdout``, ``stderr``, ``returncode``)"""
 
-    def __init__(self, host, proc, argv, isatty, stdin, stdout, stderr, encoding):
+    def __init__(self, proc, argv, isatty, stdin, stdout, stderr, encoding, *, host):
         self.host = host
         self.proc = proc
         self.argv = argv
@@ -209,7 +209,7 @@ class ShellSession:
     """
 
     def __init__(
-        self, proc, encoding="auto", isatty=False, connect_timeout=5, host=None
+        self, proc, encoding="auto", isatty=False, connect_timeout=5, *, host=None
     ):
         self.host = host
         self.proc = proc
@@ -301,7 +301,6 @@ class ShellSession:
         self.proc.stdin.write(full_cmd + b"\n")
         self.proc.stdin.flush()
         self._current = SessionPopen(
-            self.host,
             self.proc,
             full_cmd,
             self.isatty,
@@ -309,6 +308,7 @@ class ShellSession:
             MarkedPipe(self.proc.stdout, marker),
             MarkedPipe(self.proc.stderr, marker),
             self.custom_encoding,
+            host=self.host,
         )
         return self._current
 
