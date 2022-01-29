@@ -354,6 +354,7 @@ def iter_lines(
 
     if buffer_size is None:
         buffer_size = DEFAULT_BUFFER_SIZE
+    buffer_size: int
 
     assert mode in (BY_POSITION, BY_TYPE)
 
