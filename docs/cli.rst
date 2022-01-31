@@ -23,7 +23,7 @@ might look like this::
         verbose = cli.Flag(["v", "verbose"], help = "If given, I will be very talkative")
 
         def main(self, filename):
-            print("I will now read {0}".format(filename))
+            print(f"I will now read {filename}")
             if self.verbose:
                 print("Yadda " * 200)
 
@@ -492,7 +492,7 @@ attached to the root application using the ``subcommand`` decorator ::
 
         def main(self, *args):
             if args:
-                print("Unknown command {0!r}".format(args[0]))
+                print(f"Unknown command {args[0]}")
                 return 1   # error exit code
             if not self.nested_command:           # will be ``None`` if no sub-command follows
                 print("No command given")
