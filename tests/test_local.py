@@ -724,11 +724,6 @@ class TestLocalMachine:
             ls("-a", "")  # check that empty strings are rendered correctly
         assert execinfo.value.argv[-2:] == ["-a", ""]
 
-    def test_exceptions(self):
-        with pytest.raises(ProcessExecutionError) as exc_info:
-            local.cmd.false()
-        assert repr(exc_info.value) == "ProcessExecutionError(['/usr/bin/false'], 1)"
-
     def test_tempdir(self):
         with local.tempdir() as dir:
             assert dir.is_dir()
