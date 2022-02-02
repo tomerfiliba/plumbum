@@ -724,6 +724,13 @@ class TestLocalMachine:
             ls("-a", "")  # check that empty strings are rendered correctly
         assert execinfo.value.argv[-2:] == ["-a", ""]
 
+    def test_exception_pickling(self):
+        import pickle
+
+        with pytest.raises(ProcessExecutionError) as exc_info:
+            local.cmd.ls("no-file")
+        assert pickle.loads(pickle.dumps(exc_info.value)).argv == exc_info.value.argv
+
     def test_tempdir(self):
         with local.tempdir() as dir:
             assert dir.is_dir()
