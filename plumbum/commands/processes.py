@@ -114,7 +114,11 @@ class ProcessExecutionError(EnvironmentError):
     """
 
     def __init__(self, argv, retcode, stdout, stderr, message=None, host=None):
-        super().__init__(self, argv, retcode, stdout, stderr)
+
+        # we can't use 'super' here since EnvironmentError only keeps the first 2 args,
+        # which leads to failuring in loading this object from a pickle.dumps.
+        Exception.__init__(self, argv, retcode, stdout, stderr)
+
         self.message = message
         self.host = host
         self.argv = argv
