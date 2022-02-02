@@ -114,7 +114,7 @@ class ProcessExecutionError(EnvironmentError):
     """
 
     def __init__(self, argv, retcode, stdout, stderr, message=None):
-        super().__init__(self, argv, retcode, stdout, stderr)
+        super().__init__(argv, retcode, stdout, stderr)
         self.message = message
         self.argv = argv
         self.retcode = retcode
