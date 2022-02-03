@@ -246,9 +246,9 @@ For example, if you wanted to create an HTMLStyle and HTMLcolors, you could do::
             result = ''
 
             if self.bg and not self.bg.reset:
-                result += '<span style="background-color: {0}">'.format(self.bg.hex_code)
+                result += f'<span style="background-color: {self.bg.hex_code}">'
             if self.fg and not self.fg.reset:
-                result += '<font color="{0}">'.format(self.fg.hex_code)
+                result += f'<font color="{self.fg.hex_code}">'
             for attr in sorted(self.attributes):
                 if self.attributes[attr]:
                     result += '<' + self.attribute_names[attr] + '>'

@@ -106,7 +106,7 @@ else:
 # ===================================================================================================
 # Exceptions
 # ===================================================================================================
-class ProcessExecutionError(EnvironmentError):
+class ProcessExecutionError(OSError):
     """Represents the failure of a process. When the exit code of a terminated process does not
     match the expected result, this exception is raised by :func:`run_proc
     <plumbum.commands.run_proc>`. It contains the process' return code, stdout, and stderr, as
@@ -114,7 +114,11 @@ class ProcessExecutionError(EnvironmentError):
     """
 
     def __init__(self, argv, retcode, stdout, stderr, message=None, *, host=None):
-        super().__init__(argv, retcode, stdout, stderr)
+
+        # we can't use 'super' here since OSError only keeps the first 2 args,
+        # which leads to failuring in loading this object from a pickle.dumps.
+        Exception.__init__(self, argv, retcode, stdout, stderr)
+
         self.message = message
         self.host = host
         self.argv = argv
