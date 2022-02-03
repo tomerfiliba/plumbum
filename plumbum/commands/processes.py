@@ -115,7 +115,7 @@ class ProcessExecutionError(OSError):
 
     def __init__(self, argv, retcode, stdout, stderr, message=None):
 
-        # we can't use 'super' here since EnvironmentError only keeps the first 2 args,
+        # we can't use 'super' here since OSError only keeps the first 2 args,
         # which leads to failuring in loading this object from a pickle.dumps.
         Exception.__init__(self, argv, retcode, stdout, stderr)
 
