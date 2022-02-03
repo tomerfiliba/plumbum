@@ -76,7 +76,7 @@ msgid ""
 "Argument of {name} expected to be {argtype}, not {val!r}:\n"
 "    {ex!r}"
 msgstr ""
-"Argument de {name} doit être {argtype} , et non {val|1}:\n"
+"Argument de {name} doit être {argtype} , et non {val!r}:\n"
 "    {ex!r}"
 
 #: plumbum/cli/application.py:461
