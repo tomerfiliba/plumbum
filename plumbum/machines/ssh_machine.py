@@ -104,6 +104,7 @@ class SshMachine(BaseRemoteMachine):
 
         scp_args = []
         ssh_args = []
+        self.host = host
         if user:
             self._fqhost = f"{user}@{host}"
         else:
@@ -208,6 +209,7 @@ class SshMachine(BaseRemoteMachine):
             self.custom_encoding,
             isatty,
             self.connect_timeout,
+            host=self.host,
         )
 
     def tunnel(

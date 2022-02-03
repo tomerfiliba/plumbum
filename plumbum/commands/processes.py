@@ -113,13 +113,14 @@ class ProcessExecutionError(OSError):
     well as the command line used to create the process (``argv``)
     """
 
-    def __init__(self, argv, retcode, stdout, stderr, message=None):
+    def __init__(self, argv, retcode, stdout, stderr, message=None, *, host=None):
 
         # we can't use 'super' here since OSError only keeps the first 2 args,
         # which leads to failuring in loading this object from a pickle.dumps.
         Exception.__init__(self, argv, retcode, stdout, stderr)
 
         self.message = message
+        self.host = host
         self.argv = argv
         self.retcode = retcode
         if isinstance(stdout, bytes):
@@ -143,6 +144,8 @@ class ProcessExecutionError(OSError):
             lines = ["Unexpected exit code: ", str(self.retcode)]
         cmd = "\n              | ".join(cmd.splitlines())
         lines += ["\nCommand line: | ", cmd]
+        if self.host:
+            lines += ["\nHost:         | ", self.host]
         if stdout:
             lines += ["\nStdout:       | ", stdout]
         if stderr:

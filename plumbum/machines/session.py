@@ -72,7 +72,8 @@ class SessionPopen(PopenAddons):
     """A shell-session-based ``Popen``-like object (has the following attributes: ``stdin``,
     ``stdout``, ``stderr``, ``returncode``)"""
 
-    def __init__(self, proc, argv, isatty, stdin, stdout, stderr, encoding):
+    def __init__(self, proc, argv, isatty, stdin, stdout, stderr, encoding, *, host):
+        self.host = host
         self.proc = proc
         self.argv = argv
         self.isatty = isatty
@@ -132,6 +133,7 @@ class SessionPopen(PopenAddons):
                         stdout,
                         stderr,
                         message="Incorrect username or password provided",
+                        host=self.host,
                     ) from None
                 if returncode == 6:
                     raise HostPublicKeyUnknown(
@@ -140,6 +142,7 @@ class SessionPopen(PopenAddons):
                         stdout,
                         stderr,
                         message="The authenticity of the host can't be established",
+                        host=self.host,
                     ) from None
                 if returncode != 0:
                     raise SSHCommsError(
@@ -148,6 +151,7 @@ class SessionPopen(PopenAddons):
                         stdout,
                         stderr,
                         message="SSH communication failed",
+                        host=self.host,
                     ) from None
                 if name == "2":
                     raise SSHCommsChannel2Error(
@@ -156,6 +160,7 @@ class SessionPopen(PopenAddons):
                         stdout,
                         stderr,
                         message="No stderr result detected. Does the remote have Bash as the default shell?",
+                        host=self.host,
                     ) from None
 
                 raise SSHCommsError(
@@ -164,6 +169,7 @@ class SessionPopen(PopenAddons):
                     stdout,
                     stderr,
                     message="No communication channel detected. Does the remote exist?",
+                    host=self.host,
                 ) from err
             if not line:
                 del sources[i]
@@ -202,7 +208,10 @@ class ShellSession:
                             is seen, the shell process is killed
     """
 
-    def __init__(self, proc, encoding="auto", isatty=False, connect_timeout=5):
+    def __init__(
+        self, proc, encoding="auto", isatty=False, connect_timeout=5, *, host=None
+    ):
+        self.host = host
         self.proc = proc
         self.custom_encoding = proc.custom_encoding if encoding == "auto" else encoding
         self.isatty = isatty
@@ -299,6 +308,7 @@ class ShellSession:
             MarkedPipe(self.proc.stdout, marker),
             MarkedPipe(self.proc.stderr, marker),
             self.custom_encoding,
+            host=self.host,
         )
         return self._current
 
