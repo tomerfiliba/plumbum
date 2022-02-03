@@ -113,7 +113,7 @@ class ProcessExecutionError(EnvironmentError):
     well as the command line used to create the process (``argv``)
     """
 
-    def __init__(self, argv, retcode, stdout, stderr, message=None, host=None):
+    def __init__(self, argv, retcode, stdout, stderr, message=None, *, host=None):
         super().__init__(argv, retcode, stdout, stderr)
         self.message = message
         self.host = host
