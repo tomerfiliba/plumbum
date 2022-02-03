@@ -19,9 +19,9 @@ Another member is ``python``, which is a command object that points to the curre
 (``sys.executable``)::
 
     >>> local.python
-    <LocalCommand c:\python27\python.exe>
-    >>> local.python("-c", "import sys;print sys.version")
-    '2.7.2 (default, Jun 12 2011, 15:08:59) [MSC v.1500 32 bit (Intel)]\r\n'
+    <LocalCommand c:\python310\python.exe>
+    >>> local.python("-c", "import sys;print(sys.version)")
+    '3.10.0 (default, Feb 2 2022, 02:22:22) [MSC v.1931 64 bit (Intel)]\r\n'
 
 Working Directory
 -----------------
@@ -35,14 +35,15 @@ The ``local.cwd`` attribute represents the current working directory. You can ch
 
 You can also use it as a *context manager*, so it behaves like ``pushd``/``popd``::
 
+    >>> ls_l = ls | wc["-l"]
     >>> with local.cwd("c:\\windows"):
-    ...     print "%s:%s" % (local.cwd, (ls | wc["-l"])())
+    ...     print(f"{local.cwd}:{ls_l()}")
     ...     with local.cwd("c:\\windows\\system32"):
-    ...         print "%s:%s" % (local.cwd, (ls | wc["-l"])())
+    ...         print(f"{local.cwd}:{ls_l()}")
     ...
     c:\windows: 105
     c:\windows\system32: 3013
-    >>> print "%s:%s" % (local.cwd, (ls | wc["-l"])())
+    >>> print(f"{local.cwd}:{ls_l()}")
     d:\workspace\plumbum: 9
 
 Finally, A more explicit and thread-safe way of running a command in a different directory is using the ``.with_cwd()`` method:
@@ -65,10 +66,10 @@ And similarity to ``cwd`` is the context-manager nature of ``env``; each level w
 it's own private copy of the environment::
 
     >>> with local.env(FOO="BAR"):
-    ...     local.python("-c", "import os;print os.environ['FOO']")
+    ...     local.python("-c", "import os; print(os.environ['FOO'])")
     ...     with local.env(FOO="SPAM"):
-    ...         local.python("-c", "import os;print os.environ['FOO']")
-    ...     local.python("-c", "import os;print os.environ['FOO']")
+    ...         local.python("-c", "import os; print(os.environ['FOO'])")
+    ...     local.python("-c", "import os; print(os.environ['FOO'])")
     ...
     'BAR\r\n'
     'SPAM\r\n'
@@ -77,10 +78,10 @@ it's own private copy of the environment::
     Traceback (most recent call last):
        [...]
     ProcessExecutionError: Unexpected exit code: 1
-    Command line: | /usr/bin/python -c "import os;print(os.environ['FOO'])"
+    Command line: | /usr/bin/python3 -c "import os; print(os.environ['FOO'])"
     Stderr:       | Traceback (most recent call last):
                   |   File "<string>", line 1, in <module>
-                  |   File "/usr/lib/python3.5/os.py", line 725, in __getitem__
+                  |   File "/usr/lib/python3.10/os.py", line 725, in __getitem__
                   |     raise KeyError(key) from None
                   | KeyError: 'FOO'
 
@@ -93,13 +94,13 @@ properties for getting the username (``.user``), the home path (``.home``), and 
     >>> local.env.home
     <Path c:\Users\sebulba>
     >>> local.env.path
-    [<Path c:\python27\lib\site-packages\gtk-2.0\runtime\bin>, <Path c:\Users\sebulba\bin>, ...]
+    [<Path c:\python39\lib\site-packages\gtk-2.0\runtime\bin>, <Path c:\Users\sebulba\bin>, ...]
     >>>
     >>> local.which("python")
-    <Path c:\python27\python.exe>
-    >>> local.env.path.insert(0, "c:\\python32")
+    <Path c:\python39\python.exe>
+    >>> local.env.path.insert(0, "c:\\python310")
     >>> local.which("python")
-    <Path c:\python32\python.exe>
+    <Path c:\python310\python.exe>
 
 
 For further information, see the :ref:`api docs <api-local-machine>`.

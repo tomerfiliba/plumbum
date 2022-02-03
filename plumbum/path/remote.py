@@ -1,6 +1,5 @@
 import errno
 import os
-import sys
 import urllib.request as urllib
 from contextlib import contextmanager
 
@@ -224,8 +223,7 @@ class RemotePath(Path):
                 self.remote._path_mkdir(self.parent, mode=mode, minus_p=True)
             try:
                 self.remote._path_mkdir(self, mode=mode, minus_p=False)
-            except ProcessExecutionError:
-                _, ex, _ = sys.exc_info()
+            except ProcessExecutionError as ex:
                 if "File exists" not in ex.stderr:
                     raise
 

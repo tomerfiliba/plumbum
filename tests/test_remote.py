@@ -1,7 +1,6 @@
 import logging
 import os
 import socket
-import sys
 import time
 from multiprocessing import Queue
 from threading import Thread
@@ -421,11 +420,8 @@ s.close()
                 ):
                     print("out:", out)
                     print("err:", err)
-            except NotImplementedError:
-                try:
-                    pytest.skip(str(sys.exc_info()[1]))
-                except AttributeError:
-                    return
+            except NotImplementedError as err:
+                pytest.skip(str(err))
             except ProcessTimedOut:
                 assert i > 3
             else:

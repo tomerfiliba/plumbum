@@ -445,8 +445,7 @@ class Application:
         if argtype:
             try:
                 return argtype(val)
-            except (TypeError, ValueError):
-                ex = sys.exc_info()[1]  # compat
+            except (TypeError, ValueError) as ex:
                 raise WrongArgumentType(
                     T_(
                         "Argument of {name} expected to be {argtype}, not {val!r}:\n    {ex!r}"
@@ -608,8 +607,7 @@ class Application:
             inst.helpall()
         except ShowVersion:
             inst.version()
-        except SwitchError:
-            ex = sys.exc_info()[1]  # compatibility with python 2.5
+        except SwitchError as ex:
             print(T_("Error: {0}").format(ex))
             print(T_("------"))
             inst.help()

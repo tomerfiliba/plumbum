@@ -9,10 +9,10 @@ Basics
     >>> ls
     LocalCommand(<LocalPath /bin/ls>)
     >>> ls()
-    u'build.py\ndist\ndocs\nLICENSE\nplumbum\nREADME.rst\nsetup.py\ntests\ntodo.txt\n'
+    'build.py\ndist\ndocs\nLICENSE\nplumbum\nREADME.rst\nsetup.py\ntests\ntodo.txt\n'
     >>> notepad = local["c:\\windows\\notepad.exe"]
     >>> notepad()                                   # Notepad window pops up
-    u''                                             # Notepad window is closed by user, command returns
+    ''                                              # Notepad window is closed by user, command returns
 
 Instead of writing ``xxx = local["xxx"]`` for every program you wish to use, you can
 also :ref:`import commands <import-hack>`:
@@ -28,7 +28,7 @@ Or, use the ``local.cmd`` syntactic-sugar:
     >>> local.cmd.ls
     LocalCommand(<LocalPath /bin/ls>)
     >>> local.cmd.ls()
-    u'build.py\ndist\ndocs\nLICENSE\nplumbum\nREADME.rst\nsetup.py\ntests\ntodo.txt\n'
+    'build.py\ndist\ndocs\nLICENSE\nplumbum\nREADME.rst\nsetup.py\ntests\ntodo.txt\n'
 
 See :ref:`guide-local-commands`.
 
@@ -38,10 +38,10 @@ Piping
 .. code-block:: python
 
     >>> chain = ls["-a"] | grep["-v", "\\.py"] | wc["-l"]
-    >>> print chain
+    >>> print(chain)
     /bin/ls -a | /bin/grep -v '\.py' | /usr/bin/wc -l
     >>> chain()
-    u'13\n'
+    '13\n'
 
 See :ref:`guide-local-commands-pipelining`.
 
@@ -51,11 +51,11 @@ Redirection
 .. code-block:: python
 
     >>> ((cat < "setup.py") | head["-n", 4])()
-    u'#!/usr/bin/env python\nimport os\n\ntry:\n'
+    '#!/usr/bin/env python3\nimport os\n\ntry:\n'
     >>> (ls["-a"] > "file.list")()
-    u''
+    ''
     >>> (cat["file.list"] | wc["-l"])()
-    u'17\n'
+    '17\n'
 
 See :ref:`guide-local-commands-redir`.
 
@@ -69,7 +69,7 @@ Working-directory manipulation
     >>> with local.cwd(local.cwd / "docs"):
     ...     chain()
     ...
-    u'15\n'
+    '15\n'
 
 A more explicit, and thread-safe way of running a command in a differet directory is using the ``.with_cwd()`` method:
 
@@ -103,7 +103,7 @@ Command nesting
 .. code-block:: python
 
     >>> from plumbum.cmd import sudo
-    >>> print sudo[ifconfig["-a"]]
+    >>> print(sudo[ifconfig["-a"]])
     /usr/bin/sudo /sbin/ifconfig -a
     >>> (sudo[ifconfig["-a"]] | grep["-i", "loop"]) & FG
     lo        Link encap:Local Loopback
@@ -127,7 +127,7 @@ and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implement
     >>> with remote.cwd("/lib"):
     ...     (r_ls | grep["0.so.0"])()
     ...
-    u'libusb-1.0.so.0\nlibusb-1.0.so.0.0.0\n'
+    'libusb-1.0.so.0\nlibusb-1.0.so.0.0.0\n'
 
 See :ref:`guide-remote`.
 
@@ -150,9 +150,9 @@ CLI applications
             logging.root.setLevel(level)
 
         def main(self, *srcfiles):
-            print "Verbose:", self.verbose
-            print "Include dirs:", self.include_dirs
-            print "Compiling:", srcfiles
+            print("Verbose:", self.verbose)
+            print("Include dirs:", self.include_dirs)
+            print("Compiling:", srcfiles)
 
     if __name__ == "__main__":
         MyCompiler.run()
@@ -162,7 +162,7 @@ Sample output
 
 ::
 
-    $ python simple_cli.py -v -I foo/bar -Ispam/eggs x.cpp y.cpp z.cpp
+    $ python3 simple_cli.py -v -I foo/bar -Ispam/eggs x.cpp y.cpp z.cpp
     Verbose: True
     Include dirs: ['foo/bar', 'spam/eggs']
     Compiling: ('x.cpp', 'y.cpp', 'z.cpp')

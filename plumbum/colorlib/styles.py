@@ -510,7 +510,7 @@ class Style:
             file.flush()
 
     print_ = print
-    """Shortcut just in case user not using __future__"""
+    """DEPRECATED: Shortcut from classic Python 2"""
 
     def __getitem__(self, wrapped):
         """The [] syntax is supported for wrapping"""

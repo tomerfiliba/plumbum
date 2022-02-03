@@ -4,7 +4,6 @@ Atomic file operations
 
 import atexit
 import os
-import sys
 import threading
 from contextlib import contextmanager
 
@@ -35,8 +34,7 @@ except ImportError:
                 0xFFFFFFFF,
                 OVERLAPPED(),
             )
-        except WinError:
-            _, ex, _ = sys.exc_info()
+        except WinError as ex:
             raise OSError(*ex.args) from None
         try:
             yield
@@ -185,9 +183,9 @@ class AtomicCounterFile:
     Example::
 
         acf = AtomicCounterFile.open("/some/file")
-        print acf.next()   # e.g., 7
-        print acf.next()   # 8
-        print acf.next()   # 9
+        print(acf.next())  # e.g., 7
+        print(acf.next())  # 8
+        print(acf.next())  # 9
 
     .. versionadded:: 1.3
     """

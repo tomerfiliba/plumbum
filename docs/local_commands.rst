@@ -93,7 +93,7 @@ Now that we can bind arguments to commands, forming pipelines is easy and straig
 using ``|`` (bitwise-or)::
 
     >>> chain = ls["-l"] | grep[".py"]
-    >>> print chain
+    >>> print(chain)
     C:\Program Files\Git\bin\ls.exe -l | C:\Program Files\Git\bin\grep.exe .py
     >>>
     >>> chain()
@@ -167,7 +167,7 @@ one you passed::
    but not both), you can use the ``run`` method, which will provide all of them
 
    >>>  cat["non/existing.file"].run(retcode=None)
-   (1, u'', u'/bin/cat: non/existing.file: No such file or directory\n')
+   (1, '', '/bin/cat: non/existing.file: No such file or directory\n')
 
 
 
@@ -277,11 +277,11 @@ as we've seen above, but they can also be other **commands**! This allows nestin
 one another, forming complex command objects. The classic example is ``sudo``::
 
     >>> from plumbum.cmd import sudo
-    >>> print sudo[ls["-l", "-a"]]
+    >>> print(sudo[ls["-l", "-a"]])
     /usr/bin/sudo /bin/ls -l -a
 
     >>> sudo[ls["-l", "-a"]]()
-    u'total 22\ndrwxr-xr-x    8 sebulba  Administ     4096 May  9 20:46 .\n[...]'
+    'total 22\ndrwxr-xr-x    8 sebulba  Administ     4096 May  9 20:46 .\n[...]'
 
 In fact, you can nest even command-chains (i.e., pipes and redirections), e.g.,
 ``sudo[ls | grep["\\.py"]]``; however, that would require that the top-level program be able
@@ -302,7 +302,7 @@ We'll learn more about remote command execution :ref:`later <guide-remote-comman
 meanwhile, we should learn that command nesting works by *shell-quoting* (or *shell-escaping*)
 the nested command. Quoting normally takes place from the second level of nesting::
 
-    >>> print ssh["somehost", ssh["anotherhost", ls | grep["\\.py"]]]
+    >>> print(ssh["somehost", ssh["anotherhost", ls | grep["\\.py"]]])
     /bin/ssh somehost /bin/ssh anotherhost /bin/ls '|' /bin/grep "'\\.py'"
 
 In this example, we first ssh to ``somehost``, from it we ssh to ``anotherhost``, and on that host

@@ -60,7 +60,7 @@ Paths can be composed using ``/`` or ``[]``::
 You can also iterate over directories to get the contents::
 
     >>> for p2 in p:
-    ...     print p2
+    ...     print(p2)
     ...
     c:\windows\addins
     c:\windows\appcompat

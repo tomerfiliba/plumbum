@@ -1,6 +1,6 @@
 """
 This is provided as a quick way to recover your terminal. Simply run
-``python -m plumbum.colorlib``
+``python3 -m plumbum.colorlib``
 to recover terminal color.
 """
 

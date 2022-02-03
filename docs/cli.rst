@@ -32,10 +32,10 @@ might look like this::
 
 And you can run it::
 
-    $ python example.py foo
+    $ python3 example.py foo
     I will now read foo
 
-    $ python example.py --help
+    $ python3 example.py --help
     example.py v1.0
 
     Usage: example.py [SWITCHES] filename
@@ -443,12 +443,12 @@ can be enabled by defining the class-level attribute ``ALLOW_ABBREV`` to True. F
 
 With the above definition, running the following will raise an error due to ambiguity::
 
-    $ python example.py --ch   # error! matches --cheese and --chives
+    $ python3 example.py --ch   # error! matches --cheese and --chives
 
 However, the following two lines are equivalent::
 
-    $ python example.py --che
-    $ python example.py --cheese
+    $ python3 example.py --che
+    $ python3 example.py --cheese
 
 
 .. _guide-subcommands:
@@ -525,7 +525,7 @@ attached to the root application using the ``subcommand`` decorator ::
 
 Here's an example of running this application::
 
-    $ python geet.py --help
+    $ python3 geet.py --help
     geet v1.7.2
     The l33t version control
 
@@ -540,7 +540,7 @@ Here's an example of running this application::
         push                       pushes the current local branch to the remote
                                    one; see 'geet push --help' for more info
 
-    $ python geet.py commit --help
+    $ python3 geet.py commit --help
     geet commit v1.7.2
     creates a new commit in the current branch
 
@@ -553,7 +553,7 @@ Here's an example of running this application::
         -a                         automatically add changed files
         -m VALUE:str               sets the commit message; required
 
-    $ python geet.py commit -m "foo"
+    $ python3 geet.py commit -m "foo"
     committing...
 
 
@@ -605,7 +605,7 @@ is ignored and the image will no longer be constrained to scale proportionately.
 To directly plot an image, the ``show`` method takes a filename and a double
 parameter, which doubles the vertical resolution on some fonts. The ``show_pil``
 and ``show_pil_double`` methods directly take a PIL-like object. To plot an image
-from the command line, the module can be run directly: ``python -m
+from the command line, the module can be run directly: ``python3 -m
 plumbum.cli.image myimage.png``.
 
 For the full list of helpers or more information, see the :ref:`api docs <api-cli>`.

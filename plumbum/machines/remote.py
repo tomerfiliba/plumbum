@@ -180,7 +180,7 @@ class BaseRemoteMachine(BaseMachine):
             return out.strip()
 
         rc, out, _ = self._session.run(
-            "python -c 'import platform;print(platform.uname()[0])'", retcode=None
+            "python3 -c 'import platform;print(platform.uname()[0])'", retcode=None
         )
         if rc == 0:
             return out.strip()
@@ -264,7 +264,7 @@ class BaseRemoteMachine(BaseMachine):
     def python(self):
         """A command that represents the default remote python interpreter"""
         if not self._python:
-            self._python = self["python"]
+            self._python = self["python3"]
         return self._python
 
     def session(self, isatty=False, new_session=False):

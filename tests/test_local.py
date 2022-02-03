@@ -428,22 +428,22 @@ class TestLocalMachine:
             local.python("-c", "import os;os.environ['FOOBAR72']")
         local.env["FOOBAR72"] = "spAm"
         assert local.python(
-            "-c", "import os;print (os.environ['FOOBAR72'])"
+            "-c", "import os; print(os.environ['FOOBAR72'])"
         ).splitlines() == ["spAm"]
 
         with local.env(FOOBAR73=1889):
             assert local.python(
-                "-c", "import os;print (os.environ['FOOBAR73'])"
+                "-c", "import os; print(os.environ['FOOBAR73'])"
             ).splitlines() == ["1889"]
             with local.env(FOOBAR73=1778):
                 assert local.python(
-                    "-c", "import os;print (os.environ['FOOBAR73'])"
+                    "-c", "import os; print(os.environ['FOOBAR73'])"
                 ).splitlines() == ["1778"]
             assert local.python(
-                "-c", "import os;print (os.environ['FOOBAR73'])"
+                "-c", "import os; print(os.environ['FOOBAR73'])"
             ).splitlines() == ["1889"]
         with pytest.raises(ProcessExecutionError):
-            local.python("-c", "import os;os.environ['FOOBAR73']")
+            local.python("-c", "import os; os.environ['FOOBAR73']")
 
         # path manipulation
         with pytest.raises(CommandNotFound):
@@ -459,7 +459,7 @@ class TestLocalMachine:
         assert local.path("foo") == os.path.join(os.getcwd(), "foo")
         local.which("ls")
         local["ls"]
-        assert local.python("-c", "print ('hi there')").splitlines() == ["hi there"]
+        assert local.python("-c", "print('hi there')").splitlines() == ["hi there"]
 
     @skip_on_windows
     def test_piping(self):
@@ -846,7 +846,7 @@ class TestLocalMachine:
     def test_atomic_file2(self):
         af = AtomicFile("tmp.txt")
 
-        code = """from __future__ import with_statement
+        code = """\
 from plumbum.fs.atomic import AtomicFile
 af = AtomicFile("tmp.txt")
 try:
@@ -863,7 +863,7 @@ except (OSError, IOError):
 
     @skip_on_windows
     def test_pid_file(self):
-        code = """from __future__ import with_statement
+        code = """\
 from plumbum.fs.atomic import PidFile, PidFileTaken
 try:
     with PidFile("mypid"):
