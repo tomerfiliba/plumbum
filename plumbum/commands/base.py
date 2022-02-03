@@ -335,6 +335,8 @@ class BoundCommand(BaseCommand):
 
 
 class BoundEnvCommand(BaseCommand):
+    __slots__ = ("cmd",)
+
     def __init__(self, cmd, env=None, cwd=None):
         self.cmd = cmd
         self.env = env or {}
