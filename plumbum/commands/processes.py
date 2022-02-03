@@ -1,5 +1,6 @@
 import atexit
 import heapq
+import math
 import time
 from queue import Empty as QueueEmpty
 from queue import Queue
@@ -113,10 +114,12 @@ class ProcessExecutionError(OSError):
     well as the command line used to create the process (``argv``)
     """
 
+    # pylint: disable-next=super-init-not-called
     def __init__(self, argv, retcode, stdout, stderr, message=None, *, host=None):
 
         # we can't use 'super' here since OSError only keeps the first 2 args,
         # which leads to failuring in loading this object from a pickle.dumps.
+        # pylint: disable-next=non-parent-init-called
         Exception.__init__(self, argv, retcode, stdout, stderr)
 
         self.message = message
@@ -310,7 +313,7 @@ def run_proc(proc, retcode, timeout=None):
 BY_POSITION = object()
 BY_TYPE = object()
 DEFAULT_ITER_LINES_MODE = BY_POSITION
-DEFAULT_BUFFER_SIZE = _INFINITE = float("inf")
+DEFAULT_BUFFER_SIZE = math.inf
 
 
 def iter_lines(
@@ -376,7 +379,7 @@ def iter_lines(
         buffer = buffers[t]
         if buffer_size > 0:
             buffer.append(line)
-            if buffer_size < _INFINITE:
+            if buffer_size < math.inf:
                 del buffer[:-buffer_size]
 
         if mode is BY_POSITION:

@@ -344,7 +344,10 @@ class LocalMachine(BaseMachine):
             output = tasklist("/V", "/FO", "CSV")
             lines = output.splitlines()
             rows = csv.reader(lines)
-            header = next(rows)
+            try:
+                header = next(rows)
+            except StopIteration:
+                raise RuntimeError("tasklist must at least have header") from None
             imgidx = header.index("Image Name")
             pididx = header.index("PID")
             statidx = header.index("Status")

@@ -449,6 +449,9 @@ class ParamikoMachine(BaseRemoteMachine):
             res.text_mode = "regular file"
         return res
 
+    def daemonic_popen(self, command, cwd="/", stdout=None, stderr=None, append=True):
+        raise NotImplementedError("This is not implemented on ParamikoMachine!")
+
 
 ###################################################################################################
 # Make paramiko.Channel adhere to the socket protocol, namely, send and recv should fail

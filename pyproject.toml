@@ -57,7 +57,6 @@ all = true
 [tool.pylint]
 master.py-version = "3.6"
 master.jobs = "0"
-master.fail-under = "9.97"
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"
 messages_control.enable = [
@@ -67,6 +66,7 @@ messages_control.disable = [
   "arguments-differ", # TODO: investigate
   "attribute-defined-outside-init", # TODO: investigate
   "broad-except", # TODO: investigate
+  "consider-using-with", # TODO: should be handled
   "cyclic-import",
   "duplicate-code",  # TODO: check
   "fixme",
@@ -78,6 +78,7 @@ messages_control.disable = [
   "missing-function-docstring",
   "missing-module-docstring",
   "no-member",
+  #"non-parent-init-called", # TODO: should be looked at
   "protected-access",
   "too-few-public-methods",
   "too-many-arguments",
@@ -90,6 +91,5 @@ messages_control.disable = [
   "too-many-public-methods",
   "too-many-return-statements",
   "too-many-statements",
-  "non-parent-init-called", # TODO: should be looked at
   "unidiomatic-typecheck", # TODO: might be able to remove
 ]

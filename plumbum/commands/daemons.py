@@ -21,7 +21,6 @@ class _fake_lock:
         pass
 
 
-# pylint: disable-next: inconsistent-return-statements
 def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
     if stdout is None:
         stdout = os.devnull
@@ -33,7 +32,7 @@ def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
     argv = command.formulate()
     firstpid = os.fork()
     if firstpid == 0:
-        # first child: become session leader,
+        # first child: become session leader
         os.close(rfd)
         rc = 0
         try:
@@ -58,55 +57,55 @@ def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
         finally:
             os.close(wfd)
             os._exit(rc)
+
+    # wait for first child to die
+    os.close(wfd)
+    _, rc = os.waitpid(firstpid, 0)
+    output = os.read(rfd, MAX_SIZE)
+    os.close(rfd)
+    try:
+        output = output.decode("utf8")
+    except UnicodeError:
+        pass
+    if rc == 0 and output.isdigit():
+        secondpid = int(output)
     else:
-        # wait for first child to die
-        os.close(wfd)
-        _, rc = os.waitpid(firstpid, 0)
-        output = os.read(rfd, MAX_SIZE)
-        os.close(rfd)
-        try:
-            output = output.decode("utf8")
-        except UnicodeError:
-            pass
-        if rc == 0 and output.isdigit():
-            secondpid = int(output)
-        else:
-            raise ProcessExecutionError(argv, rc, "", output)
-        proc = subprocess.Popen.__new__(subprocess.Popen)
-        proc._child_created = True
-        proc.returncode = None
-        proc.stdout = None
-        proc.stdin = None
-        proc.stderr = None
-        proc.pid = secondpid
-        proc.universal_newlines = False
-        proc._input = None
-        proc._waitpid_lock = _fake_lock()
-        proc._communication_started = False
-        proc.args = argv
-        proc.argv = argv
+        raise ProcessExecutionError(argv, rc, "", output)
+    proc = subprocess.Popen.__new__(subprocess.Popen)
+    proc._child_created = True
+    proc.returncode = None
+    proc.stdout = None
+    proc.stdin = None
+    proc.stderr = None
+    proc.pid = secondpid
+    proc.universal_newlines = False
+    proc._input = None
+    proc._waitpid_lock = _fake_lock()
+    proc._communication_started = False
+    proc.args = argv
+    proc.argv = argv
 
-        def poll(self=proc):
-            if self.returncode is None:
-                try:
-                    os.kill(self.pid, 0)
-                except OSError as ex:
-                    if ex.errno == errno.ESRCH:
-                        # process does not exist
-                        self.returncode = 0
-                    else:
-                        raise
-            return self.returncode
+    def poll(self=proc):
+        if self.returncode is None:
+            try:
+                os.kill(self.pid, 0)
+            except OSError as ex:
+                if ex.errno == errno.ESRCH:
+                    # process does not exist
+                    self.returncode = 0
+                else:
+                    raise
+        return self.returncode
 
-        def wait(self=proc):
-            while self.returncode is None:
-                if self.poll() is None:
-                    time.sleep(0.5)
-            return proc.returncode
+    def wait(self=proc):
+        while self.returncode is None:
+            if self.poll() is None:
+                time.sleep(0.5)
+        return proc.returncode
 
-        proc.poll = poll
-        proc.wait = wait
-        return proc
+    proc.poll = poll
+    proc.wait = wait
+    return proc
 
 
 def win32_daemonize(command, cwd, stdout=None, stderr=None, append=True):
