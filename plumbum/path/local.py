@@ -3,7 +3,6 @@ import glob
 import logging
 import os
 import shutil
-import sys
 import urllib.parse as urlparse
 import urllib.request as urllib
 from contextlib import contextmanager
@@ -161,9 +160,8 @@ class LocalPath(Path):
         else:
             try:
                 os.remove(str(self))
-            except OSError:  # pragma: no cover
+            except OSError as ex:  # pragma: no cover
                 # file might already been removed (a race with other threads/processes)
-                _, ex, _ = sys.exc_info()
                 if ex.errno != errno.ENOENT:
                     raise
 
@@ -197,9 +195,8 @@ class LocalPath(Path):
                     os.makedirs(str(self), mode)
                 else:
                     os.mkdir(str(self), mode)
-            except OSError:  # pragma: no cover
+            except OSError as ex:  # pragma: no cover
                 # directory might already exist (a race with other threads/processes)
-                _, ex, _ = sys.exc_info()
                 if ex.errno != errno.EEXIST or not exist_ok:
                     raise
 
@@ -299,9 +296,8 @@ class LocalPath(Path):
             else:
                 # windows: use rmdir for directories and directory symlinks
                 os.rmdir(str(self))
-        except OSError:  # pragma: no cover
+        except OSError as ex:  # pragma: no cover
             # file might already been removed (a race with other threads/processes)
-            _, ex, _ = sys.exc_info()
             if ex.errno != errno.ENOENT:
                 raise
 

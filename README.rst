@@ -84,7 +84,7 @@ Redirection
 
     >>> from plumbum.cmd import cat, head
     >>> ((cat < "setup.py") | head["-n", 4])()
-    '#!/usr/bin/env python\nimport os\n\ntry:\n'
+    '#!/usr/bin/env python3\nimport os\n\ntry:\n'
     >>> (ls["-a"] > "file.list")()
     ''
     >>> (cat["file.list"] | wc["-l"])()
@@ -174,7 +174,7 @@ Sample output
 
 ::
 
-    $ python simple_cli.py -v -I foo/bar -Ispam/eggs x.cpp y.cpp z.cpp
+    $ python3 simple_cli.py -v -I foo/bar -Ispam/eggs x.cpp y.cpp z.cpp
     Verbose: True
     Include dirs: ['foo/bar', 'spam/eggs']
     Compiling: ('x.cpp', 'y.cpp', 'z.cpp')

@@ -56,7 +56,7 @@ class Image:
         for y in range(size[1]):
             for x in range(size[0] - 1):
                 pix = new_im.getpixel((x, y))
-                print(colors.bg.rgb(*pix), " ", sep="", end="")  # u'\u2588'
+                print(colors.bg.rgb(*pix), " ", sep="", end="")  # '\u2588'
             print(colors.reset, " ", sep="")
         print(colors.reset)
 

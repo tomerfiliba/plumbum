@@ -55,7 +55,7 @@ counterparts, they can be used as context managers, so their effects can be cont
     >>> rem.cwd
     <Workdir /home/john>
     >>> with rem.cwd(rem.cwd / "Desktop"):
-    ...     print rem.cwd
+    ...     print(rem.cwd)
     /home/john/Desktop
     >>> rem.env["PATH"]
     /bin:/sbin:/usr/bin:/usr/local/bin
@@ -102,7 +102,7 @@ object. You can either pass the command's name, in which case it will be resolve
     >>> r_ls = rem["ls"]
     >>> r_grep = rem["grep"]
     >>> r_ls()
-    u'foo\nbar\spam\n'
+    'foo\nbar\spam\n'
 
 Nesting Commands
 ^^^^^^^^^^^^^^^^
@@ -111,7 +111,7 @@ behind the scenes - it nests each command inside ``ssh``. Here are some examples
 
     >>> r_sudo = rem["sudo"]
     >>> r_ifconfig = rem["ifconfig"]
-    >>> print r_sudo[r_ifconfig["-a"]]()
+    >>> print(r_sudo[r_ifconfig["-a"]]())
     eth0      Link encap:Ethernet HWaddr ...
     [...]
 
@@ -119,11 +119,11 @@ You can nest multiple commands, one within another. For instance, you can connec
 over SSH and use that machine's SSH client to connect to yet another machine. Here's a sketch::
 
     >>> from plumbum.cmd import ssh
-    >>> print ssh["localhost", ssh["localhost", "ls"]]
+    >>> print(ssh["localhost", ssh["localhost", "ls"]])
     /usr/bin/ssh localhost /usr/bin/ssh localhost ls
     >>>
     >>> ssh["localhost", ssh["localhost", "ls"]]()
-    u'bin\nDesktop\nDocuments\n...'
+    'bin\nDesktop\nDocuments\n...'
 
 
 Piping
@@ -134,7 +134,7 @@ place on the local machine! Consider this code for instance ::
     >>> r_grep = rem["grep"]
     >>> r_ls = rem["ls"]
     >>> (r_ls | r_grep["b"])()
-    u'bin\nPublic\n'
+    'bin\nPublic\n'
 
 Although ``r_ls`` and ``r_grep`` are remote commands, the data is sent from ``r_ls`` to the local
 machine, which then sends it to the remote one for running ``grep``. This will be fixed in a future
@@ -145,7 +145,7 @@ For example, the previous code can be written as ::
 
     >>> from plumbum.cmd import grep
     >>> (r_ls | grep["b"])()
-    u'bin\nPublic\n'
+    'bin\nPublic\n'
 
 Which is even more efficient (no need to send data back and forth over SSH).
 
@@ -178,9 +178,9 @@ and it works along the lines of the ``SshMachine``::
     RemoteCommand(<ParamikoMachine paramiko://192.168.1.143>, <RemotePath /bin/ls>)
     >>> r_ls = rem["ls"]
     >>> r_ls()
-    u'bin\nDesktop\nDocuments\nDownloads\nexamples.desktop\nMusic\nPictures\n...'
+    'bin\nDesktop\nDocuments\nDownloads\nexamples.desktop\nMusic\nPictures\n...'
     >>> r_ls("-a")
-    u'.\n..\n.adobe\n.bash_history\n.bash_logout\n.bashrc\nbin...'
+    '.\n..\n.adobe\n.bash_history\n.bash_logout\n.bashrc\nbin...'
 
 .. note::
     Using ``ParamikoMachine`` requires paramiko to be installed on your system. Also, you have
@@ -209,7 +209,7 @@ object
 
         >>> s = mach.session()
         >>> s.run("ls | grep b")
-        (0, u'bin\nPublic\n', u'')
+        (0, 'bin\nPublic\n', '')
 
 
 Tunneling Example

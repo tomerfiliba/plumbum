@@ -90,8 +90,7 @@ def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
             if self.returncode is None:
                 try:
                     os.kill(self.pid, 0)
-                except OSError:
-                    ex = sys.exc_info()[1]
+                except OSError as ex:
                     if ex.errno == errno.ESRCH:
                         # process does not exist
                         self.returncode = 0

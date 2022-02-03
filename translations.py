@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # If you are on macOS and using brew, you might need the following first:
 # export PATH="/usr/local/opt/gettext/bin:$PATH"
