@@ -602,3 +602,10 @@ class ConcreteCommand(BaseCommand):
         # if self.custom_encoding:
         #    argv = [a.encode(self.custom_encoding) for a in argv if isinstance(a, str)]
         return argv
+
+    @property
+    def machine(self):
+        raise NotImplementedError()
+
+    def popen(self, args=(), **kwargs):
+        raise NotImplementedError()

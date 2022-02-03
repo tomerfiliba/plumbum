@@ -114,10 +114,12 @@ class ProcessExecutionError(OSError):
     well as the command line used to create the process (``argv``)
     """
 
+    # pylint: disable-next=super-init-not-called
     def __init__(self, argv, retcode, stdout, stderr, message=None, *, host=None):
 
         # we can't use 'super' here since OSError only keeps the first 2 args,
         # which leads to failuring in loading this object from a pickle.dumps.
+        # pylint: disable-next=non-parent-init-called
         Exception.__init__(self, argv, retcode, stdout, stderr)
 
         self.message = message
