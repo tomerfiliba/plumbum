@@ -6,6 +6,74 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+
+[project]
+name = "plumbum"
+description = "Plumbum: shell combinators library"
+readme = "README.rst"
+author = { name="Tomer Filiba", email="tomerfiliba@gmail.com" }
+license = { file="LICENSE" }
+requires-python = ">=3.6"
+dynamic = ["version"]
+requires = [
+    "pywin32; platform_system=='Windows' and platform_python_implementation!='PyPy'",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Systems Administration",
+]
+keywords = [
+    "path",
+    "local",
+    "remote",
+    "ssh",
+    "shell",
+    "pipe",
+    "popen",
+    "process",
+    "execution",
+    "color",
+    "cli",
+]
+
+[project.optional-dependencies]
+dev = [
+    "paramiko",
+    "psutil",
+    "pytest>=6.0",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-timeout",
+]
+docs = [
+    "sphinx>=4.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+]
+ssh = [
+    "paramiko",
+]
+
+[tool.setuptools]
+platforms = ["POSIX", "Windows"]
+
+[tool.setuptools.packages.find]
+include = ["plumbum"]
+
+[tool.setuptools.package-data]
+"plumbum.cli" = ["i18n/*/LC_MESSAGES/*.mo"]
+
+
 [tool.setuptools_scm]
 write_to = "plumbum/version.py"
 
@@ -15,7 +83,6 @@ files = ["plumbum"]
 python_version = "3.6"
 warn_unused_configs = true
 warn_unused_ignores = true
-
 
 [[tool.mypy.overrides]]
 module = ["IPython.*", "pywintypes.*", "win32con.*", "win32file.*", "PIL.*", "plumbum.cmd.*", "ipywidgets.*", "traitlets.*", "plumbum.version"]
