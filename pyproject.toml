@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "setuptools>=42",
+    "setuptools @ git+https://github.com/abravalheri/setuptools@support-pyproject",
     "wheel",
     "setuptools_scm[toml]>=3.4.3"
 ]
