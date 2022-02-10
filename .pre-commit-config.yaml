@@ -35,11 +35,6 @@ repos:
   - id: pyupgrade
     args: ["--py36-plus"]
 
-- repo: https://github.com/asottile/setup-cfg-fmt
-  rev: "v1.20.0"
-  hooks:
-  - id: setup-cfg-fmt
-
 - repo: https://github.com/hadialqattan/pycln
   rev: v1.1.0
   hooks:
