@@ -25,7 +25,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        depth: 0
+        fetch-depth: 0
     - uses: actions/setup-python@v2
     - uses: pre-commit/action@v2.0.3
     - name: pylint
@@ -50,7 +50,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        depth: 0
+        fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
@@ -101,7 +101,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        depth: 0
+        fetch-depth: 0
     - name: Build SDist and wheel
       run: pipx run build
     - uses: actions/upload-artifact@v2
