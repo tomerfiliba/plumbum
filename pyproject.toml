@@ -11,11 +11,11 @@ build-backend = "setuptools.build_meta"
 name = "plumbum"
 description = "Plumbum: shell combinators library"
 readme = "README.rst"
-author = { name="Tomer Filiba", email="tomerfiliba@gmail.com" }
+authors = [{ name="Tomer Filiba", email="tomerfiliba@gmail.com" }]
 license = { file="LICENSE" }
 requires-python = ">=3.6"
 dynamic = ["version"]
-requires = [
+dependencies = [
     "pywin32; platform_system=='Windows' and platform_python_implementation!='PyPy'",
 ]
 classifiers = [
