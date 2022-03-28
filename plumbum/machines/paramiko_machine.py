@@ -287,7 +287,7 @@ class ParamikoMachine(BaseRemoteMachine):
         return self._sftp
 
     def session(
-        self, isatty=False, term="vt100", width=80, height=24, new_session=False
+        self, isatty=False, term="vt100", width=80, height=24, *, new_session=False
     ):
         # new_session is ignored for ParamikoMachine
         trans = self._client.get_transport()
