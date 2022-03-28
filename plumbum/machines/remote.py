@@ -100,7 +100,7 @@ class RemoteEnv(BaseEnv):
 
 
 class RemoteCommand(ConcreteCommand):
-    __slots__ = ["remote", "executable"]
+    __slots__ = ("remote",)
     QUOTE_LEVEL = 1
 
     def __init__(self, remote, executable, encoding="auto"):
@@ -276,7 +276,7 @@ class BaseRemoteMachine(BaseMachine):
             self._python = self["python3"]
         return self._python
 
-    def session(self, isatty=False, new_session=False):
+    def session(self, isatty=False, *, new_session=False):
         """Creates a new :class:`ShellSession <plumbum.session.ShellSession>` object; this invokes the user's
         shell on the remote machine and executes commands on it over stdin/stdout/stderr"""
         raise NotImplementedError()

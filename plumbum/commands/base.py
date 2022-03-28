@@ -566,7 +566,7 @@ class StdinDataRedirection(BaseCommand):
 
 class ConcreteCommand(BaseCommand):
     QUOTE_LEVEL: ClassVar[int]
-    __slots__ = ("executable", "custom_encoding")
+    __slots__ = ("executable",)
 
     def __init__(self, executable, encoding):
         self.executable = executable

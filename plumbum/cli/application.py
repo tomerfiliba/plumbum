@@ -889,7 +889,7 @@ class Application:
                     lgrp = T_(grp) if grp in _switch_groups else grp
                     print(self.COLOR_GROUP_TITLES[grp] | lgrp + ":")
 
-                for si in sorted(swinfos, key=lambda si: si.names):
+                for si in sorted(swinfos, key=lambda x: x.names):
                     swnames = ", ".join(
                         ("-" if len(n) == 1 else "--") + n
                         for n in si.names
