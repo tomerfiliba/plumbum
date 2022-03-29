@@ -6,7 +6,7 @@ from plumbum.commands import CommandNotFound, ConcreteCommand, shquote
 from plumbum.lib import ProcInfo
 from plumbum.machines.base import BaseMachine
 from plumbum.machines.env import BaseEnv
-from plumbum.machines.local import LocalPath
+from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath, RemoteWorkdir, StatRes
 
 

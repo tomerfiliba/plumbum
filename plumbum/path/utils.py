@@ -1,7 +1,8 @@
 import os
 
-from plumbum.machines.local import LocalPath, local
+from plumbum.machines.local import local
 from plumbum.path.base import Path
+from plumbum.path.local import LocalPath
 
 
 def delete(*paths):
