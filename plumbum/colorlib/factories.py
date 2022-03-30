@@ -1,11 +1,11 @@
 """
 Color-related factories. They produce Styles.
-
 """
 
 
 import sys
 from functools import reduce
+from typing import Any
 
 from .names import color_names, default_styles
 from .styles import ColorNotFound
@@ -108,7 +108,7 @@ class ColorFactory:
         """This will reset the color on leaving the with statement."""
         return self
 
-    def __exit__(self, _type, _value, _traceback) -> None:
+    def __exit__(self, _type: Any, _value: Any, _traceback: Any) -> None:
         """This resets a FG/BG color or all styles,
         due to different definition of RESET for the
         factories."""

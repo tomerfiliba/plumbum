@@ -44,7 +44,7 @@ repos:
   rev: v1.2.5
   hooks:
   - id: pycln
-    args: [--config=pyproject.toml]
+    args: [--all]
     stages: [manual]
 
 - repo: https://github.com/pycqa/flake8
@@ -59,7 +59,7 @@ repos:
   hooks:
   - id: mypy
     files: plumbum
-    args: [--show-error-codes]
+    args: []
     additional_dependencies: [typed-ast, types-paramiko, types-setuptools]
 
 # This wants the .mo files removed

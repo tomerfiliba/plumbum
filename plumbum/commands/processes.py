@@ -262,7 +262,8 @@ def _shutdown_bg_threads():
     global _shutting_down  # pylint: disable=global-statement
     _shutting_down = True
     # Make sure this still exists (don't throw error in atexit!)
-    if _timeout_queue:
+    # TODO: not sure why this would be "falsy", though
+    if _timeout_queue:  # type: ignore[truthy-bool]
         _timeout_queue.put((SystemExit, 0))
         # grace period
         bgthd.join(0.1)

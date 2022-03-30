@@ -2,8 +2,11 @@
 -----
 
 * Drop Python 2.7 and 3.5 support (`#573 <https://github.com/tomerfiliba/plumbum/pull/573>`_)
+* Lots of extended checks and fixes for problems exposed.
 * Color: support ``NO_COLOR``/``FORCE_COLOR`` (`#575 <https://github.com/tomerfiliba/plumbum/pull/575>`_)
-
+* Commands: New ``iter_lines`` ``buffer_size`` parameter  (`#582 <https://github.com/tomerfiliba/plumbum/pull/582>`_)
+* Commands: cache remote commands (`#583 <https://github.com/tomerfiliba/plumbum/pull/583>`_)
+* Exceptions: fix for exception pickling (`#586 <https://github.com/tomerfiliba/plumbum/pull/586>`_)
 
 
 1.7.2
