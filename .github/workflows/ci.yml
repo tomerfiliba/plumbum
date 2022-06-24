@@ -27,7 +27,7 @@ jobs:
       with:
         fetch-depth: 0
     - uses: actions/setup-python@v2
-    - uses: pre-commit/action@v2.0.3
+    - uses: pre-commit/action@v3.0.0
     - name: pylint
       run: |
         echo "::add-matcher::$GITHUB_WORKSPACE/.github/matchers/pylint.json"
