@@ -547,7 +547,7 @@ class StdinDataRedirection(BaseCommand):
         return self.cmd.machine
 
     def popen(self, args=(), **kwargs):
-        if kwargs.get('stdin') not in (PIPE, None):
+        if kwargs.get("stdin") not in (PIPE, None):
             raise RedirectionError("stdin is already redirected")
         data = self.data
         if isinstance(data, str) and self._get_encoding() is not None:
@@ -558,7 +558,7 @@ class StdinDataRedirection(BaseCommand):
             f.write(chunk)
             data = data[self.CHUNK_SIZE :]
         f.seek(0)
-        kwargs['stdin'] = f
+        kwargs["stdin"] = f
         # try:
         return self.cmd.popen(args, **kwargs)
         # finally:

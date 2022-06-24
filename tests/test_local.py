@@ -640,10 +640,15 @@ class TestLocalMachine:
             assert EXPECT == capfd.readouterr()[0]
 
     @skip_on_windows
-    @pytest.mark.parametrize('modifier, expected', [(FG, None),
-                                                    (TF(FG=True), True),
-                                                    (RETCODE(FG=True), 0),
-                                                    (TEE, (0, 'meow', ''))])
+    @pytest.mark.parametrize(
+        "modifier, expected",
+        [
+            (FG, None),
+            (TF(FG=True), True),
+            (RETCODE(FG=True), 0),
+            (TEE, (0, "meow", "")),
+        ],
+    )
     def test_redirection_stdin_modifiers_fg(self, modifier, expected, capfd):
         "StdinDataRedirection compatible with modifiers which write to stdout"
         from plumbum.cmd import cat
