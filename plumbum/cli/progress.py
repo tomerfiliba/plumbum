@@ -69,7 +69,7 @@ class ProgressBase(ABC):
         return rval
 
     def next(self):
-        return self.__next__()
+        return next(self)
 
     @property
     def value(self):

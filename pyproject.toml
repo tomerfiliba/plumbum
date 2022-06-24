@@ -68,6 +68,7 @@ ignore = [
 [tool.pylint]
 master.py-version = "3.6"
 master.jobs = "0"
+master.load-plugins = ["pylint.extensions.no_self_use"]
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"
 messages_control.enable = [
@@ -103,4 +104,5 @@ messages_control.disable = [
   "too-many-return-statements",
   "too-many-statements",
   "unidiomatic-typecheck", # TODO: might be able to remove
+  "unnecessary-lambda-assignment", # TODO: 4 instances
 ]

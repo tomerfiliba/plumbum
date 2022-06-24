@@ -290,7 +290,7 @@ class PidFile:
             return
         self._ctx = self.atomicfile.locked(blocking=False)
         try:
-            self._ctx.__enter__()
+            self._ctx.__enter__()  # pylint: disable=unnecessary-dunder-call
         except OSError:
             self._ctx = None
             try:
