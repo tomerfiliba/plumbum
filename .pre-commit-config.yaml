@@ -35,12 +35,6 @@ repos:
   - id: pyupgrade
     args: ["--py36-plus"]
 
-- repo: https://github.com/asottile/setup-cfg-fmt
-  rev: "v2.0.0"
-  hooks:
-  - id: setup-cfg-fmt
-    args: [--include-version-classifiers, --max-py-version=3.11]
-
 - repo: https://github.com/hadialqattan/pycln
   rev: v2.1.1
   hooks:
@@ -62,13 +56,6 @@ repos:
     files: plumbum
     args: []
     additional_dependencies: [typed-ast, types-paramiko, types-setuptools]
-
-# This wants the .mo files removed
-- repo: https://github.com/mgedmin/check-manifest
-  rev: "0.48"
-  hooks:
-  - id: check-manifest
-    stages: [manual]
 
 - repo: https://github.com/codespell-project/codespell
   rev: v2.2.1
