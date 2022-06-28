@@ -1,5 +1,7 @@
 import re
+import socket
 import warnings
+from contextlib import closing
 
 from plumbum.commands import ProcessExecutionError, shquote
 from plumbum.lib import IS_WIN32
@@ -8,6 +10,14 @@ from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath
+
+
+def _get_free_port():
+    """Attempts to find a free port."""
+    s = socket.socket()
+    with closing(s):
+        s.bind(("localhost", 0))
+        return s.getsockname()[1]
 
 
 class SshTunnel:
@@ -299,6 +309,8 @@ class SshMachine(BaseRemoteMachine):
         """
         formatted_lhost = "" if lhost is None else f"[{lhost}]:"
         formatted_dhost = "" if dhost is None else f"[{dhost}]:"
+        if str(lport) == "0":
+            lport = _get_free_port()
         ssh_opts = (
             [
                 "-L",
