@@ -1,3 +1,4 @@
+import re
 import warnings
 
 from plumbum.commands import ProcessExecutionError, shquote
@@ -13,10 +14,21 @@ class SshTunnel:
     """An object representing an SSH tunnel (created by
     :func:`SshMachine.tunnel <plumbum.machines.remote.SshMachine.tunnel>`)"""
 
-    __slots__ = ["_session", "__weakref__"]
+    __slots__ = ["_session", "_lport", "_dport", "_reverse", "__weakref__"]
 
-    def __init__(self, session):
+    def __init__(self, session, lport, dport, reverse):
         self._session = session
+        self._lport = lport
+        self._dport = dport
+        self._reverse = reverse
+        if reverse and str(dport) == "0" and session._startup_result is not None:
+            # Try to detect assigned remote port.
+            regex = re.compile(
+                r"^Allocated port (\d+) for remote forward to .+$", re.MULTILINE
+            )
+            match = regex.search(session._startup_result[2])
+            if match:
+                self._dport = match.group(1)
 
     def __repr__(self):
         tunnel = self._session.proc if self._session.alive() else "(defunct)"
@@ -31,6 +43,21 @@ class SshTunnel:
     def close(self):
         """Closes(terminates) the tunnel"""
         self._session.close()
+
+    @property
+    def lport(self):
+        """Tunneled port or socket on the local machine."""
+        return self._lport
+
+    @property
+    def dport(self):
+        """Tunneled port or socket on the remote machine."""
+        return self._dport
+
+    @property
+    def reverse(self):
+        """Represents if the tunnel is a reverse tunnel."""
+        return self._reverse
 
 
 class SshMachine(BaseRemoteMachine):
@@ -287,7 +314,10 @@ class SshMachine(BaseRemoteMachine):
         return SshTunnel(
             ShellSession(
                 proc, self.custom_encoding, connect_timeout=self.connect_timeout
-            )
+            ),
+            lport,
+            dport,
+            reverse,
         )
 
     def _translate_drive_letter(self, path):  # pylint: disable=no-self-use

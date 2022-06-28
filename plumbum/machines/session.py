@@ -217,6 +217,7 @@ class ShellSession:
         self.isatty = isatty
         self._lock = threading.RLock()
         self._current = None
+        self._startup_result = None
         if connect_timeout:
 
             def closer():
@@ -228,7 +229,7 @@ class ShellSession:
             timer = threading.Timer(connect_timeout, closer)
             timer.start()
         try:
-            self.run("")
+            self._startup_result = self.run("")
         finally:
             if connect_timeout:
                 timer.cancel()
