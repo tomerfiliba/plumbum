@@ -464,7 +464,8 @@ class TestRemoteMachine(BaseRemoteMachineTest):
     def _connect(self):
         return SshMachine(TEST_HOST)
 
-    def test_tunnel(self):
+    @pytest.mark.parametrize("dynamic_lport", [False, True])
+    def test_tunnel(self, dynamic_lport):
 
         for tunnel_prog in (self.TUNNEL_PROG_AF_INET, self.TUNNEL_PROG_AF_UNIX):
             with self._connect() as rem:
@@ -476,13 +477,21 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                 except ValueError:
                     dhost = None
 
-                with rem.tunnel(12222, port_or_socket, dhost=dhost) as tun:
-                    assert tun.lport == 12222
+                if not dynamic_lport:
+                    lport = 12222
+                else:
+                    lport = 0
+
+                with rem.tunnel(lport, port_or_socket, dhost=dhost) as tun:
+                    if not dynamic_lport:
+                        assert tun.lport == lport
+                    else:
+                        assert_is_port(tun.lport)
                     assert tun.dport == port_or_socket
                     assert not tun.reverse
 
                     s = socket.socket()
-                    s.connect(("localhost", 12222))
+                    s.connect(("localhost", tun.lport))
                     s.send(b"world")
                     data = s.recv(100)
                     s.close()
