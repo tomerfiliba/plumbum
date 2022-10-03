@@ -74,7 +74,7 @@ class ResetNotSupported(Exception):
     for this Style."""
 
 
-class Color(ABC):
+class Color:
     """\
     Loaded with ``(r, g, b, fg)`` or ``(color, fg=fg)``. The second signature is a short cut
     and will try full and hex loading.
@@ -331,7 +331,7 @@ class Color(ABC):
         return self if self.representation <= val else self.to_representation(val)
 
 
-class Style:
+class Style(ABC):
     """This class allows the color changes to be called directly
     to write them to stdout, ``[]`` calls to wrap colors (or the ``.wrap`` method)
     and can be called in a with statement.
