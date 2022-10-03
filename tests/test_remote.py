@@ -36,6 +36,10 @@ def strassert(one, two):
     assert str(one) == str(two)
 
 
+def assert_is_port(port):
+    assert 0 < int(port) < 2**16
+
+
 # TEST_HOST = "192.168.1.143"
 TEST_HOST = "127.0.0.1"
 if TEST_HOST not in ("::1", "127.0.0.1", "localhost"):
@@ -444,9 +448,9 @@ s.close()
             rfile.delete()
 
 
-def serve_reverse_tunnel(queue):
+def serve_reverse_tunnel(queue, port):
     s = socket.socket()
-    s.bind(("", 12223))
+    s.bind(("", port))
     s.listen(1)
     s2, _ = s.accept()
     data = s2.recv(100).decode("ascii").strip()
@@ -460,7 +464,8 @@ class TestRemoteMachine(BaseRemoteMachineTest):
     def _connect(self):
         return SshMachine(TEST_HOST)
 
-    def test_tunnel(self):
+    @pytest.mark.parametrize("dynamic_lport", [False, True])
+    def test_tunnel(self, dynamic_lport):
 
         for tunnel_prog in (self.TUNNEL_PROG_AF_INET, self.TUNNEL_PROG_AF_UNIX):
             with self._connect() as rem:
@@ -472,9 +477,21 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                 except ValueError:
                     dhost = None
 
-                with rem.tunnel(12222, port_or_socket, dhost=dhost):
+                if not dynamic_lport:
+                    lport = 12222
+                else:
+                    lport = 0
+
+                with rem.tunnel(lport, port_or_socket, dhost=dhost) as tun:
+                    if not dynamic_lport:
+                        assert tun.lport == lport
+                    else:
+                        assert_is_port(tun.lport)
+                    assert tun.dport == port_or_socket
+                    assert not tun.reverse
+
                     s = socket.socket()
-                    s.connect(("localhost", 12222))
+                    s.connect(("localhost", tun.lport))
                     s.send(b"world")
                     data = s.recv(100)
                     s.close()
@@ -482,10 +499,19 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                 print(p.communicate())
                 assert data == b"hello world"
 
-    def test_reverse_tunnel(self):
+    @pytest.mark.parametrize("dynamic_dport", [False, True])
+    def test_reverse_tunnel(self, dynamic_dport):
 
+        lport = 12223 + dynamic_dport
         with self._connect() as rem:
-            get_unbound_socket_remote = """import sys, socket
+            queue = Queue()
+            tunnel_server = Thread(target=serve_reverse_tunnel, args=(queue, lport))
+            tunnel_server.start()
+            message = str(time.time())
+
+            if not dynamic_dport:
+
+                get_unbound_socket_remote = """import sys, socket
 s = socket.socket()
 s.bind(("", 0))
 s.listen(1)
@@ -493,20 +519,28 @@ sys.stdout.write(str(s.getsockname()[1]))
 sys.stdout.flush()
 s.close()
 """
-            p = (rem.python["-u"] << get_unbound_socket_remote).popen()
-            remote_socket = p.stdout.readline().decode("ascii").strip()
-            queue = Queue()
-            tunnel_server = Thread(target=serve_reverse_tunnel, args=(queue,))
-            tunnel_server.start()
-            message = str(time.time())
-            with rem.tunnel(12223, remote_socket, dhost="localhost", reverse=True):
+                p = (rem.python["-u"] << get_unbound_socket_remote).popen()
+                remote_socket = p.stdout.readline().decode("ascii").strip()
+            else:
+                remote_socket = 0
+
+            with rem.tunnel(
+                lport, remote_socket, dhost="localhost", reverse=True
+            ) as tun:
+                assert tun.lport == lport
+                if not dynamic_dport:
+                    assert tun.dport == remote_socket
+                else:
+                    assert_is_port(tun.dport)
+                assert tun.reverse
+
                 remote_send_af_inet = """import socket
 s = socket.socket()
 s.connect(("localhost", {}))
 s.send("{}".encode("ascii"))
 s.close()
 """.format(
-                    remote_socket, message
+                    tun.dport, message
                 )
                 (rem.python["-u"] << remote_send_af_inet).popen()
                 tunnel_server.join(timeout=1)
