@@ -262,7 +262,7 @@ def _shutdown_bg_threads():
     global _shutting_down  # pylint: disable=global-statement
     _shutting_down = True
     # Make sure this still exists (don't throw error in atexit!)
-    # TODO: not sure why this would be "falsy", though
+    # TODO: not sure why this would be "falsey", though
     if _timeout_queue:  # type: ignore[truthy-bool]
         _timeout_queue.put((SystemExit, 0))
         # grace period
@@ -367,7 +367,7 @@ def iter_lines(
     assert mode in (BY_POSITION, BY_TYPE)
 
     encoding = getattr(proc, "custom_encoding", None) or "utf-8"
-    decode = lambda s: s.decode(encoding, errors="replace").rstrip()
+    decode = lambda s: s.decode(encoding, errors="replace").rstrip()  # noqa: E731
 
     _register_proc_timeout(proc, timeout)
 

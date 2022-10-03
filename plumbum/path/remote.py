@@ -173,10 +173,12 @@ class RemotePath(Path):
         return self.__class__(self.remote, self.dirname) / (name + suffix)
 
     def glob(self, pattern):
-        fn = lambda pat: [
-            RemotePath(self.remote, m) for m in self.remote._path_glob(self, pat)
-        ]
-        return self._glob(pattern, fn)
+        return self._glob(
+            pattern,
+            lambda pat: [
+                RemotePath(self.remote, m) for m in self.remote._path_glob(self, pat)
+            ],
+        )
 
     def delete(self):
         if not self.exists():

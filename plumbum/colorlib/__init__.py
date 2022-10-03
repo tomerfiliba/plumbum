@@ -29,7 +29,7 @@ def load_ipython_extension(ipython):  # pragma: no cover
     try:
         from ._ipython_ext import OutputMagics  # pylint:disable=import-outside-toplevel
     except ImportError:
-        print("IPython required for the IPython extension to be loaded.")
+        print("IPython required for the IPython extension to be loaded.")  # noqa: T201
         raise
 
     ipython.push({"colors": htmlcolors})

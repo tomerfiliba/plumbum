@@ -19,7 +19,9 @@ except ImportError:
         from win32con import LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY
         from win32file import OVERLAPPED, LockFileEx, UnlockFile
     except ImportError:
-        print("On Windows, Plumbum requires Python for Windows Extensions (pywin32)")
+        print(  # noqa: T201
+            "On Windows, Plumbum requires Python for Windows Extensions (pywin32)"
+        )
         raise
 
     @contextmanager

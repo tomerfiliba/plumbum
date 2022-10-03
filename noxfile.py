@@ -47,10 +47,10 @@ def docs(session):
 
     if session.posargs:
         if "serve" in session.posargs:
-            print("Launching docs at http://localhost:8000/ - use Ctrl-C to quit")
+            session.log("Launching docs at http://localhost:8000/ - use Ctrl-C to quit")
             session.run("python", "-m", "http.server", "8000", "-d", "_build/html")
         else:
-            print("Unsupported argument to docs")
+            session.log("Unsupported argument to docs")
 
 
 @nox.session
