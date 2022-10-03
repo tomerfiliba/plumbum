@@ -12,7 +12,7 @@ import os
 import platform
 import re
 import sys
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from copy import copy
 from typing import IO, Dict, Optional, Union
 
@@ -331,7 +331,7 @@ class Color:
         return self if self.representation <= val else self.to_representation(val)
 
 
-class Style(ABC):
+class Style(metaclass=ABCMeta):
     """This class allows the color changes to be called directly
     to write them to stdout, ``[]`` calls to wrap colors (or the ``.wrap`` method)
     and can be called in a with statement.
