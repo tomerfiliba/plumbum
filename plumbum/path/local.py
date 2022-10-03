@@ -147,10 +147,13 @@ class LocalPath(Path):
         return LocalPath(self.dirname) / (name + suffix)
 
     def glob(self, pattern):
-        fn = lambda pat: [
-            LocalPath(m) for m in glob.glob(os.path.join(glob.escape(str(self)), pat))
-        ]
-        return self._glob(pattern, fn)
+        return self._glob(
+            pattern,
+            lambda pat: [
+                LocalPath(m)
+                for m in glob.glob(os.path.join(glob.escape(str(self)), pat))
+            ],
+        )
 
     def delete(self):
         if not self.exists():

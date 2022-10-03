@@ -96,7 +96,7 @@ class TypedEnv(MutableMapping):
         def __init__(
             self, name, default=NO_DEFAULT, type=str, separator=","
         ):  # pylint:disable=redefined-builtin
-            super(TypedEnv.CSV, self).__init__(name, default=default)
+            super().__init__(name, default=default)
             self.type = type
             self.separator = separator
 

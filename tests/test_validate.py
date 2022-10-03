@@ -5,7 +5,7 @@ class TestValidator:
     def test_named(self):
         class Try:
             @cli.positional(x=abs, y=str)
-            def main(selfy, x, y):
+            def main(selfy, x, y):  # noqa: B902
                 pass
 
         assert Try.main.positional == [abs, str]
@@ -14,7 +14,7 @@ class TestValidator:
     def test_position(self):
         class Try:
             @cli.positional(abs, str)
-            def main(selfy, x, y):
+            def main(selfy, x, y):  # noqa: B902
                 pass
 
         assert Try.main.positional == [abs, str]
@@ -23,7 +23,7 @@ class TestValidator:
     def test_mix(self):
         class Try:
             @cli.positional(abs, str, d=bool)
-            def main(selfy, x, y, z, d):
+            def main(selfy, x, y, z, d):  # noqa: B902
                 pass
 
         assert Try.main.positional == [abs, str, None, bool]
@@ -32,7 +32,7 @@ class TestValidator:
     def test_var(self):
         class Try:
             @cli.positional(abs, str, int)
-            def main(selfy, x, y, *g):
+            def main(selfy, x, y, *g):  # noqa: B902
                 pass
 
         assert Try.main.positional == [abs, str]
@@ -41,7 +41,7 @@ class TestValidator:
     def test_defaults(self):
         class Try:
             @cli.positional(abs, str)
-            def main(selfy, x, y="hello"):
+            def main(selfy, x, y="hello"):  # noqa: B902
                 pass
 
         assert Try.main.positional == [abs, str]

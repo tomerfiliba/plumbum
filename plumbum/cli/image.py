@@ -1,3 +1,5 @@
+import sys
+
 from plumbum import colors
 
 from .. import cli
@@ -56,9 +58,10 @@ class Image:
         for y in range(size[1]):
             for x in range(size[0] - 1):
                 pix = new_im.getpixel((x, y))
-                print(colors.bg.rgb(*pix), " ", sep="", end="")  # '\u2588'
-            print(colors.reset, " ", sep="")
-        print(colors.reset)
+                sys.stdout.write(colors.bg.rgb(*pix) + " ")  # '\u2588'
+            sys.stdout.write(colors.reset + " \n")
+        sys.stdout.write(colors.reset + "\n")
+        sys.stdout.flush()
 
     def show_pil_double(self, im):
         "Show double resolution on some fonts"
@@ -71,14 +74,12 @@ class Image:
             for x in range(size[0] - 1):
                 pix = new_im.getpixel((x, y * 2))
                 pixl = new_im.getpixel((x, y * 2 + 1))
-                print(
-                    colors.bg.rgb(*pixl) & colors.fg.rgb(*pix),
-                    "\u2580",
-                    sep="",
-                    end="",
+                sys.stdout.write(
+                    (colors.bg.rgb(*pixl) & colors.fg.rgb(*pix)) + "\u2580"
                 )
-            print(colors.reset, " ", sep="")
-        print(colors.reset)
+            sys.stdout.write(colors.reset + " \n")
+        sys.stdout.write(colors.reset + "\n")
+        sys.stdout.flush()
 
 
 class ShowImageApp(cli.Application):

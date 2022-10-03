@@ -136,9 +136,10 @@ class Progress(ProgressBase):
         self.value = self.length
         self.display()
         if self.clear and not self.has_output:
-            print("\r", len(str(self)) * " ", "\r", end="", sep="")
+            sys.stdout.write("\r" + len(str(self)) * " " + "\r")
         else:
-            print()
+            sys.stdout.write("\n")
+        sys.stdout.flush()
 
     def __str__(self):
         width = get_terminal_size(default=(0, 0))[0]
@@ -175,11 +176,11 @@ class Progress(ProgressBase):
     def display(self):
         disptxt = str(self)
         if self.width == 0 or self.has_output:
-            print(disptxt)
+            sys.stdout.write(disptxt + "\n")
         else:
-            print("\r", end="")
-            print(disptxt, end="")
-            sys.stdout.flush()
+            sys.stdout.write("\r")
+            sys.stdout.write(disptxt)
+        sys.stdout.flush()
 
 
 class ProgressIPy(ProgressBase):  # pragma: no cover
