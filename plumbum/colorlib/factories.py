@@ -3,8 +3,9 @@ Color-related factories. They produce Styles.
 """
 
 
+import functools
+import operator
 import sys
-from functools import reduce
 from typing import Any
 
 from .names import color_names, default_styles
@@ -182,7 +183,7 @@ class StyleFactory(ColorFactory):
                 prev = self
 
         if styleslist:
-            prev = reduce(lambda a, b: a & b, styleslist)
+            prev = functools.reduce(operator.and_, styleslist)
 
         return prev if isinstance(prev, self._style) else prev.reset
 

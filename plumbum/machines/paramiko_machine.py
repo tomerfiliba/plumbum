@@ -1,3 +1,4 @@
+import contextlib
 import errno
 import logging
 import os
@@ -258,11 +259,9 @@ class ParamikoMachine(BaseRemoteMachine):
             ssh_config = paramiko.SSHConfig()
             with open(os.path.expanduser("~/.ssh/config"), encoding="utf-8") as f:
                 ssh_config.parse(f)
-            try:
+            with contextlib.suppress(KeyError):
                 hostConfig = ssh_config.lookup(host)
                 kwargs["sock"] = paramiko.ProxyCommand(hostConfig["proxycommand"])
-            except KeyError:
-                pass
         self._client.connect(host, **kwargs)
         self._keep_alive = keep_alive
         self._sftp = None

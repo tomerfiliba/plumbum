@@ -1,3 +1,4 @@
+import contextlib
 import inspect
 from abc import ABC, abstractmethod
 
@@ -484,10 +485,8 @@ class Set(Validator):
                 if opt == value:
                     return opt  # always return original value
                 continue
-            try:
+            with contextlib.suppress(ValueError):
                 return opt(value)
-            except ValueError:
-                pass
         raise ValueError(f"Invalid value: {value} (Expected one of {self.values})")
 
     def choices(self, partial=""):

@@ -3,6 +3,7 @@ Terminal size utility
 ---------------------
 """
 
+import contextlib
 import os
 import platform
 import warnings
@@ -87,12 +88,10 @@ def _ioctl_GWINSZ(fd: int) -> Optional[Tuple[int, int]]:
 def _get_terminal_size_linux() -> Optional[Tuple[int, int]]:
     cr = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(1) or _ioctl_GWINSZ(2)
     if not cr:
-        try:
+        with contextlib.suppress(Exception):
             fd = os.open(os.ctermid(), os.O_RDONLY)
             cr = _ioctl_GWINSZ(fd)
             os.close(fd)
-        except Exception:
-            pass
     if not cr:
         try:
             cr = (int(os.environ["LINES"]), int(os.environ["COLUMNS"]))

@@ -4,15 +4,17 @@ Terminal-related utilities
 """
 
 
+import contextlib
 import os
 import sys
+from typing import List, Optional
 
 from plumbum import local
 
 from .progress import Progress
 from .termsize import get_terminal_size
 
-__all__ = (
+__all__ = [
     "readline",
     "ask",
     "choose",
@@ -20,21 +22,21 @@ __all__ = (
     "get_terminal_size",
     "Progress",
     "get_terminal_size",
-)
+]
 
 
-def __dir__():
+def __dir__() -> List[str]:
     return __all__
 
 
-def readline(message=""):
+def readline(message: str = "") -> str:
     """Gets a line of input from the user (stdin)"""
     sys.stdout.write(message)
     sys.stdout.flush()
     return sys.stdin.readline()
 
 
-def ask(question, default=None):
+def ask(question: str, default: Optional[bool] = None) -> bool:
     """
     Presents the user with a yes/no question.
 
@@ -234,13 +236,9 @@ def pager(rows, pagercmd=None):  # pragma: no cover
         pg.stdin.close()
         pg.wait()
     finally:
-        try:
+        with contextlib.suppress(Exception):
             rows.close()
-        except Exception:
-            pass
         if pg and pg.poll() is None:
-            try:
+            with contextlib.suppress(Exception):
                 pg.terminate()
-            except Exception:
-                pass
             os.system("reset")

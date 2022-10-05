@@ -1,4 +1,5 @@
 import atexit
+import contextlib
 import heapq
 import math
 import time
@@ -220,26 +221,22 @@ def _timeout_thread_func():
                 timeout = max(0, ttk - time.time())
             else:
                 timeout = None
-            try:
+            with contextlib.suppress(QueueEmpty):
                 proc, time_to_kill = _timeout_queue.get(timeout=timeout)
                 if proc is SystemExit:
                     # terminate
                     return
                 waiting.push((time_to_kill, proc))
-            except QueueEmpty:
-                pass
             now = time.time()
             while waiting:
                 ttk, proc = waiting.peek()
                 if ttk > now:
                     break
                 waiting.pop()
-                try:
+                with contextlib.suppress(OSError):
                     if proc.poll() is None:
                         proc.kill()
                         proc._timed_out = True
-                except OSError:
-                    pass
     except Exception:
         if _shutting_down:
             # to prevent all sorts of exceptions during interpreter shutdown

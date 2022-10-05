@@ -1,3 +1,4 @@
+import contextlib
 import errno
 import os
 import signal
@@ -63,10 +64,8 @@ def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
     _, rc = os.waitpid(firstpid, 0)
     output = os.read(rfd, MAX_SIZE)
     os.close(rfd)
-    try:
+    with contextlib.suppress(UnicodeError):
         output = output.decode("utf8")
-    except UnicodeError:
-        pass
     if rc == 0 and output.isdigit():
         secondpid = int(output)
     else:
