@@ -501,6 +501,12 @@ class Application:
                 )
 
         m = inspect.getfullargspec(self.main)
+
+        if sys.version_info < (3, 10):
+            sig = inspect.signature(self.main)
+        else:
+            sig = inspect.signature(self.main, eval_str=True)
+
         max_args = sys.maxsize if m.varargs else len(m.args) - 1
         min_args = len(m.args) - 1 - (len(m.defaults) if m.defaults else 0)
         if len(tailargs) < min_args:
@@ -530,17 +536,24 @@ class Application:
                 m.varargs,
             )
 
-        elif hasattr(m, "annotations"):
+        elif hasattr(m, "annotations") and m.annotations:
             args_names = list(m.args[1:])
             positional = [None] * len(args_names)
             varargs = None
 
             # All args are positional, so convert kargs to positional
             for item in m.annotations:
+                annotation = (
+                    sig.parameters[item].annotation
+                    if item != "return"
+                    else sig.return_annotation
+                )
+                if sys.version_info < (3, 10) and isinstance(annotation, str):
+                    annotation = eval(annotation)
                 if item == m.varargs:
-                    varargs = m.annotations[item]
+                    varargs = annotation
                 elif item != "return":
-                    positional[args_names.index(item)] = m.annotations[item]
+                    positional[args_names.index(item)] = annotation
 
             tailargs = self._positional_validate(
                 tailargs, positional, varargs, m.args[1:], m.varargs
