@@ -807,7 +807,7 @@ class TestLocalMachine:
 
     def test_pgrep(self):
         print(local.list_processes())
-        assert list(local.pgrep("python3"))
+        assert list(local.pgrep("python"))
 
     def _generate_sigint(self):
         with pytest.raises(KeyboardInterrupt):
