@@ -190,9 +190,11 @@ For instance ::
         ValueError("invalid literal for int() with base 10: 'foo'",)
 
 The toolkit includes two additional "types" (or rather, *validators*): ``Range`` and ``Set``.
-``Range`` takes a minimal value and a maximal value and expects an integer in that range
-(inclusive). ``Set`` takes a set of allowed values, and expects the argument to match one of
-these values. Here's an example ::
+``Range`` takes a minimal value and a maximal value and expects an integer in
+that range (inclusive). ``Set`` takes a set of allowed values, and expects the
+argument to match one of these values. You can set ``case_sensitive=False``, or
+add ``all_markers={"*", "all"}`` if you want to have a "trigger all markers"
+marker. Here's an example ::
 
     class MyApp(cli.Application):
         _port = 8080
