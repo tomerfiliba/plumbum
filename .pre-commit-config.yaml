@@ -81,7 +81,6 @@ repos:
   - id: python-check-blanket-noqa
   - id: python-check-blanket-type-ignore
   - id: python-no-log-warn
-  - id: python-no-eval
   - id: python-use-type-annotations
   - id: rst-backticks
   - id: rst-directive-colons
