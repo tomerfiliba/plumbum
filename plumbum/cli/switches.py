@@ -1,6 +1,8 @@
+import collections.abc
 import contextlib
 import inspect
 from abc import ABC, abstractmethod
+from typing import Callable, Generator, List, Union
 
 from plumbum import local
 from plumbum.cli.i18n import get_translation_for
@@ -456,41 +458,62 @@ class Set(Validator):
                              comparison or not. The default is ``False``
     :param csv: splits the input as a comma-separated-value before validating and returning
                 a list. Accepts ``True``, ``False``, or a string for the separator
+    :param all_markers: When a user inputs any value from this set, all values are iterated
+                        over. Something like {"*", "all"} would be a potential setting for
+                        this option.
     """
 
-    def __init__(self, *values, **kwargs):
-        self.case_sensitive = kwargs.pop("case_sensitive", False)
-        self.csv = kwargs.pop("csv", False)
-        if self.csv is True:
-            self.csv = ","
-        if kwargs:
-            raise TypeError(
-                _("got unexpected keyword argument(s): {0}").format(kwargs.keys())
-            )
+    def __init__(
+        self,
+        *values: Union[str, Callable[[str], str]],
+        case_sensitive: bool = False,
+        csv: Union[bool, str] = False,
+        all_markers: "collections.abc.Set[str]" = frozenset(),
+    ) -> None:
+        self.case_sensitive = case_sensitive
+        if isinstance(csv, bool):
+            self.csv = "," if csv else ""
+        else:
+            self.csv = csv
         self.values = values
+        self.all_markers = all_markers
 
     def __repr__(self):
         items = ", ".join(v if isinstance(v, str) else v.__name__ for v in self.values)
         return f"{{{items}}}"
 
-    def __call__(self, value, check_csv=True):
+    def _call_iter(
+        self, value: str, check_csv: bool = True
+    ) -> Generator[str, None, None]:
         if self.csv and check_csv:
-            return [self(v.strip(), check_csv=False) for v in value.split(",")]
+            for v in value.split(self.csv):
+                yield from self._call_iter(v.strip(), check_csv=False)
+
         if not self.case_sensitive:
             value = value.lower()
+
         for opt in self.values:
             if isinstance(opt, str):
                 if not self.case_sensitive:
                     opt = opt.lower()
-                if opt == value:
-                    return opt  # always return original value
+                if opt == value or value in self.all_markers:
+                    yield opt  # always return original value
                 continue
             with contextlib.suppress(ValueError):
-                return opt(value)
-        raise ValueError(f"Invalid value: {value} (Expected one of {self.values})")
+                yield opt(value)
+
+    def __call__(self, value: str, check_csv: bool = True) -> Union[str, List[str]]:
+        items = list(self._call_iter(value, check_csv))
+        if not items:
+            msg = f"Invalid value: {value} (Expected one of {self.values})"
+            raise ValueError(msg)
+        if self.csv and check_csv or len(items) > 1:
+            return items
+        return items[0]
 
     def choices(self, partial=""):
         choices = {opt if isinstance(opt, str) else f"({opt})" for opt in self.values}
+        choices |= self.all_markers
         if partial:
             choices = {opt for opt in choices if opt.lower().startswith(partial)}
         return choices

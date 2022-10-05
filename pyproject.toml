@@ -105,4 +105,5 @@ messages_control.disable = [
   "too-many-statements",
   "unidiomatic-typecheck", # TODO: might be able to remove
   "unnecessary-lambda-assignment", # TODO: 4 instances
+  "unused-import", # identical to flake8 but has typing false positives
 ]

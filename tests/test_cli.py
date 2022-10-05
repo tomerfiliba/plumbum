@@ -27,7 +27,9 @@ class SimpleApp(cli.Application):
         text wrapping in help messages as well""",
     )
 
-    csv = cli.SwitchAttr(["--csv"], cli.Set("MIN", "MAX", int, csv=True))
+    csv = cli.SwitchAttr(
+        ["--csv"], cli.Set("MIN", "MAX", int, csv=True, all_markers={"all"})
+    )
     num = cli.SwitchAttr(["--num"], cli.Set("MIN", "MAX", int))
 
     def main(self, *args):
@@ -35,6 +37,8 @@ class SimpleApp(cli.Application):
         self.eggs = "lalala"
         self.eggs = old
         self.tailargs = args
+
+        print(self.csv)
 
 
 class PositionalApp(cli.Application):
@@ -163,7 +167,7 @@ class TestCLI:
         _, rc = SimpleApp.run(["foo", "--version"], exit=False)
         assert rc == 0
 
-    def test_okay(self):
+    def test_okay(self, capsys):
         _, rc = SimpleApp.run(["foo", "--bacon=81"], exit=False)
         assert rc == 0
 
@@ -194,6 +198,14 @@ class TestCLI:
 
         _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=100"], exit=False)
         assert rc == 0
+
+        capsys.readouterr()
+        _, rc = SimpleApp.run(["foo", "--bacon=81", "--csv=all,100"], exit=False)
+        assert rc == 0
+        output = capsys.readouterr()
+        assert "min" in output.out
+        assert "max" in output.out
+        assert "100" in output.out
 
         _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=MAX"], exit=False)
         assert rc == 0
