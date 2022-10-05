@@ -723,7 +723,7 @@ class Application:
     def helpall(self):
         """Prints help messages of all sub-commands and quits"""
         self.help()
-        print("")
+        print()
 
         if self._subcommands:
             for name, subcls in sorted(self._subcommands.items()):
@@ -744,7 +744,7 @@ class Application:
         """Prints this help message and quits"""
         if self._get_prog_version():
             self.version()
-            print("")
+            print()
         if self.DESCRIPTION:
             print(self.DESCRIPTION.strip() + "\n")
 
@@ -860,7 +860,7 @@ class Application:
             tailargs.append(f"{m.varargs}...")
         tailargs = " ".join(tailargs)
 
-        utc = self.COLOR_USAGE_TITLE if self.COLOR_USAGE_TITLE else self.COLOR_USAGE
+        utc = self.COLOR_USAGE_TITLE or self.COLOR_USAGE
         print(utc | T_("Usage:"))
 
         with self.COLOR_USAGE:
@@ -908,7 +908,7 @@ class Application:
                     yield si, prefix, self.COLOR_GROUPS[grp]
 
                 if show_groups:
-                    print("")
+                    print()
 
         sw_width = (
             max(len(prefix) for si, prefix, color in switchs(by_groups, False)) + 4
@@ -954,14 +954,14 @@ class Application:
             for name, subcls in sorted(self._subcommands.items()):
                 with gc:
                     subapp = subcls.get()
-                    doc = subapp.DESCRIPTION if subapp.DESCRIPTION else getdoc(subapp)
+                    doc = subapp.DESCRIPTION or getdoc(subapp)
                     if self.SUBCOMMAND_HELPMSG:
                         help_str = doc + "; " if doc else ""
                         help_str += self.SUBCOMMAND_HELPMSG.format(
                             parent=self.PROGNAME, sub=name
                         )
                     else:
-                        help_str = doc if doc else ""
+                        help_str = doc or ""
 
                     msg = indentation.join(
                         wrapper.wrap(

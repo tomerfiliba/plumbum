@@ -8,6 +8,7 @@ With the ``Style`` class, any color can be directly called or given to a with st
 """
 
 
+import contextlib
 import os
 import platform
 import re
@@ -187,12 +188,10 @@ class Color:
         return self
 
     def _from_simple(self, color):
-        try:
+        with contextlib.suppress(AttributeError):
             color = color.lower()
             color = color.replace(" ", "")
             color = color.replace("_", "")
-        except AttributeError:
-            pass
 
         if color == "reset":
             return
@@ -219,12 +218,10 @@ class Color:
         return self
 
     def _from_full(self, color):
-        try:
+        with contextlib.suppress(AttributeError):
             color = color.lower()
             color = color.replace(" ", "")
             color = color.replace("_", "")
-        except AttributeError:
-            pass
 
         if color == "reset":
             return
@@ -567,9 +564,9 @@ class Style(metaclass=ABCMeta):
         neg_attributes = ", ".join(
             f"-{a}" for a in self.attributes if not self.attributes[a]
         )
-        colors = ", ".join(repr(c) for c in [self.fg, self.bg] if c)
+        colors = ", ".join(repr(c) for c in (self.fg, self.bg) if c)
         string = (
-            "; ".join(s for s in [attributes, neg_attributes, colors] if s) or "empty"
+            "; ".join(s for s in (attributes, neg_attributes, colors) if s) or "empty"
         )
         if self.isreset:
             string = "reset"

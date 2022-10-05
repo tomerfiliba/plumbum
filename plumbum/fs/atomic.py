@@ -3,9 +3,9 @@ Atomic file operations
 """
 
 import atexit
+import contextlib
 import os
 import threading
-from contextlib import contextmanager
 
 from plumbum.machines.local import local
 
@@ -24,7 +24,7 @@ except ImportError:
         )
         raise
 
-    @contextmanager
+    @contextlib.contextmanager
     def locked_file(fileno, blocking=True):
         hndl = msvcrt.get_osfhandle(fileno)
         try:
@@ -46,7 +46,7 @@ except ImportError:
 else:
     if hasattr(fcntl, "lockf"):
 
-        @contextmanager
+        @contextlib.contextmanager
         def locked_file(fileno, blocking=True):
             fcntl.lockf(fileno, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
             try:
@@ -56,7 +56,7 @@ else:
 
     else:
 
-        @contextmanager
+        @contextlib.contextmanager
         def locked_file(fileno, blocking=True):
             fcntl.flock(fileno, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
             try:
@@ -114,7 +114,7 @@ class AtomicFile:
             os.open(str(self.path), os.O_CREAT | os.O_RDWR, 384), "r+b", 0
         )
 
-    @contextmanager
+    @contextlib.contextmanager
     def locked(self, blocking=True):
         """
         A context manager that locks the file; this function is reentrant by the thread currently
@@ -274,10 +274,8 @@ class PidFile:
         self.release()
 
     def __del__(self):
-        try:
+        with contextlib.suppress(Exception):
             self.release()
-        except Exception:  # pylint:disable=broad-except
-            pass
 
     def close(self):
         self.atomicfile.close()

@@ -1,5 +1,5 @@
+import contextlib
 import re
-from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
 
 from plumbum.commands import CommandNotFound, ConcreteCommand, shquote
@@ -228,15 +228,12 @@ class BaseRemoteMachine(BaseMachine):
         """
         key = (progname, self.env.get("PATH", ""))
 
-        try:
+        with contextlib.suppress(KeyError):
             return self._program_cache[key]
-        except KeyError:
-            pass
 
         alternatives = [progname]
         if "_" in progname:
-            alternatives.append(progname.replace("_", "-"))
-            alternatives.append(progname.replace("_", "."))
+            alternatives += [progname.replace("_", "-"), progname.replace("_", ".")]
         for name in alternatives:
             for p in self.env.path:
                 fn = p / name
@@ -323,7 +320,7 @@ class BaseRemoteMachine(BaseMachine):
             if pat.search(procinfo.args):
                 yield procinfo
 
-    @contextmanager
+    @contextlib.contextmanager
     def tempdir(self):
         """A context manager that creates a remote temporary directory, which is removed when
         the context exits"""

@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 import platform
@@ -187,15 +188,12 @@ class LocalMachine(BaseMachine):
 
         key = (progname, cls.env.get("PATH", ""))
 
-        try:
+        with contextlib.suppress(KeyError):
             return cls._program_cache[key]
-        except KeyError:
-            pass
 
         alternatives = [progname]
         if "_" in progname:
-            alternatives.append(progname.replace("_", "-"))
-            alternatives.append(progname.replace("_", "."))
+            alternatives += [progname.replace("_", "-"), progname.replace("_", ".")]
         for pn in alternatives:
             path = cls._which(pn)
             if path:

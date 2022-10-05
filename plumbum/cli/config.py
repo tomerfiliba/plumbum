@@ -1,3 +1,4 @@
+import contextlib
 from abc import ABC, abstractmethod
 from configparser import ConfigParser, NoOptionError, NoSectionError
 
@@ -26,10 +27,8 @@ class ConfigBase(ABC):
         self.changed = False
 
     def __enter__(self):
-        try:
+        with contextlib.suppress(FileNotFoundError):
             self.read()
-        except FileNotFoundError:
-            pass
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

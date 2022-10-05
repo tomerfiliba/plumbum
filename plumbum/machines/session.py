@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import random
 import threading
@@ -241,10 +242,8 @@ class ShellSession:
         self.close()
 
     def __del__(self):
-        try:
+        with contextlib.suppress(Exception):
             self.close()
-        except Exception:
-            pass
 
     def alive(self):
         """Returns ``True`` if the underlying shell process is alive, ``False`` otherwise"""
@@ -254,21 +253,15 @@ class ShellSession:
         """Closes (terminates) the shell session"""
         if not self.alive():
             return
-        try:
+        with contextlib.suppress(ValueError, OSError):
             self.proc.stdin.write(b"\nexit\n\n\nexit\n\n")
             self.proc.stdin.flush()
             time.sleep(0.05)
-        except (ValueError, OSError):
-            pass
-        for p in [self.proc.stdin, self.proc.stdout, self.proc.stderr]:
-            try:
+        for p in (self.proc.stdin, self.proc.stdout, self.proc.stderr):
+            with contextlib.suppress(Exception):
                 p.close()
-            except Exception:
-                pass
-        try:
+        with contextlib.suppress(OSError):
             self.proc.kill()
-        except OSError:
-            pass
         self.proc = None
 
     def popen(self, cmd):

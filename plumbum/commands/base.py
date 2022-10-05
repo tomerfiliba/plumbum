@@ -1,7 +1,7 @@
+import contextlib
 import functools
 import shlex
 import subprocess
-from contextlib import contextmanager
 from subprocess import PIPE, Popen
 from tempfile import TemporaryFile
 from types import MethodType
@@ -172,7 +172,7 @@ class BaseCommand:
         """Runs a command detached."""
         return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)
 
-    @contextmanager
+    @contextlib.contextmanager
     def bgrun(self, args=(), **kwargs):
         """Runs the given command as a context manager, allowing you to create a
         `pipeline <http://en.wikipedia.org/wiki/Pipeline_(computing)>`_ (not in the UNIX sense)
@@ -215,11 +215,9 @@ class BaseCommand:
                 return run_proc(p, retcode, timeout)
             finally:
                 del p.run  # to break cyclic reference p -> cell -> p
-                for f in [p.stdin, p.stdout, p.stderr]:
-                    try:
+                for f in (p.stdin, p.stdout, p.stderr):
+                    with contextlib.suppress(Exception):
                         f.close()
-                    except Exception:
-                        pass
 
         p.run = runner
         yield p

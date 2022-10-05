@@ -29,7 +29,7 @@ class Path(str, ABC):
     CASE_SENSITIVE = True
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} {str(self)}>"
+        return f"<{self.__class__.__name__} {self}>"
 
     def __truediv__(self, other):
         """Joins two paths"""
