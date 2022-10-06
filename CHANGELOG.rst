@@ -1,12 +1,17 @@
 1.8.0
 -----
 
-* Drop Python 2.7 and 3.5 support (`#573 <https://github.com/tomerfiliba/plumbum/pull/573>`_)
+* Drop Python 2.7 and 3.5 support, add 3.11 support (`#573 <https://github.com/tomerfiliba/plumbum/pull/573>`_)
 * Lots of extended checks and fixes for problems exposed.
 * Color: support ``NO_COLOR``/``FORCE_COLOR`` (`#575 <https://github.com/tomerfiliba/plumbum/pull/575>`_)
 * Commands: New ``iter_lines`` ``buffer_size`` parameter  (`#582 <https://github.com/tomerfiliba/plumbum/pull/582>`_)
 * Commands: cache remote commands (`#583 <https://github.com/tomerfiliba/plumbum/pull/583>`_)
+* SSH: Support reverse tunnels and dynamically allocated ports (`#608 <https://github.com/tomerfiliba/plumbum/pull/608>`_)
+* CLI: add ``Set(..., all_markers={"*", "all"})`` and fix support for other separators (`#619 <https://github.com/tomerfiliba/plumbum/pull/619>`_)
+* CLI: support future annotations (`#621 <https://github.com/tomerfiliba/plumbum/pull/621>`_)
+* Color: fix the ABC (`#617 <https://github.com/tomerfiliba/plumbum/pull/617>`_)
 * Exceptions: fix for exception pickling (`#586 <https://github.com/tomerfiliba/plumbum/pull/586>`_)
+* Fix for StdinDataRedirection and modifiers (`#605 <https://github.com/tomerfiliba/plumbum/pull/605>`_)
 
 
 1.7.2
