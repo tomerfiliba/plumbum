@@ -104,7 +104,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-    - uses: hynek/build-and-inspect-python-package@v1
+    - uses: henryiii/build-and-inspect-python-package@henryiii/feat/summary
 
   deploy:
     name: Deploy
