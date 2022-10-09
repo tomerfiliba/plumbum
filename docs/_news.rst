@@ -1,4 +1,4 @@
-* **2021.10.05**: Version 1.8.0 released with ``NO_COLOR``/``FORCE_COLOR``, ``all_markers`` & future annotations for the CLI, some command enhancements, & Python 3.11 testing.
+* **2022.10.05**: Version 1.8.0 released with ``NO_COLOR``/``FORCE_COLOR``, ``all_markers`` & future annotations for the CLI, some command enhancements, & Python 3.11 testing.
 
 * **2021.12.23**: Version 1.7.2 released with very minor fixes, final version to support Python 2.7 and 3.5.
 
