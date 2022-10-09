@@ -99,37 +99,32 @@ jobs:
 
   dist:
     name: Dist
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-    - name: Build SDist and wheel
-      run: pipx run build
-    - uses: actions/upload-artifact@v3
-      with:
-        path: dist/*
+    - uses: hynek/build-and-inspect-python-package@v1
 
   deploy:
     name: Deploy
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [dist]
     if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
     - uses: actions/download-artifact@v3
       with:
-        name: artifact
+        name: Packages
         path: dist
 
     - uses: pypa/gh-action-pypi-publish@v1.5.1
       with:
-        user: __token__
         password: ${{ secrets.pypi_password }}
 
   coverage:
     needs: [tests]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/setup-python@v4
       with:
