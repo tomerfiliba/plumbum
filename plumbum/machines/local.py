@@ -233,6 +233,8 @@ class LocalMachine(BaseMachine):
             return LocalCommand(cmd)
 
         if not isinstance(cmd, RemotePath):
+            # handle "path-like" (pathlib.Path) objects
+            cmd = os.fspath(cmd)
             if "/" in cmd or "\\" in cmd:
                 # assume path
                 return LocalCommand(local.path(cmd))
