@@ -164,3 +164,7 @@ cython_debug/
 
 /tests/nohup.out
 /plumbum/version.py
+
+# jetbrains
+.idea
+
