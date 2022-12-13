@@ -331,7 +331,7 @@ class TestLocalMachine:
             assert non_exist1N9
 
     def test_pathlib(self):
-        ls_path = Path(local.which('ls'))
+        ls_path = Path(local.which("ls"))
         assert "test_local.py" in local[ls_path]().splitlines()
 
     def test_get(self):
