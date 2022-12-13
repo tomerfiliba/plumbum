@@ -47,6 +47,11 @@ jobs:
           os: ubuntu-latest
         - python-version: 'pypy-3.9'
           os: ubuntu-latest
+        - python-version: '3.6'
+          os: ubuntu-20.04
+        exclude:
+        - python-version: '3.6'
+          os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
     steps:

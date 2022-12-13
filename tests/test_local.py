@@ -3,6 +3,7 @@ import pickle
 import signal
 import sys
 import time
+from pathlib import Path
 
 import pytest
 
@@ -328,6 +329,10 @@ class TestLocalMachine:
             from plumbum.cmd import non_exist1N9
 
             assert non_exist1N9
+
+    def test_pathlib(self):
+        ls_path = Path(local.which("ls"))
+        assert "test_local.py" in local[ls_path]().splitlines()
 
     def test_get(self):
         assert str(local["ls"]) == str(local.get("ls"))
