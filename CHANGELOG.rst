@@ -1,3 +1,9 @@
+1.8.1
+-----
+
+* Accept path-like objects (`#627 <https://github.com/tomerfiliba/plumbum/pull/627>`_)
+* Move the build backend to hatchling and hatch-vcs. Users should be unaffected. Third-party packaging may need to adapt to the new build system. (`#607 <https://github.com/tomerfiliba/plumbum/pull/607>`_)
+
 1.8.0
 -----
 
