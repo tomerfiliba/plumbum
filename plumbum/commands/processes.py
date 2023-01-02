@@ -117,25 +117,41 @@ class ProcessExecutionError(EnvironmentError):
 
         # we can't use 'super' here since EnvironmentError only keeps the first 2 args,
         # which leads to failuring in loading this object from a pickle.dumps.
-        Exception.__init__(self, argv, retcode, stdout, stderr)
+        Exception.__init__(self, argv, retcode)
 
         self.message = message
         self.host = host
         self.argv = argv
         self.retcode = retcode
-        if isinstance(stdout, bytes):
-            stdout = ascii(stdout)
-        if isinstance(stderr, bytes):
-            stderr = ascii(stderr)
-        self.stdout = stdout
-        self.stderr = stderr
+        self.all_output = []
+        if isinstance(stdout, list):
+            assert isinstance(stderr, list)
+            self.all_output += self._format_lines(heapq.merge(stdout, stderr))
+        else:
+            if isinstance(stdout, bytes):
+                stdout = ascii(stdout)
+            if isinstance(stderr, bytes):
+                stderr = ascii(stderr)
+            self.stdout = stdout
+            self.stderr = stderr
+            stdout = "\n              | ".join(str(self.stdout).splitlines())
+            stderr = "\n              | ".join(str(self.stderr).splitlines())
+            if stdout:
+                self.all_output += ["\nStdout:       | ", stdout]
+            if stderr:
+                self.all_output += ["\nStderr:       | ", stderr]
+
+    def _format_lines(self, lines):
+        fd_names = ['stdout', 'stderr']
+        for idx, ts, stream_fd, line in lines:
+            source = fd_names[stream_fd - 1]
+            for _line in line.splitlines():
+                yield from ["\n       %6s | " % source, line]
 
     def __str__(self):
         # avoid an import cycle
         from plumbum.commands.base import shquote_list
 
-        stdout = "\n              | ".join(str(self.stdout).splitlines())
-        stderr = "\n              | ".join(str(self.stderr).splitlines())
         cmd = " ".join(shquote_list(self.argv))
         lines = []
         if self.message:
@@ -146,10 +162,7 @@ class ProcessExecutionError(EnvironmentError):
         lines += ["\nCommand line: | ", cmd]
         if self.host:
             lines += ["\nHost:         | ", self.host]
-        if stdout:
-            lines += ["\nStdout:       | ", stdout]
-        if stderr:
-            lines += ["\nStderr:       | ", stderr]
+        lines += self.all_output
         return "".join(lines)
 
 
@@ -368,14 +381,14 @@ def iter_lines(
     _register_proc_timeout(proc, timeout)
 
     buffers = [[], []]
-    for t, line in _iter_lines(proc, decode, linesize, line_timeout):
-
+    for idx, (t, line) in enumerate(_iter_lines(proc, decode, linesize, line_timeout)):
+        ts = time.time()
         # verify that the proc hasn't timed out yet
         proc.verify(timeout=timeout, retcode=None, stdout=None, stderr=None)
-
+        stream_fd = t + 1  # 1=stdout, 2=stderr
         buffer = buffers[t]
         if buffer_size > 0:
-            buffer.append(line)
+            buffer.append((idx, ts, stream_fd, line))
             if buffer_size < _INFINITE:
                 del buffer[:-buffer_size]
 
@@ -384,7 +397,7 @@ def iter_lines(
             ret[t] = line
             yield tuple(ret)
         elif mode is BY_TYPE:
-            yield (t + 1), line  # 1=stdout, 2=stderr
+            yield (stream_fd), line  
 
     # this will take care of checking return code and timeouts
-    _check_process(proc, retcode, timeout, *("\n".join(s) + "\n" for s in buffers))
+    _check_process(proc, retcode, timeout, *buffers)
