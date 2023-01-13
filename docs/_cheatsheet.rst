@@ -71,7 +71,7 @@ Working-directory manipulation
     ...
     '15\n'
 
-A more explicit, and thread-safe way of running a command in a differet directory is using the ``.with_cwd()`` method:
+A more explicit, and thread-safe way of running a command in a different directory is using the ``.with_cwd()`` method::
 
 .. code-block:: python
 
@@ -115,9 +115,9 @@ See :ref:`guide-local-commands-nesting`.
 Remote commands (over SSH)
 --------------------------
 
-Supports `openSSH <http://www.openssh.org/>`_-compatible clients,
-`PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/>`_ (on Windows)
-and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implementation of SSH2)
+Supports `openSSH <https://www.openssh.com/>`_-compatible clients,
+`PuTTY <https://www.chiark.greenend.org.uk/~sgtatham/putty/>`_ (on Windows)
+and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implementation of SSH2):
 
 .. code-block:: python
 
