@@ -18,14 +18,42 @@ def _check_process(proc, retcode, timeout, stdout, stderr):
     return proc.returncode, stdout, stderr
 
 
+def _get_piped_streams(proc):
+    """Get a list of all valid standard streams for proc that were opened with PIPE option.
+
+    If proc was started from a Pipeline command, this function assumes it will have a
+    "srcproc" member pointing to the previous command in the pipeline. That link will
+    be used to traverse all started processes started from the pipeline, the list will
+    include stdout/stderr streams opened as PIPE for all commands in the pipeline.
+    If that was not the case, some processes could write to pipes no one reads from
+    which would result in process stalling after the pipe's buffer is filled.
+
+    Streams that were closed (because they were redirected to the input of a subsequent command)
+    are not included in the result
+    """
+    streams = []
+
+    def add_stream(type_, stream):
+        if stream is None or stream.closed:
+            return
+        streams.append((type_, stream))
+
+    while proc:
+        add_stream(1, proc.stderr)
+        add_stream(0, proc.stdout)
+        proc = getattr(proc, "srcproc", None)
+
+    return streams
+
+
 def _iter_lines_posix(proc, decode, linesize, line_timeout=None):
     from selectors import EVENT_READ, DefaultSelector
-
+    streams = _get_piped_streams(proc)
     # Python 3.4+ implementation
     def selector():
         sel = DefaultSelector()
-        sel.register(proc.stdout, EVENT_READ, 0)
-        sel.register(proc.stderr, EVENT_READ, 1)
+        for stream_type, stream in streams:
+            sel.register(stream, EVENT_READ, stream_type)
         while True:
             ready = sel.select(line_timeout)
             if not ready and line_timeout:
@@ -41,10 +69,9 @@ def _iter_lines_posix(proc, decode, linesize, line_timeout=None):
         yield ret
         if proc.poll() is not None:
             break
-    for line in proc.stdout:
-        yield 0, decode(line)
-    for line in proc.stderr:
-        yield 1, decode(line)
+    for stream_type, stream in streams:
+        for line in stream:
+            yield stream_type, decode(line)
 
 
 def _iter_lines_win32(proc, decode, linesize, line_timeout=None):
