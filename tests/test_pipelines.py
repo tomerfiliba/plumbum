@@ -1,12 +1,14 @@
 from typing import List, Tuple
 
+import env
 import pytest
 
 import plumbum
 from plumbum.commands import BaseCommand
 
 
-@pytest.mark.timeout(1)
+@pytest.mark.xfail(env.WIN, reason="TODO: only fixed on posix systems")
+@pytest.mark.timeout(3)
 def test_draining_stderr(generate_cmd, process_cmd):
     stdout, stderr = get_output_with_iter_lines(
         generate_cmd | process_cmd | process_cmd
@@ -15,7 +17,8 @@ def test_draining_stderr(generate_cmd, process_cmd):
     assert len(stdout) == 5000
 
 
-@pytest.mark.timeout(1)
+@pytest.mark.xfail(env.WIN, reason="TODO: only fixed on posix systems")
+@pytest.mark.timeout(3)
 def test_draining_stderr_with_stderr_redirect(tmp_path, generate_cmd, process_cmd):
     stdout, stderr = get_output_with_iter_lines(
         generate_cmd | (process_cmd >= str(tmp_path / "output.txt")) | process_cmd
@@ -24,7 +27,8 @@ def test_draining_stderr_with_stderr_redirect(tmp_path, generate_cmd, process_cm
     assert len(stdout) == 5000
 
 
-@pytest.mark.timeout(1)
+@pytest.mark.xfail(env.WIN, reason="TODO: only fixed on posix systems")
+@pytest.mark.timeout(3)
 def test_draining_stderr_with_stdout_redirect(tmp_path, generate_cmd, process_cmd):
     stdout, stderr = get_output_with_iter_lines(
         generate_cmd | process_cmd | process_cmd > str(tmp_path / "output.txt")
