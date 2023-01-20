@@ -13,6 +13,9 @@ def test_draining_stderr(generate_cmd, process_cmd):
     stdout, stderr = get_output_with_iter_lines(
         generate_cmd | process_cmd | process_cmd
     )
+    expected_output = {f"generated {i}" for i in range(5000)}
+    expected_output.update(f"consumed {i}" for i in range(5000))
+    assert set(stderr) - expected_output == set()
     assert len(stderr) == 15000
     assert len(stdout) == 5000
 
@@ -23,6 +26,9 @@ def test_draining_stderr_with_stderr_redirect(tmp_path, generate_cmd, process_cm
     stdout, stderr = get_output_with_iter_lines(
         generate_cmd | (process_cmd >= str(tmp_path / "output.txt")) | process_cmd
     )
+    expected_output = {f"generated {i}" for i in range(5000)}
+    expected_output.update(f"consumed {i}" for i in range(5000))
+    assert set(stderr) - expected_output == set()
     assert len(stderr) == 10000
     assert len(stdout) == 5000
 
@@ -33,6 +39,9 @@ def test_draining_stderr_with_stdout_redirect(tmp_path, generate_cmd, process_cm
     stdout, stderr = get_output_with_iter_lines(
         generate_cmd | process_cmd | process_cmd > str(tmp_path / "output.txt")
     )
+    expected_output = {f"generated {i}" for i in range(5000)}
+    expected_output.update(f"consumed {i}" for i in range(5000))
+    assert set(stderr) - expected_output == set()
     assert len(stderr) == 15000
     assert len(stdout) == 0
 
