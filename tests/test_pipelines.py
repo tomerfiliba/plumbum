@@ -40,25 +40,29 @@ def test_draining_stderr_with_stdout_redirect(tmp_path, generate_cmd, process_cm
 @pytest.fixture()
 def generate_cmd(tmp_path):
     generate = tmp_path / "generate.py"
-    generate.write_text("""\
+    generate.write_text(
+        """\
 import sys
 for i in range(5000):
     print("generated", i, file=sys.stderr)
     print(i)
-""")
+"""
+    )
     return plumbum.local["python"][generate]
 
 
 @pytest.fixture()
 def process_cmd(tmp_path):
     process = tmp_path / "process.py"
-    process.write_text("""\
+    process.write_text(
+        """\
 import sys
 for line in sys.stdin:
     i = line.strip()
     print("consumed", i, file=sys.stderr)
     print(i)
-""")
+"""
+    )
     return plumbum.local["python"][process]
 
 

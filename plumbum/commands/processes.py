@@ -48,7 +48,9 @@ def _get_piped_streams(proc):
 
 def _iter_lines_posix(proc, decode, linesize, line_timeout=None):
     from selectors import EVENT_READ, DefaultSelector
+
     streams = _get_piped_streams(proc)
+
     # Python 3.4+ implementation
     def selector():
         sel = DefaultSelector()
