@@ -731,8 +731,13 @@ class TestLocalMachine:
 
     def test_exception_pickling(self):
         import pickle
+
         with pytest.raises(ProcessExecutionError) as exc_info:
             local.cmd.ls("no-file")
+        assert pickle.loads(pickle.dumps(exc_info.value)).argv == exc_info.value.argv
+
+        with pytest.raises(ProcessExecutionError) as exc_info:
+            list(local.cmd.ls["no-file"].popen())
         assert pickle.loads(pickle.dumps(exc_info.value)).argv == exc_info.value.argv
 
     def test_tempdir(self):

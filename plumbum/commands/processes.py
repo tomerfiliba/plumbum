@@ -113,7 +113,9 @@ class ProcessExecutionError(EnvironmentError):
     well as the command line used to create the process (``argv``)
     """
 
-    def __init__(self, argv, retcode, stdout, stderr, message=None, host=None):
+    def __init__(
+        self, argv, retcode, stdout=None, stderr=None, message=None, host=None
+    ):
 
         # we can't use 'super' here since EnvironmentError only keeps the first 2 args,
         # which leads to failuring in loading this object from a pickle.dumps.
@@ -144,7 +146,7 @@ class ProcessExecutionError(EnvironmentError):
                 self.all_output += ["\nStderr:       | ", stderr]
 
     def _format_lines(self, lines):
-        fd_names = ['stdout', 'stderr']
+        fd_names = ["stdout", "stderr"]
         for idx, ts, stream_fd, line in lines:
             source = fd_names[stream_fd - 1]
             for _line in line.splitlines():
@@ -399,7 +401,7 @@ def iter_lines(
             ret[t] = line
             yield tuple(ret)
         elif mode is BY_TYPE:
-            yield (stream_fd), line  
+            yield (stream_fd), line
 
     # this will take care of checking return code and timeouts
     _check_process(proc, retcode, timeout, *buffers)
