@@ -110,10 +110,6 @@ optional_tests = """
 """
 
 
-[tool.isort]
-profile = "black"
-
-
 [tool.pylint]
 master.py-version = "3.6"
 master.jobs = "0"
@@ -156,4 +152,37 @@ messages_control.disable = [
   "unnecessary-lambda-assignment", # TODO: 4 instances
   "unused-import", # identical to flake8 but has typing false positives
   "eval-used",  # Needed for Python <3.10 annotations
+  "unused-argument", # Covered by ruff
 ]
+
+[tool.ruff]
+select = [
+  "E", "F", "W", # flake8
+  "B", "B904",   # flake8-bugbear
+  "I",           # isort
+  "ARG",         # flake8-unused-arguments
+  "C4",          # flake8-comprehensions
+  "ICN",         # flake8-import-conventions
+  "ISC",         # flake8-implicit-str-concat
+  "PGH",         # pygrep-hooks
+  "PIE",         # flake8-pie
+  "PL",          # pylint
+  "PT",          # flake8-pytest-style
+  "RET",         # flake8-return
+  "RUF",         # Ruff-specific
+  "SIM",         # flake8-simplify
+  "T20",         # flake8-print
+  "UP",          # pyupgrade
+  "YTT",         # flake8-2020
+
+]
+ignore = ["E501", "PLR", "PT004"]
+target-version = "py37"
+exclude = ["docs/conf.py"]
+mccabe.max-complexity = 50
+
+[tool.ruff.per-file-ignores]
+"examples/*" = ["T20"]
+"experiments/*" = ["T20"]
+"tests/*" = ["T20"]
+"plumbum/cli/application.py" = ["T20"]

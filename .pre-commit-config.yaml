@@ -24,30 +24,11 @@ repos:
   hooks:
   - id: black
 
-- repo: https://github.com/PyCQA/isort
-  rev: "5.10.1"
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: "v0.0.247"
   hooks:
-  - id: isort
-
-- repo: https://github.com/asottile/pyupgrade
-  rev: "v2.38.2"
-  hooks:
-  - id: pyupgrade
-    args: ["--py36-plus"]
-
-- repo: https://github.com/hadialqattan/pycln
-  rev: v2.1.1
-  hooks:
-  - id: pycln
-    args: [--all]
-    stages: [manual]
-
-- repo: https://github.com/pycqa/flake8
-  rev: "5.0.4"
-  hooks:
-  - id: flake8
-    exclude: docs/conf.py
-    additional_dependencies: [flake8-bugbear, flake8-print, flake8-2020]
+    - id: ruff
+      args: ["--fix", "--show-fixes"]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: "v0.981"
@@ -65,10 +46,6 @@ repos:
 - repo: https://github.com/pre-commit/pygrep-hooks
   rev: "v1.9.0"
   hooks:
-  - id: python-check-blanket-noqa
-  - id: python-check-blanket-type-ignore
-  - id: python-no-log-warn
-  - id: python-use-type-annotations
   - id: rst-backticks
   - id: rst-directive-colons
   - id: rst-inline-touching-normal
