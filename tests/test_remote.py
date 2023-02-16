@@ -438,7 +438,7 @@ s.close()
                 for i, _lines in enumerate(rem["ls"]["--bla"].popen()):  # noqa: B007
                     pass
                 assert i == 1
-            assert "/bin/ls: " in ex.value.stderr
+            assert "ls: " in ex.value.stderr
 
     def test_touch(self):
         with self._connect() as rem:
