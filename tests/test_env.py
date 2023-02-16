@@ -11,7 +11,7 @@ except ImportError:
 class TestEnv:
     def test_change_env(self):
         with local.env(silly=12):
-            assert 12 == local.env["silly"]
+            assert local.env["silly"] == 12
             actual = {x.split("=")[0] for x in printenv().splitlines() if "=" in x}
             localenv = {x[0] for x in local.env}
             print(actual, localenv)
@@ -43,7 +43,7 @@ class TestEnv:
             assert "simple_plum" not in local.env
             local.env["simple_plum"] = "thing"
             assert "simple_plum" in local.env
-            assert "thing" == local.env.pop("simple_plum")
+            assert local.env.pop("simple_plum") == "thing"
             assert "simple_plum" not in local.env
             local.env["simple_plum"] = "thing"
         assert "simple_plum" not in local.env

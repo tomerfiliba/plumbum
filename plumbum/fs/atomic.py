@@ -127,15 +127,14 @@ class AtomicFile:
         if self._owned_by == threading.get_ident():
             yield
             return
-        with self._thdlock:
-            with locked_file(self._fileobj.fileno(), blocking):
-                if not self.path.exists() and not self._ignore_deletion:
-                    raise ValueError("Atomic file removed from filesystem")
-                self._owned_by = threading.get_ident()
-                try:
-                    yield
-                finally:
-                    self._owned_by = None
+        with self._thdlock, locked_file(self._fileobj.fileno(), blocking):
+            if not self.path.exists() and not self._ignore_deletion:
+                raise ValueError("Atomic file removed from filesystem")
+            self._owned_by = threading.get_ident()
+            try:
+                yield
+            finally:
+                self._owned_by = None
 
     def delete(self):
         """
@@ -233,10 +232,7 @@ class AtomicCounterFile:
         """
         with self.atomicfile.locked():
             curr = self.atomicfile.read_atomic().decode("utf8")
-            if not curr:
-                curr = self.initial
-            else:
-                curr = int(curr)
+            curr = self.initial if not curr else int(curr)
             self.atomicfile.write_atomic(str(curr + 1).encode("utf8"))
             return curr
 

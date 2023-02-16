@@ -106,10 +106,7 @@ def choose(question, options, default=None):
             defindex = i
         sys.stdout.write(f"({i}) {text}\n")
     if default is not None:
-        if defindex is None:
-            msg = f"Choice [{default}]: "
-        else:
-            msg = f"Choice [{defindex}]: "
+        msg = f"Choice [{default}]: " if defindex is None else f"Choice [{defindex}]: "
     else:
         msg = "Choice: "
     while True:

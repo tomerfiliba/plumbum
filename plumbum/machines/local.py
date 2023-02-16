@@ -149,9 +149,10 @@ class LocalMachine(BaseMachine):
         self._as_user_stack = []
 
     if IS_WIN32:
-        _EXTENSIONS = [""] + env.get("PATHEXT", ":.exe:.bat").lower().split(
-            os.path.pathsep
-        )
+        _EXTENSIONS = [
+            "",
+            *env.get("PATHEXT", ":.exe:.bat").lower().split(os.path.pathsep),
+        ]
 
         @classmethod
         def _which(cls, progname):
@@ -426,12 +427,12 @@ class LocalMachine(BaseMachine):
         else:
             if username is None:
                 self._as_user_stack.append(
-                    lambda argv: (["sudo"] + list(argv), self.which("sudo"))
+                    lambda argv: (["sudo", *list(argv)], self.which("sudo"))
                 )
             else:
                 self._as_user_stack.append(
                     lambda argv: (
-                        ["sudo", "-u", username] + list(argv),
+                        ["sudo", "-u", username, *list(argv)],
                         self.which("sudo"),
                     )
                 )

@@ -99,10 +99,7 @@ def _iter_lines_win32(proc, decode, linesize, line_timeout=None):
             break
 
 
-if IS_WIN32:
-    _iter_lines = _iter_lines_win32
-else:
-    _iter_lines = _iter_lines_posix
+_iter_lines = _iter_lines_win32 if IS_WIN32 else _iter_lines_posix
 
 
 # ===================================================================================================

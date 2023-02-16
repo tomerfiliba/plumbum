@@ -26,8 +26,7 @@ class FileCopier(cli.Application):
             if not self.overwrite:
                 logger.debug("Oh no! That's terrible")
                 raise ValueError("Destination already exists")
-            else:
-                delete(dst)
+            delete(dst)
 
         logger.debug("I'm going to copy %s to %s", src, dst)
         copy(src, dst)

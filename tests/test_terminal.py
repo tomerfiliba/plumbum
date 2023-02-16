@@ -102,7 +102,7 @@ class TestTerminal:
 
     def test_choose_dict(self):
         with send_stdin("23\n1"):
-            value = choose("Pick", dict(one="a", two="b"))
+            value = choose("Pick", {"one": "a", "two": "b"})
             assert value in ("a", "b")
 
     def test_ordered_dict(self):
