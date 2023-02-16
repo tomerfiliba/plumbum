@@ -395,7 +395,7 @@ class BaseRemoteMachine(BaseMachine):
     def _path_mkdir(
         self,
         fn,
-        mode=None,  # pylint: disable=unused-argument
+        mode=None,  # noqa: ARG002
         minus_p=True,
     ):
         p_str = "-p " if minus_p else ""
@@ -424,7 +424,7 @@ class BaseRemoteMachine(BaseMachine):
     def _path_read(self, fn):
         data = self["cat"](fn)
         if self.custom_encoding and isinstance(data, str):
-            data = data.encode(self.custom_encoding)
+            return data.encode(self.custom_encoding)
         return data
 
     def _path_write(self, fn, data):

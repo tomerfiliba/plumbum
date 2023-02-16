@@ -1,10 +1,10 @@
+import contextlib
+
 from plumbum import local
 from plumbum._testtools import skip_on_windows
 
-try:
+with contextlib.suppress(ModuleNotFoundError):
     from plumbum.cmd import printenv
-except ImportError:
-    pass
 
 
 @skip_on_windows

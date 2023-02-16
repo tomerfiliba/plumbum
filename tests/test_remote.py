@@ -59,7 +59,7 @@ def test_connection():
     SshMachine(TEST_HOST)
 
 
-def test_incorrect_login(sshpass):
+def test_incorrect_login(sshpass):  # noqa: ARG001
     with pytest.raises(IncorrectLogin):
         SshMachine(
             TEST_HOST,
@@ -74,7 +74,7 @@ def test_incorrect_login(sshpass):
 
 
 @pytest.mark.xfail(env.LINUX, reason="TODO: no idea why this fails on linux")
-def test_hostpubkey_unknown(sshpass):
+def test_hostpubkey_unknown(sshpass):  # noqa: ARG001
     with pytest.raises(HostPublicKeyUnknown):
         SshMachine(
             TEST_HOST,
@@ -181,7 +181,7 @@ class TestRemotePath:
             assert not tmp.exists()
 
     @pytest.mark.xfail(
-        reason="mkdir's mode argument is not yet implemented " "for remote paths",
+        reason="mkdir's mode argument is not yet implemented for remote paths",
         strict=True,
     )
     def test_mkdir_mode(self):
@@ -321,20 +321,22 @@ s.close()
                 rem["pwd"]()
 
     def test_glob(self):
-        with self._connect() as rem:
-            with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
-                filenames = [f.name for f in rem.cwd // ("*.py", "*.bash")]
-                assert "test_remote.py" in filenames
-                assert "slow_process.bash" in filenames
+        with self._connect() as rem, rem.cwd(
+            os.path.dirname(os.path.abspath(__file__))
+        ):
+            filenames = [f.name for f in rem.cwd // ("*.py", "*.bash")]
+            assert "test_remote.py" in filenames
+            assert "slow_process.bash" in filenames
 
     def test_glob_spaces(self):
-        with self._connect() as rem:
-            with rem.cwd(os.path.dirname(os.path.abspath(__file__))):
-                filenames = [f.name for f in rem.cwd // ("*space.txt")]
-                assert "file with space.txt" in filenames
+        with self._connect() as rem, rem.cwd(
+            os.path.dirname(os.path.abspath(__file__))
+        ):
+            filenames = [f.name for f in rem.cwd // ("*space.txt")]
+            assert "file with space.txt" in filenames
 
-                filenames = [f.name for f in rem.cwd // ("*with space.txt")]
-                assert "file with space.txt" in filenames
+            filenames = [f.name for f in rem.cwd // ("*with space.txt")]
+            assert "file with space.txt" in filenames
 
     def test_cmd(self):
         with self._connect() as rem:
@@ -432,7 +434,7 @@ s.close()
 
     def test_iter_lines_error(self):
         with self._connect() as rem:
-            with pytest.raises(ProcessExecutionError) as ex:
+            with pytest.raises(ProcessExecutionError) as ex:  # noqa: PT012
                 for i, _lines in enumerate(rem["ls"]["--bla"].popen()):  # noqa: B007
                     pass
                 assert i == 1

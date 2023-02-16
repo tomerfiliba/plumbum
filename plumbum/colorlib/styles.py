@@ -346,7 +346,7 @@ class Style(metaclass=ABCMeta):
     end = "\n"
     """The endline character. Override if needed in subclasses."""
 
-    ANSI_REG = re.compile("\033" + r"\[([\d;]+)m")
+    ANSI_REG = re.compile("\033\\[([\\d;]+)m")
     """The regular expression that finds ansi codes in a string."""
 
     @property
@@ -385,8 +385,7 @@ class Style(metaclass=ABCMeta):
 
     @classmethod
     def from_color(cls, color):
-        self = cls(fgcolor=color) if color.fg else cls(bgcolor=color)
-        return self
+        return cls(fgcolor=color) if color.fg else cls(bgcolor=color)
 
     def invert(self):
         """This resets current color(s) and flips the value of all

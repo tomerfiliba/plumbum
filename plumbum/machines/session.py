@@ -49,7 +49,7 @@ class MarkedPipe:
         self.marker = bytes(self.marker, "ascii")
 
     def close(self):
-        """'Closes' the marked pipe; following calls to ``readline`` will return """ ""
+        """'Closes' the marked pipe; following calls to ``readline`` will return "" """
         # consume everything
         while self.readline():
             pass
@@ -65,7 +65,7 @@ class MarkedPipe:
             raise EOFError()
         if line.strip() == self.marker:
             self.pipe = None
-            line = b""
+            return b""
         return line
 
 

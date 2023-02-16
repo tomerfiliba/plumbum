@@ -18,7 +18,7 @@ class TestImportColors:
 
 
 class TestANSIColor:
-    def setup_method(self, method):
+    def setup_method(self, method):  # noqa: ARG002
         colors.use_color = True
 
     def testColorSlice(self):

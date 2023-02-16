@@ -72,8 +72,7 @@ class GeetCommit(cli.Application):
     def main(self):
         if self.parent.debug:
             return "committing in debug"
-        else:
-            return "committing"
+        return "committing"
 
     def cleanup(self, retcode):
         self.parent.cleanups.append(2)

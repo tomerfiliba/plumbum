@@ -53,10 +53,9 @@ class LocalPath(Path):
             raise TypeError("At least one path part is required (none given)")
         if any(isinstance(path, RemotePath) for path in parts):
             raise TypeError(f"LocalPath cannot be constructed from {parts!r}")
-        self = super().__new__(
+        return super().__new__(
             cls, os.path.normpath(os.path.join(*(str(p) for p in parts)))
         )
-        return self
 
     @property
     def _path(self):
@@ -216,7 +215,7 @@ class LocalPath(Path):
         with self.open(mode) as f:
             data = f.read()
             if encoding:
-                data = data.decode(encoding)
+                return data.decode(encoding)
             return data
 
     def write(self, data, encoding=None, mode=None):

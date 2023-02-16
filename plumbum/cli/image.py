@@ -26,10 +26,9 @@ class Image:
         orig_ratio = orig[0] / orig[1] / self.char_ratio
 
         if int(term[1] / orig_ratio) <= term[0]:
-            new_size = int(term[1] / orig_ratio), term[1]
-        else:
-            new_size = term[0], int(term[0] * orig_ratio)
-        return new_size
+            return int(term[1] / orig_ratio), term[1]
+
+        return term[0], int(term[0] * orig_ratio)
 
     def show(self, filename, double=False):
         """Display an image on the command line. Can select a size or show in double resolution."""
