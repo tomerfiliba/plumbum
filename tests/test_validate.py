@@ -5,7 +5,7 @@ class TestValidator:
     def test_named(self):
         class Try:
             @cli.positional(x=abs, y=str)
-            def main(selfy, x, y):  # noqa: B902
+            def main(selfy, x, y):
                 pass
 
         assert Try.main.positional == [abs, str]
@@ -14,7 +14,7 @@ class TestValidator:
     def test_position(self):
         class Try:
             @cli.positional(abs, str)
-            def main(selfy, x, y):  # noqa: B902
+            def main(selfy, x, y):
                 pass
 
         assert Try.main.positional == [abs, str]
@@ -23,7 +23,7 @@ class TestValidator:
     def test_mix(self):
         class Try:
             @cli.positional(abs, str, d=bool)
-            def main(selfy, x, y, z, d):  # noqa: B902
+            def main(selfy, x, y, z, d):
                 pass
 
         assert Try.main.positional == [abs, str, None, bool]
@@ -32,7 +32,7 @@ class TestValidator:
     def test_var(self):
         class Try:
             @cli.positional(abs, str, int)
-            def main(selfy, x, y, *g):  # noqa: B902
+            def main(selfy, x, y, *g):
                 pass
 
         assert Try.main.positional == [abs, str]
@@ -41,7 +41,7 @@ class TestValidator:
     def test_defaults(self):
         class Try:
             @cli.positional(abs, str)
-            def main(selfy, x, y="hello"):  # noqa: B902
+            def main(selfy, x, y="hello"):
                 pass
 
         assert Try.main.positional == [abs, str]
@@ -56,7 +56,7 @@ class TestProg:
 
         _, rc = MainValidator.run(["prog", "1", "2", "3", "4", "5"], exit=False)
         assert rc == 0
-        assert "1 2 (3, 4, 5)" == capsys.readouterr()[0].strip()
+        assert capsys.readouterr()[0].strip() == "1 2 (3, 4, 5)"
 
     def test_failure(self, capsys):
         class MainValidator(cli.Application):
@@ -80,8 +80,8 @@ class TestProg:
 
         _, rc = MainValidator.run(["prog", "1"], exit=False)
         assert rc == 0
-        assert "1 2" == capsys.readouterr()[0].strip()
+        assert capsys.readouterr()[0].strip() == "1 2"
 
         _, rc = MainValidator.run(["prog", "1", "3"], exit=False)
         assert rc == 0
-        assert "1 3" == capsys.readouterr()[0].strip()
+        assert capsys.readouterr()[0].strip() == "1 3"

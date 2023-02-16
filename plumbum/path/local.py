@@ -223,10 +223,7 @@ class LocalPath(Path):
         if encoding:
             data = data.encode(encoding)
         if mode is None:
-            if isinstance(data, str):
-                mode = "w"
-            else:
-                mode = "wb"
+            mode = "w" if isinstance(data, str) else "wb"
         with self.open(mode) as f:
             f.write(data)
 

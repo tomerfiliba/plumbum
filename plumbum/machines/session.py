@@ -277,10 +277,7 @@ class ShellSession:
         if self._current and not self._current._done:
             raise ShellSessionError("Each shell may start only one process at a time")
 
-        if isinstance(cmd, BaseCommand):
-            full_cmd = cmd.formulate(1)
-        else:
-            full_cmd = cmd
+        full_cmd = cmd.formulate(1) if isinstance(cmd, BaseCommand) else cmd
         marker = f"--.END{time.time() * random.random()}.--"
         if full_cmd.strip():
             full_cmd += " ; "

@@ -91,18 +91,18 @@ class TestRemotePath:
     def test_name(self):
         name = RemotePath(self._connect(), "/some/long/path/to/file.txt").name
         assert isinstance(name, str)
-        assert "file.txt" == str(name)
+        assert str(name) == "file.txt"
 
     def test_dirname(self):
         name = RemotePath(self._connect(), "/some/long/path/to/file.txt").dirname
         assert isinstance(name, RemotePath)
-        assert "/some/long/path/to" == str(name)
+        assert str(name) == "/some/long/path/to"
 
     def test_uri(self):
         p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
-        assert "ftp://" == p1.as_uri("ftp")[:6]
-        assert "ssh://" == p1.as_uri("ssh")[:6]
-        assert "/some/long/path/to/file.txt" == p1.as_uri()[-27:]
+        assert p1.as_uri("ftp")[:6] == "ftp://"
+        assert p1.as_uri("ssh")[:6] == "ssh://"
+        assert p1.as_uri()[-27:] == "/some/long/path/to/file.txt"
 
     def test_stem(self):
         p = RemotePath(self._connect(), "/some/long/path/to/file.txt")
@@ -148,15 +148,14 @@ class TestRemotePath:
 
     @skip_without_chown
     def test_chown(self):
-        with self._connect() as rem:
-            with rem.tempdir() as dir:
-                p = dir / "foo.txt"
-                p.write(b"hello")
-                # because we're connected to localhost, we expect UID and GID to be the same
-                assert p.uid == os.getuid()
-                assert p.gid == os.getgid()
-                p.chown(p.uid.name)
-                assert p.uid == os.getuid()
+        with self._connect() as rem, rem.tempdir() as dir:
+            p = dir / "foo.txt"
+            p.write(b"hello")
+            # because we're connected to localhost, we expect UID and GID to be the same
+            assert p.uid == os.getuid()
+            assert p.gid == os.getgid()
+            p.chown(p.uid.name)
+            assert p.uid == os.getuid()
 
     def test_parent(self):
         p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
@@ -477,10 +476,7 @@ class TestRemoteMachine(BaseRemoteMachineTest):
                 except ValueError:
                     dhost = None
 
-                if not dynamic_lport:
-                    lport = 12222
-                else:
-                    lport = 0
+                lport = 12222 if not dynamic_lport else 0
 
                 with rem.tunnel(lport, port_or_socket, dhost=dhost) as tun:
                     if not dynamic_lport:

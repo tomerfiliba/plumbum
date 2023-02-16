@@ -318,25 +318,25 @@ color_codes_simple = list(range(8)) + list(range(60, 68))
 """Simple colors, remember that reset is #9, second half is non as common."""
 
 # Attributes
-attributes_ansi = dict(
-    bold=1,
-    dim=2,
-    italics=3,
-    underline=4,
-    reverse=7,
-    hidden=8,
-    strikeout=9,
-)
+attributes_ansi = {
+    "bold": 1,
+    "dim": 2,
+    "italics": 3,
+    "underline": 4,
+    "reverse": 7,
+    "hidden": 8,
+    "strikeout": 9,
+}
 
 # Stylesheet
-default_styles = dict(
-    warn="fg red",
-    title="fg cyan underline bold",
-    fatal="fg red bold",
-    highlight="bg yellow",
-    info="fg blue",
-    success="fg green",
-)
+default_styles = {
+    "warn": "fg red",
+    "title": "fg cyan underline bold",
+    "fatal": "fg red bold",
+    "highlight": "bg yellow",
+    "info": "fg blue",
+    "success": "fg green",
+}
 
 # Functions to be used for color name operations
 

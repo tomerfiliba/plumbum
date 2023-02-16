@@ -377,11 +377,11 @@ class Pipeline(BaseCommand):
         return self.srccmd._get_encoding() or self.dstcmd._get_encoding()
 
     def formulate(self, level=0, args=()):
-        return (
-            self.srccmd.formulate(level + 1)
-            + ["|"]
-            + self.dstcmd.formulate(level + 1, args)
-        )
+        return [
+            *self.srccmd.formulate(level + 1),
+            "|",
+            *self.dstcmd.formulate(level + 1, args),
+        ]
 
     @property
     def machine(self):
@@ -422,7 +422,7 @@ class Pipeline(BaseCommand):
             # TODO: right now it's impossible to specify different expected
             # return codes for different stages of the pipeline
             try:
-                or_retcode = [0] + list(retcode)
+                or_retcode = [0, *list(retcode)]
             except TypeError:
                 if retcode is None:
                     or_retcode = None  # no-retcode-verification acts "greedily"
@@ -454,7 +454,8 @@ class BaseRedirection(BaseCommand):
         return f"{self.__class__.__name__}({self.cmd!r}, {self.file!r})"
 
     def formulate(self, level=0, args=()):
-        return self.cmd.formulate(level + 1, args) + [
+        return [
+            *self.cmd.formulate(level + 1, args),
             self.SYM,
             shquote(getattr(self.file, "name", self.file)),
         ]

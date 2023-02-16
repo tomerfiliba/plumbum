@@ -161,10 +161,7 @@ def switch(
     def deco(func):
         if argname is None:
             argspec = inspect.getfullargspec(func).args
-            if len(argspec) == 2:
-                argname2 = argspec[1]
-            else:
-                argname2 = _("VALUE")
+            argname2 = argspec[1] if len(argspec) == 2 else _("VALUE")
         else:
             argname2 = argname
         help2 = getdoc(func) if help is None else help

@@ -37,9 +37,9 @@ class TestANSIColor:
         assert colors[1, 30, 77] == colors.rgb(1, 30, 77)
 
     def testColorStrings(self):
-        assert "\033[0m" == colors.reset
-        assert "\033[1m" == colors.bold
-        assert "\033[39m" == colors.fg.reset
+        assert colors.reset == "\033[0m"
+        assert colors.bold == "\033[1m"
+        assert colors.fg.reset == "\033[39m"
 
     def testNegateIsReset(self):
         assert colors.reset == ~colors
@@ -69,7 +69,7 @@ class TestANSIColor:
         assert colors.DeepSkyBlue1 == colors[39]
         assert colors.deepskyblue1 == colors[39]
         assert colors.Deep_Sky_Blue1 == colors[39]
-        assert colors.RED == colors.red
+        assert colors.red == colors.RED
 
         with pytest.raises(AttributeError):
             colors.Notacolorsatall
@@ -125,28 +125,28 @@ class TestANSIColor:
         assert newcolors.wrap(string) == string | colors.blue & colors.underline
 
     def testUndoColor(self):
-        assert "\033[39m" == ~colors.fg
-        assert "\033[49m" == ~colors.bg
-        assert "\033[22m" == ~colors.bold
-        assert "\033[22m" == ~colors.dim
+        assert ~colors.fg == "\033[39m"
+        assert ~colors.bg == "\033[49m"
+        assert ~colors.bold == "\033[22m"
+        assert ~colors.dim == "\033[22m"
         for i in range(7):
-            assert "\033[39m" == ~colors(i)
-            assert "\033[49m" == ~colors.bg(i)
-            assert "\033[39m" == ~colors.fg(i)
-            assert "\033[49m" == ~colors.bg(i)
+            assert ~colors(i) == "\033[39m"
+            assert ~colors.bg(i) == "\033[49m"
+            assert ~colors.fg(i) == "\033[39m"
+            assert ~colors.bg(i) == "\033[49m"
         for i in range(256):
-            assert "\033[39m" == ~colors.fg[i]
-            assert "\033[49m" == ~colors.bg[i]
-        assert "\033[0m" == ~colors.reset
+            assert ~colors.fg[i] == "\033[39m"
+            assert ~colors.bg[i] == "\033[49m"
+        assert ~colors.reset == "\033[0m"
         assert colors.do_nothing == ~colors.do_nothing
 
         assert colors.bold.reset == ~colors.bold
 
     def testLackOfColor(self):
         Style.use_color = False
-        assert "" == colors.fg.red
-        assert "" == ~colors.fg
-        assert "" == colors.fg["LightBlue"]
+        assert colors.fg.red == ""
+        assert ~colors.fg == ""
+        assert colors.fg["LightBlue"] == ""
 
     def testFromHex(self):
         with pytest.raises(ColorNotFound):

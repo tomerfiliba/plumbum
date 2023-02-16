@@ -34,10 +34,7 @@ SDIR = os.path.dirname(os.path.abspath(__file__))
 
 class TestLocalPopen:
     def test_contextmanager(self):
-        if IS_WIN32:
-            command = ["dir"]
-        else:
-            command = ["ls"]
+        command = ["dir"] if IS_WIN32 else ["ls"]
         with PlumbumLocalPopen(command):
             pass
 
@@ -48,13 +45,14 @@ class TestLocalPath:
     def test_name(self):
         name = self.longpath.name
         assert isinstance(name, str)
-        assert "file.txt" == str(name)
+        assert str(name) == "file.txt"
 
     def test_dirname(self):
         name = self.longpath.dirname
         assert isinstance(name, LocalPath)
-        assert "/some/long/path/to" == str(name).replace("\\", "/").lstrip("C:").lstrip(
-            "D:"
+        assert (
+            str(name).replace("\\", "/").lstrip("C:").lstrip("D:")
+            == "/some/long/path/to"
         )
 
     def test_uri(self):
@@ -63,7 +61,7 @@ class TestLocalPath:
             assert pth.startswith("file:///")
             assert pth.endswith(":/some/long/path/to/file.txt")
         else:
-            assert "file:///some/long/path/to/file.txt" == self.longpath.as_uri()
+            assert self.longpath.as_uri() == "file:///some/long/path/to/file.txt"
 
     def test_pickle(self):
         path1 = local.path(".")
@@ -347,17 +345,16 @@ class TestLocalMachine:
 
     def test_shadowed_by_dir(self):
         real_ls = local["ls"]
-        with local.tempdir() as tdir:
-            with local.cwd(tdir):
-                ls_dir = tdir / "ls"
-                ls_dir.mkdir()
-                fake_ls = local["ls"]
-                assert fake_ls.executable == real_ls.executable
+        with local.tempdir() as tdir, local.cwd(tdir):
+            ls_dir = tdir / "ls"
+            ls_dir.mkdir()
+            fake_ls = local["ls"]
+            assert fake_ls.executable == real_ls.executable
 
-                local.env.path.insert(0, tdir)
-                fake_ls = local["ls"]
-                del local.env.path[0]
-                assert fake_ls.executable == real_ls.executable
+            local.env.path.insert(0, tdir)
+            fake_ls = local["ls"]
+            del local.env.path[0]
+            assert fake_ls.executable == real_ls.executable
 
     def test_repr_command(self):
         assert "BG" in repr(BG)
@@ -530,7 +527,7 @@ class TestLocalMachine:
         cat["/dev/urndom"] & FG(1)
         assert "urndom" in capfd.readouterr()[1]
 
-        assert "" == capfd.readouterr()[1]
+        assert capfd.readouterr()[1] == ""
 
         (cat["/dev/urndom"] | head["-c", "10"]) & FG(retcode=1)
         assert "urndom" in capfd.readouterr()[1]
@@ -632,7 +629,7 @@ class TestLocalMachine:
 
         result = echo["This is fun"] & TEE
         assert result[1] == "This is fun\n"
-        assert "This is fun\n" == capfd.readouterr()[0]
+        assert capfd.readouterr()[0] == "This is fun\n"
 
     @skip_on_windows
     def test_tee_race(self, capfd):
@@ -642,11 +639,11 @@ class TestLocalMachine:
         for _ in range(5):
             result = seq["1", "5000"] & TEE
             assert result[1] == EXPECT
-            assert EXPECT == capfd.readouterr()[0]
+            assert capfd.readouterr()[0] == EXPECT
 
     @skip_on_windows
     @pytest.mark.parametrize(
-        "modifier, expected",
+        ("modifier", "expected"),
         [
             (FG, None),
             (TF(FG=True), True),
@@ -1024,7 +1021,7 @@ for _ in range({}):
 
         result = echo["This is fun"].run_tee()
         assert result[1] == "This is fun\n"
-        assert "This is fun\n" == capfd.readouterr()[0]
+        assert capfd.readouterr()[0] == "This is fun\n"
 
     def test_run_tf(self):
         from plumbum.cmd import ls

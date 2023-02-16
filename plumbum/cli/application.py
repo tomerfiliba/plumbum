@@ -320,7 +320,7 @@ class Application:
                 subcmd = self._subcommands[a].get()
                 self.nested_command = (
                     subcmd,
-                    [self.PROGNAME + " " + self._subcommands[a].name] + argv,
+                    [self.PROGNAME + " " + self._subcommands[a].name, *argv],
                 )
                 break
 
@@ -549,7 +549,7 @@ class Application:
                     else sig.return_annotation
                 )
                 if sys.version_info < (3, 10) and isinstance(annotation, str):
-                    annotation = eval(annotation)
+                    annotation = eval(annotation)  # noqa: PGH001
                 if item == m.varargs:
                     varargs = annotation
                 elif item != "return":

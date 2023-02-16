@@ -47,7 +47,7 @@ class RemotePath(Path):
                 if hasattr(remote, "_cwd")
                 else remote._session.run("pwd")[1].strip()
             )
-            parts = (cwd,) + parts
+            parts = (cwd, *parts)
 
         for p in parts:
             if windows:

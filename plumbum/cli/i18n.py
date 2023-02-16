@@ -15,7 +15,7 @@ if loc is None or loc.startswith("en"):
             return strN.replace("{0}", str(n))
 
     def get_translation_for(
-        package_name: str,  # pylint: disable=unused-argument
+        package_name: str,  # noqa: ARG001
     ) -> NullTranslation:
         return NullTranslation()
 

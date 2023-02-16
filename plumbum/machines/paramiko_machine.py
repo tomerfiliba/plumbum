@@ -54,9 +54,8 @@ class ParamikoPopen(PopenAddons):
         self.stderr_file = stderr_file
 
     def poll(self):
-        if self.returncode is None:
-            if self.channel.exit_status_ready():
-                return self.wait()
+        if self.returncode is None and self.channel.exit_status_ready():
+            return self.wait()
         return self.returncode
 
     def wait(self):

@@ -213,10 +213,7 @@ class SshMachine(BaseRemoteMachine):
         if stderr is None:
             stderr = "&1"
 
-        if str(cwd) == ".":
-            args = []
-        else:
-            args = ["cd", str(cwd), "&&"]
+        args = [] if str(cwd) == "." else ["cd", str(cwd), "&&"]
         args.append("nohup")
         args.extend(command.formulate())
         args.extend(
@@ -396,7 +393,7 @@ class PuttyMachine(SshMachine):
             user = local.env.user
         if port is not None:
             ssh_opts.extend(["-P", str(port)])
-            scp_opts = list(scp_opts) + ["-P", str(port)]
+            scp_opts = [*list(scp_opts), "-P", str(port)]
             port = None
         SshMachine.__init__(
             self,

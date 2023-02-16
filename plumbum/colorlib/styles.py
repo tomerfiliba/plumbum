@@ -737,16 +737,16 @@ class HTMLStyle(Style):
     actually can be a handy way to quickly color html text."""
 
     __slots__ = ()
-    attribute_names = dict(
-        bold="b",
-        em="em",
-        italics="i",
-        li="li",
-        underline='span style="text-decoration: underline;"',
-        code="code",
-        ol="ol start=0",
-        strikeout="s",
-    )
+    attribute_names = {
+        "bold": "b",
+        "em": "em",
+        "italics": "i",
+        "li": "li",
+        "underline": 'span style="text-decoration: underline;"',
+        "code": "code",
+        "ol": "ol start=0",
+        "strikeout": "s",
+    }
     end = "<br/>\n"
 
     def __str__(self):
@@ -764,7 +764,7 @@ class HTMLStyle(Style):
             if self.attributes[attr]:
                 result += "<" + self.attribute_names[attr] + ">"
 
-        for attr in reversed(sorted(self.attributes)):
+        for attr in sorted(self.attributes, reverse=True):
             if not self.attributes[attr]:
                 result += "</" + self.attribute_names[attr].split(" ")[0] + ">"
         if self.fg and self.fg.isreset:

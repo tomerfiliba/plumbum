@@ -4,7 +4,7 @@ from io import StringIO
 import IPython.display
 from IPython.core.magic import Magics, cell_magic, magics_class, needs_local_scope
 
-valid_choices = [x[8:] for x in dir(IPython.display) if "display_" == x[:8]]
+valid_choices = [x[8:] for x in dir(IPython.display) if x[:8] == "display_"]
 
 
 @magics_class
