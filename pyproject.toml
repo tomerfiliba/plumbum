@@ -176,13 +176,21 @@ select = [
   "YTT",         # flake8-2020
 
 ]
-ignore = ["E501", "PLR", "PT004"]
+ignore = [
+  "E501",
+  "PLR",
+  "PT004",
+  "PT011",  # TODO: add match parameter
+]
 target-version = "py37"
 exclude = ["docs/conf.py"]
 mccabe.max-complexity = 50
+flake8-unused-arguments.ignore-variadic-names = true
 
 [tool.ruff.per-file-ignores]
 "examples/*" = ["T20"]
 "experiments/*" = ["T20"]
 "tests/*" = ["T20"]
 "plumbum/cli/application.py" = ["T20"]
+"plumbum/commands/base.py" = ["SIM115"]
+"plumbum/commands/daemons.py" = ["SIM115"]

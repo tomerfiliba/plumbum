@@ -252,7 +252,7 @@ class SshMachine(BaseRemoteMachine):
         dport,
         lhost="localhost",
         dhost="localhost",
-        connect_timeout=5,  # pylint: disable=unused-argument
+        connect_timeout=5,  # noqa: ARG002
         reverse=False,
     ):
         r"""Creates an SSH tunnel from the TCP port (``lport``) of the local machine
@@ -329,11 +329,12 @@ class SshMachine(BaseRemoteMachine):
             reverse,
         )
 
-    def _translate_drive_letter(self, path):  # pylint: disable=no-self-use
+    @staticmethod
+    def _translate_drive_letter(path):
         # replace c:\some\path with /c/some/path
         path = str(path)
         if ":" in path:
-            path = "/" + path.replace(":", "").replace("\\", "/")
+            return "/" + path.replace(":", "").replace("\\", "/")
         return path
 
     def download(self, src, dst):

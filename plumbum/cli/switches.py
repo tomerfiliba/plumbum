@@ -386,7 +386,8 @@ class Validator(ABC):
     def __call__(self, obj):
         "Must be implemented for a Validator to work"
 
-    def choices(self, partial=""):  # pylint: disable=no-self-use, unused-argument
+    # pylint: disable-next=no-self-use
+    def choices(self, partial=""):  # noqa: ARG002
         """Should return set of valid choices, can be given optional partial info"""
         return set()
 
@@ -435,7 +436,7 @@ class Range(Validator):
             )
         return obj
 
-    def choices(self, partial=""):
+    def choices(self, partial=""):  # noqa: ARG002
         # TODO: Add partial handling
         return set(range(self.start, self.end + 1))
 
@@ -512,7 +513,7 @@ class Set(Validator):
         choices = {opt if isinstance(opt, str) else f"({opt})" for opt in self.values}
         choices |= self.all_markers
         if partial:
-            choices = {opt for opt in choices if opt.lower().startswith(partial)}
+            return {opt for opt in choices if opt.lower().startswith(partial)}
         return choices
 
 
@@ -531,7 +532,8 @@ class Predicate:
     def __call__(self, val):
         return self.func(val)
 
-    def choices(self, partial=""):  # pylint: disable=no-self-use, unused-argument
+    # pylint: disable-next=no-self-use
+    def choices(self, partial=""):  # noqa: ARG002
         return set()
 
 

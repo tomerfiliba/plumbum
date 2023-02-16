@@ -285,7 +285,13 @@ class ParamikoMachine(BaseRemoteMachine):
         return self._sftp
 
     def session(
-        self, isatty=False, term="vt100", width=80, height=24, *, new_session=False
+        self,
+        isatty=False,
+        term="vt100",
+        width=80,
+        height=24,
+        *,
+        new_session=False,  # noqa: ARG002
     ):
         # new_session is ignored for ParamikoMachine
         trans = self._client.get_transport()
@@ -307,7 +313,7 @@ class ParamikoMachine(BaseRemoteMachine):
         stdin=None,
         stdout=None,
         stderr=None,
-        new_session=False,  # pylint: disable=unused-argument
+        new_session=False,  # noqa: ARG002
         env=None,
         cwd=None,
     ):
@@ -478,7 +484,7 @@ class SocketCompatibleChannel:
 ###################################################################################################
 def _iter_lines(
     proc,
-    decode,  # pylint: disable=unused-argument
+    decode,  # noqa: ARG001
     linesize,
     line_timeout=None,
 ):

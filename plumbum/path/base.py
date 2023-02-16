@@ -101,8 +101,8 @@ class Path(str, ABC):
 
     def walk(
         self,
-        filter=lambda p: True,  # pylint: disable=redefined-builtin
-        dir_filter=lambda p: True,
+        filter=lambda _: True,  # pylint: disable=redefined-builtin
+        dir_filter=lambda _: True,
     ):
         """traverse all (recursive) sub-elements under this directory, that match the given filter.
         By default, the filter accepts everything; you can provide a custom filter function that
@@ -331,7 +331,7 @@ class Path(str, ABC):
             flags = FLAGS
 
         if isinstance(mode, str):
-            mode = reduce(operator.or_, [flags[m] for m in mode.lower()], 0)
+            return reduce(operator.or_, [flags[m] for m in mode.lower()], 0)
 
         return mode
 
@@ -413,7 +413,7 @@ class Path(str, ABC):
             results.extend(fn(single_pattern))
         return sorted(list(set(results)))
 
-    def resolve(self, strict=False):  # pylint:disable=unused-argument
+    def resolve(self, strict=False):  # noqa: ARG002
         """Added to allow pathlib like syntax. Does nothing since
         Plumbum paths are always absolute. Does not (currently) resolve
         symlinks."""

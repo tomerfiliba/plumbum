@@ -324,9 +324,7 @@ class TestLocalMachine:
             local["non_exist1N9"]()
 
         with pytest.raises(ImportError):
-            from plumbum.cmd import non_exist1N9
-
-            assert non_exist1N9
+            from plumbum.cmd import non_exist1N9  # noqa: F401
 
     def test_pathlib(self):
         ls_path = Path(local.which("ls"))
@@ -546,7 +544,7 @@ class TestLocalMachine:
         from plumbum.cmd import bash
 
         cmd = bash["-ce", "for ((i=0;1==1;i++)); do echo $i; sleep .3; done"]
-        with pytest.raises(ProcessTimedOut):
+        with pytest.raises(ProcessTimedOut):  # noqa: PT012
             for i, (out, err) in enumerate(cmd.popen().iter_lines(timeout=1)):
                 assert not err
                 assert out
@@ -558,7 +556,7 @@ class TestLocalMachine:
         from plumbum.cmd import bash
 
         cmd = bash["-ce", "for ((i=0;i<100;i++)); do echo $i; done; false"]
-        with pytest.raises(ProcessExecutionError) as e:
+        with pytest.raises(ProcessExecutionError) as e:  # noqa: PT012
             for _ in cmd.popen().iter_lines(timeout=1, buffer_size=5):
                 pass
         assert e.value.stdout == "\n".join(map(str, range(95, 100))) + "\n"
@@ -573,7 +571,7 @@ class TestLocalMachine:
         ]
         types = {1: "out:", 2: "err:"}
         counts = {1: 0, 2: 0}
-        with pytest.raises(ProcessTimedOut):
+        with pytest.raises(ProcessTimedOut):  # noqa: PT012
             # Order is important on mac
             for typ, line in cmd.popen().iter_lines(timeout=1, mode=BY_TYPE):
                 counts[typ] += 1
@@ -585,7 +583,7 @@ class TestLocalMachine:
     def test_iter_lines_error(self):
         from plumbum.cmd import ls
 
-        with pytest.raises(ProcessExecutionError) as err:
+        with pytest.raises(ProcessExecutionError) as err:  # noqa: PT012
             for i, _lines in enumerate(ls["--bla"].popen()):  # noqa: B007
                 pass
             assert i == 1
@@ -600,7 +598,7 @@ class TestLocalMachine:
 
         cmd = bash["-ce", "for ((i=0;1==1;i++)); do echo $i; sleep $i; done"]
 
-        with pytest.raises(ProcessLineTimedOut):
+        with pytest.raises(ProcessLineTimedOut):  # noqa: PT012
             # Order is important on mac
             for i, (out, err) in enumerate(cmd.popen().iter_lines(line_timeout=0.2)):
                 print(i, "out:", out)
@@ -811,7 +809,7 @@ class TestLocalMachine:
         assert list(local.pgrep("[pP]ython"))
 
     def _generate_sigint(self):
-        with pytest.raises(KeyboardInterrupt):
+        with pytest.raises(KeyboardInterrupt):  # noqa: PT012
             if sys.platform == "win32":
                 from win32api import GenerateConsoleCtrlEvent
 

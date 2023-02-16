@@ -130,7 +130,7 @@ def prompt(
     question,
     type=str,  # pylint: disable=redefined-builtin
     default=NotImplemented,
-    validator=lambda val: True,
+    validator=lambda _: True,
 ):
     """
     Presents the user with a validated question, keeps asking if validation does not pass.

@@ -37,10 +37,9 @@ def get_terminal_size(default: Tuple[int, int] = (80, 25)) -> Tuple[int, int]:
         )
         size = _get_terminal_size_linux()
 
-    if (
-        size is None
-    ):  # we'll assume the standard 80x25 if for any reason we don't know the terminal size
-        size = default
+    # we'll assume the standard 80x25 if for any reason we don't know the terminal size
+    if size is None:
+        return default
     return size
 
 

@@ -237,7 +237,7 @@ class RemotePath(Path):
     def read(self, encoding=None):
         data = self.remote._path_read(self)
         if encoding:
-            data = data.decode(encoding)
+            return data.decode(encoding)
         return data
 
     def write(self, data, encoding=None):
@@ -323,8 +323,7 @@ class RemoteWorkdir(RemotePath):
     """Remote working directory manipulator"""
 
     def __new__(cls, remote):
-        self = super().__new__(cls, remote, remote._session.run("pwd")[1].strip())
-        return self
+        return super().__new__(cls, remote, remote._session.run("pwd")[1].strip())
 
     def __hash__(self):
         raise TypeError("unhashable type")
