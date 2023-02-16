@@ -5,7 +5,7 @@ Command-Line Interface (CLI)
 
 The other side of *executing programs* with ease is **writing CLI programs** with ease.
 Python scripts normally use ``optparse`` or the more recent ``argparse``, and their
-`derivatives <http://packages.python.org/argh/index.html>`_; but all of these are somewhat
+`derivatives <https://pythonhosted.org/argh/index.html>`_; but all of these are somewhat
 limited in their expressive power, and are quite **unintuitive** (and even **unpythonic**).
 Plumbum's CLI toolkit offers a **programmatic approach** to building command-line applications;
 instead of creating a parser object and populating it with a series of "options", the CLI toolkit
@@ -149,10 +149,10 @@ for instance, ``$ ./myapp.py --log-to-file=/tmp/log`` would translate to a call 
 
 .. note::
    Methods' docstrings and argument names will be used to render the help message, keeping your
-   code as `DRY <http://en.wikipedia.org/wiki/Don't_repeat_yourself>`_ as possible.
+   code as `DRY <https://en.wikipedia.org/wiki/Don't_repeat_yourself>`_ as possible.
 
    There's also :func:`autoswitch <plumbum.cli.autoswitch>`, which infers the name of the switch
-   from the function's name, e.g. ::
+   from the function's name, e.g.::
 
         @cli.autoswitch(str)
         def log_to_file(self, filename):
@@ -163,13 +163,13 @@ for instance, ``$ ./myapp.py --log-to-file=/tmp/log`` would translate to a call 
 Arguments
 ^^^^^^^^^
 As demonstrated in the example above, switch functions may take no arguments (not counting
-``self``) or a single argument argument. If a switch function accepts an argument, it must
+``self``) or a single argument. If a switch function accepts an argument, it must
 specify the argument's *type*. If you require no special validation, simply pass ``str``;
 otherwise, you may pass any type (or any callable, in fact) that will take a string and convert
 it to a meaningful object. If conversion is not possible, the type (or callable) is expected to
 raise either ``TypeError`` or ``ValueError``.
 
-For instance ::
+For instance::
 
     class MyApp(cli.Application):
         _port = 8080
@@ -194,7 +194,7 @@ The toolkit includes two additional "types" (or rather, *validators*): ``Range``
 that range (inclusive). ``Set`` takes a set of allowed values, and expects the
 argument to match one of these values. You can set ``case_sensitive=False``, or
 add ``all_markers={"*", "all"}`` if you want to have a "trigger all markers"
-marker. Here's an example ::
+marker. Here's an example::
 
     class MyApp(cli.Application):
         _port = 8080
@@ -232,7 +232,7 @@ Repeatable Switches
 Many times, you would like to allow a certain switch to be given multiple times. For instance,
 in ``gcc``, you may give several include directories using ``-I``. By default, switches may
 only be given once, unless you allow multiple occurrences by passing ``list = True`` to the
-``switch`` decorator ::
+``switch`` decorator::
 
     class MyApp(cli.Application):
         _dirs = []
@@ -260,7 +260,7 @@ for this switch.
 
 Dependencies
 ^^^^^^^^^^^^
-Many time, the occurrence of a certain switch depends on the occurrence of another, e..g, it
+Many times, the occurrence of a certain switch depends on the occurrence of another, e.g., it
 may not be possible to give ``-x`` without also giving ``-y``. This constraint can be achieved
 by specifying the ``requires`` keyword argument to the ``switch`` decorator; it is a list
 of switch names that this switch depends on. If the required switches are missing, the user
@@ -322,10 +322,9 @@ Switch Attributes
 Many times it's desired to simply store a switch's argument in an attribute, or set a flag if
 a certain switch is given. For this purpose, the toolkit provides
 :class:`SwitchAttr <plumbum.cli.SwitchAttr>`, which is `data descriptor
-<http://docs.python.org/howto/descriptor.html>`_ that stores the argument in an instance attribute.
+<https://docs.python.org/howto/descriptor.html>`_ that stores the argument in an instance attribute.
 There are two additional "flavors" of ``SwitchAttr``: ``Flag`` (which toggles its default value
-if the switch is given) and ``CountOf`` (which counts the number of occurrences of the switch)
-::
+if the switch is given) and ``CountOf`` (which counts the number of occurrences of the switch)::
 
     class MyApp(cli.Application):
         log_file = cli.SwitchAttr("--log-file", str, default = None)
@@ -372,7 +371,7 @@ It may take any number of *positional argument*; for instance, in ``cp -r /foo /
 that the program would accept depends on the signature of the method: if the method takes 5
 arguments, 2 of which have default values, then at least 3 positional arguments must be supplied
 by the user and at most 5. If the method also takes varargs (``*args``), the number of
-arguments that may be given is unbound ::
+arguments that may be given is unbound::
 
     class MyApp(cli.Application):
         def main(self, src, dst, mode = "normal"):
@@ -462,7 +461,7 @@ Sub-commands
 
 A common practice of CLI applications, as they span out and get larger, is to split their
 logic into multiple, pluggable *sub-applications* (or *sub-commands*). A classic example is version
-control systems, such as `git <http://git-scm.com/>`_, where ``git`` is the *root* command,
+control systems, such as `git <https://git-scm.com/>`_, where ``git`` is the *root* command,
 under which sub-commands such as ``commit`` or ``push`` are nested. Git even supports ``alias``-ing,
 which creates allows users to create custom sub-commands. Plumbum makes writing such applications
 really easy.
@@ -485,7 +484,7 @@ Before we get to the code, it is important to stress out two things:
   is normally used.
 
 Here is an example of a mock version control system, called ``geet``. We're going to have a root
-application ``Geet``, which has two sub-commands - ``GeetCommit`` and ``GeetPush``: these are
+application ``Geet``, which has two sub-commands – ``GeetCommit`` and ``GeetPush``: these are
 attached to the root application using the ``subcommand`` decorator ::
 
     class Geet(cli.Application):
@@ -617,9 +616,9 @@ For the full list of helpers or more information, see the :ref:`api docs <api-cl
 See Also
 --------
 * `filecopy.py <https://github.com/tomerfiliba/plumbum/blob/master/examples/filecopy.py>`_ example
-* `geet.py <https://github.com/tomerfiliba/plumbum/blob/master/examples/geet.py>`_ - a runnable
+* `geet.py <https://github.com/tomerfiliba/plumbum/blob/master/examples/geet.py>`_ – a runnable
   example of using sub-commands
-* `RPyC <http://rpyc.sf.net>`_ has changed it bash-based build script to Plumbum CLI.
+* `RPyC <https://rpyc.readthedocs.io/>`_ has changed its bash-based build script to Plumbum CLI.
   Notice `how short and readable <https://github.com/tomerfiliba/rpyc/blob/c457a28d689df7605838334a437c6b35f9a94618/build.py>`_
   it is.
 * A `blog post <http://tomerfiliba.com/blog/Plumbum/>`_ describing the philosophy of the CLI module

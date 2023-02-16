@@ -10,12 +10,12 @@
     <li><a href="#about" title="Jump to user guide">About</a></li>
     </ul>
     <hr/>
-    <a href="http://tomerfiliba.com" target="_blank">
+    <a href="https://tomerfiliba.com" target="_blank">
     <img style="display: block; margin-left: auto; margin-right: auto" alt="Tomer Filiba"
     src="_static/fish-text-black.png" title="Tomer's Blog"/>
     <span style="color:transparent;position: absolute;font-size:5px;width: 0px;height: 0px;">Tomer Filiba</span></a>
     <br/>
-    <a href="http://github.com/tomerfiliba/plumbum" target="_blank">
+    <a href="https://github.com/tomerfiliba/plumbum" target="_blank">
     <img style="display: block; margin-left: auto; margin-right: auto; opacity: 0.7; width: 70px;"
     src="_static/github-logo.png" title="Github Repo"/></a>
     <br/>
@@ -34,7 +34,7 @@ Plumbum: Shell Combinators and More
 
    <strong>Sticky</strong><br/>
 
-   <a class="reference external" href="https://pypi.python.org/pypi/rpyc">Version 3.2.3</a>
+   <a class="reference external" href="https://pypi.org/project/rpyc">Version 3.2.3</a>
    was released on December 2nd <br/>
 
    Please use the
@@ -75,7 +75,7 @@ Development and Installation
 ============================
 
 The library is developed on `GitHub <https://github.com/tomerfiliba/plumbum>`_, and will happily
-accept `patches <http://help.github.com/send-pull-requests/>`_ from users. Please use the GitHub's
+accept `patches <https://docs.github.com/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request>`_ from users. Please use the GitHub's
 built-in `issue tracker <https://github.com/tomerfiliba/plumbum/issues>`_ to report any problem
 you encounter or to request features. The library is released under the permissive `MIT license
 <https://github.com/tomerfiliba/plumbum/blob/master/LICENSE>`_.
@@ -87,10 +87,10 @@ Plumbum supports **Python 3.6-3.10** and **PyPy** and is continually tested on
 **Linux**, **Mac**, and **Windows** machines through `GitHub Actions
 <https://github.com/tomerfiliba/plumbum/actions>`_.  Any Unix-like machine
 should work fine out of the box, but on Windows, you'll probably want to
-install a decent `coreutils <http://en.wikipedia.org/wiki/Coreutils>`_
+install a decent `coreutils <https://en.wikipedia.org/wiki/GNU_Core_Utilities/>`_
 environment and add it to your ``PATH``, or use WSL(2). I can recommend `mingw
-<http://mingw.org/>`_ (which comes bundled with `Git for Windows
-<http://msysgit.github.com/>`_), but `cygwin <http://www.cygwin.com/>`_ should
+<https://mingw.osdn.io/>`_ (which comes bundled with `Git for Windows
+<https://gitforwindows.org/>`_), but `cygwin <http://www.cygwin.com/>`_ should
 work too. If you only wish to use Plumbum as a Popen-replacement to run Windows
 programs, then there's no need for the Unix tools.
 
@@ -106,7 +106,7 @@ Download
 --------
 
 You can **download** the library from the `Python Package Index
-<http://pypi.python.org/pypi/plumbum#downloads>`_ (in a variety of formats), or
+<https://pypi.org/pypi/plumbum/#files>`_ (in a variety of formats), or
 run ``pip install plumbum`` directly. If you use Anaconda, you can also get it
 from the ``conda-forge`` channel with ``conda install -c conda-forge plumbum``.
 
@@ -161,12 +161,12 @@ I've toyed with this idea for some time now, but it wasn't until I had to write 
 for a project I've been working on that I decided I've had it with shell scripts and it's time
 to make it happen. Plumbum was born from the scraps of the ``Path`` class, which I
 wrote for the aforementioned build system, and the ``SshContext`` and ``SshTunnel`` classes
-that I wrote for `RPyC <http://rpyc.sf.net>`_. When I combined the two with *shell combinators*
+that I wrote for `RPyC <https://rpyc.readthedocs.io/>`_. When I combined the two with *shell combinators*
 (because shell scripts do have an edge there) the magic happened and here we are.
 
 Credits
 =======
-The project has been inspired by **PBS** (now called `sh <http://amoffat.github.com/sh/>`_)
+The project has been inspired by **PBS** (now called `sh <http://amoffat.github.io/sh/>`_)
 of `Andrew Moffat <https://github.com/amoffat>`_,
 and has borrowed some of his ideas (namely treating programs like functions and the
 nice trick for importing commands). However, I felt there was too much magic going on in PBS,
