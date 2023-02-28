@@ -390,7 +390,7 @@ class LogPipe:
             level = self.levels[typ]
             for line in lines.splitlines():
                 if self.prefix:
-                    line = f"{self.prefix}: {line}"
+                    line = f"{self.prefix}: {line}"  # noqa: PLW2901
                 self.log(level, line)
         return popen.returncode
 

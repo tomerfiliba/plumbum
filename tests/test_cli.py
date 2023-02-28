@@ -236,7 +236,6 @@ class TestCLI:
 
     # Testing #371
     def test_extra_args(self, capsys):
-
         _, rc = PositionalApp.run(["positionalapp"], exit=False)
         assert rc != 0
         stdout, stderr = capsys.readouterr()
@@ -366,7 +365,6 @@ class TestCLI:
         assert inst.eggs == "raw"
 
     def test_mandatory_env_var(self, capsys):
-
         _, rc = SimpleApp.run(["arg"], exit=False)
         assert rc == 2
         stdout, stderr = capsys.readouterr()

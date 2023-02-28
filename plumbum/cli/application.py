@@ -570,7 +570,6 @@ class Application:
         out_args = list(args)
 
         for i in range(min(len(args), len(validator_list))):
-
             if validator_list[i] is not None:
                 out_args[i] = self._handle_argument(
                     args[i], validator_list[i], argnames[i]

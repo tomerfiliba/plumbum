@@ -488,7 +488,6 @@ def _iter_lines(
     linesize,
     line_timeout=None,
 ):
-
     from selectors import EVENT_READ, DefaultSelector
 
     # Python 3.4+ implementation

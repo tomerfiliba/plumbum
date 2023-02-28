@@ -574,7 +574,6 @@ class Style(metaclass=ABCMeta):
     def __eq__(self, other):
         """Equality is true only if reset, or if attributes, fg, and bg match."""
         if type(self) == type(other):
-
             if self.isreset:
                 return other.isreset
 
@@ -749,7 +748,6 @@ class HTMLStyle(Style):
     end = "<br/>\n"
 
     def __str__(self):
-
         if self.isreset:
             raise ResetNotSupported("HTML does not support global resets!")
 

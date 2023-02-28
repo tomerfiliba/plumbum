@@ -228,7 +228,6 @@ class TestRemotePath:
 
         with self._connect() as rem:
             with rem.tempdir() as tmp:
-
                 # setup a file and make sure it exists...
                 (tmp / "file_a").touch()
                 assert (tmp / "file_a").exists()
@@ -467,7 +466,6 @@ class TestRemoteMachine(BaseRemoteMachineTest):
 
     @pytest.mark.parametrize("dynamic_lport", [False, True])
     def test_tunnel(self, dynamic_lport):
-
         for tunnel_prog in (self.TUNNEL_PROG_AF_INET, self.TUNNEL_PROG_AF_UNIX):
             with self._connect() as rem:
                 p = (rem.python["-u"] << tunnel_prog).popen()
@@ -499,7 +497,6 @@ class TestRemoteMachine(BaseRemoteMachineTest):
 
     @pytest.mark.parametrize("dynamic_dport", [False, True])
     def test_reverse_tunnel(self, dynamic_dport):
-
         lport = 12223 + dynamic_dport
         with self._connect() as rem:
             queue = Queue()
@@ -508,7 +505,6 @@ class TestRemoteMachine(BaseRemoteMachineTest):
             message = str(time.time())
 
             if not dynamic_dport:
-
                 get_unbound_socket_remote = """import sys, socket
 s = socket.socket()
 s.bind(("", 0))

@@ -187,7 +187,6 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
     HTMLBOX = '<div class="widget-hbox widget-progress"><div class="widget-label" style="display:block;">{0}</div></div>'
 
     def __init__(self, *args, **kargs):
-
         # Ipython gives warnings when using widgets about the API potentially changing
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
