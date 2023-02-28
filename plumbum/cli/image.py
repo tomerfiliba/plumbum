@@ -7,7 +7,6 @@ from .termsize import get_terminal_size
 
 
 class Image:
-
     __slots__ = "size char_ratio".split()
 
     def __init__(self, size=None, char_ratio=2.45):
@@ -99,7 +98,6 @@ class ShowImageApp(cli.Application):
 
     @cli.positional(cli.ExistingFile)
     def main(self, filename):
-
         size = None
         if self.size:
             size = map(int, self.size.split("x"))

@@ -275,7 +275,8 @@ class BaseRemoteMachine(BaseMachine):
 
     def session(self, isatty=False, *, new_session=False):
         """Creates a new :class:`ShellSession <plumbum.session.ShellSession>` object; this invokes the user's
-        shell on the remote machine and executes commands on it over stdin/stdout/stderr"""
+        shell on the remote machine and executes commands on it over stdin/stdout/stderr
+        """
         raise NotImplementedError()
 
     def download(self, src, dst):

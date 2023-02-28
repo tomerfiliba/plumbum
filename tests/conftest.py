@@ -87,7 +87,7 @@ def pytest_configure(config):
             ot_run = list(re.split(r"[,\s]+", ot_run))
     ot_run = set(ot_run)
 
-    _logger.info("optional tests to run:", ot_run)
+    _logger.info("optional tests to run: %s", ot_run)
     if ot_run:
         unknown_tests = ot_run - ot_markers
         if unknown_tests:

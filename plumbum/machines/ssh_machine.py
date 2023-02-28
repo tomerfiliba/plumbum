@@ -127,7 +127,6 @@ class SshMachine(BaseRemoteMachine):
         connect_timeout=10,
         new_session=False,
     ):
-
         if ssh_command is None:
             if password is not None:
                 ssh_command = local["sshpass"]["-p", password, "ssh"]

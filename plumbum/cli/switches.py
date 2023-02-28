@@ -493,7 +493,7 @@ class Set(Validator):
         for opt in self.values:
             if isinstance(opt, str):
                 if not self.case_sensitive:
-                    opt = opt.lower()
+                    opt = opt.lower()  # noqa: PLW2901
                 if opt == value or value in self.all_markers:
                     yield opt  # always return original value
                 continue

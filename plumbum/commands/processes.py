@@ -114,7 +114,6 @@ class ProcessExecutionError(OSError):
 
     # pylint: disable-next=super-init-not-called
     def __init__(self, argv, retcode, stdout, stderr, message=None, *, host=None):
-
         # we can't use 'super' here since OSError only keeps the first 2 args,
         # which leads to failuring in loading this object from a pickle.dumps.
         # pylint: disable-next=non-parent-init-called
@@ -253,7 +252,7 @@ def _register_proc_timeout(proc, timeout):
 
 
 def _shutdown_bg_threads():
-    global _shutting_down  # pylint: disable=global-statement
+    global _shutting_down  # noqa: PLW0603
     _shutting_down = True
     # Make sure this still exists (don't throw error in atexit!)
     # TODO: not sure why this would be "falsey", though
@@ -367,7 +366,6 @@ def iter_lines(
 
     buffers = [[], []]
     for t, line in _iter_lines(proc, decode, linesize, line_timeout):
-
         # verify that the proc hasn't timed out yet
         proc.verify(timeout=timeout, retcode=None, stdout=None, stderr=None)
 

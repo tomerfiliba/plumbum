@@ -153,6 +153,7 @@ messages_control.disable = [
   "unused-import", # identical to flake8 but has typing false positives
   "eval-used",  # Needed for Python <3.10 annotations
   "unused-argument", # Covered by ruff
+  "global-statement", # Covered by ruff
 ]
 
 [tool.ruff]
