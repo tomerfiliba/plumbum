@@ -79,9 +79,9 @@ def get_output_with_iter_lines(cmd: BaseCommand) -> Tuple[List[str], List[str]]:
     stderr, stdout = [], []
     proc = cmd.popen()
     for stdout_line, stderr_line in proc.iter_lines(retcode=[0, None]):
-        if stderr_line is not None:
+        if stderr_line:
             stderr.append(stderr_line)
-        if stdout_line is not None:
+        if stdout_line:
             stdout.append(stdout_line)
     proc.wait()
     return stdout, stderr
