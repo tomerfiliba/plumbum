@@ -99,6 +99,15 @@ using ``|`` (bitwise-or)::
     >>> chain()
     '-rw-r--r--    1 sebulba  Administ        0 Apr 27 11:54 setup.py\n'
 
+.. note::
+  Unlike common posix shells, plumbum only captures stderr of the last command in a pipeline.
+  If any of the other commands writes a large amount of text to the stderr, the whole pipeline
+  will stall (large amount equals to >64k on posix systems). This can happen with bioinformatics
+  tools that write progress information to stderr. To avoid this issue, you can discard stderr
+  of the first commands or redirect it to a file.
+
+  >>> chain = (bwa["mem", ...] >= "/dev/null") | samtools["view", ...]
+
 .. _guide-local-commands-redir:
 
 Input/Output Redirection
