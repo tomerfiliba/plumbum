@@ -43,7 +43,7 @@ jobs:
         python-version: ["3.6", "3.8", "3.11"]
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
-        - python-version: 'pypy-3.7'
+        - python-version: 'pypy-3.8'
           os: ubuntu-latest
         - python-version: 'pypy-3.9'
           os: ubuntu-latest
