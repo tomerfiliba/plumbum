@@ -36,7 +36,7 @@ class Path(str, ABC):
     def __repr__(self):
         return f"<{self.__class__.__name__} {self}>"
 
-    def __truediv__(self: _PathImpl, other) -> _PathImpl:
+    def __truediv__(self: _PathImpl, other: typing.Any) -> _PathImpl:
         """Joins two paths"""
         return self.join(other)
 
@@ -53,7 +53,7 @@ class Path(str, ABC):
         """Iterate over the files in this directory"""
         return iter(self.list())
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: typing.Union[_PathImpl, str]) -> bool:
         if isinstance(other, Path):
             return self._get_info() == other._get_info()
         if isinstance(other, str):
@@ -97,7 +97,7 @@ class Path(str, ABC):
             return (self / item).exists()
 
     @abstractmethod
-    def _form(self: _PathImpl, *parts) -> _PathImpl:
+    def _form(self: _PathImpl, *parts: typing.Any) -> _PathImpl:
         pass
 
     def up(self, count=1):
@@ -180,7 +180,7 @@ class Path(str, ABC):
         attribute that holds the string-name of the group"""
 
     @abstractmethod
-    def as_uri(self, scheme=None) -> str:
+    def as_uri(self, scheme: typing.Optional[str] = None) -> str:
         """Returns a universal resource identifier. Use ``scheme`` to force a scheme."""
 
     @abstractmethod
@@ -188,7 +188,7 @@ class Path(str, ABC):
         pass
 
     @abstractmethod
-    def join(self: _PathImpl, *parts) -> _PathImpl:
+    def join(self: _PathImpl, *parts: typing.Any) -> _PathImpl:
         """Joins this path with any number of paths"""
 
     @abstractmethod
@@ -235,11 +235,11 @@ class Path(str, ABC):
         """Returns the os.stats for a file"""
 
     @abstractmethod
-    def with_name(self: _PathImpl, name) -> _PathImpl:
+    def with_name(self: _PathImpl, name: typing.Any) -> _PathImpl:
         """Returns a path with the name replaced"""
 
     @abstractmethod
-    def with_suffix(self: _PathImpl, suffix, depth=1) -> _PathImpl:
+    def with_suffix(self: _PathImpl, suffix: str, depth=1) -> _PathImpl:
         """Returns a path with the suffix replaced. Up to last ``depth`` suffixes will be
         replaced. None will replace all suffixes. If there are less than ``depth`` suffixes,
         this will replace all suffixes. ``.tar.gz`` is an example where ``depth=2`` or
@@ -251,7 +251,9 @@ class Path(str, ABC):
         return self if len(self.suffixes) > 0 else self.with_suffix(suffix)
 
     @abstractmethod
-    def glob(self: _PathImpl, pattern) -> _PathImpl:
+    def glob(
+        self: _PathImpl, pattern: typing.Union[str, typing.Iterable[str]]
+    ) -> typing.List[_PathImpl]:
         """Returns a (possibly empty) list of paths that matched the glob-pattern under this path"""
 
     @abstractmethod
@@ -294,16 +296,18 @@ class Path(str, ABC):
         """
 
     @abstractmethod
-    def open(self, mode="r", *, encoding=None) -> io.IOBase:
+    def open(
+        self, mode: str = "r", *, encoding: typing.Optional[str] = None
+    ) -> io.IOBase:
         """opens this path as a file"""
 
     @abstractmethod
-    def read(self, encoding=None) -> str:
+    def read(self, encoding: typing.Optional[str] = None) -> str:
         """returns the contents of this file as a ``str``. By default the data is read
         as text, but you can specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
 
     @abstractmethod
-    def write(self, data, encoding=None):
+    def write(self, data: typing.AnyStr, encoding: typing.Optional[str] = None) -> None:
         """writes the given data to this file. By default the data is written as-is
         (either text or binary), but you can specify the encoding, e.g., ``'latin1'``
         or ``'utf8'``"""
@@ -341,7 +345,7 @@ class Path(str, ABC):
         return mode
 
     @abstractmethod
-    def access(self, mode=0) -> bool:
+    def access(self, mode: typing.Union[None, int, str] = 0) -> bool:
         """Test file existence or permission bits
 
         :param mode: a bitwise-or of access bits, or a string-representation thereof:
