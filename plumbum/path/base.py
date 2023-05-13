@@ -53,7 +53,7 @@ class Path(str, ABC):
         """Iterate over the files in this directory"""
         return iter(self.list())
 
-    def __eq__(self, other: typing.Union[_PathImpl, str]) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, Path):
             return self._get_info() == other._get_info()
         if isinstance(other, str):
@@ -239,7 +239,9 @@ class Path(str, ABC):
         """Returns a path with the name replaced"""
 
     @abstractmethod
-    def with_suffix(self: _PathImpl, suffix: str, depth=1) -> _PathImpl:
+    def with_suffix(
+        self: _PathImpl, suffix: str, depth: typing.Optional[int] = 1
+    ) -> _PathImpl:
         """Returns a path with the suffix replaced. Up to last ``depth`` suffixes will be
         replaced. None will replace all suffixes. If there are less than ``depth`` suffixes,
         this will replace all suffixes. ``.tar.gz`` is an example where ``depth=2`` or
