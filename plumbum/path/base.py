@@ -347,7 +347,7 @@ class Path(str, ABC):
         return mode
 
     @abstractmethod
-    def access(self, mode: typing.Union[None, int, str] = 0) -> bool:
+    def access(self, mode: typing.Union[int, str] = 0) -> bool:
         """Test file existence or permission bits
 
         :param mode: a bitwise-or of access bits, or a string-representation thereof:
