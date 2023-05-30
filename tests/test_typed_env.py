@@ -41,7 +41,7 @@ class TestTypedEnv:
         e.INTS = [1, 2, 3, 4]
 
         with pytest.raises(KeyError):
-            e.I
+            e.I  # noqa: B018
 
         raw_env["INTEGER"] = "4"
         assert e.I == 4

@@ -10,7 +10,7 @@ build-backend = "hatchling.build"
 name = "plumbum"
 description = "Plumbum: shell combinators library"
 readme = "README.rst"
-author = { name="Tomer Filiba", email="tomerfiliba@gmail.com" }
+authors = [{ name="Tomer Filiba", email="tomerfiliba@gmail.com" }]
 license = { file="LICENSE" }
 requires-python = ">=3.6"
 dynamic = ["version"]
@@ -154,6 +154,7 @@ messages_control.disable = [
   "eval-used",  # Needed for Python <3.10 annotations
   "unused-argument", # Covered by ruff
   "global-statement", # Covered by ruff
+  "useless-expression", # Covered by ruff
 ]
 
 [tool.ruff]
@@ -177,11 +178,12 @@ select = [
   "YTT",         # flake8-2020
 
 ]
-ignore = [
+extend-ignore = [
   "E501",
   "PLR",
   "PT004",
   "PT011",  # TODO: add match parameter
+  "PLC1901", # Simplify == "", might be risky
 ]
 target-version = "py37"
 exclude = ["docs/conf.py"]

@@ -329,7 +329,7 @@ class _NOHUP(ExecutionModifier):
     from the current process, returning a
     standard popen object. It will keep running even if you close the current process.
     In order to slightly mimic shell syntax, it applies
-    when you right-and it with a command. If you wish to use a diffent working directory
+    when you right-and it with a command. If you wish to use a different working directory
     or different stdout, stderr, you can use named arguments. The default is ``NOHUP(
     cwd=local.cwd, stdout='nohup.out', stderr=None)``. If stderr is None, stderr will be
     sent to stdout. Use ``os.devnull`` for null output. Will respect redirected output.

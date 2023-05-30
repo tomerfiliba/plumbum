@@ -195,7 +195,11 @@ class SshMachine(BaseRemoteMachine):
         allowing the command to run "detached" from its controlling TTY or parent.
         Does not return anything. Depreciated (use command.nohup or daemonic_popen).
         """
-        warnings.warn("Use .nohup on the command or use daemonic_popen)", FutureWarning)
+        warnings.warn(
+            "Use .nohup on the command or use daemonic_popen)",
+            FutureWarning,
+            stacklevel=2,
+        )
         self.daemonic_popen(command, cwd=".", stdout=None, stderr=None, append=False)
 
     def daemonic_popen(self, command, cwd=".", stdout=None, stderr=None, append=True):

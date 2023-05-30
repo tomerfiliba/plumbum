@@ -127,7 +127,7 @@ class Path(str, ABC):
     @property
     def basename(self):
         """Included for compatibility with older Plumbum code"""
-        warnings.warn("Use .name instead", FutureWarning)
+        warnings.warn("Use .name instead", FutureWarning, stacklevel=2)
         return self.name
 
     @property
@@ -200,7 +200,7 @@ class Path(str, ABC):
 
     def isdir(self):
         """Included for compatibility with older Plumbum code"""
-        warnings.warn("Use .is_dir() instead", FutureWarning)
+        warnings.warn("Use .is_dir() instead", FutureWarning, stacklevel=2)
         return self.is_dir()
 
     @abstractmethod
@@ -209,12 +209,12 @@ class Path(str, ABC):
 
     def isfile(self):
         """Included for compatibility with older Plumbum code"""
-        warnings.warn("Use .is_file() instead", FutureWarning)
+        warnings.warn("Use .is_file() instead", FutureWarning, stacklevel=2)
         return self.is_file()
 
     def islink(self):
         """Included for compatibility with older Plumbum code"""
-        warnings.warn("Use is_symlink instead", FutureWarning)
+        warnings.warn("Use is_symlink instead", FutureWarning, stacklevel=2)
         return self.is_symlink()
 
     @abstractmethod

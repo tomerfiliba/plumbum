@@ -72,7 +72,7 @@ class TestANSIColor:
         assert colors.red == colors.RED
 
         with pytest.raises(AttributeError):
-            colors.Notacolorsatall
+            colors.Notacolorsatall  # noqa: B018
 
     def testMultiColor(self):
         sumcolors = colors.bold & colors.blue

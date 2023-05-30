@@ -296,7 +296,7 @@ class TestCLI:
             assert "  DEF" in stdout
             assert "   - Item" in stdout
             # List items should not be combined into paragraphs
-            assert "  * Star 2"
+            assert "  * Star 2" in stdout
             # Lines of the same list item should be combined. (The right-hand expression of the 'or' operator
             # below is for when the terminal is too narrow, causing "GHI" to be wrapped to the next line.)
             assert "  GHI" not in stdout or "     GHI" in stdout
