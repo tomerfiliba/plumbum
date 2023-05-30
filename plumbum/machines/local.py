@@ -218,8 +218,7 @@ class LocalMachine(BaseMachine):
             self[cmd]
         except CommandNotFound:
             return False
-        else:
-            return True
+        return True
 
     def __getitem__(self, cmd):
         """Returns a `Command` object representing the given program. ``cmd`` can be a string or

@@ -183,5 +183,4 @@ class BaseEnv:
             import pwd
         except ImportError:
             return None
-        else:
-            return pwd.getpwuid(os.getuid())[0]  # @UndefinedVariable
+        return pwd.getpwuid(os.getuid())[0]  # @UndefinedVariable

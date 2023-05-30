@@ -63,8 +63,7 @@ class BaseMachine:
             self[cmd]
         except CommandNotFound:
             return False
-        else:
-            return True
+        return True
 
     @property
     def encoding(self):

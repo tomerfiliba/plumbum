@@ -154,7 +154,7 @@ messages_control.disable = [
   "eval-used",  # Needed for Python <3.10 annotations
   "unused-argument", # Covered by ruff
   "global-statement", # Covered by ruff
-  "useless-expression", # Covered by ruff
+  "pointless-statement", # Covered by ruff
 ]
 
 [tool.ruff]

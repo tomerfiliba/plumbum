@@ -297,9 +297,8 @@ class PidFile:
                 f"PID file {self.atomicfile.path!r} taken by process {pid}",
                 pid,
             ) from None
-        else:
-            self.atomicfile.write_atomic(str(os.getpid()).encode("utf8"))
-            atexit.register(self.release)
+        self.atomicfile.write_atomic(str(os.getpid()).encode("utf8"))
+        atexit.register(self.release)
 
     def release(self):
         """
