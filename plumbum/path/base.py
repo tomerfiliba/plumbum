@@ -1,6 +1,8 @@
+import io
 import itertools
 import operator
 import os
+import typing
 import warnings
 from abc import ABC, abstractmethod
 from functools import reduce
@@ -20,6 +22,9 @@ class FSUser(int):
         return self
 
 
+_PathImpl = typing.TypeVar("_PathImpl", bound="Path")
+
+
 class Path(str, ABC):
     """An abstraction over file system paths. This class is abstract, and the two implementations
     are :class:`LocalPath <plumbum.machines.local.LocalPath>` and
@@ -31,7 +36,7 @@ class Path(str, ABC):
     def __repr__(self):
         return f"<{self.__class__.__name__} {self}>"
 
-    def __truediv__(self, other):
+    def __truediv__(self: _PathImpl, other: typing.Any) -> _PathImpl:
         """Joins two paths"""
         return self.join(other)
 
@@ -48,7 +53,7 @@ class Path(str, ABC):
         """Iterate over the files in this directory"""
         return iter(self.list())
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, Path):
             return self._get_info() == other._get_info()
         if isinstance(other, str):
@@ -92,7 +97,7 @@ class Path(str, ABC):
             return (self / item).exists()
 
     @abstractmethod
-    def _form(self, *parts):
+    def _form(self: _PathImpl, *parts: typing.Any) -> _PathImpl:
         pass
 
     def up(self, count=1):
@@ -121,7 +126,7 @@ class Path(str, ABC):
 
     @property
     @abstractmethod
-    def name(self):
+    def name(self) -> str:
         """The basename component of this path"""
 
     @property
@@ -132,70 +137,70 @@ class Path(str, ABC):
 
     @property
     @abstractmethod
-    def stem(self):
+    def stem(self) -> str:
         """The name without an extension, or the last component of the path"""
 
     @property
     @abstractmethod
-    def dirname(self):
+    def dirname(self: _PathImpl) -> _PathImpl:
         """The dirname component of this path"""
 
     @property
     @abstractmethod
-    def root(self):
+    def root(self) -> str:
         """The root of the file tree (`/` on Unix)"""
 
     @property
     @abstractmethod
-    def drive(self):
+    def drive(self) -> str:
         """The drive letter (on Windows)"""
 
     @property
     @abstractmethod
-    def suffix(self):
+    def suffix(self) -> str:
         """The suffix of this file"""
 
     @property
     @abstractmethod
-    def suffixes(self):
+    def suffixes(self) -> typing.List[str]:
         """This is a list of all suffixes"""
 
     @property
     @abstractmethod
-    def uid(self):
+    def uid(self) -> FSUser:
         """The user that owns this path. The returned value is a :class:`FSUser <plumbum.path.FSUser>`
         object which behaves like an ``int`` (as expected from ``uid``), but it also has a ``.name``
         attribute that holds the string-name of the user"""
 
     @property
     @abstractmethod
-    def gid(self):
+    def gid(self) -> FSUser:
         """The group that owns this path. The returned value is a :class:`FSUser <plumbum.path.FSUser>`
         object which behaves like an ``int`` (as expected from ``gid``), but it also has a ``.name``
         attribute that holds the string-name of the group"""
 
     @abstractmethod
-    def as_uri(self, scheme=None):
+    def as_uri(self, scheme: typing.Optional[str] = None) -> str:
         """Returns a universal resource identifier. Use ``scheme`` to force a scheme."""
 
     @abstractmethod
-    def _get_info(self):
+    def _get_info(self) -> typing.Any:
         pass
 
     @abstractmethod
-    def join(self, *parts):
+    def join(self: _PathImpl, *parts: typing.Any) -> _PathImpl:
         """Joins this path with any number of paths"""
 
     @abstractmethod
-    def list(self):
+    def list(self: _PathImpl) -> typing.List[_PathImpl]:
         """Returns the files in this directory"""
 
     @abstractmethod
-    def iterdir(self):
+    def iterdir(self: _PathImpl) -> typing.Iterable[_PathImpl]:
         """Returns an iterator over the directory. Might be slightly faster on Python 3.5 than .list()"""
 
     @abstractmethod
-    def is_dir(self):
+    def is_dir(self) -> bool:
         """Returns ``True`` if this path is a directory, ``False`` otherwise"""
 
     def isdir(self):
@@ -204,10 +209,10 @@ class Path(str, ABC):
         return self.is_dir()
 
     @abstractmethod
-    def is_file(self):
+    def is_file(self) -> bool:
         """Returns ``True`` if this path is a regular file, ``False`` otherwise"""
 
-    def isfile(self):
+    def isfile(self) -> bool:
         """Included for compatibility with older Plumbum code"""
         warnings.warn("Use .is_file() instead", FutureWarning, stacklevel=2)
         return self.is_file()
@@ -218,23 +223,25 @@ class Path(str, ABC):
         return self.is_symlink()
 
     @abstractmethod
-    def is_symlink(self):
+    def is_symlink(self) -> bool:
         """Returns ``True`` if this path is a symbolic link, ``False`` otherwise"""
 
     @abstractmethod
-    def exists(self):
+    def exists(self) -> bool:
         """Returns ``True`` if this path exists, ``False`` otherwise"""
 
     @abstractmethod
-    def stat(self):
+    def stat(self) -> os.stat_result:
         """Returns the os.stats for a file"""
 
     @abstractmethod
-    def with_name(self, name):
+    def with_name(self: _PathImpl, name: typing.Any) -> _PathImpl:
         """Returns a path with the name replaced"""
 
     @abstractmethod
-    def with_suffix(self, suffix, depth=1):
+    def with_suffix(
+        self: _PathImpl, suffix: str, depth: typing.Optional[int] = 1
+    ) -> _PathImpl:
         """Returns a path with the suffix replaced. Up to last ``depth`` suffixes will be
         replaced. None will replace all suffixes. If there are less than ``depth`` suffixes,
         this will replace all suffixes. ``.tar.gz`` is an example where ``depth=2`` or
@@ -246,7 +253,9 @@ class Path(str, ABC):
         return self if len(self.suffixes) > 0 else self.with_suffix(suffix)
 
     @abstractmethod
-    def glob(self, pattern):
+    def glob(
+        self: _PathImpl, pattern: typing.Union[str, typing.Iterable[str]]
+    ) -> typing.List[_PathImpl]:
         """Returns a (possibly empty) list of paths that matched the glob-pattern under this path"""
 
     @abstractmethod
@@ -289,16 +298,18 @@ class Path(str, ABC):
         """
 
     @abstractmethod
-    def open(self, mode="r", *, encoding=None):
+    def open(
+        self, mode: str = "r", *, encoding: typing.Optional[str] = None
+    ) -> io.IOBase:
         """opens this path as a file"""
 
     @abstractmethod
-    def read(self, encoding=None):
+    def read(self, encoding: typing.Optional[str] = None) -> str:
         """returns the contents of this file as a ``str``. By default the data is read
         as text, but you can specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
 
     @abstractmethod
-    def write(self, data, encoding=None):
+    def write(self, data: typing.AnyStr, encoding: typing.Optional[str] = None) -> None:
         """writes the given data to this file. By default the data is written as-is
         (either text or binary), but you can specify the encoding, e.g., ``'latin1'``
         or ``'utf8'``"""
@@ -336,7 +347,7 @@ class Path(str, ABC):
         return mode
 
     @abstractmethod
-    def access(self, mode=0):
+    def access(self, mode: typing.Union[int, str] = 0) -> bool:
         """Test file existence or permission bits
 
         :param mode: a bitwise-or of access bits, or a string-representation thereof:
