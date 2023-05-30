@@ -1,3 +1,11 @@
+1.8.2
+-----
+
+* Fix author metadata on PyPI package and add static check (`#648 <https://github.com/tomerfiliba/plumbum/pull/648>`_)
+* Add testing for Python 3.12 beta 1 (`#650 <https://github.com/tomerfiliba/plumbum/pull/650>`_)
+* Use Ruff for linting (`#643 <https://github.com/tomerfiliba/plumbum/pull/643>`_)
+* Paths: Add type hinting for Path (`#646 <https://github.com/tomerfiliba/plumbum/pull/646>`_)
+
 1.8.1
 -----
 
