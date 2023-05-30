@@ -1,0 +1,38 @@
+name: CD
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+    - published
+
+env:
+  FORCE_COLOR: 3
+
+jobs:
+  dist:
+    name: Dist
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - uses: hynek/build-and-inspect-python-package@v1
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-22.04
+    needs: [dist]
+    if: github.event_name == 'release' && github.event.action == 'published'
+    environment: pypi
+    permissions:
+      id-token: write
+
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: Packages
+        path: dist
+
+    - uses: pypa/gh-action-pypi-publish@release/v1
