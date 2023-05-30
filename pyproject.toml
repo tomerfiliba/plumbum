@@ -30,6 +30,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Build Tools",
     "Topic :: System :: Systems Administration",
 ]
@@ -46,6 +47,14 @@ keywords = [
     "color",
     "cli",
 ]
+
+[project.urls]
+Homepage = "https://github.com/tomerfiliba/plumbum"
+Documentation = "https://plumbum.readthedocs.io/"
+"Bug Tracker" = "https://github.com/tomerfiliba/plumbum/issues"
+Changelog = "https://plumbum.readthedocs.io/en/latest/changelog.html"
+Cheatsheet = "https://plumbum.readthedocs.io/en/latest/quickref.html"
+
 
 [project.optional-dependencies]
 dev = [
