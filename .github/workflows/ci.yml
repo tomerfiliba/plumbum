@@ -10,9 +10,6 @@ on:
     branches:
     - master
     - main
-  release:
-    types:
-    - published
 
 env:
   FORCE_COLOR: 3
@@ -100,32 +97,6 @@ jobs:
         COVERALLS_PARALLEL: true
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: test-${{ matrix.os }}-${{ matrix.python-version }}
-
-
-  dist:
-    name: Dist
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - uses: hynek/build-and-inspect-python-package@v1
-
-  deploy:
-    name: Deploy
-    runs-on: ubuntu-22.04
-    needs: [dist]
-    if: github.event_name == 'release' && github.event.action == 'published'
-
-    steps:
-    - uses: actions/download-artifact@v3
-      with:
-        name: Packages
-        path: dist
-
-    - uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.pypi_password }}
 
   coverage:
     needs: [tests]
