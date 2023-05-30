@@ -241,7 +241,7 @@ class ProgressAuto(ProgressBase):
     def __new__(cls, *args, **kargs):
         """Uses the generator trick that if a cls instance is returned, the __init__ method is not called."""
         try:  # pragma: no cover
-            __IPYTHON__  # pylint: disable=pointless-statement
+            __IPYTHON__  # noqa: B018
             try:
                 from traitlets import TraitError
             except ImportError:  # Support for IPython < 4.0

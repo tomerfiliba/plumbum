@@ -142,8 +142,7 @@ class TypedEnv(MutableMapping):
             self._raw_get(key)
         except EnvironmentVariableError:
             return False
-        else:
-            return True
+        return True
 
     def __getattr__(self, name):
         # if we're here then there was no descriptor defined

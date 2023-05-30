@@ -33,7 +33,8 @@ def get_terminal_size(default: Tuple[int, int] = (80, 25)) -> Tuple[int, int]:
 
     else:  # pragma: no cover
         warnings.warn(
-            "Plumbum does not know the type of the current OS for term size, defaulting to UNIX"
+            "Plumbum does not know the type of the current OS for term size, defaulting to UNIX",
+            stacklevel=2,
         )
         size = _get_terminal_size_linux()
 
