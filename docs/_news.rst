@@ -1,3 +1,5 @@
+* **2023.05.30**: Version 1.8.2 released with a PyPI metadata fix, Python 3.12b1 testing, and a bit more typing.
+
 * **2023.01.01**: Version 1.8.1 released with hatchling replacing setuptools for the build system, and support for Path objects in local.
 
 * **2022.10.05**: Version 1.8.0 released with ``NO_COLOR``/``FORCE_COLOR``, ``all_markers`` & future annotations for the CLI, some command enhancements, & Python 3.11 testing.
