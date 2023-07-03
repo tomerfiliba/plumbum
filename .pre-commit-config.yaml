@@ -24,8 +24,8 @@ repos:
   hooks:
   - id: black
 
-- repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: "v0.0.270"
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: "v0.0.275"
   hooks:
     - id: ruff
       args: ["--fix", "--show-fixes"]
