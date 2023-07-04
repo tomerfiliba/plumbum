@@ -192,7 +192,7 @@ extend-ignore = [
   "PLR",
   "PT004",
   "PT011",  # TODO: add match parameter
-  "PLC1901", # Simplify == "", might be risky
+  "RUF012",  # ClassVar required if mutable
 ]
 target-version = "py37"
 exclude = ["docs/conf.py"]
