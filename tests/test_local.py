@@ -620,6 +620,8 @@ class TestLocalMachine:
         assert not (command_false & TF)
         assert command & RETCODE == 0
         assert command_false & RETCODE == 1
+        assert (command & TEE)[0] == 0
+        assert (command_false & TEE(retcode=None))[0] == 1
 
     @skip_on_windows
     def test_tee_modifier(self, capfd):

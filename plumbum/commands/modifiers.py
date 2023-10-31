@@ -226,6 +226,7 @@ class _TEE(ExecutionModifier):
 
                         buf.append(data)
 
+            p.wait()  # To get return code in p
             stdout = "".join([x.decode("utf-8") for x in outbuf])
             stderr = "".join([x.decode("utf-8") for x in errbuf])
             return p.returncode, stdout, stderr
