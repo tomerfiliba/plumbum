@@ -1,6 +1,5 @@
 from typing import List, Tuple
 
-import env
 import pytest
 
 import plumbum
