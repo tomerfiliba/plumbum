@@ -93,9 +93,7 @@ class TypedEnv(MutableMapping):
         a list of objects of type ``type`` (``str`` by default).
         """
 
-        def __init__(
-            self, name, default=NO_DEFAULT, type=str, separator=","
-        ):  # pylint:disable=redefined-builtin
+        def __init__(self, name, default=NO_DEFAULT, type=str, separator=","):  # pylint:disable=redefined-builtin
             super().__init__(name, default=default)
             self.type = type
             self.separator = separator

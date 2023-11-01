@@ -195,6 +195,7 @@ ignore = [
   "PT004",
   "PT011",  # TODO: add match parameter
   "RUF012",  # ClassVar required if mutable
+  "ISC001",  # conflicts with formatter
 ]
 flake8-unused-arguments.ignore-variadic-names = true
 

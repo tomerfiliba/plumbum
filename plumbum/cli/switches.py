@@ -230,7 +230,8 @@ class SwitchAttr:
         argname=VALUE,
         **kwargs,
     ):
-        self.__doc__ = "Sets an attribute"  # to prevent the help message from showing SwitchAttr's docstring
+        # Setting to prevent the help message from showing SwitchAttr's docstring
+        self.__doc__ = "Sets an attribute"
         if default and argtype is not None:
             defaultmsg = _("; the default is {0}").format(default)
             if "help" in kwargs:

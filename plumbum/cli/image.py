@@ -82,6 +82,7 @@ class Image:
 
 class ShowImageApp(cli.Application):
     "Display an image on the terminal"
+
     double = cli.Flag(
         ["-d", "--double"], help="Double resolution (looks good only with some fonts)"
     )
