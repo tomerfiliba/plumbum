@@ -528,14 +528,12 @@ s.close()
                     assert_is_port(tun.dport)
                 assert tun.reverse
 
-                remote_send_af_inet = """import socket
+                remote_send_af_inet = f"""import socket
 s = socket.socket()
-s.connect(("localhost", {}))
-s.send("{}".encode("ascii"))
+s.connect(("localhost", {tun.dport}))
+s.send("{message}".encode("ascii"))
 s.close()
-""".format(
-                    tun.dport, message
-                )
+"""
                 (rem.python["-u"] << remote_send_af_inet).popen()
                 tunnel_server.join(timeout=1)
                 assert queue.get() == message

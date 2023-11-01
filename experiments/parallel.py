@@ -166,7 +166,7 @@ class ClusterSession:
         self.close()
 
     def __del__(self):
-        try:  # noqa: 167
+        try:  # noqa: SIM105
             self.close()
         except Exception:
             pass

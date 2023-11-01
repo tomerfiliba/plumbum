@@ -259,8 +259,10 @@ class LocalMachine(BaseMachine):
             kwargs["start_new_session"] = True
 
         if IS_WIN32 and "startupinfo" not in kwargs and stdin not in (sys.stdin, None):
+            # pylint: disable-next=used-before-assignment
             subsystem = get_pe_subsystem(str(executable))
 
+            # pylint: disable-next=used-before-assignment
             if subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI:
                 # don't open a new console
                 sui = subprocess.STARTUPINFO()

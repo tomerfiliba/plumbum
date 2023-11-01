@@ -114,7 +114,7 @@ class ProcessExecutionError(OSError):
 
     def __init__(self, argv, retcode, stdout, stderr, message=None, *, host=None):
         # we can't use 'super' here since OSError only keeps the first 2 args,
-        # which leads to failuring in loading this object from a pickle.dumps.
+        # which leads to failing in loading this object from a pickle.dumps.
         # pylint: disable-next=non-parent-init-called
         Exception.__init__(self, argv, retcode, stdout, stderr)
 
@@ -341,7 +341,7 @@ def iter_lines(
 
     :param buffer_size: Maximum number of lines to keep in the stdout/stderr buffers, in case of a ProcessExecutionError.
                     Default is ``None``, which defaults to DEFAULT_BUFFER_SIZE (which is infinite by default).
-                    ``0`` will disable bufferring completely.
+                    ``0`` will disable buffering completely.
 
     :param mode: Controls what the generator yields. Defaults to DEFAULT_ITER_LINES_MODE (which is BY_POSITION by default)
                 - BY_POSITION (default): yields ``(out, err)`` line tuples, where either item may be ``None``

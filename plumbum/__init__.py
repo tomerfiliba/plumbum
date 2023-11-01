@@ -89,7 +89,7 @@ __all__ = (
 # ===================================================================================================
 
 
-if sys.version_info < (3, 7):
+if sys.version_info < (3, 7):  # noqa: UP036
     from types import ModuleType
     from typing import List
 

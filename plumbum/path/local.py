@@ -203,7 +203,7 @@ class LocalPath(Path):
                     raise
 
     def open(self, mode="r", encoding=None):
-        return open(
+        return open(  # noqa: SIM115
             str(self),
             mode,
             encoding=encoding,

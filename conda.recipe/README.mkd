@@ -1,7 +1,7 @@
 # Building instructions
 
 
-Change to the `conda.recipies` directory. Run
+Change to the `conda.recipes` directory. Run
 ```bash
 $ conda install conda-build
 ```
