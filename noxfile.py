@@ -32,7 +32,7 @@ def tests(session):
     Run the unit and regular tests.
     """
     session.install("-e", ".[dev]")
-    session.run("pytest", *session.posargs)
+    session.run("pytest", *session.posargs, env={"PYTHONTRACEMALLOC": "5"})
 
 
 @nox.session(reuse_venv=True)
