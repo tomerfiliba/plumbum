@@ -533,8 +533,9 @@ class StdinDataRedirection(BaseCommand):
     def formulate(self, level=0, args=()):
         return [
             f"echo {shquote(self.data)}",
-            "|"
-        ] + self.cmd.formulate(level + 1, args),
+            "|",
+            *self.cmd.formulate(level + 1, args),
+        ]
 
     @property
     def machine(self):
