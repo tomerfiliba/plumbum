@@ -1052,10 +1052,6 @@ class TestLocalEncoding:
     except NameError:
         richstr = chr(40960)
 
-    @pytest.mark.xfail(
-        IS_WIN32,
-        reason="Unicode output on Windows does not work (Python 3.6+ was supposed to work)",
-    )
     def test_inout_rich(self):
         from plumbum.cmd import echo
 
