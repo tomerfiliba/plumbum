@@ -166,7 +166,7 @@ that I wrote for `RPyC <https://rpyc.readthedocs.io/>`_. When I combined the two
 
 Credits
 =======
-The project has been inspired by **PBS** (now called `sh <http://amoffat.github.io/sh/>`_)
+The project has been inspired by **PBS** (now called `sh <http://sh.rtfd.org>`_)
 of `Andrew Moffat <https://github.com/amoffat>`_,
 and has borrowed some of his ideas (namely treating programs like functions and the
 nice trick for importing commands). However, I felt there was too much magic going on in PBS,
