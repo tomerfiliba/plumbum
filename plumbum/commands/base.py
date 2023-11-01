@@ -398,8 +398,6 @@ class Pipeline(BaseCommand):
         dstproc = self.dstcmd.popen(**kwargs)
         # allow p1 to receive a SIGPIPE if p2 exits
         srcproc.stdout.close()
-        if srcproc.stderr is not None:
-            dstproc.stderr = srcproc.stderr
         if srcproc.stdin and src_kwargs.get("stdin") != PIPE:
             srcproc.stdin.close()
         dstproc.srcproc = srcproc
