@@ -902,16 +902,14 @@ except PidFileTaken:
         num_of_procs = 20
         num_of_increments = 20
 
-        code = """from plumbum.fs.atomic import AtomicCounterFile
+        code = f"""from plumbum.fs.atomic import AtomicCounterFile
 import time
 time.sleep(0.2)
 afc = AtomicCounterFile.open("counter")
-for _ in range({}):
+for _ in range({num_of_increments}):
     print(afc.next())
     time.sleep(0.1)
-""".format(
-            num_of_increments,
-        )
+"""
 
         procs = []
         for _ in range(num_of_procs):

@@ -5,7 +5,7 @@ ci:
 repos:
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: "v4.4.0"
+  rev: "v4.5.0"
   hooks:
   - id: check-added-large-files
   - id: check-case-conflict
@@ -20,33 +20,34 @@ repos:
   - id: trailing-whitespace
 
 - repo: https://github.com/psf/black-pre-commit-mirror
-  rev: "23.7.0"
+  rev: "23.10.1"
   hooks:
   - id: black
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.0.275"
+  rev: "v0.1.3"
   hooks:
     - id: ruff
       args: ["--fix", "--show-fixes"]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: "v1.3.0"
+  rev: "v1.6.1"
   hooks:
   - id: mypy
     files: plumbum
     args: []
-    additional_dependencies: [typed-ast, types-paramiko, types-setuptools]
+    additional_dependencies: [typed-ast, types-paramiko, types-setuptools, pytest]
 
 - repo: https://github.com/abravalheri/validate-pyproject
-  rev: "v0.13"
+  rev: "v0.15"
   hooks:
   - id: validate-pyproject
 
 - repo: https://github.com/codespell-project/codespell
-  rev: "v2.2.4"
+  rev: "v2.2.6"
   hooks:
   - id: codespell
+    args: ["-w"]
 
 - repo: https://github.com/pre-commit/pygrep-hooks
   rev: "v1.10.0"

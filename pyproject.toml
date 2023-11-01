@@ -80,7 +80,7 @@ build.hooks.vcs.version-file = "plumbum/version.py"
 
 [tool.mypy]
 files = ["plumbum"]
-python_version = "3.6"
+python_version = "3.7"
 warn_unused_configs = true
 warn_unused_ignores = true
 show_error_codes = true
@@ -105,7 +105,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = ["-ra", "--cov-config=setup.cfg", "--strict-markers", "--strict-config"]
+addopts = ["-ra", "--showlocals", "--cov-config=setup.cfg", "--strict-markers", "--strict-config"]
 norecursedirs = ["examples", "experiments"]
 filterwarnings = [
   "always"
@@ -167,9 +167,12 @@ messages_control.disable = [
 ]
 
 [tool.ruff]
-select = [
-  "E", "F", "W", # flake8
-  "B", "B904",   # flake8-bugbear
+target-version = "py37"
+exclude = ["docs/conf.py"]
+
+[tool.ruff.lint]
+extend-select = [
+  "B",           # flake8-bugbear
   "I",           # isort
   "ARG",         # flake8-unused-arguments
   "C4",          # flake8-comprehensions
@@ -185,21 +188,17 @@ select = [
   "T20",         # flake8-print
   "UP",          # pyupgrade
   "YTT",         # flake8-2020
-
 ]
-extend-ignore = [
+ignore = [
   "E501",
   "PLR",
   "PT004",
   "PT011",  # TODO: add match parameter
   "RUF012",  # ClassVar required if mutable
 ]
-target-version = "py37"
-exclude = ["docs/conf.py"]
-mccabe.max-complexity = 50
 flake8-unused-arguments.ignore-variadic-names = true
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "examples/*" = ["T20"]
 "experiments/*" = ["T20"]
 "tests/*" = ["T20"]

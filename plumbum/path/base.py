@@ -41,7 +41,7 @@ class Path(str, ABC):
         return self.join(other)
 
     def __getitem__(self, key):
-        if type(key) == str or isinstance(key, Path):
+        if type(key) == str or isinstance(key, Path):  # noqa: E721
             return self / key
         return str(self)[key]
 
@@ -419,10 +419,8 @@ class Path(str, ABC):
         if isinstance(pattern, str):
             return fn(pattern)
 
-        results = []
-        for single_pattern in pattern:
-            results.extend(fn(single_pattern))
-        return sorted(list(set(results)))
+        results = {value for single_pattern in pattern for value in fn(single_pattern)}
+        return sorted(results)
 
     def resolve(self, strict=False):  # noqa: ARG002
         """Added to allow pathlib like syntax. Does nothing since
