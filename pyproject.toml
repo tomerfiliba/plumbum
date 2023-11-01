@@ -104,6 +104,7 @@ ignore_missing_imports = true
 
 
 [tool.pytest.ini_options]
+testpaths = ["tests"]
 minversion = "6.0"
 addopts = ["-ra", "--showlocals", "--cov-config=setup.cfg", "--strict-markers", "--strict-config"]
 norecursedirs = ["examples", "experiments"]
@@ -111,6 +112,7 @@ filterwarnings = [
   "always"
 ]
 log_cli_level = "info"
+xfail_strict = true
 required_plugins = ["pytest-timeout", "pytest-mock"]
 timeout = 300
 optional_tests = """
