@@ -607,7 +607,7 @@ class TestLocalMachine:
 
     @skip_on_windows
     def test_modifiers(self):
-        from plumbum.cmd import grep, ls
+        from plumbum.cmd import cat, grep, ls
 
         f = (ls["-a"] | grep["\\.py"]) & BG
         f.wait()
@@ -615,11 +615,17 @@ class TestLocalMachine:
 
         command = ls["-a"] | grep["local"]
         command_false = ls["-a"] | grep["not_a_file_here"]
+        command_false_2 = command_false | cat
         command & FG
         assert command & TF
         assert not (command_false & TF)
+        assert not (command_false_2 & TF)
         assert command & RETCODE == 0
         assert command_false & RETCODE == 1
+        assert command_false_2 & RETCODE == 1
+        assert (command & TEE)[0] == 0
+        assert (command_false & TEE(retcode=None))[0] == 1
+        assert (command_false_2 & TEE(retcode=None))[0] == 1
 
     @skip_on_windows
     def test_tee_modifier(self, capfd):
