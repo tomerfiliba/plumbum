@@ -23,7 +23,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: "3.x"
     - uses: pre-commit/action@v3.0.0
@@ -57,7 +57,7 @@ jobs:
         fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -102,7 +102,7 @@ jobs:
     needs: [tests]
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: "3.x"
     - name: Install coveralls
