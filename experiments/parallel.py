@@ -127,8 +127,7 @@ class Cluster:
     def __getitem__(self, progname):
         if not isinstance(progname, str):
             raise TypeError(
-                "progname must be a string, not %r"
-                % (
+                "progname must be a string, not {!r}".format(
                     type(
                         progname,
                     )

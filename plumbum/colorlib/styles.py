@@ -7,7 +7,6 @@ but merely provides the workhorse for finding and manipulating colors.
 With the ``Style`` class, any color can be directly called or given to a with statement.
 """
 
-
 import contextlib
 import os
 import platform

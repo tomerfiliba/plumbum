@@ -5,6 +5,7 @@ Extended set is similar to `vim wiki <http://vim.wikia.com/wiki/Xterm256_color_n
 You can access the index of the colors with names.index(name). You can access the
 rgb values with ``r=int(html[n][1:3],16)``, etc.
 """
+
 from typing import Tuple
 
 color_names = """\
