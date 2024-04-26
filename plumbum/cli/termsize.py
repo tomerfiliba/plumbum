@@ -80,7 +80,7 @@ def _ioctl_GWINSZ(fd: int) -> Optional[Tuple[int, int]]:
         import termios
 
         # TODO: Clean this up. Problems could be hidden by the broad except.
-        return yx.unpack(fcntl.ioctl(fd, termios.TIOCGWINSZ, b"1234"))  # type: ignore[return-value]
+        return yx.unpack(fcntl.ioctl(fd, termios.TIOCGWINSZ, b"1234"))
     except Exception:
         return None
 

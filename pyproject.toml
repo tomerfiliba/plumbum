@@ -80,7 +80,7 @@ build.hooks.vcs.version-file = "plumbum/version.py"
 
 [tool.mypy]
 files = ["plumbum"]
-python_version = "3.7"
+python_version = "3.8"
 warn_unused_configs = true
 warn_unused_ignores = true
 show_error_codes = true

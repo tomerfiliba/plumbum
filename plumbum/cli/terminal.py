@@ -3,7 +3,6 @@ Terminal-related utilities
 --------------------------
 """
 
-
 import contextlib
 import os
 import sys

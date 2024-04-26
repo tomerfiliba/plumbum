@@ -549,7 +549,7 @@ class Application:
                     else sig.return_annotation
                 )
                 if sys.version_info < (3, 10) and isinstance(annotation, str):
-                    annotation = eval(annotation)  # noqa: PGH001
+                    annotation = eval(annotation)
                 if item == m.varargs:
                     varargs = annotation
                 elif item != "return":

@@ -636,11 +636,11 @@ class TestParamikoMachine(BaseRemoteMachineTest):
         with self._connect() as rem:
             unicode_half = b"\xc2\xbd".decode("utf8")
 
-            ret = rem["bash"]("-c", 'echo -e "\xC2\xBD"')
-            assert ret == "%s\n" % unicode_half
+            ret = rem["bash"]("-c", 'echo -e "\xc2\xbd"')
+            assert ret == f"{unicode_half}\n"
 
-            ret = list(rem["bash"]["-c", 'echo -e "\xC2\xBD"'].popen())
-            assert ret == [["%s\n" % unicode_half, None]]
+            ret = list(rem["bash"]["-c", 'echo -e "\xc2\xbd"'].popen())
+            assert ret == [[f"{unicode_half}\n", None]]
 
     def test_path_open_remote_write_local_read(self):
         with self._connect() as rem:
