@@ -1,3 +1,12 @@
+1.8.3
+-----
+
+* Fix StdinDataRedirection's formulate() method by @nebbish in https://github.com/tomerfiliba/plumbum/pull/629
+* Missing non-zero return code from TEE'd pipe by @vient in https://github.com/tomerfiliba/plumbum/pull/661
+* Fix stalling in Pipeline command by @astaric in https://github.com/tomerfiliba/plumbum/pull/632
+* Use high-speed method for C locale too by @henryiii in https://github.com/tomerfiliba/plumbum/pull/681
+* Update index.rst - fix broken link for sh project by @mcint in https://github.com/tomerfiliba/plumbum/pull/658
+
 1.8.2
 -----
 
