@@ -2,7 +2,7 @@ import locale
 
 # High performance method for English (no translation needed)
 loc = locale.getlocale()[0]
-if loc is None or loc.startswith("en"):
+if loc is None or loc.startswith("en") or loc == "C":
 
     class NullTranslation:
         def gettext(self, str1: str) -> str:  # pylint: disable=no-self-use
