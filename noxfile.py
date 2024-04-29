@@ -22,7 +22,7 @@ def pylint(session):
     Run pylint.
     """
 
-    session.install(".", "paramiko", "ipython", "pylint~=3.0.2")
+    session.install(".", "paramiko", "ipython", "pylint~=3.1.0")
     session.run("pylint", "plumbum", *session.posargs)
 
 
