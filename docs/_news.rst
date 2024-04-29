@@ -1,3 +1,5 @@
+* **2024.04.29**: Version 1.8.2 released with some small fixes, final version to support Python 3.6 and 3.7.
+
 * **2023.05.30**: Version 1.8.2 released with a PyPI metadata fix, Python 3.12b1 testing, and a bit more typing.
 
 * **2023.01.01**: Version 1.8.1 released with hatchling replacing setuptools for the build system, and support for Path objects in local.
