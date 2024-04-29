@@ -208,3 +208,7 @@ flake8-unused-arguments.ignore-variadic-names = true
 "plumbum/cli/application.py" = ["T20"]
 "plumbum/commands/base.py" = ["SIM115"]
 "plumbum/commands/daemons.py" = ["SIM115"]
+
+[tool.codespell]
+ignore-words-list = "ans,switchs,hart,ot,twoo,fo"
+skip = "*.po"
