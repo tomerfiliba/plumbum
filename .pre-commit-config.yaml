@@ -32,7 +32,7 @@ repos:
   - id: mypy
     files: plumbum
     args: []
-    additional_dependencies: [typed-ast, types-paramiko, types-setuptools, pytest]
+    additional_dependencies: [typed-ast, types-paramiko, types-setuptools, pytest, importlib-resources]
 
 - repo: https://github.com/abravalheri/validate-pyproject
   rev: "v0.16"
