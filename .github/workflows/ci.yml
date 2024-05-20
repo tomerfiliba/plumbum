@@ -28,26 +28,23 @@ jobs:
         python-version: "3.x"
     - uses: pre-commit/action@v3.0.1
     - name: pylint
-      run: |
-        echo "::add-matcher::$GITHUB_WORKSPACE/.github/matchers/pylint.json"
-        pipx run --python python nox -s pylint
+      run: pipx run --python python nox -s pylint -- --output-format=github
 
   tests:
     name: Tests on 🐍 ${{ matrix.python-version }} ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.6", "3.8", "3.11", "3.12"]
+        python-version: ["3.8", "3.10", "3.12"]
         os: [ubuntu-latest, windows-latest, macos-13]
         include:
         - python-version: 'pypy-3.8'
           os: ubuntu-latest
         - python-version: 'pypy-3.10'
           os: ubuntu-latest
-        - python-version: '3.6'
-          os: ubuntu-20.04
-        exclude:
-        - python-version: '3.6'
+        - python-version: '3.9'
+          os: ubuntu-latest
+        - python-version: '3.13'
           os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
@@ -60,19 +57,21 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
 
-    - uses: actions/cache@v4
-      if: runner.os == 'Linux' && startsWith(matrix.python-version, 'pypy')
+    - name: Setup uv (uncached)
+      uses: yezz123/setup-uv@v4
+      if: "!startsWith(matrix.python-version, 'pypy')"
+
+    - name: Setup uv (cached)
+      uses: hynek/setup-cached-uv@v1
+      if: "startsWith(matrix.python-version, 'pypy')"
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('setup.cfg') }}
-        restore-keys: |
-          ${{ runner.os }}-${{ matrix.python-version }}-pip-
+        cache-suffix: -${{ matrix.python-version }}
 
     - name: Install
       run: |
-        pip install wheel coveralls pytest-github-actions-annotate-failures
-        pip install -e .[dev]
+        uv pip install --system -e.[test] pytest-github-actions-annotate-failures --reinstall-package plumbum
 
     - name: Setup SSH tests
       if: runner.os != 'Windows'
@@ -92,7 +91,7 @@ jobs:
       run: pytest --cov --run-optional-tests=ssh,sudo
 
     - name: Upload coverage
-      run: coveralls --service=github
+      run: pipx run coveralls --service=github
       env:
         COVERALLS_PARALLEL: true
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -100,7 +99,7 @@ jobs:
 
   coverage:
     needs: [tests]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/setup-python@v5
       with:

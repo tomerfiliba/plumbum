@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import collections.abc
 import contextlib
 import inspect
 from abc import ABC, abstractmethod
-from typing import Callable, Generator, List, Union
+from typing import Callable, Generator
 
 from plumbum import local
 from plumbum.cli.i18n import get_translation_for
@@ -464,10 +466,10 @@ class Set(Validator):
 
     def __init__(
         self,
-        *values: Union[str, Callable[[str], str]],
+        *values: str | Callable[[str], str],
         case_sensitive: bool = False,
-        csv: Union[bool, str] = False,
-        all_markers: "collections.abc.Set[str]" = frozenset(),
+        csv: bool | str = False,
+        all_markers: collections.abc.Set[str] = frozenset(),
     ) -> None:
         self.case_sensitive = case_sensitive
         if isinstance(csv, bool):
@@ -501,7 +503,7 @@ class Set(Validator):
             with contextlib.suppress(ValueError):
                 yield opt(value)
 
-    def __call__(self, value: str, check_csv: bool = True) -> Union[str, List[str]]:
+    def __call__(self, value: str, check_csv: bool = True) -> str | list[str]:
         items = list(self._call_iter(value, check_csv))
         if not items:
             msg = f"Invalid value: {value} (Expected one of {self.values})"

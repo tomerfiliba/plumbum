@@ -3,10 +3,11 @@ Terminal-related utilities
 --------------------------
 """
 
+from __future__ import annotations
+
 import contextlib
 import os
 import sys
-from typing import List, Optional
 
 from plumbum import local
 
@@ -24,7 +25,7 @@ __all__ = [
 ]
 
 
-def __dir__() -> List[str]:
+def __dir__() -> list[str]:
     return __all__
 
 
@@ -35,7 +36,7 @@ def readline(message: str = "") -> str:
     return sys.stdin.readline()
 
 
-def ask(question: str, default: Optional[bool] = None) -> bool:
+def ask(question: str, default: bool | None = None) -> bool:
     """
     Presents the user with a yes/no question.
 

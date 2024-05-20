@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import nox
 
-ALL_PYTHONS = ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+ALL_PYTHONS = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
 
-nox.options.sessions = ["lint", "tests"]
+nox.needs_version = ">=2024.3.2"
+nox.options.sessions = ["lint", "pylint", "tests"]
+nox.options.default_venv_backend = "uv|virtualenv"
 
 
 @nox.session(reuse_venv=True)
@@ -22,7 +24,7 @@ def pylint(session):
     Run pylint.
     """
 
-    session.install(".", "paramiko", "ipython", "pylint~=3.1.0")
+    session.install(".", "paramiko", "ipython", "pylint")
     session.run("pylint", "plumbum", *session.posargs)
 
 
@@ -31,7 +33,7 @@ def tests(session):
     """
     Run the unit and regular tests.
     """
-    session.install("-e", ".[dev]")
+    session.install("-e", ".[test]")
     session.run("pytest", *session.posargs, env={"PYTHONTRACEMALLOC": "5"})
 
 

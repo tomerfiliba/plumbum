@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from plumbum import cli, colors
 
 # from plumbum.colorlib import HTMLStyle, StyleFactory

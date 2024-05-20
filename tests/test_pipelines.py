@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from __future__ import annotations
 
 import pytest
 
@@ -75,7 +75,7 @@ for line in sys.stdin:
     return plumbum.local["python"][process]
 
 
-def get_output_with_iter_lines(cmd: BaseCommand) -> Tuple[List[str], List[str]]:
+def get_output_with_iter_lines(cmd: BaseCommand) -> tuple[list[str], list[str]]:
     stderr, stdout = [], []
     proc = cmd.popen()
     for stdout_line, stderr_line in proc.iter_lines(retcode=[0, None]):

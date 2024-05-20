@@ -4,6 +4,8 @@ and attributes like bold and
 underlined text. It also provides ``reset`` to recover the normal font.
 """
 
+from __future__ import annotations
+
 import sys
 
 from .factories import StyleFactory

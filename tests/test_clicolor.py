@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from plumbum import cli, colors
 
 colors.use_color = 3

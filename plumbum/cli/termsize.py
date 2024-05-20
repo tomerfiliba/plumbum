@@ -3,17 +3,18 @@ Terminal size utility
 ---------------------
 """
 
+from __future__ import annotations
+
 import contextlib
 import os
 import platform
 import warnings
 from struct import Struct
-from typing import Optional, Tuple
 
 from plumbum import local
 
 
-def get_terminal_size(default: Tuple[int, int] = (80, 25)) -> Tuple[int, int]:
+def get_terminal_size(default: tuple[int, int] = (80, 25)) -> tuple[int, int]:
     """
     Get width and height of console; works on linux, os x, windows and cygwin
 
@@ -73,7 +74,7 @@ def _get_terminal_size_tput():  # pragma: no cover
         return None
 
 
-def _ioctl_GWINSZ(fd: int) -> Optional[Tuple[int, int]]:
+def _ioctl_GWINSZ(fd: int) -> tuple[int, int] | None:
     yx = Struct("hh")
     try:
         import fcntl
@@ -85,7 +86,7 @@ def _ioctl_GWINSZ(fd: int) -> Optional[Tuple[int, int]]:
         return None
 
 
-def _get_terminal_size_linux() -> Optional[Tuple[int, int]]:
+def _get_terminal_size_linux() -> tuple[int, int] | None:
     cr = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(1) or _ioctl_GWINSZ(2)
     if not cr:
         with contextlib.suppress(Exception):

@@ -1,5 +1,7 @@
 """Test that PuttyMachine initializes its SshMachine correctly"""
 
+from __future__ import annotations
+
 import pytest
 
 from plumbum import PuttyMachine, SshMachine

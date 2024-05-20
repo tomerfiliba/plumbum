@@ -35,6 +35,8 @@ Include dirs: ['foo/bar', 'spam/eggs']
 Compiling: ('x.cpp', 'y.cpp', 'z.cpp')
 """
 
+from __future__ import annotations
+
 import logging
 
 from plumbum import cli
