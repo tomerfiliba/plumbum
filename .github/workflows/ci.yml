@@ -59,13 +59,13 @@ jobs:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
 
-    - name: Setup uv
-      uses: yezz123/setup-uv@v4
+    - uses: hynek/setup-cached-uv@v1
+      with:
+        cache-suffix: -${{ matrix.python-version }}
 
     - name: Install
       run: |
-        uv pip install --system pip install pytest-github-actions-annotate-failures
-        uv pip install --system -e .[test]
+        uv pip install --system -e.[test] pytest-github-actions-annotate-failures --reinstall-package plumbum
 
     - name: Setup SSH tests
       if: runner.os != 'Windows'

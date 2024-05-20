@@ -658,7 +658,7 @@ class Style(metaclass=ABCMeta):
                 else:
                     raise ColorNotFound(f"The code {value} is not recognised")
         except StopIteration:
-            return
+            pass
 
     @classmethod
     def string_filter_ansi(cls, colored_string):
