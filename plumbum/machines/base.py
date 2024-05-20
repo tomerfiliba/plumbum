@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from plumbum.commands.processes import (
     CommandNotFound,
     ProcessExecutionError,

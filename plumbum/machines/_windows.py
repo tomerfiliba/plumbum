@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import struct
 
 LFANEW_OFFSET = 30 * 2

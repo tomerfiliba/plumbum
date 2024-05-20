@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from plumbum import cli, local
 from plumbum.cli.terminal import get_terminal_size
 

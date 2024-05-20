@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .application import Application
 from .config import Config, ConfigINI
 from .switches import (

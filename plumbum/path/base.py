@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import builtins
 import io
 import itertools
 import operator
@@ -162,7 +165,7 @@ class Path(str, ABC):
 
     @property
     @abstractmethod
-    def suffixes(self) -> typing.List[str]:
+    def suffixes(self) -> list[str]:
         """This is a list of all suffixes"""
 
     @property
@@ -180,7 +183,7 @@ class Path(str, ABC):
         attribute that holds the string-name of the group"""
 
     @abstractmethod
-    def as_uri(self, scheme: typing.Optional[str] = None) -> str:
+    def as_uri(self, scheme: str | None = None) -> str:
         """Returns a universal resource identifier. Use ``scheme`` to force a scheme."""
 
     @abstractmethod
@@ -192,7 +195,7 @@ class Path(str, ABC):
         """Joins this path with any number of paths"""
 
     @abstractmethod
-    def list(self: _PathImpl) -> typing.List[_PathImpl]:
+    def list(self: _PathImpl) -> builtins.list[_PathImpl]:
         """Returns the files in this directory"""
 
     @abstractmethod
@@ -239,9 +242,7 @@ class Path(str, ABC):
         """Returns a path with the name replaced"""
 
     @abstractmethod
-    def with_suffix(
-        self: _PathImpl, suffix: str, depth: typing.Optional[int] = 1
-    ) -> _PathImpl:
+    def with_suffix(self: _PathImpl, suffix: str, depth: int | None = 1) -> _PathImpl:
         """Returns a path with the suffix replaced. Up to last ``depth`` suffixes will be
         replaced. None will replace all suffixes. If there are less than ``depth`` suffixes,
         this will replace all suffixes. ``.tar.gz`` is an example where ``depth=2`` or
@@ -254,8 +255,8 @@ class Path(str, ABC):
 
     @abstractmethod
     def glob(
-        self: _PathImpl, pattern: typing.Union[str, typing.Iterable[str]]
-    ) -> typing.List[_PathImpl]:
+        self: _PathImpl, pattern: str | typing.Iterable[str]
+    ) -> builtins.list[_PathImpl]:
         """Returns a (possibly empty) list of paths that matched the glob-pattern under this path"""
 
     @abstractmethod
@@ -298,18 +299,16 @@ class Path(str, ABC):
         """
 
     @abstractmethod
-    def open(
-        self, mode: str = "r", *, encoding: typing.Optional[str] = None
-    ) -> io.IOBase:
+    def open(self, mode: str = "r", *, encoding: str | None = None) -> io.IOBase:
         """opens this path as a file"""
 
     @abstractmethod
-    def read(self, encoding: typing.Optional[str] = None) -> str:
+    def read(self, encoding: str | None = None) -> str:
         """returns the contents of this file as a ``str``. By default the data is read
         as text, but you can specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
 
     @abstractmethod
-    def write(self, data: typing.AnyStr, encoding: typing.Optional[str] = None) -> None:
+    def write(self, data: typing.AnyStr, encoding: str | None = None) -> None:
         """writes the given data to this file. By default the data is written as-is
         (either text or binary), but you can specify the encoding, e.g., ``'latin1'``
         or ``'utf8'``"""
@@ -347,7 +346,7 @@ class Path(str, ABC):
         return mode
 
     @abstractmethod
-    def access(self, mode: typing.Union[int, str] = 0) -> bool:
+    def access(self, mode: int | str = 0) -> bool:
         """Test file existence or permission bits
 
         :param mode: a bitwise-or of access bits, or a string-representation thereof:

@@ -35,7 +35,7 @@ of command-line interface (CLI) programs.
 See https://plumbum.readthedocs.io for full details
 """
 
-import sys
+from __future__ import annotations
 
 # Avoids a circular import error later
 import plumbum.path  # noqa: F401
@@ -83,35 +83,7 @@ __all__ = (
     "cmd",
 )
 
-# ===================================================================================================
-# Module hack: ``from plumbum.cmd import ls``
-# Can be replaced by a real module with __getattr__ after Python 3.6 is dropped
-# ===================================================================================================
-
-
-if sys.version_info < (3, 7):  # noqa: UP036
-    from types import ModuleType
-    from typing import List
-
-    class LocalModule(ModuleType):
-        """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
-
-        __all__ = ()  # to make help() happy
-        __package__ = __name__
-
-        def __getattr__(self, name):
-            try:
-                return local[name]
-            except CommandNotFound:
-                raise AttributeError(name) from None
-
-        __path__: List[str] = []
-        __file__ = __file__
-
-    cmd = LocalModule(__name__ + ".cmd", LocalModule.__doc__)
-    sys.modules[cmd.__name__] = cmd
-else:
-    from . import cmd
+from . import cmd
 
 
 def __dir__():

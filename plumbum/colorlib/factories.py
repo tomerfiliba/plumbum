@@ -2,6 +2,8 @@
 Color-related factories. They produce Styles.
 """
 
+from __future__ import annotations
+
 import functools
 import operator
 import sys

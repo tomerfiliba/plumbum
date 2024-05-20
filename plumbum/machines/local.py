@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import contextlib
 import logging
 import os
@@ -9,7 +11,6 @@ import time
 from contextlib import contextmanager
 from subprocess import PIPE, Popen
 from tempfile import mkdtemp
-from typing import Dict, Tuple
 
 from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.commands.daemons import posix_daemonize, win32_daemonize
@@ -143,7 +144,7 @@ class LocalMachine(BaseMachine):
 
     custom_encoding = sys.getfilesystemencoding()
     uname = platform.uname()[0]
-    _program_cache: Dict[Tuple[str, str], LocalPath] = {}
+    _program_cache: dict[tuple[str, str], LocalPath] = {}
 
     def __init__(self):
         self._as_user_stack = []

@@ -7,6 +7,8 @@ but merely provides the workhorse for finding and manipulating colors.
 With the ``Style`` class, any color can be directly called or given to a with statement.
 """
 
+from __future__ import annotations
+
 import contextlib
 import os
 import platform
@@ -14,7 +16,7 @@ import re
 import sys
 from abc import ABCMeta, abstractmethod
 from copy import copy
-from typing import IO, Dict, Optional, Union
+from typing import IO
 
 from .names import (
     FindNearest,
@@ -170,6 +172,8 @@ class Color:
             number = FindNearest(*self.rgb).only_simple()
         elif self.representation in (3, 4):
             number = FindNearest(*self.rgb).all_fast()
+        else:
+            raise AssertionError("Invalid representation, needs to be 0-4")
 
         if self.number is None:
             self.number = number
@@ -339,9 +343,9 @@ class Style(metaclass=ABCMeta):
     """The class of color to use. Never hardcode ``Color`` call when writing a Style
     method."""
 
-    attribute_names: Union[Dict[str, str], Dict[str, int]]
+    attribute_names: dict[str, str] | dict[str, int]
 
-    _stdout: Optional[IO] = None
+    _stdout: IO | None = None
     end = "\n"
     """The endline character. Override if needed in subclasses."""
 

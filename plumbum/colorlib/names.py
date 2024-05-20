@@ -6,7 +6,7 @@ You can access the index of the colors with names.index(name). You can access th
 rgb values with ``r=int(html[n][1:3],16)``, etc.
 """
 
-from typing import Tuple
+from __future__ import annotations
 
 color_names = """\
 black
@@ -417,7 +417,7 @@ class FindNearest:
         return colors[min(range(len(distances)), key=distances.__getitem__)]
 
 
-def from_html(color: str) -> Tuple[int, int, int]:
+def from_html(color: str) -> tuple[int, int, int]:
     """Convert html hex code to rgb."""
     if len(color) != 7 or color[0] != "#":
         raise ValueError("Invalid length of html code")

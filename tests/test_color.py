@@ -1,4 +1,6 @@
 # Just check to see if this file is importable
+from __future__ import annotations
+
 from plumbum.cli.image import Image  # noqa: F401
 from plumbum.colorlib.names import FindNearest, color_html
 from plumbum.colorlib.styles import (  # noqa: F401

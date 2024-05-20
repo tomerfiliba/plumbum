@@ -12,7 +12,7 @@ description = "Plumbum: shell combinators library"
 readme = "README.rst"
 authors = [{ name="Tomer Filiba", email="tomerfiliba@gmail.com" }]
 license = { file="LICENSE" }
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 dynamic = ["version"]
 dependencies = [
     "pywin32; platform_system=='Windows' and platform_python_implementation!='PyPy'",
@@ -24,8 +24,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -57,13 +55,17 @@ Cheatsheet = "https://plumbum.readthedocs.io/en/latest/quickref.html"
 
 
 [project.optional-dependencies]
-dev = [
+test = [
+    "coverage[toml]",
     "paramiko",
     "psutil",
-    "pytest>=6.0",
     "pytest-cov",
     "pytest-mock",
     "pytest-timeout",
+    "pytest>=6.0",
+]
+dev = [
+    "plumbum[test]",
 ]
 docs = [
     "sphinx>=4.0.0",
@@ -106,10 +108,10 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 minversion = "6.0"
-addopts = ["-ra", "--showlocals", "--cov-config=setup.cfg", "--strict-markers", "--strict-config"]
+addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config", "--cov-config=pyproject.toml" ]
 norecursedirs = ["examples", "experiments"]
 filterwarnings = [
-  "always"
+  "always",
 ]
 log_cli_level = "info"
 xfail_strict = true
@@ -122,7 +124,7 @@ optional_tests = """
 
 
 [tool.pylint]
-master.py-version = "3.6"
+master.py-version = "3.8"
 master.jobs = "0"
 master.load-plugins = ["pylint.extensions.no_self_use"]
 reports.output-format = "colorized"
@@ -169,7 +171,6 @@ messages_control.disable = [
 ]
 
 [tool.ruff]
-target-version = "py37"
 exclude = ["docs/conf.py"]
 
 [tool.ruff.lint]
@@ -195,11 +196,12 @@ ignore = [
   "E501",
   "PLR",
   "PT004",
-  "PT011",  # TODO: add match parameter
+  "PT011",   # TODO: add match parameter
   "RUF012",  # ClassVar required if mutable
   "ISC001",  # conflicts with formatter
 ]
 flake8-unused-arguments.ignore-variadic-names = true
+isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "examples/*" = ["T20"]
@@ -212,3 +214,22 @@ flake8-unused-arguments.ignore-variadic-names = true
 [tool.codespell]
 ignore-words-list = "ans,switchs,hart,ot,twoo,fo"
 skip = "*.po"
+
+
+[tool.coverage.run]
+branch = true
+relative_files = true
+source_pkgs = ["plumbum"]
+omit = [
+    "*ipython*.py",
+    "*__main__.py",
+    "*_windows.py",
+]
+
+[tool.coverage.report]
+exclude_also = [
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

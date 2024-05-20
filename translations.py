@@ -2,6 +2,7 @@
 
 # If you are on macOS and using brew, you might need the following first:
 # export PATH="/usr/local/opt/gettext/bin:$PATH"
+from __future__ import annotations
 
 from plumbum import FG, local
 from plumbum.cmd import msgfmt, msgmerge, xgettext
