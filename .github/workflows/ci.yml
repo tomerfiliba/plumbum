@@ -59,15 +59,11 @@ jobs:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
 
-    - name: Setup uv (uncached)
-      uses: yezz123/setup-uv@v4
-      if: "!startsWith(matrix.python-version, 'pypy')"
-
-    - name: Setup uv (cached)
-      uses: hynek/setup-cached-uv@v1
-      if: "startsWith(matrix.python-version, 'pypy')"
+    - name: Setup uv
+      uses: henryiii/setup-cached-uv@patch-1
       with:
         cache-suffix: -${{ matrix.python-version }}
+        use-cache: ${{startsWith(matrix.python-version, 'pypy')}}
 
     - name: Install
       run: |
