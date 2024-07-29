@@ -64,7 +64,7 @@ jobs:
       if: "!startsWith(matrix.python-version, 'pypy')"
 
     - name: Setup uv (cached)
-      uses: hynek/setup-cached-uv@v1
+      uses: hynek/setup-cached-uv@v2
       if: "startsWith(matrix.python-version, 'pypy')"
       with:
         cache-suffix: -${{ matrix.python-version }}
