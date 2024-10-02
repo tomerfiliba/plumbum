@@ -16,7 +16,7 @@ import re
 import sys
 from abc import ABCMeta, abstractmethod
 from copy import copy
-from typing import IO
+from typing import IO, ClassVar
 
 from .names import (
     FindNearest,
@@ -343,7 +343,9 @@ class Style(metaclass=ABCMeta):
     """The class of color to use. Never hardcode ``Color`` call when writing a Style
     method."""
 
-    attribute_names: dict[str, str] | dict[str, int]
+    # These must be defined by subclasses
+    # pylint: disable-next=declare-non-slot
+    attribute_names: ClassVar[dict[str, str] | dict[str, int]]
 
     _stdout: IO | None = None
     end = "\n"

@@ -125,9 +125,9 @@ optional_tests = """
 
 
 [tool.pylint]
-master.py-version = "3.8"
-master.jobs = "0"
-master.load-plugins = ["pylint.extensions.no_self_use"]
+py-version = "3.8"
+jobs = "0"
+load-plugins = ["pylint.extensions.no_self_use"]
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"
 messages_control.enable = [
@@ -162,6 +162,7 @@ messages_control.disable = [
   "too-many-public-methods",
   "too-many-return-statements",
   "too-many-statements",
+  "too-many-positional-arguments",
   "unidiomatic-typecheck", # TODO: might be able to remove
   "unnecessary-lambda-assignment", # TODO: 4 instances
   "unused-import", # identical to flake8 but has typing false positives
