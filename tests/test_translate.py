@@ -23,6 +23,10 @@ def french():
         locale.setlocale(locale.LC_ALL, "fr_FR.utf-8")
         reload_cli()
         yield
+    except locale.Error:
+        pytest.skip(
+            "No fr_FR locale found, run 'sudo locale-gen fr_FR.UTF-8' to run this test"
+        )
     finally:
         locale.setlocale(locale.LC_ALL, "")
         reload_cli()

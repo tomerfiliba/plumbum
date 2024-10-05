@@ -60,7 +60,7 @@ jobs:
         allow-prereleases: true
 
     - name: Add locale for locale test
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' && matrix.python-version != '3.10'
       run: sudo locale-gen fr_FR.UTF-8
 
     - name: Setup uv (cached)
