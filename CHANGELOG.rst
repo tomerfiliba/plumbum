@@ -1,11 +1,20 @@
+1.9.0
+-----
+
+* Drop Python <3.8 (`#683 <https://github.com/tomerfiliba/plumbum/pull/683>`_)
+* Add 3.13 testing and classifiers (`#690 <https://github.com/tomerfiliba/plumbum/pull/690>`_)
+* setuptools-less installs couldn't translate, add test (`#373 <https://github.com/tomerfiliba/plumbum/pull/373>`_)
+* Use importlib resources (`#680 <https://github.com/tomerfiliba/plumbum/pull/680>`_)
+* Replaced ``NotImplementedError`` by ``NotImplemented`` (`#667 <https://github.com/tomerfiliba/plumbum/pull/667>`_)
+
 1.8.3
 -----
 
-* Fix StdinDataRedirection's formulate() method by @nebbish in https://github.com/tomerfiliba/plumbum/pull/629
-* Missing non-zero return code from TEE'd pipe by @vient in https://github.com/tomerfiliba/plumbum/pull/661
-* Fix stalling in Pipeline command by @astaric in https://github.com/tomerfiliba/plumbum/pull/632
-* Use high-speed method for C locale too by @henryiii in https://github.com/tomerfiliba/plumbum/pull/681
-* Update index.rst - fix broken link for sh project by @mcint in https://github.com/tomerfiliba/plumbum/pull/658
+* Fix StdinDataRedirection's formulate() method (`#629 <https://github.com/tomerfiliba/plumbum/pull/629>`_)
+* Missing non-zero return code from TEE'd pipe (`661 <https://github.com/tomerfiliba/plumbum/pull/661>`_)
+* Fix stalling in Pipeline command (`#632 <https://github.com/tomerfiliba/plumbum/pull/632>`_)
+* Use high-speed method for C locale too (`#691 <https://github.com/tomerfiliba/plumbum/pull/681>`_)
+* Update index.rst - fix broken link for sh project (`#658 <https://github.com/tomerfiliba/plumbum/pull/658>`_)
 
 1.8.2
 -----
