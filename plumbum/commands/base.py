@@ -437,9 +437,11 @@ class Pipeline(BaseCommand):
 
 class BaseRedirection(BaseCommand):
     __slots__ = ("cmd", "file")
-    SYM: ClassVar[str]
-    KWARG: ClassVar[str]
-    MODE: ClassVar[str]
+
+    # These must be defined by subclasses
+    SYM: ClassVar[str]  # pylint: disable=declare-non-slot
+    KWARG: ClassVar[str]  # pylint: disable=declare-non-slot
+    MODE: ClassVar[str]  # pylint: disable=declare-non-slot
 
     def __init__(self, cmd, file):
         self.cmd = cmd
@@ -563,8 +565,10 @@ class StdinDataRedirection(BaseCommand):
 
 
 class ConcreteCommand(BaseCommand):
-    QUOTE_LEVEL: ClassVar[int]
     __slots__ = ("executable",)
+
+    # These must be defined by subclasses
+    QUOTE_LEVEL: ClassVar[int]  # pylint: disable=declare-non-slot
 
     def __init__(self, executable, encoding):
         self.executable = executable

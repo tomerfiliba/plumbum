@@ -12,7 +12,7 @@ env:
 jobs:
   dist:
     name: Dist
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
@@ -22,12 +22,15 @@ jobs:
 
   deploy:
     name: Deploy
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: [dist]
     if: github.event_name == 'release' && github.event.action == 'published'
-    environment: pypi
+    environment:
+      name: pypi
+      url: https://pypi.org/p/plumbum
     permissions:
       id-token: write
+      attestations: write
 
     steps:
     - uses: actions/download-artifact@v4
@@ -35,4 +38,11 @@ jobs:
         name: Packages
         path: dist
 
+    - name: Generate artifact attestation for sdist and wheel
+      uses: actions/attest-build-provenance@v1
+      with:
+        subject-path: "dist/*"
+
     - uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        attestations: true
