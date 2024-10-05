@@ -27,8 +27,10 @@ jobs:
       with:
         python-version: "3.x"
     - uses: pre-commit/action@v3.0.1
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v3
     - name: pylint
-      run: pipx run --python python nox -s pylint -- --output-format=github
+      run: uvx nox -s pylint -- --output-format=github
 
   tests:
     name: Tests on 🐍 ${{ matrix.python-version }} ${{ matrix.os }}
@@ -53,22 +55,31 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Setup uv (cached)
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+        cache-dependency-glob: "**/pyproject.toml"
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
+      if: matrix.python-version != '3.13'
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
+
+    - name: Set up Python ${{ matrix.python-version }} (uv)
+      if: matrix.python-version == '3.13'
+      run: uv python install 3.13
 
     - name: Add locale for locale test
       if: runner.os == 'Linux' && matrix.python-version != '3.10'
       run: sudo locale-gen fr_FR.UTF-8
 
-    - name: Setup uv (cached)
-      uses: hynek/setup-cached-uv@v2
-
     - name: Install
       run: |
-        uv pip install --system -e.[test] pytest-github-actions-annotate-failures --reinstall-package plumbum
+        uv venv --python ${{ matrix.python-version }}
+        uv pip install -e.[test] pytest-github-actions-annotate-failures
 
     - name: Setup SSH tests
       if: runner.os != 'Windows'
@@ -85,10 +96,10 @@ jobs:
         ssh localhost -vvv "echo 'Worked!'"
 
     - name: Test with pytest
-      run: pytest --cov --run-optional-tests=ssh,sudo
+      run: uv run pytest --cov --run-optional-tests=ssh,sudo
 
     - name: Upload coverage
-      run: pipx run coveralls --service=github
+      run: uvx coveralls --service=github
       env:
         COVERALLS_PARALLEL: true
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
