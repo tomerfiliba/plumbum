@@ -628,7 +628,7 @@ class TestParamikoMachine(BaseRemoteMachineTest):
         with self._connect() as rem:
             try:
                 rem["ls"] | rem["cat"]
-            except NotImplementedError:
+            except (NotImplementedError, TypeError):
                 pass
             else:
                 pytest.fail("Should not pipe")

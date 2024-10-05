@@ -190,22 +190,22 @@ class ParamikoMachine(BaseRemoteMachine):
 
     class RemoteCommand(BaseRemoteMachine.RemoteCommand):  # type: ignore[valid-type, misc]
         def __or__(self, *_):
-            raise NotImplementedError("Not supported with ParamikoMachine")
+            return NotImplemented
 
         def __gt__(self, *_):
-            raise NotImplementedError("Not supported with ParamikoMachine")
+            return NotImplemented
 
         def __rshift__(self, *_):
-            raise NotImplementedError("Not supported with ParamikoMachine")
+            return NotImplemented
 
         def __ge__(self, *_):
-            raise NotImplementedError("Not supported with ParamikoMachine")
+            return NotImplemented
 
         def __lt__(self, *_):
-            raise NotImplementedError("Not supported with ParamikoMachine")
+            return NotImplemented
 
         def __lshift__(self, *_):
-            raise NotImplementedError("Not supported with ParamikoMachine")
+            return NotImplemented
 
     def __init__(
         self,
