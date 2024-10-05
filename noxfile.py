@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import nox
 
-ALL_PYTHONS = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
-
-nox.needs_version = ">=2024.3.2"
-nox.options.sessions = ["lint", "pylint", "tests"]
+nox.needs_version = ">=2024.4.15"
 nox.options.default_venv_backend = "uv|virtualenv"
+
+ALL_PYTHONS = [
+    c.split()[-1]
+    for c in nox.project.load_toml("pyproject.toml")["project"]["classifiers"]
+    if c.startswith("Programming Language :: Python :: 3.")
+]
 
 
 @nox.session(reuse_venv=True)
@@ -37,7 +40,7 @@ def tests(session):
     session.run("pytest", *session.posargs, env={"PYTHONTRACEMALLOC": "5"})
 
 
-@nox.session(reuse_venv=True)
+@nox.session(reuse_venv=True, default=False)
 def docs(session):
     """
     Build the docs. Pass "serve" to serve.
@@ -55,7 +58,7 @@ def docs(session):
             session.log("Unsupported argument to docs")
 
 
-@nox.session
+@nox.session(default=False)
 def build(session):
     """
     Build an SDist and wheel.
