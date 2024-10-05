@@ -59,6 +59,10 @@ jobs:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
 
+    - name: Add locale for locale test
+      if: runner.os == 'Linux'
+      run: sudo locale-gen fr_FR.UTF-8
+
     - name: Setup uv (cached)
       uses: hynek/setup-cached-uv@v2
 

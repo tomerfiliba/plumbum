@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import locale
+import os
+
+DIR = os.path.abspath(os.path.dirname(__file__))
 
 # High performance method for English (no translation needed)
 loc = locale.getlocale()[0]
@@ -23,7 +26,6 @@ if loc is None or loc.startswith("en") or loc == "C":
 
 else:
     import gettext
-    import os
 
     # If not installed with setuptools, this might not be available
     try:
@@ -31,25 +33,26 @@ else:
     except ImportError:
         pkg_resources = None  # type: ignore[assignment]
 
-    local_dir = os.path.basename(__file__)
-
     def get_translation_for(package_name: str) -> gettext.NullTranslations:  # type: ignore[misc]
         """Find and return gettext translation for package
         (Try to find folder manually if setuptools does not exist)
         """
+        assert loc is not None
 
         if "." in package_name:
             package_name = ".".join(package_name.split(".")[:-1])
         localedir = None
 
         if pkg_resources is None:
-            mydir = os.path.join(local_dir, "i18n")
+            mydir = os.path.join(DIR, "i18n")
         else:
             mydir = pkg_resources.resource_filename(package_name, "i18n")
 
         for localedir in mydir, None:
-            localefile = gettext.find(package_name, localedir)
+            localefile = gettext.find(package_name, localedir, languages=[loc])
             if localefile:
                 break
 
-        return gettext.translation(package_name, localedir=localedir, fallback=True)
+        return gettext.translation(
+            package_name, localedir=localedir, languages=[loc], fallback=True
+        )
