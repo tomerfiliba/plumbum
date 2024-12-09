@@ -28,7 +28,7 @@ jobs:
         python-version: "3.x"
     - uses: pre-commit/action@v3.0.1
     - name: Setup uv
-      uses: astral-sh/setup-uv@v3
+      uses: astral-sh/setup-uv@v4
     - name: pylint
       run: uvx nox -s pylint -- --output-format=github
 
@@ -56,7 +56,7 @@ jobs:
         fetch-depth: 0
 
     - name: Setup uv (cached)
-      uses: astral-sh/setup-uv@v3
+      uses: astral-sh/setup-uv@v4
       with:
         enable-cache: true
         cache-suffix: ${{ matrix.os }}-${{ matrix.python-version }}
