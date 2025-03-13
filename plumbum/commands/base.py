@@ -41,11 +41,6 @@ class RedirectionError(Exception):
 # ===================================================================================================
 # Utilities
 # ===================================================================================================
-# modified from the stdlib pipes module for windows
-_safechars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@%_-+=:,./"
-_funnychars = '"`$\\'
-
-
 def shquote(text):
     """Quotes the given text with shell escaping (assumes as syntax similar to ``sh``)"""
     text = str(text)
