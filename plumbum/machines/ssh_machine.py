@@ -26,7 +26,7 @@ class SshTunnel:
     """An object representing an SSH tunnel (created by
     :func:`SshMachine.tunnel <plumbum.machines.remote.SshMachine.tunnel>`)"""
 
-    __slots__ = ["_session", "_lport", "_dport", "_reverse", "__weakref__"]
+    __slots__ = ["__weakref__", "_dport", "_lport", "_reverse", "_session"]
 
     def __init__(self, session, lport, dport, reverse):
         self._session = session

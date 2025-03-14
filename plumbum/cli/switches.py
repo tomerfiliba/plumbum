@@ -422,7 +422,7 @@ class Range(Validator):
     :param end: The maximal value
     """
 
-    __slots__ = ("start", "end")
+    __slots__ = ("end", "start")
 
     def __init__(self, start, end):
         self.start = start
@@ -508,7 +508,7 @@ class Set(Validator):
         if not items:
             msg = f"Invalid value: {value} (Expected one of {self.values})"
             raise ValueError(msg)
-        if self.csv and check_csv or len(items) > 1:
+        if (self.csv and check_csv) or len(items) > 1:
             return items
         return items[0]
 

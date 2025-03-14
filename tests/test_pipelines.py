@@ -46,7 +46,7 @@ def test_draining_stderr_with_stdout_redirect(tmp_path, generate_cmd, process_cm
     assert len(stdout) == 0
 
 
-@pytest.fixture()
+@pytest.fixture
 def generate_cmd(tmp_path):
     generate = tmp_path / "generate.py"
     generate.write_text(
@@ -60,7 +60,7 @@ for i in range(5000):
     return plumbum.local["python"][generate]
 
 
-@pytest.fixture()
+@pytest.fixture
 def process_cmd(tmp_path):
     process = tmp_path / "process.py"
     process.write_text(

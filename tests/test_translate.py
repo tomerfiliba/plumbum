@@ -17,7 +17,7 @@ def reload_cli():
     importlib.reload(plumbum.cli)
 
 
-@pytest.fixture()
+@pytest.fixture
 def french():
     try:
         locale.setlocale(locale.LC_ALL, "fr_FR.utf-8")

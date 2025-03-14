@@ -131,7 +131,7 @@ class ClosedRemoteMachine(Exception):
 
 
 class ClosedRemote:
-    __slots__ = ["_obj", "__weakref__"]
+    __slots__ = ["__weakref__", "_obj"]
 
     def __init__(self, obj):
         self._obj = obj

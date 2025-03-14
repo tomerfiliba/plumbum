@@ -5,11 +5,11 @@ from plumbum.machines.remote import BaseRemoteMachine, RemoteCommand
 from plumbum.machines.ssh_machine import PuttyMachine, SshMachine
 
 __all__ = (
+    "BaseRemoteMachine",
     "LocalCommand",
     "LocalMachine",
-    "local",
-    "BaseRemoteMachine",
-    "RemoteCommand",
     "PuttyMachine",
+    "RemoteCommand",
     "SshMachine",
+    "local",
 )

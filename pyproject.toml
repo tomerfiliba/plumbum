@@ -200,10 +200,9 @@ extend-select = [
 ignore = [
   "E501",
   "PLR",
-  "PT004",
+  "E721",    # Type comparisons (TODO)
   "PT011",   # TODO: add match parameter
   "RUF012",  # ClassVar required if mutable
-  "ISC001",  # conflicts with formatter
 ]
 flake8-unused-arguments.ignore-variadic-names = true
 isort.required-imports = ["from __future__ import annotations"]

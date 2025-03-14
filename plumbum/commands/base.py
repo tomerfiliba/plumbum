@@ -13,23 +13,23 @@ import plumbum.commands.modifiers
 from plumbum.commands.processes import iter_lines, run_proc
 
 __all__ = (
-    "iter_lines",
-    "run_proc",
-    "shquote",
-    "shquote_list",
-    "RedirectionError",
+    "ERROUT",
+    "AppendingStdoutRedirection",
     "BaseCommand",
-    "Pipeline",
     "BaseRedirection",
     "BoundCommand",
     "BoundEnvCommand",
     "ConcreteCommand",
-    "ERROUT",
+    "Pipeline",
+    "RedirectionError",
+    "StderrRedirection",
+    "StdinDataRedirection",
     "StdinRedirection",
     "StdoutRedirection",
-    "StderrRedirection",
-    "AppendingStdoutRedirection",
-    "StdinDataRedirection",
+    "iter_lines",
+    "run_proc",
+    "shquote",
+    "shquote_list",
 )
 
 
@@ -62,7 +62,7 @@ def shquote_list(seq):
 class BaseCommand:
     """Base of all command objects"""
 
-    __slots__ = ("cwd", "env", "custom_encoding", "__weakref__")
+    __slots__ = ("__weakref__", "custom_encoding", "cwd", "env")
 
     def __str__(self):
         return " ".join(self.formulate())
@@ -307,7 +307,7 @@ class BaseCommand:
 
 
 class BoundCommand(BaseCommand):
-    __slots__ = ("cmd", "args")
+    __slots__ = ("args", "cmd")
 
     def __init__(self, cmd, args):
         self.cmd = cmd
@@ -366,7 +366,7 @@ class BoundEnvCommand(BaseCommand):
 
 
 class Pipeline(BaseCommand):
-    __slots__ = ("srccmd", "dstcmd")
+    __slots__ = ("dstcmd", "srccmd")
 
     def __init__(self, srccmd, dstcmd):
         self.srccmd = srccmd

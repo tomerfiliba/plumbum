@@ -10,7 +10,7 @@ class TestTypedEnv:
         class E(TypedEnv):
             terminal = TypedEnv.Str("TERM")
             B = TypedEnv.Bool("BOOL", default=True)
-            I = TypedEnv.Int("INT INTEGER".split())  # noqa: E741  # noqa: E741
+            I = TypedEnv.Int(["INT", "INTEGER"])  # noqa: E741  # noqa: E741
             INTS = TypedEnv.CSV("CS_INTS", type=int)
 
         raw_env = {"TERM": "xterm", "CS_INTS": "1,2,3,4"}
@@ -37,9 +37,9 @@ class TestTypedEnv:
         e.B = False
         assert raw_env["BOOL"] == "no"
 
-        assert [1, 2, 3, 4] == e.INTS
+        assert e.INTS == [1, 2, 3, 4]
         e.INTS = [1, 2]
-        assert [1, 2] == e.INTS
+        assert e.INTS == [1, 2]
         e.INTS = [1, 2, 3, 4]
 
         with pytest.raises(KeyError):

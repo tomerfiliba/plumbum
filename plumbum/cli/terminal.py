@@ -15,13 +15,13 @@ from .progress import Progress
 from .termsize import get_terminal_size
 
 __all__ = [
-    "readline",
+    "Progress",
     "ask",
     "choose",
+    "get_terminal_size",
+    "get_terminal_size",
     "prompt",
-    "get_terminal_size",
-    "Progress",
-    "get_terminal_size",
+    "readline",
 ]
 
 
@@ -205,7 +205,7 @@ def hexdump(data_or_stream, bytes_per_line=16, aggregate=True):
         if skipped:
             yield "*"
         hexd_ljust = hexd.ljust(bytes_per_line * 3, " ")
-        yield f"{i*bytes_per_line:06x} | {hexd_ljust}| {text}"
+        yield f"{i * bytes_per_line:06x} | {hexd_ljust}| {text}"
         skipped = False
 
 

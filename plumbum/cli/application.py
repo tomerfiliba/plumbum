@@ -43,7 +43,7 @@ class ShowVersion(SwitchError):
 
 
 class SwitchParseInfo:
-    __slots__ = ["swname", "val", "index", "__weakref__"]
+    __slots__ = ["__weakref__", "index", "swname", "val"]
 
     def __init__(self, swname, val, index):
         self.swname = swname
@@ -603,7 +603,7 @@ class Application:
         exit code of the application.
 
         .. note::
-           Setting ``exit`` to ``False`` is intendend for testing/debugging purposes only -- do
+           Setting ``exit`` to ``False`` is intended for testing/debugging purposes only -- do
            not override it in other situations.
         """
         if argv is None:

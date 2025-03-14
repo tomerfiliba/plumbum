@@ -41,7 +41,7 @@ class TypedEnv(MutableMapping):
         assert False
     """
 
-    __slots__ = ["_env", "_defined_keys"]
+    __slots__ = ["_defined_keys", "_env"]
 
     class _BaseVar:
         def __init__(self, name, default=NO_DEFAULT):

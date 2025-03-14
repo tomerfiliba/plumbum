@@ -20,10 +20,10 @@ from .switches import (
 )
 
 __all__ = (
+    "CSV",
     "Application",
     "Config",
     "ConfigINI",
-    "CSV",
     "CountOf",
     "ExistingDirectory",
     "ExistingFile",

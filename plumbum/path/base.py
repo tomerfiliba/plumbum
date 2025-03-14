@@ -44,7 +44,7 @@ class Path(str, ABC):
         return self.join(other)
 
     def __getitem__(self, key):
-        if type(key) == str or isinstance(key, Path):  # noqa: E721
+        if type(key) == str or isinstance(key, Path):
             return self / key
         return str(self)[key]
 

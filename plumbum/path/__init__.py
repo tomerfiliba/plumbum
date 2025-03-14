@@ -7,10 +7,10 @@ from plumbum.path.utils import copy, delete, move
 
 __all__ = (
     "FSUser",
-    "Path",
-    "RelativePath",
     "LocalPath",
     "LocalWorkdir",
+    "Path",
+    "RelativePath",
     "RemotePath",
     "RemoteWorkdir",
     "copy",

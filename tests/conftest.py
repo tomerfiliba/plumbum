@@ -11,12 +11,12 @@ import pytest
 SDIR = os.path.dirname(os.path.abspath(__file__))
 
 
-@pytest.fixture()
+@pytest.fixture
 def testdir():
     os.chdir(SDIR)
 
 
-@pytest.fixture()
+@pytest.fixture
 def cleandir():
     newpath = tempfile.mkdtemp()
     os.chdir(newpath)
