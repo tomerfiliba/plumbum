@@ -57,6 +57,15 @@ Cheatsheet = "https://plumbum.readthedocs.io/en/latest/quickref.html"
 
 
 [project.optional-dependencies]
+ssh = [
+    "paramiko",
+]
+
+[tool.hatch]
+version.source = "vcs"
+build.hooks.vcs.version-file = "plumbum/version.py"
+
+[dependency-groups]
 test = [
     "coverage[toml]",
     "paramiko",
@@ -67,19 +76,12 @@ test = [
     "pytest>=6.0",
 ]
 dev = [
-    "plumbum[test]",
+    { include-group = "test" }
 ]
 docs = [
     "sphinx>=4.0.0",
     "sphinx-rtd-theme>=1.0.0",
 ]
-ssh = [
-    "paramiko",
-]
-
-[tool.hatch]
-version.source = "vcs"
-build.hooks.vcs.version-file = "plumbum/version.py"
 
 
 [tool.mypy]
