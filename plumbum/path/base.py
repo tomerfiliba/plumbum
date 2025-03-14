@@ -44,7 +44,7 @@ class Path(str, ABC):
         return self.join(other)
 
     def __getitem__(self, key):
-        if type(key) == str or isinstance(key, Path):  # noqa: E721
+        if type(key) == str or isinstance(key, Path):
             return self / key
         return str(self)[key]
 
@@ -308,7 +308,7 @@ class Path(str, ABC):
         as text, but you can specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
 
     @abstractmethod
-    def write(self, data: typing.AnyStr, encoding: str | None = None) -> None:
+    def write(self, data: str | bytes, encoding: str | None = None) -> None:
         """writes the given data to this file. By default the data is written as-is
         (either text or binary), but you can specify the encoding, e.g., ``'latin1'``
         or ``'utf8'``"""

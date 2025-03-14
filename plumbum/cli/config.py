@@ -22,7 +22,7 @@ class ConfigBase(ABC):
 
     """
 
-    __slots__ = "filename changed".split()
+    __slots__ = ["changed", "filename"]
 
     def __init__(self, filename):
         self.filename = local.path(filename)
@@ -76,7 +76,7 @@ class ConfigBase(ABC):
 
 class ConfigINI(ConfigBase):
     DEFAULT_SECTION = "DEFAULT"
-    slots = "parser".split()
+    slots = ["parser"]
 
     def __init__(self, filename):
         super().__init__(filename)

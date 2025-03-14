@@ -26,24 +26,24 @@ from plumbum.commands.processes import (
 )
 
 __all__ = (
-    "BaseCommand",
-    "ConcreteCommand",
-    "shquote",
-    "shquote_list",
-    "ERROUT",
     "BG",
+    "ERROUT",
     "FG",
     "NOHUP",
     "RETCODE",
     "TEE",
     "TF",
+    "BaseCommand",
+    "CommandNotFound",
+    "ConcreteCommand",
     "ExecutionModifier",
     "Future",
-    "CommandNotFound",
     "ProcessExecutionError",
     "ProcessLineTimedOut",
     "ProcessTimedOut",
     "run_proc",
+    "shquote",
+    "shquote_list",
 )
 
 

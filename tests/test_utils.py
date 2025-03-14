@@ -8,7 +8,7 @@ from plumbum.path.utils import copy, delete, move
 
 
 @skip_on_windows
-@pytest.mark.ssh()
+@pytest.mark.ssh
 def test_copy_move_delete():
     from plumbum.cmd import touch
 
@@ -16,9 +16,9 @@ def test_copy_move_delete():
         (dir / "orog").mkdir()
         (dir / "orog" / "rec").mkdir()
         for i in range(20):
-            touch(dir / "orog" / ("f%d.txt" % (i,)))
+            touch(dir / "orog" / f"f{i}.txt")
         for i in range(20, 40):
-            touch(dir / "orog" / "rec" / ("f%d.txt" % (i,)))
+            touch(dir / "orog" / "rec" / f"f{i}.txt")
 
         move(dir / "orog", dir / "orig")
 

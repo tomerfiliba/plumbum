@@ -166,7 +166,7 @@ class RemotePath(Path):
         return self.__class__(self.remote, self.dirname) / name
 
     def with_suffix(self, suffix, depth=1):
-        if suffix and not suffix.startswith(".") or suffix == ".":
+        if (suffix and not suffix.startswith(".")) or suffix == ".":
             raise ValueError(f"Invalid suffix {suffix!r}")
         name = self.name
         depth = len(self.suffixes) if depth is None else min(depth, len(self.suffixes))

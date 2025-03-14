@@ -43,7 +43,7 @@ class MarkedPipe:
     """A pipe-like object from which you can read lines; the pipe will return report EOF (the
     empty string) when a special marker is detected"""
 
-    __slots__ = ["pipe", "marker", "__weakref__"]
+    __slots__ = ["__weakref__", "marker", "pipe"]
 
     def __init__(self, pipe, marker):
         self.pipe = pipe

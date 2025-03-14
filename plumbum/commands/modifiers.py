@@ -112,7 +112,7 @@ class _BG(ExecutionModifier):
        For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
     """
 
-    __slots__ = ("retcode", "kargs", "timeout")
+    __slots__ = ("kargs", "retcode", "timeout")
 
     def __init__(self, retcode=0, timeout=None, **kargs):
         self.retcode = retcode
@@ -165,7 +165,7 @@ class _TEE(ExecutionModifier):
     Returns a tuple of (return code, stdout, stderr), just like ``run()``.
     """
 
-    __slots__ = ("retcode", "buffered", "timeout")
+    __slots__ = ("buffered", "retcode", "timeout")
 
     def __init__(self, retcode=0, buffered=True, timeout=None):
         """`retcode` is the return code to expect to mean "success".  Set
@@ -251,7 +251,7 @@ class _TF(ExecutionModifier):
         local['touch']['/root/test'] & TF(FG=True) * Returns False, will show error message
     """
 
-    __slots__ = ("retcode", "FG", "timeout")
+    __slots__ = ("FG", "retcode", "timeout")
 
     def __init__(
         self,
@@ -349,7 +349,7 @@ class _NOHUP(ExecutionModifier):
 
     """
 
-    __slots__ = ("cwd", "stdout", "stderr", "append")
+    __slots__ = ("append", "cwd", "stderr", "stdout")
 
     def __init__(self, cwd=".", stdout="nohup.out", stderr=None, append=True):
         """Set ``cwd``, ``stdout``, or ``stderr``.

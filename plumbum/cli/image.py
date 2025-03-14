@@ -9,7 +9,7 @@ from .termsize import get_terminal_size
 
 
 class Image:
-    __slots__ = "size char_ratio".split()
+    __slots__ = ["char_ratio", "size"]
 
     def __init__(self, size=None, char_ratio=2.45):
         self.size = size
