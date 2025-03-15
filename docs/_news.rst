@@ -1,4 +1,4 @@
-* **2023.10.05**: Version 1.9.0 released with Python 3.8-3.13 support, and some small fixes.
+* **2024.10.05**: Version 1.9.0 released with Python 3.8-3.13 support, and some small fixes.
 
 * **2024.04.29**: Version 1.8.3 released with some small fixes, final version to support Python 3.6 and 3.7.
 
