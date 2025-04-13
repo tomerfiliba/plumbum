@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "hatchling",
+    "hatchling>=1.27.0",
     "hatch-vcs",
 ]
 build-backend = "hatchling.build"
@@ -11,7 +11,8 @@ name = "plumbum"
 description = "Plumbum: shell combinators library"
 readme = "README.rst"
 authors = [{ name="Tomer Filiba", email="tomerfiliba@gmail.com" }]
-license = { file="LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.8"
 dynamic = ["version"]
 dependencies = [
@@ -20,7 +21,6 @@ dependencies = [
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
