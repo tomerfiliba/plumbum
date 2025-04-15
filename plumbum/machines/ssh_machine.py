@@ -1,4 +1,5 @@
 import warnings
+import ipaddress
 
 from plumbum.commands import ProcessExecutionError, shquote
 from plumbum.lib import IS_WIN32
@@ -32,6 +33,12 @@ class SshTunnel:
         """Closes(terminates) the tunnel"""
         self._session.close()
 
+def is_ipv6(addr: str) -> bool:
+    try:
+        ipaddress.IPv6Address(addr)
+        return True
+    except ValueError:
+        return False
 
 class SshMachine(BaseRemoteMachine):
     """
@@ -307,7 +314,7 @@ class SshMachine(BaseRemoteMachine):
         if IS_WIN32:
             src = self._translate_drive_letter(src)
             dst = self._translate_drive_letter(dst)
-        self._scp_command(f"{self._fqhost}:{shquote(src)}", dst)
+        self._scp_command(f"{self._get_wrapped_host()}:{shquote(src)}", dst)
 
     def upload(self, src, dst):
         if isinstance(src, RemotePath):
@@ -319,8 +326,10 @@ class SshMachine(BaseRemoteMachine):
         if IS_WIN32:
             src = self._translate_drive_letter(src)
             dst = self._translate_drive_letter(dst)
-        self._scp_command(src, f"{self._fqhost}:{shquote(dst)}")
+        self._scp_command(src, f"{self._get_wrapped_host()}:{shquote(dst)}")
 
+    def _get_wrapped_host(self):
+        return f'[{self._fqhost}]' if is_ipv6(self._fqhost) and not self._fqhost.startswith('[') else self._fqhost
 
 class PuttyMachine(SshMachine):
     """

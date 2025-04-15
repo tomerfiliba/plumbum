@@ -37,7 +37,7 @@ def strassert(one, two):
     assert str(one) == str(two)
 
 
-# TEST_HOST = "192.168.1.143"
+# TEST_HOST = "2001:67c:9b4:1::5c:1"
 TEST_HOST = "127.0.0.1"
 if TEST_HOST not in ("::1", "127.0.0.1", "localhost"):
     plumbum.local.env.path.append("c:\\Program Files\\Git\\bin")
