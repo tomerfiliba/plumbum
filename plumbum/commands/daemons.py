@@ -24,12 +24,7 @@ class _fake_lock:
         pass
 
 
-def posix_daemonize(command, cwd, stdout=None, stderr=None, append=True):
-    if stdout is None:
-        stdout = os.devnull
-    if stderr is None:
-        stderr = stdout
-
+def posix_daemonize(command, cwd, stdout, stderr, append):
     MAX_SIZE = 16384
     rfd, wfd = os.pipe()
     argv = command.formulate()
