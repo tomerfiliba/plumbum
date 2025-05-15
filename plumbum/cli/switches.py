@@ -4,7 +4,8 @@ import collections.abc
 import contextlib
 import inspect
 from abc import ABC, abstractmethod
-from typing import Callable, Generator
+from collections.abc import Generator
+from typing import Callable
 
 from plumbum import local
 from plumbum.cli.i18n import get_translation_for

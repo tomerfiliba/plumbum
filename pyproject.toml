@@ -13,11 +13,10 @@ readme = "README.rst"
 authors = [{ name="Tomer Filiba", email="tomerfiliba@gmail.com" }]
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dynamic = ["version"]
 dependencies = [
     "pywin32; platform_system=='Windows' and platform_python_implementation!='PyPy'",
-    "importlib_resources; python_version<'3.9'",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -25,12 +24,12 @@ classifiers = [
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Build Tools",
     "Topic :: System :: Systems Administration",
 ]
@@ -73,20 +72,20 @@ test = [
     "pytest-cov",
     "pytest-mock",
     "pytest-timeout",
-    "pytest>=6.0",
+    "pytest>=7.0",
 ]
 dev = [
     { include-group = "test" }
 ]
 docs = [
-    "sphinx>=4.0.0",
+    "sphinx>=6.0.0",
     "sphinx-rtd-theme>=1.0.0",
 ]
 
 
 [tool.mypy]
 files = ["plumbum"]
-python_version = "3.8"
+python_version = "3.9"
 warn_unused_configs = true
 warn_unused_ignores = true
 show_error_codes = true
@@ -111,7 +110,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-minversion = "6.0"
+minversion = "7.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config", "--cov-config=pyproject.toml" ]
 norecursedirs = ["examples", "experiments"]
 filterwarnings = [
@@ -128,7 +127,7 @@ optional_tests = """
 
 
 [tool.pylint]
-py-version = "3.8"
+py-version = "3.9"
 jobs = "0"
 load-plugins = ["pylint.extensions.no_self_use"]
 reports.output-format = "colorized"
