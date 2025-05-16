@@ -322,16 +322,18 @@ s.close()
                 rem["pwd"]()
 
     def test_glob(self):
-        with self._connect() as rem, rem.cwd(
-            os.path.dirname(os.path.abspath(__file__))
+        with (
+            self._connect() as rem,
+            rem.cwd(os.path.dirname(os.path.abspath(__file__))),
         ):
             filenames = [f.name for f in rem.cwd // ("*.py", "*.bash")]
             assert "test_remote.py" in filenames
             assert "slow_process.bash" in filenames
 
     def test_glob_spaces(self):
-        with self._connect() as rem, rem.cwd(
-            os.path.dirname(os.path.abspath(__file__))
+        with (
+            self._connect() as rem,
+            rem.cwd(os.path.dirname(os.path.abspath(__file__))),
         ):
             filenames = [f.name for f in rem.cwd // ("*space.txt")]
             assert "file with space.txt" in filenames

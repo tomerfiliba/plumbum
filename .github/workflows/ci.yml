@@ -37,15 +37,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.10", "3.13"]
+        python-version: ["3.9", "3.11", "3.14"]
         os: [ubuntu-22.04, windows-latest, macos-13]
         include:
         - python-version: 'pypy-3.10'
           os: ubuntu-22.04
-        - python-version: '3.9'
+        - python-version: '3.10'
           os: ubuntu-22.04
         - python-version: '3.13'
           os: ubuntu-22.04
+        exclude:
+        - python-version: '3.14'
+          os: windows-latest
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -67,7 +70,7 @@ jobs:
         allow-prereleases: true
 
     - name: Add locale for locale test
-      if: runner.os == 'Linux' && matrix.python-version != '3.10'
+      if: runner.os == 'Linux' && matrix.python-version != '3.11'
       run: sudo locale-gen fr_FR.UTF-8
 
     - name: Install

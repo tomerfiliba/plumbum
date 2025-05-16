@@ -23,12 +23,7 @@ if loc is None or loc.startswith("en") or loc == "C":
 
 else:
     import gettext
-    import sys
-
-    if sys.version_info < (3, 9):
-        from importlib_resources import as_file, files
-    else:
-        from importlib.resources import as_file, files
+    from importlib.resources import as_file, files
 
     def get_translation_for(package_name: str) -> gettext.NullTranslations:  # type: ignore[misc]
         """
