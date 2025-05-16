@@ -46,6 +46,9 @@ jobs:
           os: ubuntu-22.04
         - python-version: '3.13'
           os: ubuntu-22.04
+        exclude:
+        - python-version: '3.14'
+          os: windows-latest
     runs-on: ${{ matrix.os }}
 
     steps:
