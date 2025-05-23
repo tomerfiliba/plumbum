@@ -305,10 +305,7 @@ class LocalPath(Path):
                 raise
 
     def as_uri(self, scheme="file"):
-        res = urlparse.urljoin(f"{scheme}:", urllib.pathname2url(str(self)))
-        if not res.startswith(f"{scheme}://") and res.startswith(f"{scheme}:/"):
-            res = f"{scheme}:///" + res[len(f"{scheme}:/") :]
-        return res
+        return urlparse.urljoin(f"{scheme}://", urllib.pathname2url(str(self)))
 
     @property
     def drive(self):
