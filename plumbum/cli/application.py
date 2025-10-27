@@ -3,13 +3,14 @@ from __future__ import annotations
 import functools
 import inspect
 import os
+import re
 import sys
 from collections import defaultdict
 from textwrap import TextWrapper
 
 from plumbum import colors, local
 from plumbum.cli.i18n import get_translation_for
-from plumbum.lib import getdoc
+from plumbum.lib import getdoc, get_main_module_frame
 
 from .switches import (
     CountOf,
@@ -79,6 +80,7 @@ _switch_groups_l10n = [T_("Switches"), T_("Meta-switches")]
 # CLI Application base class
 # ===================================================================================================
 
+main_module_ending_rx = re.compile("\.__main__$")
 
 class Application:
     """The base class for CLI applications; your "entry point" class should derive from it,
@@ -184,7 +186,11 @@ class Application:
         # Filter colors
 
         if self.PROGNAME is None:
-            self.PROGNAME = os.path.basename(executable)
+            spec = get_main_module_frame().f_globals.get("__spec__", None)
+            if spec:
+                self.PROGNAME = " ".join(("python -m", main_module_ending_rx.sub("", spec.name)))
+            else:
+                self.PROGNAME = os.path.basename(executable)
         elif isinstance(self.PROGNAME, colors._style):
             self.PROGNAME = self.PROGNAME | os.path.basename(executable)
         elif colors.filter(self.PROGNAME) == "":
