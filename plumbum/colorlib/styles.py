@@ -528,11 +528,9 @@ class Style(metaclass=ABCMeta):
 
     def now(self) -> None:
         """Immediately writes color to stdout. (Not safe)"""
-        try:
+        # Silently handle broken pipe (e.g., when output is piped to head)
+        with contextlib.suppress(BrokenPipeError):
             self.stdout.write(str(self))
-        except BrokenPipeError:
-            # Silently handle broken pipe (e.g., when output is piped to head)
-            pass
 
     def print(self, *printables: object, **kargs: Any) -> None:
         """\

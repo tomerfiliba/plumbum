@@ -446,7 +446,7 @@ class TestCLI:
         # Create a test script file that uses an app with subcommands
         test_script_file = tmp_path / "test_app.py"
         test_script_file.write_text(
-            f'''
+            f"""
 import sys
 sys.path.insert(0, {str(local.cwd)!r})
 from plumbum.cli import Application, Flag
@@ -464,24 +464,30 @@ class ThingDoer(Application):
 
 if __name__ == '__main__':
     TestApp()
-'''
+"""
         )
 
         # Run the script piped to head - this should not raise BrokenPipeError
         result = subprocess.run(
-            f'{sys.executable} {test_script_file} -h | head -5',
+            f"{sys.executable} {test_script_file} -h | head -5",
             shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
-            cwd=str(local.cwd)
+            cwd=str(local.cwd),
+            check=False,
         )
 
         # The command should exit cleanly (return code 0)
-        assert result.returncode == 0, f"Non-zero return code: {result.returncode}, stderr: {result.stderr}"
+        assert result.returncode == 0, (
+            f"Non-zero return code: {result.returncode}, stderr: {result.stderr}"
+        )
         # Output should contain help text
-        assert "Usage:" in result.stdout, f"Help output missing 'Usage:', got: {result.stdout}"
+        assert "Usage:" in result.stdout, (
+            f"Help output missing 'Usage:', got: {result.stdout}"
+        )
         # No BrokenPipeError should be in stderr
-        assert "BrokenPipeError" not in result.stderr, f"BrokenPipeError in stderr: {result.stderr}"
+        assert "BrokenPipeError" not in result.stderr, (
+            f"BrokenPipeError in stderr: {result.stderr}"
+        )
         # No traceback should be in stderr
         assert "Traceback" not in result.stderr, f"Traceback in stderr: {result.stderr}"
