@@ -205,6 +205,7 @@ ignore = [
 ]
 flake8-unused-arguments.ignore-variadic-names = true
 isort.required-imports = ["from __future__ import annotations"]
+isort.known-first-party = ["plumbum"]
 
 [tool.ruff.lint.per-file-ignores]
 "examples/*" = ["T20"]

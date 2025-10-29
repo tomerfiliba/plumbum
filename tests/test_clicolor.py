@@ -29,19 +29,19 @@ class TestSimpleApp:
     def test_colorless_run(self, capsys):
         colors.use_color = 0
         SimpleApp = make_app()
-        _, rc = SimpleApp.run(["SimpleApp"], exit=False)
+        _, _rc = SimpleApp.run(["SimpleApp"], exit=False)
         assert capsys.readouterr()[0] == "lalala\n"
 
     def test_colorful_run(self, capsys):
         colors.use_color = 4
         SimpleApp = make_app()
-        _, rc = SimpleApp.run(["SimpleApp"], exit=False)
+        _, _rc = SimpleApp.run(["SimpleApp"], exit=False)
         assert capsys.readouterr()[0] == "lalala\n"
 
     def test_colorless_output(self, capsys):
         colors.use_color = 0
         SimpleApp = make_app()
-        _, rc = SimpleApp.run(["SimpleApp", "-h"], exit=False)
+        _, _rc = SimpleApp.run(["SimpleApp", "-h"], exit=False)
         output = capsys.readouterr()[0]
         assert "SimpleApp 1.0.3" in output
         assert "SimpleApp [SWITCHES] args..." in output
@@ -49,7 +49,7 @@ class TestSimpleApp:
     def test_colorful_help(self, capsys):
         colors.use_color = 4
         SimpleApp = make_app()
-        _, rc = SimpleApp.run(["SimpleApp", "-h"], exit=False)
+        _, _rc = SimpleApp.run(["SimpleApp", "-h"], exit=False)
         output = capsys.readouterr()[0]
         assert "SimpleApp 1.0.3" not in output
         assert SimpleApp.PROGNAME | "SimpleApp" in output

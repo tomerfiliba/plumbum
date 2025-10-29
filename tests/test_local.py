@@ -511,7 +511,7 @@ class TestLocalMachine:
     def test_run(self):
         from plumbum.cmd import grep, ls
 
-        rc, out, err = (ls | grep["non_exist1N9"]).run(retcode=1)
+        rc, _out, _err = (ls | grep["non_exist1N9"]).run(retcode=1)
         assert rc == 1
 
     def test_timeout(self):

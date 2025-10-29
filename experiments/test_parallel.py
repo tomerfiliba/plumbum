@@ -41,7 +41,7 @@ class TestParallel(unittest.TestCase):
     def test_sessions(self):
         m = Cluster(local, self.connect(), local, self.connect())
         # we should get 4 different proc ids
-        ret, stdout, stderr = m.session().run("echo $$")
+        ret, stdout, _ = m.session().run("echo $$")
         ret = [int(pid) for pid in stdout]
         assert len(set(ret)) == 4
 
