@@ -676,6 +676,15 @@ class Application:
            Setting ``exit`` to ``False`` is intended for testing/debugging purposes only -- do
            not override it in other situations.
         """
+        # Handle SIGPIPE to avoid BrokenPipeError when output is piped (e.g., to head)
+        # This is only available on Unix systems
+        try:
+            import signal
+            signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+        except (ImportError, AttributeError):
+            # SIGPIPE not available on Windows
+            pass
+        
         if argv is None:
             argv = sys.argv
         cls.autocomplete(argv)
