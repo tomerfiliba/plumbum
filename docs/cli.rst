@@ -523,10 +523,19 @@ attached to the root application using the ``subcommand`` decorator ::
       ``GeetCommit.run()`` directly (should that make sense in the context of your application)
     * You can also attach sub-commands "imperatively", using ``subcommand`` as a method instead
       of a decorator: ``Geet.subcommand("push", GeetPush)``
-    * A single sub-application can be registered under multiple names, either by stacking
-      decorators (``@Geet.subcommand("name1") @Geet.subcommand("name2")``) or by calling
-      ``subcommand`` multiple times (``for name in names: Geet.subcommand(name, SubApp)``).
-      This is useful for providing both new and legacy command names, or aliases.
+    * A single sub-application can be registered under multiple names. You can stack
+      multiple decorators on separate lines, or call ``subcommand`` multiple times in a loop.
+      This is useful for providing both new and legacy command names, or aliases. For example::
+
+          @Geet.subcommand("new-name")
+          @Geet.subcommand("legacy-name")
+          class MyCommand(cli.Application):
+              pass
+
+      Or::
+
+          for name in ("alias1", "alias2"):
+              Geet.subcommand(name, MyCommand)
 
 Here's an example of running this application::
 
