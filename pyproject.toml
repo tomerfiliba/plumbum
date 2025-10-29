@@ -88,7 +88,6 @@ files = ["plumbum"]
 python_version = "3.9"
 warn_unused_configs = true
 warn_unused_ignores = true
-show_error_codes = true
 enable_error_code = ["ignore-without-code", "truthy-bool"]
 disallow_any_generics = false
 disallow_subclassing_any = false
@@ -116,7 +115,7 @@ norecursedirs = ["examples", "experiments"]
 filterwarnings = [
   "always",
 ]
-log_cli_level = "info"
+log_cli_level = "INFO"
 xfail_strict = true
 required_plugins = ["pytest-timeout", "pytest-mock"]
 timeout = 300
@@ -202,9 +201,11 @@ ignore = [
   "E721",    # Type comparisons (TODO)
   "PT011",   # TODO: add match parameter
   "RUF012",  # ClassVar required if mutable
+  "PLC0415", # Import at top of file
 ]
 flake8-unused-arguments.ignore-variadic-names = true
 isort.required-imports = ["from __future__ import annotations"]
+isort.known-first-party = ["plumbum"]
 
 [tool.ruff.lint.per-file-ignores]
 "examples/*" = ["T20"]

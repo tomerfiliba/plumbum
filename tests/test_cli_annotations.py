@@ -11,5 +11,5 @@ class App(Application):
 def test_access_annotations(capsys):
     _, rc = App.run(["prog", "pyproject.toml"], exit=False)
     assert rc == 0
-    stdout, stderr = capsys.readouterr()
+    stdout, _ = capsys.readouterr()
     assert "file=pyproject.toml" in stdout
