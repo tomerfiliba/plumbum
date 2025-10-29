@@ -75,13 +75,17 @@ def _get_terminal_size_tput():  # pragma: no cover
 
 
 def _ioctl_GWINSZ(fd: int) -> tuple[int, int] | None:
-    yx = Struct("hh")
+    # struct winsize has 4 unsigned shorts: ws_row, ws_col, ws_xpixel, ws_ypixel
+    # We only need the first two (rows and cols), but must provide full struct size
+    winsize = Struct("HHHH")  # 4 unsigned shorts = 8 bytes
     try:
         import fcntl
         import termios
 
         # TODO: Clean this up. Problems could be hidden by the broad except.
-        return yx.unpack(fcntl.ioctl(fd, termios.TIOCGWINSZ, b"1234"))
+        result = fcntl.ioctl(fd, termios.TIOCGWINSZ, b"\x00" * winsize.size)
+        rows, cols, _, _ = winsize.unpack(result)
+        return rows, cols
     except Exception:
         return None
 
