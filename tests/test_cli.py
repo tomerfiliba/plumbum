@@ -334,6 +334,7 @@ class TestCLI:
 
     def test_multiple_subcommand_names(self):
         """Test that a single subapp can be assigned to multiple subcommand names"""
+
         class MainApp(cli.Application):
             pass
 
