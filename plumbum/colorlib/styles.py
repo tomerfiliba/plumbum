@@ -282,6 +282,9 @@ class Color:
         """Reset colors are equal, otherwise rgb have to match."""
         return other.isreset if self.isreset else self.rgb == other.rgb
 
+    def __hash__(self):
+        return hash(self.isreset or self.rgb)
+
     @property
     def ansi_sequence(self):
         """This is the ansi sequence as a string, ready to use."""
@@ -589,6 +592,8 @@ class Style(metaclass=ABCMeta):
             )
 
         return str(self) == other
+
+    __hash__ = None  # type: ignore[assignment]
 
     @abstractmethod
     def __str__(self):
