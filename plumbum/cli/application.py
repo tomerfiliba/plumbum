@@ -601,6 +601,7 @@ class Application:
         # This is only available on Unix systems
         try:
             import signal
+
             signal.signal(signal.SIGPIPE, signal.SIG_DFL)
         except (ImportError, AttributeError):
             # SIGPIPE not available on Windows
