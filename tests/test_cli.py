@@ -349,6 +349,20 @@ class TestCLI:
             ("arg1", "arg2"),
         )
 
+    def test_invoke_flag(self):
+        # Test that Flag kwargs work correctly with invoke()
+        # When debug=False, flag should remain False (not toggled)
+        inst, rc = Geet.invoke(debug=False)
+        assert inst.debug is False
+
+        # When debug=True, flag should be True
+        inst, rc = Geet.invoke(debug=True)
+        assert inst.debug is True
+
+        # When no argument, flag should use default (False)
+        inst, rc = Geet.invoke()
+        assert inst.debug is False
+
     def test_env_var(self, capsys):
         _, rc = SimpleApp.run(["arg", "--bacon=10"], exit=False)
         assert rc == 0
