@@ -289,8 +289,9 @@ class Application:
         """
 
         def wrapper(subapp):
-            subname = subapp if isinstance(subapp, str) else subapp.__name__
-            attrname = f"_subcommand_{subname}"
+            # Use the subcommand name (not subapp name) to ensure uniqueness
+            # This allows the same subapp to be registered under multiple names
+            attrname = f"_subcommand_{name}"
             setattr(cls, attrname, Subcommand(name, subapp))
             return subapp
 
