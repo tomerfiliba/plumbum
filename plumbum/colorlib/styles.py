@@ -495,7 +495,11 @@ class Style(metaclass=ABCMeta):
 
     def now(self):
         """Immediately writes color to stdout. (Not safe)"""
-        self.stdout.write(str(self))
+        try:
+            self.stdout.write(str(self))
+        except BrokenPipeError:
+            # Silently handle broken pipe (e.g., when output is piped to head)
+            pass
 
     def print(self, *printables, **kargs):
         """\
@@ -506,9 +510,13 @@ class Style(metaclass=ABCMeta):
         sep = kargs.get("sep", " ")
         file = kargs.get("file", self.stdout)
         flush = kargs.get("flush", False)
-        file.write(self.wrap(sep.join(map(str, printables))) + end)
-        if flush:
-            file.flush()
+        try:
+            file.write(self.wrap(sep.join(map(str, printables))) + end)
+            if flush:
+                file.flush()
+        except BrokenPipeError:
+            # Silently handle broken pipe (e.g., when output is piped to head)
+            pass
 
     print_ = print
     """DEPRECATED: Shortcut from classic Python 2"""
@@ -519,13 +527,21 @@ class Style(metaclass=ABCMeta):
 
     def __enter__(self):
         """Context manager support"""
-        self.stdout.write(str(self))
-        self.stdout.flush()
+        try:
+            self.stdout.write(str(self))
+            self.stdout.flush()
+        except BrokenPipeError:
+            # Silently handle broken pipe (e.g., when output is piped to head)
+            pass
 
     def __exit__(self, _type, _value, _traceback):
         """Runs even if exception occurred, does not catch it."""
-        self.stdout.write(str(~self))
-        self.stdout.flush()
+        try:
+            self.stdout.write(str(~self))
+            self.stdout.flush()
+        except BrokenPipeError:
+            # Silently handle broken pipe (e.g., when output is piped to head)
+            pass
         return False
 
     @property
