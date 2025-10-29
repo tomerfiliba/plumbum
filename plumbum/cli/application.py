@@ -698,6 +698,9 @@ class Application:
                 # a flag
                 if val not in (True, False, None, Flag):
                     raise SwitchError(T_("Switch {0} is a boolean flag").format(swname))
+                # If val is False or None, skip adding the flag (treat as not present)
+                if val in (False, None):
+                    continue
                 p = ()
             else:
                 p = (val,)
