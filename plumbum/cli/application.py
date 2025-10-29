@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import functools
 import inspect
 import os
@@ -678,13 +679,10 @@ class Application:
         """
         # Handle SIGPIPE to avoid BrokenPipeError when output is piped (e.g., to head)
         # This is only available on Unix systems
-        try:
+        with contextlib.suppress(ImportError, AttributeError):
             import signal
 
             signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-        except (ImportError, AttributeError):
-            # SIGPIPE not available on Windows
-            pass
 
         if argv is None:
             argv = sys.argv
