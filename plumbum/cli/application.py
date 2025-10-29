@@ -684,7 +684,7 @@ class Application:
         except (ImportError, AttributeError):
             # SIGPIPE not available on Windows
             pass
-        
+
         if argv is None:
             argv = sys.argv
         cls.autocomplete(argv)
