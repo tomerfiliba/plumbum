@@ -391,13 +391,13 @@ class Style(metaclass=ABCMeta):
 
     def __init__(
         self,
-        attributes: Color | dict[str, bool] | None = None,
+        attributes: Style | dict[str, bool] | None = None,
         fgcolor: Color | None = None,
         bgcolor: Color | None = None,
         reset: bool = False,
     ):
         """This is usually initialized from a factory."""
-        if isinstance(attributes, Color):
+        if isinstance(attributes, Style):
             for item in ("attributes", "fg", "bg", "isreset"):
                 setattr(self, item, copy(getattr(attributes, item)))
             return
