@@ -154,7 +154,7 @@ class TestInheritedApp:
     def test_help(self, capsys):
         _, rc = AppB.run(["AppB", "-h"], exit=False)
         assert rc == 0
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         assert "--one" in stdout
         assert "--two" in stdout
         assert "--three" in stdout
@@ -240,16 +240,16 @@ class TestCLI:
     def test_extra_args(self, capsys):
         _, rc = PositionalApp.run(["positionalapp"], exit=False)
         assert rc != 0
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         assert "Expected at least" in stdout
 
         _, rc = PositionalApp.run(["positionalapp", "one"], exit=False)
         assert rc == 0
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
 
         _, rc = PositionalApp.run(["positionalapp", "one", "two"], exit=False)
         assert rc != 0
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         assert "Expected at most" in stdout
 
     def test_subcommands(self):
@@ -271,7 +271,7 @@ class TestCLI:
     def test_help_all(self, capsys):
         _, rc = Geet.run(["geet", "--help-all"], exit=False)
         assert rc == 0
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         assert "--help-all" in stdout
         assert "geet add" in stdout
         assert "geet commit" in stdout
@@ -279,14 +279,14 @@ class TestCLI:
     def test_unbind(self, capsys):
         _, rc = Sample.run(["sample", "--help"], exit=False)
         assert rc == 0
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         assert "--foo" in stdout
         assert "--version" not in stdout
 
     def test_description(self, capsys):
         _, rc = Sample.run(["sample", "--help"], exit=False)
         assert rc == 0
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         cols, _ = get_terminal_size()
 
         if cols < 9:
@@ -308,17 +308,17 @@ class TestCLI:
     def test_default_main(self, capsys):
         _, rc = Sample.run(["sample"], exit=False)
         assert rc == 1
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         assert "No sub-command given" in stdout
 
         _, rc = Sample.run(["sample", "pimple"], exit=False)
         assert rc == 1
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         assert "Unknown sub-command 'pimple'" in stdout
 
         _, rc = Sample.run(["sample", "mumble"], exit=False)
         assert rc == 1
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         assert "main() not implemented" in stdout
 
     def test_lazy_subcommand(self, capsys):
@@ -329,7 +329,7 @@ class TestCLI:
 
         _, rc = Foo.run(["foo", "lazy"], exit=False)
         assert rc == 0
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         assert "hello world" in stdout
 
     def test_multiple_subcommand_names(self):
@@ -381,7 +381,7 @@ class TestCLI:
         assert inst.eggs is None
 
     def test_invoke(self):
-        inst, _ = SimpleApp.invoke("arg1", "arg2", eggs="sunny", bacon=10, verbose=2)
+        inst, rc = SimpleApp.invoke("arg1", "arg2", eggs="sunny", bacon=10, verbose=2)
         assert (inst.eggs, inst.verbose, inst.tailargs) == (
             "sunny",
             2,
@@ -391,21 +391,21 @@ class TestCLI:
     def test_invoke_flag(self):
         # Test that Flag kwargs work correctly with invoke()
         # When debug=False, flag should remain False (not toggled)
-        inst, _ = Geet.invoke(debug=False)
+        inst, rc = Geet.invoke(debug=False)
         assert inst.debug is False
 
         # When debug=True, flag should be True
-        inst, _ = Geet.invoke(debug=True)
+        inst, rc = Geet.invoke(debug=True)
         assert inst.debug is True
 
         # When no argument, flag should use default (False)
-        inst, _ = Geet.invoke()
+        inst, rc = Geet.invoke()
         assert inst.debug is False
 
     def test_env_var(self, capsys):
         _, rc = SimpleApp.run(["arg", "--bacon=10"], exit=False)
         assert rc == 0
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         assert "10" in stdout
 
         with local.env(
@@ -415,21 +415,21 @@ class TestCLI:
             inst, rc = SimpleApp.run(["arg"], exit=False)
 
         assert rc == 0
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         assert "20" in stdout
         assert inst.eggs == "raw"
 
     def test_mandatory_env_var(self, capsys):
         _, rc = SimpleApp.run(["arg"], exit=False)
         assert rc == 2
-        stdout, _ = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         assert "bacon is mandatory" in stdout
 
     def test_partial_switches(self, capsys):
         app = SimpleApp
         app.ALLOW_ABBREV = True
         inst, rc = app.run(["foo", "--bacon=2", "--ch"], exit=False)
-        stdout, _stderr = capsys.readouterr()
+        stdout, stderr = capsys.readouterr()
         assert "Ambiguous partial switch" in stdout
         assert rc == 2
 
@@ -437,3 +437,57 @@ class TestCLI:
         assert rc == 0
         assert inst.cheese is True
         assert inst.chives is False
+
+    def test_help_pipe_no_broken_pipe(self, tmp_path):
+        """Test that piping help output doesn't raise BrokenPipeError"""
+        import subprocess
+        import sys
+
+        # Create a test script file that uses an app with subcommands
+        test_script_file = tmp_path / "test_app.py"
+        test_script_file.write_text(
+            f"""
+import sys
+sys.path.insert(0, {str(local.cwd)!r})
+from plumbum.cli import Application, Flag
+
+class TestApp(Application):
+    debug = Flag(['debug', 'd'])
+
+    def main(self):
+        print(f"{{self.debug=}}")
+
+@TestApp.subcommand("dothing")
+class ThingDoer(Application):
+    def main(self):
+        print("Doing the thing!")
+
+if __name__ == '__main__':
+    TestApp()
+"""
+        )
+
+        # Run the script piped to head - this should not raise BrokenPipeError
+        result = subprocess.run(
+            f"{sys.executable} {test_script_file} -h | head -5",
+            shell=True,
+            capture_output=True,
+            text=True,
+            cwd=str(local.cwd),
+            check=False,
+        )
+
+        # The command should exit cleanly (return code 0)
+        assert result.returncode == 0, (
+            f"Non-zero return code: {result.returncode}, stderr: {result.stderr}"
+        )
+        # Output should contain help text
+        assert "Usage:" in result.stdout, (
+            f"Help output missing 'Usage:', got: {result.stdout}"
+        )
+        # No BrokenPipeError should be in stderr
+        assert "BrokenPipeError" not in result.stderr, (
+            f"BrokenPipeError in stderr: {result.stderr}"
+        )
+        # No traceback should be in stderr
+        assert "Traceback" not in result.stderr, f"Traceback in stderr: {result.stderr}"
