@@ -10,7 +10,7 @@ import sys
 from typing import Any
 
 from .names import color_names, default_styles
-from .styles import ColorNotFound
+from .styles import ColorNotFound, Style
 
 __all__ = ["ColorFactory", "StyleFactory"]
 
@@ -19,7 +19,7 @@ class ColorFactory:
     """This creates color names given fg = True/False. It usually will
     be called as part of a StyleFactory."""
 
-    def __init__(self, fg, style):
+    def __init__(self, fg: bool, style: Style):
         self._fg = fg
         self._style = style
         self.reset = style.from_color(style.color_class(fg=fg))
@@ -30,7 +30,7 @@ class ColorFactory:
                 self, item, style.from_color(style.color_class.from_simple(item, fg=fg))
             )
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> Style:
         """Full color names work, but do not populate __dir__."""
         try:
             return self._style.from_color(self._style.color_class(item, fg=self._fg))

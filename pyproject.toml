@@ -17,6 +17,7 @@ requires-python = ">=3.9"
 dynamic = ["version"]
 dependencies = [
     "pywin32; platform_system=='Windows' and platform_python_implementation!='PyPy'",
+    "typing_extensions; python_version<'3.11'",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

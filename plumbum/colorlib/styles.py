@@ -9,15 +9,16 @@ With the ``Style`` class, any color can be directly called or given to a with st
 
 from __future__ import annotations
 
-import contextlib
 import os
 import platform
 import re
 import sys
+import typing
 from abc import ABCMeta, abstractmethod
 from copy import copy
 from typing import IO, ClassVar
 
+from .._compat.typing import Self
 from .names import (
     FindNearest,
     attributes_ansi,
@@ -39,7 +40,7 @@ __all__ = [
 _lower_camel_names = [n.replace("_", "") for n in color_names]
 
 
-def get_color_repr():
+def get_color_repr() -> int:
     """Gets best colors for current system."""
     if "NO_COLOR" in os.environ:
         return 0
@@ -124,10 +125,16 @@ class Color:
 
     __slots__ = ("exact", "fg", "isreset", "number", "representation", "rgb")
 
-    def __init__(self, r_or_color=None, g=None, b=None, fg=True):
+    def __init__(
+        self,
+        r_or_color: None | int | Color | str = None,
+        g: int | None = None,
+        b: int | None = None,
+        fg: bool = True,
+    ):
         """This works from color values, or tries to load non-simple ones."""
 
-        if isinstance(r_or_color, type(self)):
+        if isinstance(r_or_color, Color):
             for item in ("fg", "isreset", "rgb", "number", "representation", "exact"):
                 setattr(self, item, getattr(r_or_color, item))
             return
@@ -136,7 +143,8 @@ class Color:
         self.isreset = True  # Starts as reset color
         self.rgb = (0, 0, 0)
 
-        self.number = None
+        # This will get set to a real int below!
+        self.number = typing.cast(int, None)
         "Number of the original color, or closest color"
 
         self.representation = 4
@@ -154,17 +162,19 @@ class Color:
                 try:
                     self._from_full(r_or_color)
                 except ColorNotFound:
+                    assert isinstance(r_or_color, str)
                     self._from_hex(r_or_color)
 
-        elif None not in (r_or_color, g, b):
+        elif isinstance(r_or_color, int) and g is not None and b is not None:
             self.rgb = (r_or_color, g, b)
             self._init_number()
         else:
             raise ColorNotFound("Invalid parameters for a color!")
 
-    def _init_number(self):
+    def _init_number(self) -> None:
         """Should always be called after filling in r, g, b, and representation.
         Color will not be a reset color anymore."""
+        # TODO: make this a function that returns the number, instead of mutation
 
         if self.representation in (0, 1):
             number = FindNearest(*self.rgb).only_basic()
@@ -184,14 +194,14 @@ class Color:
             self.number = number
 
     @classmethod
-    def from_simple(cls, color, fg=True):
+    def from_simple(cls, color: str | int, fg: bool = True) -> Self:
         """Creates a color from simple name or color number"""
         self = cls(fg=fg)
         self._from_simple(color)
         return self
 
-    def _from_simple(self, color):
-        with contextlib.suppress(AttributeError):
+    def _from_simple(self, color: str | int) -> None:
+        if isinstance(color, str):
             color = color.lower()
             color = color.replace(" ", "")
             color = color.replace("_", "")
@@ -199,7 +209,7 @@ class Color:
         if color == "reset":
             return
 
-        if color in _lower_camel_names[:16]:
+        if isinstance(color, str) and color in _lower_camel_names[:16]:
             self.number = _lower_camel_names.index(color)
             self.rgb = from_html(color_html[self.number])
 
@@ -214,14 +224,14 @@ class Color:
         self._init_number()
 
     @classmethod
-    def from_full(cls, color, fg=True):
+    def from_full(cls, color: str | int, fg: bool = True) -> Self:
         """Creates a color from full name or color number"""
         self = cls(fg=fg)
         self._from_full(color)
         return self
 
-    def _from_full(self, color):
-        with contextlib.suppress(AttributeError):
+    def _from_full(self, color: str | int) -> None:
+        if isinstance(self, str):
             color = color.lower()
             color = color.replace(" ", "")
             color = color.replace("_", "")
@@ -229,7 +239,7 @@ class Color:
         if color == "reset":
             return
 
-        if color in _lower_camel_names:
+        if isinstance(color, str) and color in _lower_camel_names:
             self.number = _lower_camel_names.index(color)
             self.rgb = from_html(color_html[self.number])
 
@@ -244,14 +254,14 @@ class Color:
         self._init_number()
 
     @classmethod
-    def from_hex(cls, color, fg=True):
+    def from_hex(cls, color: str, fg: bool = True) -> Self:
         """Converts #123456 values to colors."""
 
         self = cls(fg=fg)
         self._from_hex(color)
         return self
 
-    def _from_hex(self, color):
+    def _from_hex(self, color: str) -> None:
         try:
             self.rgb = from_html(color)
         except (TypeError, ValueError):
@@ -261,16 +271,16 @@ class Color:
         self._init_number()
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The (closest) name of the current color"""
         return "reset" if self.isreset else color_names[self.number]
 
     @property
-    def name_camelcase(self):
+    def name_camelcase(self) -> str:
         """The camelcase name of the color"""
         return self.name.replace("_", " ").title().replace(" ", "")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """This class has a smart representation that shows name and color (if not unique)."""
         name = ["Deactivated:", " Basic:", "", " Full:", " True:"][self.representation]
         name += "" if self.fg else " Background"
@@ -278,20 +288,24 @@ class Color:
         name += "" if self.exact else " " + self.hex_code
         return name[1:]
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Reset colors are equal, otherwise rgb have to match."""
+        if not isinstance(other, Color):
+            return NotImplemented
         return other.isreset if self.isreset else self.rgb == other.rgb
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.isreset or self.rgb)
 
     @property
-    def ansi_sequence(self):
+    def ansi_sequence(self) -> str:
         """This is the ansi sequence as a string, ready to use."""
         return "\033[" + ";".join(map(str, self.ansi_codes)) + "m"
 
     @property
-    def ansi_codes(self):
+    def ansi_codes(
+        self,
+    ) -> tuple[int] | tuple[int, int, int] | tuple[int, int, int, int, int]:
         """This is the full ANSI code, can be reset, simple, 256, or full color."""
         ansi_addition = 30 if self.fg else 40
 
@@ -305,7 +319,7 @@ class Color:
         return (ansi_addition + 8, 2, self.rgb[0], self.rgb[1], self.rgb[2])
 
     @property
-    def hex_code(self):
+    def hex_code(self) -> str:
         """This is the hex code of the current color, html style notation."""
 
         return (
@@ -314,21 +328,21 @@ class Color:
             else f"#{self.rgb[0]:02X}{self.rgb[1]:02X}{self.rgb[2]:02X}"
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         """This just prints it's simple name"""
         return self.name
 
-    def to_representation(self, val):
+    def to_representation(self, val: int) -> Self:
         """Converts a color to any representation"""
         other = copy(self)
         other.representation = val
         if self.isreset:
             return other
-        other.number = None
+        other.number = typing.cast(int, None)
         other._init_number()
         return other
 
-    def limit_representation(self, val):
+    def limit_representation(self, val: int) -> Self:
         """Only converts if val is lower than representation"""
 
         return self if self.representation <= val else self.to_representation(val)
@@ -375,9 +389,15 @@ class Style(metaclass=ABCMeta):
     def stdout(self, newout):
         self.__class__._stdout = newout
 
-    def __init__(self, attributes=None, fgcolor=None, bgcolor=None, reset=False):
+    def __init__(
+        self,
+        attributes: Color | dict[str, bool] | None = None,
+        fgcolor: Color | None = None,
+        bgcolor: Color | None = None,
+        reset: bool = False,
+    ):
         """This is usually initialized from a factory."""
-        if isinstance(attributes, type(self)):
+        if isinstance(attributes, Color):
             for item in ("attributes", "fg", "bg", "isreset"):
                 setattr(self, item, copy(getattr(attributes, item)))
             return
@@ -392,7 +412,7 @@ class Style(metaclass=ABCMeta):
             )
 
     @classmethod
-    def from_color(cls, color):
+    def from_color(cls, color: Color) -> Self:
         return cls(fgcolor=color) if color.fg else cls(bgcolor=color)
 
     def invert(self):
