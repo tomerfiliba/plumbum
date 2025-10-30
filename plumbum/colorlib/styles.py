@@ -231,7 +231,7 @@ class Color:
         return self
 
     def _from_full(self, color: str | int) -> None:
-        if isinstance(self, str):
+        if isinstance(color, str):
             color = color.lower()
             color = color.replace(" ", "")
             color = color.replace("_", "")
