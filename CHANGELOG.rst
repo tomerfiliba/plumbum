@@ -1,12 +1,12 @@
 1.10.0
 ------
 
-* Add Python π, drop Python 3.8 (`#705 <https://github.com/tomerfiliba/plumbum/pull/705`_)
-* CLI: Fix flag invoke behavior to respect ``False`` values (`#724 <https://github.com/tomerfiliba/plumbum/pull/724`_)
-* CLI: Allow subapplication registration under multiple subcommand names (`#725 <https://github.com/tomerfiliba/plumbum/pull/725`_)
-* CLI: Better support for future annotations on 3.9 (`#723 <https://github.com/tomerfiliba/plumbum/pull/723`_)
-* CLI: Termsize determination fixed on Linux Python 3.14, broken due to wrong struct size (`#721 <https://github.com/tomerfiliba/plumbum/pull/721`_)
-* Drop some unused variables (`#700 <https://github.com/tomerfiliba/plumbum/pull/700`_)
+* Add Python π, drop Python 3.8 (`#705 <https://github.com/tomerfiliba/plumbum/pull/705>`_)
+* CLI: Fix flag invoke behavior to respect ``False`` values (`#724 <https://github.com/tomerfiliba/plumbum/pull/724>`_)
+* CLI: Allow subapplication registration under multiple subcommand names (`#725 <https://github.com/tomerfiliba/plumbum/pull/725>`_)
+* CLI: Better support for future annotations on 3.9 (`#723 <https://github.com/tomerfiliba/plumbum/pull/723>`_)
+* CLI: Termsize determination fixed on Linux Python 3.14, broken due to wrong struct size (`#721 <https://github.com/tomerfiliba/plumbum/pull/721>`_)
+* Drop some unused variables (`#700 <https://github.com/tomerfiliba/plumbum/pull/700>`_)
 * Simpler urljoin (`#707 <https://github.com/tomerfiliba/plumbum/pull/707>`_)
 * Use SPDX license identifier (`#702 <https://github.com/tomerfiliba/plumbum/pull/702>`_)
 
