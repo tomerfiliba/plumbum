@@ -102,7 +102,6 @@ module = [
     "plumbum.fs.*",
     "plumbum.machines.*",
     "plumbum.path.*",
-    "plumbum.typed_env",
 ]
 disallow_any_generics = false
 disallow_subclassing_any = false
