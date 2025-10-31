@@ -375,6 +375,9 @@ class Style(metaclass=ABCMeta):
     ANSI_REG = re.compile("\033\\[([\\d;]+)m")
     """The regular expression that finds ansi codes in a string."""
 
+    use_color = 4
+    """The color level. Only used on ANSIStyle, other styles are always on max (4)."""
+
     @property
     def stdout(self) -> TextIO:
         """\
