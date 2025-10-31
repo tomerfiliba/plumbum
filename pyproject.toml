@@ -100,7 +100,6 @@ module = [
     "plumbum.cli.*",
     "plumbum.commands.*",
     "plumbum.fs.*",
-    "plumbum.lib",
     "plumbum.machines.*",
     "plumbum.path.*",
     "plumbum.typed_env",
