@@ -59,7 +59,7 @@ from plumbum.version import version
 __author__ = "Tomer Filiba (tomerfiliba@gmail.com)"
 __version__ = version
 
-__all__ = (
+__all__ = [
     "BG",
     "ERROUT",
     "FG",
@@ -81,11 +81,11 @@ __all__ = (
     "__version__",
     "cmd",
     "local",
-)
+]
 
 from . import cmd
 
 
-def __dir__():
+def __dir__() -> list[str]:
     "Support nice tab completion"
     return __all__
