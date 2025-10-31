@@ -15,8 +15,9 @@ import re
 import sys
 import typing
 from abc import ABCMeta, abstractmethod
+from collections.abc import Iterable
 from copy import copy
-from typing import IO, ClassVar
+from typing import Any, ClassVar, Literal, TextIO, TypeVar
 
 from .._compat.typing import Self
 from .names import (
@@ -348,6 +349,9 @@ class Color:
         return self if self.representation <= val else self.to_representation(val)
 
 
+S = TypeVar("S", "Style", str)
+
+
 class Style(metaclass=ABCMeta):
     """This class allows the color changes to be called directly
     to write them to stdout, ``[]`` calls to wrap colors (or the ``.wrap`` method)
@@ -364,7 +368,7 @@ class Style(metaclass=ABCMeta):
     # pylint: disable-next=declare-non-slot
     attribute_names: ClassVar[dict[str, str] | dict[str, int]]
 
-    _stdout: IO | None = None
+    _stdout: ClassVar[TextIO | None] = None
     end = "\n"
     """The endline character. Override if needed in subclasses."""
 
@@ -372,7 +376,7 @@ class Style(metaclass=ABCMeta):
     """The regular expression that finds ansi codes in a string."""
 
     @property
-    def stdout(self):
+    def stdout(self) -> TextIO:
         """\
         This property will allow custom, class level control of stdout.
         It will use current sys.stdout if set to None (default).
@@ -386,7 +390,7 @@ class Style(metaclass=ABCMeta):
         )
 
     @stdout.setter
-    def stdout(self, newout):
+    def stdout(self, newout: TextIO) -> None:
         self.__class__._stdout = newout
 
     def __init__(
@@ -415,7 +419,7 @@ class Style(metaclass=ABCMeta):
     def from_color(cls, color: Color) -> Self:
         return cls(fgcolor=color) if color.fg else cls(bgcolor=color)
 
-    def invert(self):
+    def invert(self) -> Self:
         """This resets current color(s) and flips the value of all
         attributes present"""
 
@@ -440,11 +444,11 @@ class Style(metaclass=ABCMeta):
         return other
 
     @property
-    def reset(self):
+    def reset(self) -> Self:
         """Shortcut to access reset as a property."""
         return self.invert()
 
-    def __copy__(self):
+    def __copy__(self) -> Self:
         """Copy is supported, will make dictionary and colors unique."""
         result = self.__class__()
         result.isreset = self.isreset
@@ -453,11 +457,11 @@ class Style(metaclass=ABCMeta):
         result.attributes = copy(self.attributes)
         return result
 
-    def __invert__(self):
+    def __invert__(self) -> Self:
         """This allows ~color."""
         return self.invert()
 
-    def __add__(self, other):
+    def __add__(self, other: S) -> S:
         """Adding two matching Styles results in a new style with
         the combination of both. Adding with a string results in
         the string concatenation of a style.
@@ -465,7 +469,7 @@ class Style(metaclass=ABCMeta):
         Addition is non-commutative, with the rightmost Style property
         being taken if both have the same property.
         (Not safe)"""
-        if type(self) == type(other):
+        if isinstance(other, Style):
             result = copy(other)
 
             result.isreset = self.isreset or other.isreset
@@ -480,47 +484,47 @@ class Style(metaclass=ABCMeta):
 
         return other.__class__(self) + other
 
-    def __radd__(self, other):
+    def __radd__(self, other: str) -> str:
         """This only gets called if the string is on the left side. (Not safe)"""
         return other + other.__class__(self)
 
-    def wrap(self, wrap_this):
+    def wrap(self, wrap_this: str) -> str:
         """Wrap a string in this style and its inverse."""
         return self + wrap_this + ~self
 
-    def __and__(self, other):
+    def __and__(self, other: S) -> S:
         """This class supports ``color & color2`` syntax,
         and ``color & "String" syntax too.``"""
-        if type(self) == type(other):
+        if isinstance(other, Style):
             return self + other
 
         return self.wrap(other)
 
-    def __rand__(self, other):
+    def __rand__(self, other: str) -> str:
         """This class supports ``"String:" & color`` syntax."""
         return self.wrap(other)
 
-    def __ror__(self, other):
+    def __ror__(self, other: str) -> str:
         """Support for "String" | color syntax"""
         return self.wrap(other)
 
-    def __or__(self, other):
+    def __or__(self, other: S) -> S:
         """This class supports ``color | color2`` syntax. It also supports
         ``"color | "String"`` syntax too."""
         return self.__and__(other)
 
-    def __call__(self):
+    def __call__(self) -> None:
         """\
         This is a shortcut to print color immediately to the stdout. (Not safe)
         """
 
         self.now()
 
-    def now(self):
+    def now(self) -> None:
         """Immediately writes color to stdout. (Not safe)"""
         self.stdout.write(str(self))
 
-    def print(self, *printables, **kargs):
+    def print(self, *printables: object, **kargs: Any) -> None:
         """\
         This acts like print; will print that argument to stdout wrapped
         in Style with the same syntax as the print function in 3.4."""
@@ -536,23 +540,25 @@ class Style(metaclass=ABCMeta):
     print_ = print
     """DEPRECATED: Shortcut from classic Python 2"""
 
-    def __getitem__(self, wrapped):
+    def __getitem__(self, wrapped: str) -> str:
         """The [] syntax is supported for wrapping"""
         return self.wrap(wrapped)
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         """Context manager support"""
         self.stdout.write(str(self))
         self.stdout.flush()
 
-    def __exit__(self, _type, _value, _traceback):
+    def __exit__(
+        self, _type: object, _value: object, _traceback: object
+    ) -> Literal[False]:
         """Runs even if exception occurred, does not catch it."""
         self.stdout.write(str(~self))
         self.stdout.flush()
         return False
 
     @property
-    def ansi_codes(self):
+    def ansi_codes(self) -> list[int]:
         """Generates the full ANSI code sequence for a Style"""
 
         if self.isreset:
@@ -580,12 +586,12 @@ class Style(metaclass=ABCMeta):
         return codes
 
     @property
-    def ansi_sequence(self):
+    def ansi_sequence(self) -> str:
         """This is the string ANSI sequence."""
         codes = ";".join(str(c) for c in self.ansi_codes)
         return f"\033[{codes}m" if codes else ""
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         name = self.__class__.__name__
         attributes = ", ".join(a for a in self.attributes if self.attributes[a])
         neg_attributes = ", ".join(
@@ -599,9 +605,9 @@ class Style(metaclass=ABCMeta):
             string = "reset"
         return f"<{name}: {string}>"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Equality is true only if reset, or if attributes, fg, and bg match."""
-        if type(self) == type(other):
+        if isinstance(other, Style):
             if self.isreset:
                 return other.isreset
 
@@ -616,21 +622,22 @@ class Style(metaclass=ABCMeta):
     __hash__ = None  # type: ignore[assignment]
 
     @abstractmethod
-    def __str__(self):
+    def __str__(self) -> str:
         """Base Style does not implement a __str__ representation. This is the one
         required method of a subclass."""
 
     @classmethod
-    def from_ansi(cls, ansi_string, filter_resets=False):
+    def from_ansi(cls, ansi_string: str, filter_resets: bool = False) -> Self:
         """This generated a style from an ansi string. Will ignore resets if filter_resets is True."""
         result = cls()
         res = cls.ANSI_REG.search(ansi_string)
-        for group in res.groups():
-            sequence = map(int, group.split(";"))
-            result.add_ansi(sequence, filter_resets)
+        if res is not None:
+            for group in res.groups():
+                sequence = map(int, group.split(";"))
+                result.add_ansi(sequence, filter_resets)
         return result
 
-    def add_ansi(self, sequence, filter_resets=False):
+    def add_ansi(self, sequence: Iterable[int], filter_resets: bool = False) -> None:
         """Adds a sequence of ansi numbers to the class. Will ignore resets if filter_resets is True."""
 
         values = iter(sequence)
@@ -688,16 +695,16 @@ class Style(metaclass=ABCMeta):
             pass
 
     @classmethod
-    def string_filter_ansi(cls, colored_string):
+    def string_filter_ansi(cls, colored_string: str) -> str:
         """Filters out colors in a string, returning only the name."""
         return cls.ANSI_REG.sub("", colored_string)
 
     @classmethod
-    def string_contains_colors(cls, colored_string):
+    def string_contains_colors(cls, colored_string: str) -> bool:
         """Checks to see if a string contains colors."""
         return len(cls.ANSI_REG.findall(colored_string)) > 0
 
-    def to_representation(self, rep):
+    def to_representation(self, rep: int) -> Self:
         """This converts both colors to a specific representation"""
         other = copy(self)
         if other.fg:
@@ -706,7 +713,7 @@ class Style(metaclass=ABCMeta):
             other.bg = other.bg.to_representation(rep)
         return other
 
-    def limit_representation(self, rep):
+    def limit_representation(self, rep: int) -> Self:
         """This only converts if true representation is higher"""
 
         if rep is True or rep is False:
@@ -720,22 +727,22 @@ class Style(metaclass=ABCMeta):
         return other
 
     @property
-    def basic(self):
+    def basic(self) -> Self:
         """The color in the 8 color representation."""
         return self.to_representation(1)
 
     @property
-    def simple(self):
+    def simple(self) -> Self:
         """The color in the 16 color representation."""
         return self.to_representation(2)
 
     @property
-    def full(self):
+    def full(self) -> Self:
         """The color in the 256 color representation."""
         return self.to_representation(3)
 
     @property
-    def true(self):
+    def true(self) -> Self:
         """The color in the true color representation."""
         return self.to_representation(4)
 
@@ -752,7 +759,7 @@ class ANSIStyle(Style):
 
     attribute_names = attributes_ansi
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             self.limit_representation(self.use_color).ansi_sequence
             if self.use_color
@@ -777,7 +784,7 @@ class HTMLStyle(Style):
     }
     end = "<br/>\n"
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.isreset:
             raise ResetNotSupported("HTML does not support global resets!")
 
