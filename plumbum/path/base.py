@@ -8,9 +8,15 @@ import os
 import typing
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Generator, Iterable, Iterator
 from functools import reduce
+from typing import SupportsIndex, TypeVar
+
+from .._compat.typing import Self
 
 FLAGS = {"f": os.F_OK, "w": os.W_OK, "r": os.R_OK, "x": os.X_OK}
+
+P = TypeVar("P", bound="Path")
 
 
 class FSUser(int):
@@ -19,13 +25,12 @@ class FSUser(int):
     string-name of the user, if given (otherwise ``None``)
     """
 
-    def __new__(cls, val, name=None):
+    name: str | None
+
+    def __new__(cls, val: int, name: str | None = None) -> Self:
         self = int.__new__(cls, val)
         self.name = name
         return self
-
-
-_PathImpl = typing.TypeVar("_PathImpl", bound="Path")
 
 
 class Path(str, ABC):
@@ -36,23 +41,29 @@ class Path(str, ABC):
 
     CASE_SENSITIVE = True
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self}>"
 
-    def __truediv__(self: _PathImpl, other: typing.Any) -> _PathImpl:
+    def __truediv__(self, other: str | Self) -> Self:
         """Joins two paths"""
         return self.join(other)
 
-    def __getitem__(self, key):
-        if type(key) == str or isinstance(key, Path):
+    @typing.overload
+    def __getitem__(self, key: str | Path) -> Self: ...
+
+    @typing.overload
+    def __getitem__(self, key: SupportsIndex | slice) -> str: ...
+
+    def __getitem__(self, key: str | Path | SupportsIndex | slice) -> Self | str:
+        if isinstance(key, (str, Path)):
             return self / key
         return str(self)[key]
 
-    def __floordiv__(self, expr):
+    def __floordiv__(self, expr: str) -> list[Self]:
         """Returns a (possibly empty) list of paths that matched the glob-pattern under this path"""
         return self.glob(expr)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Self]:
         """Iterate over the files in this directory"""
         return iter(self.list())
 
@@ -67,51 +78,51 @@ class Path(str, ABC):
 
         return NotImplemented
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
         return not self == other
 
-    def __gt__(self, other):
+    def __gt__(self, other: object) -> bool:
         return str(self) > str(other)
 
-    def __ge__(self, other):
+    def __ge__(self, other: object) -> bool:
         return str(self) >= str(other)
 
-    def __lt__(self, other):
+    def __lt__(self, other: object) -> bool:
         return str(self) < str(other)
 
-    def __le__(self, other):
+    def __le__(self, other: object) -> bool:
         return str(self) <= str(other)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self)) if self.CASE_SENSITIVE else hash(str(self).lower())
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(str(self))
 
-    def __fspath__(self):
+    def __fspath__(self) -> str:
         """Added for Python 3.6 support"""
         return str(self)
 
-    def __contains__(self, item):
+    def __contains__(self, item: object) -> bool:
         """Paths should support checking to see if an file or folder is in them."""
         try:
-            return (self / item.name).exists()
+            return (self / item.name).exists()  # type: ignore[attr-defined]
         except AttributeError:
-            return (self / item).exists()
+            return (self / item).exists()  # type: ignore[operator]
 
     @abstractmethod
-    def _form(self: _PathImpl, *parts: typing.Any) -> _PathImpl:
+    def _form(self, *parts: typing.Any) -> Self:
         pass
 
-    def up(self, count=1):
+    def up(self, count: int = 1) -> Self:
         """Go up in ``count`` directories (the default is 1)"""
         return self.join("../" * count)
 
     def walk(
         self,
-        filter=lambda _: True,  # pylint: disable=redefined-builtin
-        dir_filter=lambda _: True,
-    ):
+        filter: Callable[[Self], bool] = lambda _: True,  # pylint: disable=redefined-builtin
+        dir_filter: Callable[[Self], bool] = lambda _: True,
+    ) -> Generator[Self, None, None]:
         """traverse all (recursive) sub-elements under this directory, that match the given filter.
         By default, the filter accepts everything; you can provide a custom filter function that
         takes a path as an argument and returns a boolean
@@ -133,7 +144,7 @@ class Path(str, ABC):
         """The basename component of this path"""
 
     @property
-    def basename(self):
+    def basename(self) -> str:
         """Included for compatibility with older Plumbum code"""
         warnings.warn("Use .name instead", FutureWarning, stacklevel=2)
         return self.name
@@ -145,7 +156,7 @@ class Path(str, ABC):
 
     @property
     @abstractmethod
-    def dirname(self: _PathImpl) -> _PathImpl:
+    def dirname(self) -> Self:
         """The dirname component of this path"""
 
     @property
@@ -187,26 +198,26 @@ class Path(str, ABC):
         """Returns a universal resource identifier. Use ``scheme`` to force a scheme."""
 
     @abstractmethod
-    def _get_info(self) -> typing.Any:
+    def _get_info(self) -> str | tuple[str, str]:
         pass
 
     @abstractmethod
-    def join(self: _PathImpl, *parts: typing.Any) -> _PathImpl:
+    def join(self, *parts: str) -> Self:  # type: ignore[override]
         """Joins this path with any number of paths"""
 
     @abstractmethod
-    def list(self: _PathImpl) -> builtins.list[_PathImpl]:
+    def list(self) -> builtins.list[Self]:
         """Returns the files in this directory"""
 
     @abstractmethod
-    def iterdir(self: _PathImpl) -> typing.Iterable[_PathImpl]:
+    def iterdir(self) -> Iterable[Self]:
         """Returns an iterator over the directory. Might be slightly faster on Python 3.5 than .list()"""
 
     @abstractmethod
     def is_dir(self) -> bool:
         """Returns ``True`` if this path is a directory, ``False`` otherwise"""
 
-    def isdir(self):
+    def isdir(self) -> bool:
         """Included for compatibility with older Plumbum code"""
         warnings.warn("Use .is_dir() instead", FutureWarning, stacklevel=2)
         return self.is_dir()
@@ -220,7 +231,7 @@ class Path(str, ABC):
         warnings.warn("Use .is_file() instead", FutureWarning, stacklevel=2)
         return self.is_file()
 
-    def islink(self):
+    def islink(self) -> bool:
         """Included for compatibility with older Plumbum code"""
         warnings.warn("Use is_symlink instead", FutureWarning, stacklevel=2)
         return self.is_symlink()
@@ -238,48 +249,48 @@ class Path(str, ABC):
         """Returns the os.stats for a file"""
 
     @abstractmethod
-    def with_name(self: _PathImpl, name: typing.Any) -> _PathImpl:
+    def with_name(self, name: str) -> Self:
         """Returns a path with the name replaced"""
 
     @abstractmethod
-    def with_suffix(self: _PathImpl, suffix: str, depth: int | None = 1) -> _PathImpl:
+    def with_suffix(self, suffix: str, depth: int | None = 1) -> Self:
         """Returns a path with the suffix replaced. Up to last ``depth`` suffixes will be
         replaced. None will replace all suffixes. If there are less than ``depth`` suffixes,
         this will replace all suffixes. ``.tar.gz`` is an example where ``depth=2`` or
         ``depth=None`` is useful"""
 
-    def preferred_suffix(self, suffix):
+    def preferred_suffix(self, suffix: str) -> Self:
         """Adds a suffix if one does not currently exist (otherwise, no change). Useful
         for loading files with a default suffix"""
         return self if len(self.suffixes) > 0 else self.with_suffix(suffix)
 
     @abstractmethod
-    def glob(
-        self: _PathImpl, pattern: str | typing.Iterable[str]
-    ) -> builtins.list[_PathImpl]:
+    def glob(self, pattern: str | Iterable[str]) -> builtins.list[Self]:
         """Returns a (possibly empty) list of paths that matched the glob-pattern under this path"""
 
     @abstractmethod
-    def delete(self):
+    def delete(self) -> None:
         """Deletes this path (recursively, if a directory)"""
 
     @abstractmethod
-    def move(self, dst):
+    def move(self, dst: Self) -> Self:
         """Moves this path to a different location"""
 
-    def rename(self, newname):
+    def rename(self, newname: str) -> Self:
         """Renames this path to the ``new name`` (only the basename is changed)"""
         return self.move(self.up() / newname)
 
     @abstractmethod
-    def copy(self, dst, override=None):
+    def copy(self, dst: Self, override: bool | None = None) -> None:
         """Copies this path (recursively, if a directory) to the destination path "dst".
         Raises TypeError if dst exists and override is False.
         Will overwrite if override is True.
         Will silently fail to copy if override is None (the default)."""
 
     @abstractmethod
-    def mkdir(self, mode=0o777, parents=True, exist_ok=True):
+    def mkdir(
+        self, mode: int = 0o777, parents: bool = True, exist_ok: bool = True
+    ) -> None:
         """
         Creates a directory at this path.
 
@@ -314,11 +325,16 @@ class Path(str, ABC):
         or ``'utf8'``"""
 
     @abstractmethod
-    def touch(self):
+    def touch(self) -> None:
         """Update the access time. Creates an empty file if none exists."""
 
     @abstractmethod
-    def chown(self, owner=None, group=None, recursive=None):
+    def chown(
+        self,
+        owner: int | str | None = None,
+        group: int | str | None = None,
+        recursiv: bool | None = None,
+    ) -> None:
         """Change ownership of this path.
 
         :param owner: The owner to set (either ``uid`` or ``username``), optional
@@ -329,14 +345,14 @@ class Path(str, ABC):
         """
 
     @abstractmethod
-    def chmod(self, mode):
+    def chmod(self, mode: int) -> None:
         """Change the mode of path to the numeric mode.
 
         :param mode: file mode as for os.chmod
         """
 
     @staticmethod
-    def _access_mode_to_flags(mode, flags=None):
+    def _access_mode_to_flags(mode: int, flags: dict[str, int] | None = None) -> int:
         if flags is None:
             flags = FLAGS
 
@@ -355,24 +371,24 @@ class Path(str, ABC):
         """
 
     @abstractmethod
-    def link(self, dst):
+    def link(self, dst: Self) -> None:
         """Creates a hard link from ``self`` to ``dst``
 
         :param dst: the destination path
         """
 
     @abstractmethod
-    def symlink(self, dst):
+    def symlink(self, dst: Self) -> None:
         """Creates a symbolic link from ``self`` to ``dst``
 
         :param dst: the destination path
         """
 
     @abstractmethod
-    def unlink(self):
+    def unlink(self) -> None:
         """Deletes a symbolic link"""
 
-    def split(self, *_args, **_kargs):
+    def split(self, *_args: object, **_kargs: object) -> builtins.list[str]:
         """Splits the path on directory separators, yielding a list of directories, e.g,
         ``"/var/log/messages"`` will yield ``['var', 'log', 'messages']``.
         """
@@ -384,11 +400,11 @@ class Path(str, ABC):
         return parts[::-1]
 
     @property
-    def parts(self):
+    def parts(self) -> tuple[str, ...]:
         """Splits the directory into parts, including the base directory, returns a tuple"""
         return (self.drive + self.root, *self.split())
 
-    def relative_to(self, source):
+    def relative_to(self, source: Self) -> RelativePath:
         """Computes the "relative path" require to get from ``source`` to ``self``. They satisfy the invariant
         ``source_path + (target_path - source_path) == target_path``. For example::
 
@@ -408,12 +424,24 @@ class Path(str, ABC):
         )
         return RelativePath([".."] * (len(baseparts) - ancestors) + parts[ancestors:])
 
-    def __sub__(self, other):
+    def __sub__(self, other: Self) -> RelativePath:
         """Same as ``self.relative_to(other)``"""
         return self.relative_to(other)
 
+    @typing.overload
     @staticmethod
-    def _glob(pattern, fn):
+    def _glob(pattern: str, fn: Callable[[str], str]) -> str: ...
+
+    @typing.overload
+    @staticmethod
+    def _glob(
+        pattern: builtins.list[str] | tuple[str, ...], fn: Callable[[str], str]
+    ) -> builtins.list[str]: ...
+
+    @staticmethod
+    def _glob(
+        pattern: str | Iterable[str], fn: Callable[[str], str]
+    ) -> builtins.list[str] | str:
         """Applies a glob string or list/tuple/iterable to the current path, using ``fn``"""
         if isinstance(pattern, str):
             return fn(pattern)
@@ -421,7 +449,7 @@ class Path(str, ABC):
         results = {value for single_pattern in pattern for value in fn(single_pattern)}
         return sorted(results)
 
-    def resolve(self, strict=False):  # noqa: ARG002
+    def resolve(self, strict: bool = False) -> Self:  # noqa: ARG002
         """Added to allow pathlib like syntax. Does nothing since
         Plumbum paths are always absolute. Does not (currently) resolve
         symlinks."""
@@ -429,7 +457,7 @@ class Path(str, ABC):
         return self
 
     @property
-    def parents(self):
+    def parents(self) -> tuple[str, ...]:
         """Pathlib like sequence of ancestors"""
         as_list = (
             reduce(lambda x, y: self._form(x) / y, self.parts[:i], self.parts[0])
@@ -438,7 +466,7 @@ class Path(str, ABC):
         return tuple(as_list)
 
     @property
-    def parent(self):
+    def parent(self) -> str:
         """Pathlib like parent of the path."""
         return self.parents[0]
 
@@ -453,50 +481,56 @@ class RelativePath:
     Relative paths are created by subtracting paths (``Path.relative_to``)
     """
 
-    def __init__(self, parts):
+    def __init__(self, parts: list[str]):
         self.parts = parts
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "/".join(self.parts)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self.parts)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.parts)
 
-    def __getitem__(self, index):
+    @typing.overload
+    def __getitem__(self, index: SupportsIndex) -> str: ...
+
+    @typing.overload
+    def __getitem__(self, index: slice) -> list[str]: ...
+
+    def __getitem__(self, index: SupportsIndex | slice) -> list[str] | str:
         return self.parts[index]
 
-    def __repr__(self):
-        return f"RelativePath({self.parts!r})"
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.parts!r})"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return str(self) == str(other)
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
         return not self == other
 
-    def __gt__(self, other):
+    def __gt__(self, other: object) -> bool:
         return str(self) > str(other)
 
-    def __ge__(self, other):
+    def __ge__(self, other: object) -> bool:
         return str(self) >= str(other)
 
-    def __lt__(self, other):
+    def __lt__(self, other: object) -> bool:
         return str(self) < str(other)
 
-    def __le__(self, other):
+    def __le__(self, other: object) -> bool:
         return str(self) <= str(other)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self))
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(str(self))
 
-    def up(self, count=1):
-        return RelativePath(self.parts[:-count])
+    def up(self, count: int = 1) -> Self:
+        return self.__class__(self.parts[:-count])
 
-    def __radd__(self, path):
+    def __radd__(self, path: P) -> P:
         return path.join(*self.parts)
