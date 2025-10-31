@@ -376,7 +376,7 @@ class Style(metaclass=ABCMeta):
     """The regular expression that finds ansi codes in a string."""
 
     use_color = 4
-    """The color level. Only used on ANSIStyle, other styles are always on max (4)."""
+    """The color level. This is a default value that subclasses may override. For example, ANSIStyle uses this to control color output, while other styles may always use the maximum level (4)."""
 
     @property
     def stdout(self) -> TextIO:
