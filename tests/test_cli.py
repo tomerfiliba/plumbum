@@ -437,3 +437,57 @@ class TestCLI:
         assert rc == 0
         assert inst.cheese is True
         assert inst.chives is False
+
+    def test_help_pipe_no_broken_pipe(self, tmp_path):
+        """Test that piping help output doesn't raise BrokenPipeError"""
+        import subprocess
+        import sys
+
+        # Create a test script file that uses an app with subcommands
+        test_script_file = tmp_path / "test_app.py"
+        test_script_file.write_text(
+            f"""
+import sys
+sys.path.insert(0, {str(local.cwd)!r})
+from plumbum.cli import Application, Flag
+
+class TestApp(Application):
+    debug = Flag(['debug', 'd'])
+
+    def main(self):
+        print(f"{{self.debug=}}")
+
+@TestApp.subcommand("dothing")
+class ThingDoer(Application):
+    def main(self):
+        print("Doing the thing!")
+
+if __name__ == '__main__':
+    TestApp()
+"""
+        )
+
+        # Run the script piped to head - this should not raise BrokenPipeError
+        result = subprocess.run(
+            f"{sys.executable} {test_script_file} -h | head -5",
+            shell=True,
+            capture_output=True,
+            text=True,
+            cwd=str(local.cwd),
+            check=False,
+        )
+
+        # The command should exit cleanly (return code 0)
+        assert result.returncode == 0, (
+            f"Non-zero return code: {result.returncode}, stderr: {result.stderr}"
+        )
+        # Output should contain help text
+        assert "Usage:" in result.stdout, (
+            f"Help output missing 'Usage:', got: {result.stdout}"
+        )
+        # No BrokenPipeError should be in stderr
+        assert "BrokenPipeError" not in result.stderr, (
+            f"BrokenPipeError in stderr: {result.stderr}"
+        )
+        # No traceback should be in stderr
+        assert "Traceback" not in result.stderr, f"Traceback in stderr: {result.stderr}"
