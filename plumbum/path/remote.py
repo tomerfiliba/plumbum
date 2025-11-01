@@ -4,6 +4,7 @@ import errno
 import os
 import urllib.request as urllib
 from contextlib import contextmanager
+from typing import Any
 
 from plumbum.commands import ProcessExecutionError, shquote
 from plumbum.path.base import FSUser, Path
@@ -32,6 +33,8 @@ class StatRes:
 
 class RemotePath(Path):
     """The class implementing remote-machine paths"""
+
+    remote: Any
 
     def __new__(cls, remote, *parts):
         if not parts:

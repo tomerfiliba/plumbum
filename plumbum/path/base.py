@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import builtins
-import io
 import itertools
 import operator
 import os
@@ -10,7 +9,7 @@ import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator, Iterable, Iterator
 from functools import reduce
-from typing import SupportsIndex, TypeVar
+from typing import IO, SupportsIndex, TypeVar
 
 from .._compat.typing import Self
 
@@ -194,7 +193,7 @@ class Path(str, ABC):
         attribute that holds the string-name of the group"""
 
     @abstractmethod
-    def as_uri(self, scheme: str | None = None) -> str:
+    def as_uri(self, scheme: str = ...) -> str:
         """Returns a universal resource identifier. Use ``scheme`` to force a scheme."""
 
     @abstractmethod
@@ -265,7 +264,7 @@ class Path(str, ABC):
         return self if len(self.suffixes) > 0 else self.with_suffix(suffix)
 
     @abstractmethod
-    def glob(self, pattern: str | Iterable[str]) -> builtins.list[Self]:
+    def glob(self, pattern: str) -> builtins.list[Self]:
         """Returns a (possibly empty) list of paths that matched the glob-pattern under this path"""
 
     @abstractmethod
@@ -281,7 +280,7 @@ class Path(str, ABC):
         return self.move(self.up() / newname)
 
     @abstractmethod
-    def copy(self, dst: Self, override: bool | None = None) -> None:
+    def copy(self, dst: Self, override: bool | None = None) -> Self:
         """Copies this path (recursively, if a directory) to the destination path "dst".
         Raises TypeError if dst exists and override is False.
         Will overwrite if override is True.
@@ -310,11 +309,11 @@ class Path(str, ABC):
         """
 
     @abstractmethod
-    def open(self, mode: str = "r", *, encoding: str | None = None) -> io.IOBase:
+    def open(self, mode: str = "r", *, encoding: str | None = None) -> IO:
         """opens this path as a file"""
 
     @abstractmethod
-    def read(self, encoding: str | None = None) -> str:
+    def read(self, encoding: str | None = None) -> str | bytes:
         """returns the contents of this file as a ``str``. By default the data is read
         as text, but you can specify the encoding, e.g., ``'latin1'`` or ``'utf8'``"""
 
@@ -362,7 +361,7 @@ class Path(str, ABC):
         return mode
 
     @abstractmethod
-    def access(self, mode: int | str = 0) -> bool:
+    def access(self, mode: int = 0) -> bool:
         """Test file existence or permission bits
 
         :param mode: a bitwise-or of access bits, or a string-representation thereof:
@@ -402,7 +401,7 @@ class Path(str, ABC):
     @property
     def parts(self) -> tuple[str, ...]:
         """Splits the directory into parts, including the base directory, returns a tuple"""
-        return (self.drive + self.root, *self.split())
+        return (self.drive + self.root, *self)
 
     def relative_to(self, source: Self) -> RelativePath:
         """Computes the "relative path" require to get from ``source`` to ``self``. They satisfy the invariant
@@ -428,25 +427,19 @@ class Path(str, ABC):
         """Same as ``self.relative_to(other)``"""
         return self.relative_to(other)
 
-    @typing.overload
-    @staticmethod
-    def _glob(pattern: str, fn: Callable[[str], str]) -> str: ...
-
-    @typing.overload
-    @staticmethod
+    @classmethod
     def _glob(
-        pattern: builtins.list[str] | tuple[str, ...], fn: Callable[[str], str]
-    ) -> builtins.list[str]: ...
-
-    @staticmethod
-    def _glob(
-        pattern: str | Iterable[str], fn: Callable[[str], str]
-    ) -> builtins.list[str] | str:
+        cls, pattern: str | Iterable[str], fn: Callable[[str], builtins.list[str]]
+    ) -> builtins.list[Self]:
         """Applies a glob string or list/tuple/iterable to the current path, using ``fn``"""
         if isinstance(pattern, str):
-            return fn(pattern)
+            return [cls(p) for p in fn(pattern)]  # type: ignore[abstract]
 
-        results = {value for single_pattern in pattern for value in fn(single_pattern)}
+        results = {
+            cls(value)  # type: ignore[abstract]
+            for single_pattern in pattern
+            for value in fn(single_pattern)
+        }
         return sorted(results)
 
     def resolve(self, strict: bool = False) -> Self:  # noqa: ARG002
