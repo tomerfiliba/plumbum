@@ -17,6 +17,6 @@ if __name__ == "__main__":
 else:  # Don't register an exit if this is called using -m!
     atexit.register(_reset)
 
-sys.modules[__name__ + ".fg"] = ansicolors.fg
-sys.modules[__name__ + ".bg"] = ansicolors.bg
+sys.modules[__name__ + ".fg"] = ansicolors.fg  # type: ignore[assignment]
+sys.modules[__name__ + ".bg"] = ansicolors.bg  # type: ignore[assignment]
 sys.modules[__name__] = ansicolors  # type: ignore[assignment]

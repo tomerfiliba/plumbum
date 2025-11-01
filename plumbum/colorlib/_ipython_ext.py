@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from io import StringIO
+from typing import Any
 
 import IPython.display
 from IPython.core.magic import Magics, cell_magic, magics_class, needs_local_scope
@@ -11,9 +12,9 @@ valid_choices = [x[8:] for x in dir(IPython.display) if x[:8] == "display_"]
 
 @magics_class
 class OutputMagics(Magics):  # pragma: no cover
-    @needs_local_scope
-    @cell_magic
-    def to(self, line, cell, local_ns=None):
+    @needs_local_scope  # type: ignore[misc]
+    @cell_magic  # type: ignore[misc]
+    def to(self: Any, line: str, cell: Any, local_ns: Any = None) -> None:
         choice = line.strip()
         assert choice in valid_choices, "Valid choices for '%%to' are: " + str(
             valid_choices

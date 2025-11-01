@@ -7,6 +7,7 @@ underlined text. It also provides ``reset`` to recover the normal font.
 from __future__ import annotations
 
 import sys
+from typing import Any
 
 from .factories import StyleFactory
 from .styles import ANSIStyle, ColorNotFound, HTMLStyle, Style
@@ -27,7 +28,7 @@ ansicolors = StyleFactory(ANSIStyle)
 htmlcolors = StyleFactory(HTMLStyle)
 
 
-def load_ipython_extension(ipython):  # pragma: no cover
+def load_ipython_extension(ipython: Any) -> None:  # pragma: no cover
     try:
         from ._ipython_ext import OutputMagics  # pylint:disable=import-outside-toplevel
     except ImportError:
@@ -38,7 +39,7 @@ def load_ipython_extension(ipython):  # pragma: no cover
     ipython.register_magics(OutputMagics)
 
 
-def main():  # pragma: no cover
+def main() -> None:  # pragma: no cover
     """Color changing script entry. Call using
     python3 -m plumbum.colors, will reset if no arguments given."""
     color = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else ""
