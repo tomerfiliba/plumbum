@@ -332,7 +332,7 @@ class Path(str, ABC):
         self,
         owner: int | str | None = None,
         group: int | str | None = None,
-        recursiv: bool | None = None,
+        recursive: bool | None = None,
     ) -> None:
         """Change ownership of this path.
 
@@ -401,7 +401,7 @@ class Path(str, ABC):
     @property
     def parts(self) -> tuple[str, ...]:
         """Splits the directory into parts, including the base directory, returns a tuple"""
-        return (self.drive + self.root, *self)
+        return (self.drive + self.root, *self.split())
 
     def relative_to(self, source: Self) -> RelativePath:
         """Computes the "relative path" require to get from ``source`` to ``self``. They satisfy the invariant
@@ -429,17 +429,13 @@ class Path(str, ABC):
 
     @classmethod
     def _glob(
-        cls, pattern: str | Iterable[str], fn: Callable[[str], builtins.list[str]]
+        cls, pattern: str | Iterable[str], fn: Callable[[str], builtins.list[Self]]
     ) -> builtins.list[Self]:
         """Applies a glob string or list/tuple/iterable to the current path, using ``fn``"""
         if isinstance(pattern, str):
-            return [cls(p) for p in fn(pattern)]  # type: ignore[abstract]
+            return fn(pattern)
 
-        results = {
-            cls(value)  # type: ignore[abstract]
-            for single_pattern in pattern
-            for value in fn(single_pattern)
-        }
+        results = {value for single_pattern in pattern for value in fn(single_pattern)}
         return sorted(results)
 
     def resolve(self, strict: bool = False) -> Self:  # noqa: ARG002

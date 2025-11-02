@@ -235,7 +235,8 @@ class RemotePath(Path):
         return self._glob(
             pattern,
             lambda pat: [
-                RemotePath(self.remote, m) for m in self.remote._path_glob(self, pat)
+                self.__class__(self.remote, m)
+                for m in self.remote._path_glob(self, pat)
             ],
         )
 

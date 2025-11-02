@@ -334,8 +334,7 @@ class LocalPath(Path):
 class LocalWorkdir(LocalPath):
     """Working directory manipulator"""
 
-    def __hash__(self) -> int:
-        raise TypeError("unhashable type")
+    __hash__ = None  # type: ignore[assignment]
 
     def __new__(cls) -> Self:
         return super().__new__(cls, os.getcwd())
