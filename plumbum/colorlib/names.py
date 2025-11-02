@@ -352,7 +352,7 @@ class FindNearest:
         self.b = b
         self.g = g
 
-    def only_basic(self):
+    def only_basic(self) -> int:
         """This will only return the first 8 colors!
         Breaks the colorspace into cubes, returns color"""
         midlevel = 0x40  # Since bright is not included
@@ -425,6 +425,6 @@ def from_html(color: str) -> tuple[int, int, int]:
     return (int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16))
 
 
-def to_html(r, g, b):
+def to_html(r: int, g: int, b: int) -> str:
     """Convert rgb to html hex code."""
     return f"#{r:02x}{g:02x}{b:02x}"

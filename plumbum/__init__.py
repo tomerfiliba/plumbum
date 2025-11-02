@@ -86,6 +86,6 @@ __all__ = (
 from . import cmd
 
 
-def __dir__():
+def __dir__() -> list[str]:
     "Support nice tab completion"
-    return __all__
+    return list(__all__)

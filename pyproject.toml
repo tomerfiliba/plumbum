@@ -17,6 +17,7 @@ requires-python = ">=3.9"
 dynamic = ["version"]
 dependencies = [
     "pywin32; platform_system=='Windows' and platform_python_implementation!='PyPy'",
+    "typing_extensions; python_version<'3.11'",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -89,6 +90,21 @@ python_version = "3.9"
 warn_unused_configs = true
 enable_error_code = ["ignore-without-code", "truthy-bool"]
 strict = true
+
+[[tool.mypy.overrides]]
+module = ["IPython.html.*", "IPython.utils.*", "pywintypes.*", "win32con.*", "win32file.*", "PIL.*", "ipywidgets.*", "traitlets.*", "plumbum.version"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "plumbum.cli.*",
+    "plumbum.commands.*",
+    "plumbum.fs.*",
+    "plumbum.lib",
+    "plumbum.machines.*",
+    "plumbum.path.*",
+    "plumbum.typed_env",
+]
 disallow_any_generics = false
 disallow_subclassing_any = false
 disallow_untyped_calls = false
@@ -96,10 +112,6 @@ disallow_untyped_defs = false
 check_untyped_defs = false
 disallow_untyped_decorators = false
 warn_return_any = false
-
-[[tool.mypy.overrides]]
-module = ["IPython.*", "pywintypes.*", "win32con.*", "win32file.*", "PIL.*", "ipywidgets.*", "traitlets.*", "plumbum.version"]
-ignore_missing_imports = true
 
 
 [tool.pytest.ini_options]
