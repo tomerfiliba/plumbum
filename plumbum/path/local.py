@@ -336,7 +336,9 @@ class LocalWorkdir(LocalPath):
 
     __hash__ = None  # type: ignore[assignment]
 
-    def __new__(cls) -> Self:
+    def __new__(cls, *args: str) -> Self:
+        if args:
+            return super().__new__(cls, *args)
         return super().__new__(cls, os.getcwd())
 
     def chdir(self, newdir: LocalPath | str) -> Self:
