@@ -1,33 +1,39 @@
 from __future__ import annotations
 
+import builtins
 import errno
 import glob
 import logging
 import os
 import shutil
+import sys
 import urllib.parse as urlparse
 import urllib.request as urllib
+from collections.abc import Generator, Iterator
 from contextlib import contextmanager
+from typing import IO
 
 from plumbum.lib import IS_WIN32
 from plumbum.path.base import FSUser, Path
 from plumbum.path.remote import RemotePath
 
-try:
+from .._compat.typing import Self
+
+if not sys.platform.startswith("win32"):
     from grp import getgrgid, getgrnam
     from pwd import getpwnam, getpwuid
-except ImportError:
+else:
 
-    def getpwuid(_x):  # type: ignore[misc]
+    def getpwuid(_x: int) -> tuple[None]:
         return (None,)
 
-    def getgrgid(_x):  # type: ignore[misc]
+    def getgrgid(_: int) -> tuple[None]:
         return (None,)
 
-    def getpwnam(_x):  # type: ignore[misc]
+    def getpwnam(_x: str) -> None:  # not NoReturn to avoid unreachable warnings
         raise OSError("`getpwnam` not supported")
 
-    def getgrnam(_x):  # type: ignore[misc]
+    def getgrnam(_x: str) -> None:  # not NoReturn to avoid unreachable warnings
         raise OSError("`getgrnam` not supported")
 
 
@@ -44,7 +50,7 @@ class LocalPath(Path):
 
     CASE_SENSITIVE = not IS_WIN32
 
-    def __new__(cls, *parts):
+    def __new__(cls, *parts: str) -> Self:
         if (
             len(parts) == 1
             and isinstance(parts[0], cls)
@@ -60,29 +66,29 @@ class LocalPath(Path):
         )
 
     @property
-    def _path(self):
+    def _path(self) -> str:
         return str(self)
 
-    def _get_info(self):
+    def _get_info(self) -> str:
         return self._path
 
-    def _form(self, *parts):
+    def _form(self, *parts: str) -> LocalPath:
         return LocalPath(*parts)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return os.path.basename(str(self))
 
     @property
-    def dirname(self):
+    def dirname(self) -> LocalPath:
         return LocalPath(os.path.dirname(str(self)))
 
     @property
-    def suffix(self):
+    def suffix(self) -> str:
         return os.path.splitext(str(self))[1]
 
     @property
-    def suffixes(self):
+    def suffixes(self) -> list[str]:
         exts = []
         base = str(self)
         while True:
@@ -93,52 +99,52 @@ class LocalPath(Path):
                 return list(reversed(exts))
 
     @property
-    def uid(self):
+    def uid(self) -> FSUser:
         uid = self.stat().st_uid
         name = getpwuid(uid)[0]
         return FSUser(uid, name)
 
     @property
-    def gid(self):
+    def gid(self) -> FSUser:
         gid = self.stat().st_gid
         name = getgrgid(gid)[0]
         return FSUser(gid, name)
 
-    def join(self, *others):
+    def join(self, *others: str) -> LocalPath:  # type: ignore[override]
         return LocalPath(self, *others)
 
-    def list(self):
+    def list(self) -> list[LocalPath]:
         return [self / fn for fn in os.listdir(str(self))]
 
-    def iterdir(self):
+    def iterdir(self) -> Iterator[LocalPath]:
         try:
             return (self / fn.name for fn in os.scandir(str(self)))
         except AttributeError:
             return (self / fn for fn in os.listdir(str(self)))
 
-    def is_dir(self):
+    def is_dir(self) -> bool:
         return os.path.isdir(str(self))
 
-    def is_file(self):
+    def is_file(self) -> bool:
         return os.path.isfile(str(self))
 
-    def is_symlink(self):
+    def is_symlink(self) -> bool:
         return os.path.islink(str(self))
 
-    def exists(self):
+    def exists(self) -> bool:
         return os.path.exists(str(self))
 
-    def stat(self):
+    def stat(self) -> os.stat_result:
         return os.stat(str(self))
 
-    def with_name(self, name):
+    def with_name(self, name: str) -> LocalPath:
         return LocalPath(self.dirname) / name
 
     @property
-    def stem(self):
+    def stem(self) -> str:
         return self.name.rsplit(os.path.extsep)[0]
 
-    def with_suffix(self, suffix, depth=1):
+    def with_suffix(self, suffix: str, depth: int | None = 1) -> LocalPath:
         if (
             suffix and not suffix.startswith(os.path.extsep)
         ) or suffix == os.path.extsep:
@@ -149,7 +155,7 @@ class LocalPath(Path):
             name, _ = os.path.splitext(name)
         return LocalPath(self.dirname) / (name + suffix)
 
-    def glob(self, pattern):
+    def glob(self, pattern: str) -> builtins.list[LocalPath]:
         return self._glob(
             pattern,
             lambda pat: [
@@ -158,7 +164,7 @@ class LocalPath(Path):
             ],
         )
 
-    def delete(self):
+    def delete(self) -> None:
         if not self.exists():
             return
         if self.is_dir():
@@ -171,13 +177,13 @@ class LocalPath(Path):
                 if ex.errno != errno.ENOENT:
                     raise
 
-    def move(self, dst):
+    def move(self, dst: LocalPath | str) -> LocalPath:
         if isinstance(dst, RemotePath):
             raise TypeError(f"Cannot move local path {self} to {dst!r}")
         shutil.move(str(self), str(dst))
         return LocalPath(dst)
 
-    def copy(self, dst, override=None):
+    def copy(self, dst: LocalPath | str, override: bool | None = None) -> LocalPath:
         if isinstance(dst, RemotePath):
             raise TypeError(f"Cannot copy local path {self} to {dst!r}")
         dst = LocalPath(dst)
@@ -194,7 +200,9 @@ class LocalPath(Path):
             shutil.copy2(str(self), str(dst))
         return dst
 
-    def mkdir(self, mode=0o777, parents=True, exist_ok=True):
+    def mkdir(
+        self, mode: int = 0o777, parents: bool = True, exist_ok: bool = True
+    ) -> None:
         if not self.exists() or not exist_ok:
             try:
                 if parents:
@@ -206,35 +214,46 @@ class LocalPath(Path):
                 if ex.errno != errno.EEXIST or not exist_ok:
                     raise
 
-    def open(self, mode="r", encoding=None):
+    def open(self, mode: str = "r", encoding: str | None = None) -> IO[str] | IO[bytes]:
         return open(
             str(self),
             mode,
             encoding=encoding,
         )
 
-    def read(self, encoding=None, mode="r"):
+    def read(self, encoding: str | None = None, mode: str = "r") -> str | bytes:
         if encoding and "b" not in mode:
             mode = mode + "b"
         with self.open(mode) as f:
             data = f.read()
             if encoding:
+                assert isinstance(data, bytes)
                 return data.decode(encoding)
             return data
 
-    def write(self, data, encoding=None, mode=None):
+    def write(
+        self, data: str | bytes, encoding: str | None = None, mode: str | None = None
+    ) -> None:
         if encoding:
+            if isinstance(data, bytes):
+                msg = "Must write string data if encoding given"
+                raise TypeError(msg)
             data = data.encode(encoding)
         if mode is None:
             mode = "w" if isinstance(data, str) else "wb"
         with self.open(mode) as f:
-            f.write(data)
+            f.write(data)  # type: ignore[arg-type]
 
-    def touch(self):
+    def touch(self) -> None:
         with open(str(self), "a", encoding="utf-8"):
             os.utime(str(self), None)
 
-    def chown(self, owner=None, group=None, recursive=None):
+    def chown(
+        self,
+        owner: int | str | None = None,
+        group: int | str | None = None,
+        recursive: bool | None = None,
+    ) -> None:
         if not hasattr(os, "chown"):
             raise OSError("os.chown() not supported")
         uid = (
@@ -252,15 +271,15 @@ class LocalPath(Path):
             for subpath in self.walk():
                 os.chown(str(subpath), uid, gid)
 
-    def chmod(self, mode):
+    def chmod(self, mode: int) -> None:
         if not hasattr(os, "chmod"):
             raise OSError("os.chmod() not supported")
         os.chmod(str(self), mode)
 
-    def access(self, mode=0):
+    def access(self, mode: int = 0) -> bool:
         return os.access(str(self), self._access_mode_to_flags(mode))
 
-    def link(self, dst):
+    def link(self, dst: LocalPath | str) -> None:
         if isinstance(dst, RemotePath):
             raise TypeError(
                 f"Cannot create a hardlink from local path {self} to {dst!r}"
@@ -276,7 +295,7 @@ class LocalPath(Path):
             else:
                 local["cmd"]("/C", "mklink", "/H", str(dst), str(self))
 
-    def symlink(self, dst):
+    def symlink(self, dst: LocalPath | str) -> None:
         if isinstance(dst, RemotePath):
             raise TypeError(
                 f"Cannot create a symlink from local path {self} to {dst!r}"
@@ -292,7 +311,7 @@ class LocalPath(Path):
             else:
                 local["cmd"]("/C", "mklink", str(dst), str(self))
 
-    def unlink(self):
+    def unlink(self) -> None:
         try:
             if hasattr(os, "symlink") or not self.is_dir():
                 os.unlink(str(self))
@@ -304,28 +323,27 @@ class LocalPath(Path):
             if ex.errno != errno.ENOENT:
                 raise
 
-    def as_uri(self, scheme="file"):
+    def as_uri(self, scheme: str = "file") -> str:
         return urlparse.urljoin(f"{scheme}://", urllib.pathname2url(str(self)))
 
     @property
-    def drive(self):
+    def drive(self) -> str:
         return os.path.splitdrive(str(self))[0]
 
     @property
-    def root(self):
+    def root(self) -> str:
         return os.path.sep
 
 
 class LocalWorkdir(LocalPath):
     """Working directory manipulator"""
 
-    def __hash__(self):
-        raise TypeError("unhashable type")
+    __hash__ = None  # type: ignore[assignment]
 
-    def __new__(cls):
+    def __new__(cls) -> Self:
         return super().__new__(cls, os.getcwd())
 
-    def chdir(self, newdir):
+    def chdir(self, newdir: LocalPath | str) -> LocalWorkdir:
         """Changes the current working directory to the given one
 
         :param newdir: The destination director (a string or a ``LocalPath``)
@@ -336,12 +354,12 @@ class LocalWorkdir(LocalPath):
         os.chdir(str(newdir))
         return self.__class__()
 
-    def getpath(self):
+    def getpath(self) -> LocalPath:
         """Returns the current working directory as a ``LocalPath`` object"""
         return LocalPath(self._path)
 
     @contextmanager
-    def __call__(self, newdir):
+    def __call__(self, newdir: LocalPath | str) -> Generator[LocalWorkdir, None, None]:
         """A context manager used to ``chdir`` into a directory and then ``chdir`` back to
         the previous location; much like ``pushd``/``popd``.
 
