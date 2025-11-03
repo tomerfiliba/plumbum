@@ -11,7 +11,7 @@ import urllib.parse as urlparse
 import urllib.request as urllib
 from collections.abc import Generator, Iterator
 from contextlib import contextmanager
-from typing import IO, NoReturn
+from typing import IO
 
 from plumbum.lib import IS_WIN32
 from plumbum.path.base import FSUser, Path
@@ -30,10 +30,10 @@ else:
     def getgrgid(_: int) -> tuple[None]:
         return (None,)
 
-    def getpwnam(_x: str) -> NoReturn:
+    def getpwnam(_x: str) -> None:  # not NoReturn to avoid unreachable warnings
         raise OSError("`getpwnam` not supported")
 
-    def getgrnam(_x: str) -> NoReturn:
+    def getgrnam(_x: str) -> None:  # not NoReturn to avoid unreachable warnings
         raise OSError("`getgrnam` not supported")
 
 

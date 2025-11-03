@@ -88,7 +88,7 @@ class TypedEnv(MutableMapping[str, str]):
             instance[self.name] = value
 
     class Str(_BaseVar[str]):
-        def convert(self, value: str) -> str:  # pylint:disable=no-self-use
+        def convert(self, value: str) -> str:
             return value
 
     class Bool(_BaseVar[bool]):
