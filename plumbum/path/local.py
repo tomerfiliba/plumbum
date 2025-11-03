@@ -177,13 +177,13 @@ class LocalPath(Path):
                 if ex.errno != errno.ENOENT:
                     raise
 
-    def move(self, dst: LocalPath) -> LocalPath:
+    def move(self, dst: LocalPath | str) -> LocalPath:
         if isinstance(dst, RemotePath):
             raise TypeError(f"Cannot move local path {self} to {dst!r}")
         shutil.move(str(self), str(dst))
         return LocalPath(dst)
 
-    def copy(self, dst: LocalPath, override: bool | None = None) -> LocalPath:
+    def copy(self, dst: LocalPath | str, override: bool | None = None) -> LocalPath:
         if isinstance(dst, RemotePath):
             raise TypeError(f"Cannot copy local path {self} to {dst!r}")
         dst = LocalPath(dst)
@@ -295,7 +295,7 @@ class LocalPath(Path):
             else:
                 local["cmd"]("/C", "mklink", "/H", str(dst), str(self))
 
-    def symlink(self, dst: LocalPath) -> None:
+    def symlink(self, dst: LocalPath | str) -> None:
         if isinstance(dst, RemotePath):
             raise TypeError(
                 f"Cannot create a symlink from local path {self} to {dst!r}"

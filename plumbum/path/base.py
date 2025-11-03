@@ -272,7 +272,7 @@ class Path(str, ABC):
         """Deletes this path (recursively, if a directory)"""
 
     @abstractmethod
-    def move(self, dst: Self) -> Self:
+    def move(self, dst: Self | str) -> Self:
         """Moves this path to a different location"""
 
     def rename(self, newname: str) -> Self:
@@ -280,7 +280,7 @@ class Path(str, ABC):
         return self.move(self.up() / newname)
 
     @abstractmethod
-    def copy(self, dst: Self, override: bool | None = None) -> Self:
+    def copy(self, dst: Self | str, override: bool | None = None) -> Self:
         """Copies this path (recursively, if a directory) to the destination path "dst".
         Raises TypeError if dst exists and override is False.
         Will overwrite if override is True.
@@ -372,14 +372,14 @@ class Path(str, ABC):
         """
 
     @abstractmethod
-    def link(self, dst: Self) -> None:
+    def link(self, dst: Self | str) -> None:
         """Creates a hard link from ``self`` to ``dst``
 
         :param dst: the destination path
         """
 
     @abstractmethod
-    def symlink(self, dst: Self) -> None:
+    def symlink(self, dst: Self | str) -> None:
         """Creates a symbolic link from ``self`` to ``dst``
 
         :param dst: the destination path
