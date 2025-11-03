@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import builtins
 import collections.abc
 import contextlib
+import dataclasses
 import inspect
 from abc import ABC, abstractmethod
-from collections.abc import Generator
-from typing import Callable
+from collections.abc import Callable, Generator
 
 from plumbum import local
 from plumbum.cli.i18n import get_translation_for
@@ -51,10 +52,20 @@ class SubcommandError(SwitchError):
 # ===================================================================================================
 # The switch decorator
 # ===================================================================================================
+@dataclasses.dataclass
 class SwitchInfo:
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+    names: builtins.list[str]
+    envname: str | None
+    argtype: str | None
+    list: bool
+    func: Callable[..., None]
+    mandatory: bool
+    overridable: bool
+    group: str
+    requires: builtins.list[str]
+    excludes: builtins.list[str]
+    argname: str | None
+    help: str | None
 
 
 def switch(

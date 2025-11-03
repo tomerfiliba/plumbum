@@ -7,6 +7,7 @@ import sys
 import typing
 from collections import defaultdict
 from textwrap import TextWrapper
+from typing import ClassVar
 
 from plumbum import colors, local
 from plumbum.cli.i18n import get_translation_for
@@ -27,6 +28,12 @@ from .switches import (
 )
 from .terminal import get_terminal_size
 
+if typing.TYPE_CHECKING:
+    from collections.abc import Callable, MutableMapping
+
+    from plumbum.cli.switches import SwitchInfo
+    from plumbum.colorlib.styles import Style
+
 _translation = get_translation_for(__name__)
 T_, ngettext = _translation.gettext, _translation.ngettext
 
@@ -44,20 +51,22 @@ class ShowVersion(SwitchError):
 
 
 class SwitchParseInfo:
-    __slots__ = ["__weakref__", "index", "swname", "val"]
+    __slots__ = ("__weakref__", "index", "swname", "val")
 
-    def __init__(self, swname, val, index):
+    def __init__(
+        self, swname: str, val: tuple[str, ...] | tuple[list[str], ...], index: int
+    ):
         self.swname = swname
         self.val = val
         self.index = index
 
 
 class Subcommand:
-    def __init__(self, name, subapplication):
+    def __init__(self, name: str, subapplication: Application | str):
         self.name = name
         self.subapplication = subapplication
 
-    def get(self):
+    def get(self) -> Application:
         if isinstance(self.subapplication, str):
             modname, clsname = self.subapplication.rsplit(".", 1)
             mod = __import__(modname, None, None, "*")
@@ -66,9 +75,10 @@ class Subcommand:
             except AttributeError:
                 raise ImportError(f"cannot import name {clsname}") from None
             self.subapplication = cls
+        assert not isinstance(self.subapplication, str)
         return self.subapplication
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return T_("Subcommand({self.name}, {self.subapplication})").format(self=self)
 
 
@@ -153,22 +163,22 @@ class Application:
 
     """
 
-    PROGNAME = None
-    DESCRIPTION = None
-    DESCRIPTION_MORE = None
-    VERSION = None
-    USAGE = None
-    COLOR_USAGE = None
-    COLOR_USAGE_TITLE = None
-    COLOR_GROUPS = None
-    COLOR_GROUP_TITLES = None
-    CALL_MAIN_IF_NESTED_COMMAND = True
-    SUBCOMMAND_HELPMSG = T_("see '{parent} {sub} --help' for more info")
-    ALLOW_ABBREV = False
+    PROGNAME: str | None = None
+    DESCRIPTION: str | None = None
+    DESCRIPTION_MORE: str | None = None
+    VERSION: str | None = None
+    USAGE: str | None = None
+    COLOR_USAGE: Style | None = None
+    COLOR_USAGE_TITLE: str | None = None
+    COLOR_GROUPS: MutableMapping[str, Style] | None = None
+    COLOR_GROUP_TITLES: MutableMapping[str, Style] | None = None
+    CALL_MAIN_IF_NESTED_COMMAND: bool = True
+    SUBCOMMAND_HELPMSG: str = T_("see '{parent} {sub} --help' for more info")
+    ALLOW_ABBREV: bool = False
 
-    parent = None
-    nested_command = None
-    _unbound_switches = ()
+    parent: Application | None = None
+    nested_command: Application | None = None
+    _unbound_switches: ClassVar[tuple[str, ...]] = ()
 
     def __new__(cls, executable=None):
         """Allows running the class directly as a shortcut for main.
@@ -181,7 +191,7 @@ class Application:
 
         return super().__new__(cls)
 
-    def __init__(self, executable):
+    def __init__(self, executable: str):
         # Filter colors
 
         if self.PROGNAME is None:
@@ -196,20 +206,20 @@ class Application:
         # Allow None for the colors
         self.COLOR_GROUPS = defaultdict(
             lambda: colors.do_nothing,
-            {} if type(self).COLOR_GROUPS is None else type(self).COLOR_GROUPS,
+            {} if self.COLOR_GROUPS is None else self.COLOR_GROUPS,
         )
 
         self.COLOR_GROUP_TITLES = defaultdict(
             lambda: colors.do_nothing,
             self.COLOR_GROUPS
-            if type(self).COLOR_GROUP_TITLES is None
-            else type(self).COLOR_GROUP_TITLES,
+            if self.COLOR_GROUP_TITLES is None
+            else self.COLOR_GROUP_TITLES,
         )
         if type(self).COLOR_USAGE is None:
             self.COLOR_USAGE = colors.do_nothing
 
         self.executable = executable
-        self._switches_by_name = {}
+        self._switches_by_name: dict[str, SwitchInfo] = {}
         self._switches_by_func = {}
         self._switches_by_envar = {}
         self._subcommands = {}
@@ -247,11 +257,11 @@ class Application:
                         self._switches_by_envar[swinfo.envname] = swinfo
 
     @property
-    def root_app(self):
+    def root_app(self) -> Application:
         return self.parent.root_app if self.parent else self
 
     @classmethod
-    def unbind_switches(cls, *switch_names):
+    def unbind_switches(cls, *switch_names: str) -> None:
         """Unbinds the given switch names from this application. For example
 
         ::
@@ -266,7 +276,9 @@ class Application:
         )
 
     @classmethod
-    def subcommand(cls, name, subapp=None):
+    def subcommand(
+        cls, name: str, subapp: Application | str | None = None
+    ) -> Callable[[Application], Application]:
         """Registers the given sub-application as a sub-command of this one. This method can be
         used both as a decorator and as a normal ``classmethod``::
 
