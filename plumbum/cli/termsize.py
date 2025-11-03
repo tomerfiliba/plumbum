@@ -45,9 +45,9 @@ def get_terminal_size(default: tuple[int, int] = (80, 25)) -> tuple[int, int]:
     return size
 
 
-def _get_terminal_size_windows():  # pragma: no cover
+def _get_terminal_size_windows() -> tuple[int, int] | None:  # pragma: no cover
     try:
-        from ctypes import create_string_buffer, windll
+        from ctypes import create_string_buffer, windll  # type: ignore[attr-defined]
 
         STDERR_HANDLE = -12
         h = windll.kernel32.GetStdHandle(STDERR_HANDLE)
@@ -62,7 +62,7 @@ def _get_terminal_size_windows():  # pragma: no cover
         return None
 
 
-def _get_terminal_size_tput():  # pragma: no cover
+def _get_terminal_size_tput() -> tuple[int, int] | None:  # pragma: no cover
     # get terminal width
     # src: http://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window
     try:

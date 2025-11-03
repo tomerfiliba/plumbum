@@ -5,6 +5,7 @@ import collections.abc
 import contextlib
 import dataclasses
 import inspect
+import typing
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Generator
 from typing import TYPE_CHECKING, Any, Generic
@@ -68,7 +69,7 @@ T = TypeVar("T", default=str)
 class SwitchInfo:
     names: builtins.list[str]
     envname: str | None
-    argtype: Callable[[str | None], Any] | None
+    argtype: Callable[[str], Any] | None
     list: bool
     func: Callable[..., None]
     mandatory: bool
@@ -76,11 +77,11 @@ class SwitchInfo:
     group: str
     requires: builtins.list[str]
     excludes: builtins.list[str]
-    argname: str | None
+    argname: str
     help: str | None
 
 
-F = TypeVar("F", bound=Callable[..., object])
+F = TypeVar("F", bound=Callable[..., None])
 
 
 def switch(
@@ -187,7 +188,7 @@ def switch(
     requires = [n.lstrip("-") for n in requires]
     excludes = [n.lstrip("-") for n in excludes]
 
-    def deco(func):
+    def deco(func: F) -> F:
         if argname is None:
             argspec = inspect.getfullargspec(func).args
             argname2 = argspec[1] if len(argspec) == 2 else _("VALUE")
@@ -196,7 +197,7 @@ def switch(
         help2 = getdoc(func) if help is None else help
         if not help2:
             help2 = str(func)
-        func._switch_info = SwitchInfo(
+        func._switch_info = SwitchInfo(  # type: ignore[attr-defined]
             names=names,
             envname=envname,
             argtype=argtype,
@@ -220,7 +221,7 @@ def autoswitch(*args: Any, **kwargs: Any) -> Callable[[F], F]:
     from the function's name (converting to lower-case, and replacing underscores with hyphens).
     The arguments are the same as for :func:`switch <plumbum.cli.switch>`."""
 
-    def deco(func):
+    def deco(func: F) -> F:
         return switch(func.__name__.replace("_", "-"), *args, **kwargs)(func)
 
     return deco
@@ -285,10 +286,16 @@ class SwitchAttr(Generic[T]):
     def __call__(self, inst: Application | None, val: T) -> None:
         self.__set__(inst, val)
 
+    @typing.overload
+    def __get__(self, inst: None, cls: object) -> Self: ...
+
+    @typing.overload
+    def __get__(self, inst: Application, cls: object) -> T: ...
+
     def __get__(self, inst: Application | None, cls: object) -> T | Self:
         if inst is None:
             return self
-        return getattr(inst, self.ATTR_NAME, {}).get(self, self._default_value)
+        return getattr(inst, self.ATTR_NAME, {}).get(self, self._default_value)  # type: ignore[no-any-return]
 
     def __set__(self, inst: Application | None, val: T) -> None:
         if inst is None:

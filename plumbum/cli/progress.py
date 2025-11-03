@@ -217,7 +217,7 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
     def start(self) -> None:
         from IPython.display import display
 
-        display(self._box)
+        display(self._box)  # type: ignore[no-untyped-call]
         super().start()
 
     @property

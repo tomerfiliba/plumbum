@@ -203,7 +203,7 @@ class LocalMachine(BaseMachine):
                 return path
         raise CommandNotFound(progname, list(cls.env.path))
 
-    def path(self, *parts):
+    def path(self, *parts: str) -> LocalPath:
         """A factory for :class:`LocalPaths <plumbum.path.local.LocalPath>`.
         Usage: ``p = local.path("/usr", "lib", "python2.7")``
         """

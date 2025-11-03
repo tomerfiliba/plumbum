@@ -7,10 +7,11 @@ import sys
 import typing
 from collections import defaultdict
 from textwrap import TextWrapper
-from typing import Any, ClassVar, TypeVar
+from typing import Any, ClassVar, Literal, NoReturn, TypeVar
 
 from plumbum import colors, local
 from plumbum.cli.i18n import get_translation_for
+from plumbum.colorlib.styles import Style
 from plumbum.lib import getdoc
 
 from .switches import (
@@ -29,10 +30,10 @@ from .switches import (
 from .terminal import get_terminal_size
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Callable, MutableMapping
+    from collections.abc import Callable, Generator, MutableMapping, Sequence
 
+    from plumbum._compat.typing import Self
     from plumbum.cli.switches import SwitchInfo
-    from plumbum.colorlib.styles import Style
 
 _translation = get_translation_for(__name__)
 T_, ngettext = _translation.gettext, _translation.ngettext
@@ -56,20 +57,18 @@ class ShowVersion(SwitchError):
 class SwitchParseInfo:
     __slots__ = ("__weakref__", "index", "swname", "val")
 
-    def __init__(
-        self, swname: str, val: tuple[str, ...] | tuple[list[str], ...], index: int
-    ):
+    def __init__(self, swname: str, val: tuple[Any, ...], index: int):
         self.swname = swname
         self.val = val
         self.index = index
 
 
 class Subcommand:
-    def __init__(self, name: str, subapplication: Application | str):
+    def __init__(self, name: str, subapplication: type[Application] | str):
         self.name = name
         self.subapplication = subapplication
 
-    def get(self) -> Application:
+    def get(self) -> type[Application]:
         if isinstance(self.subapplication, str):
             modname, clsname = self.subapplication.rsplit(".", 1)
             mod = __import__(modname, None, None, "*")
@@ -92,6 +91,8 @@ _switch_groups_l10n = [T_("Switches"), T_("Meta-switches")]
 # ===================================================================================================
 # CLI Application base class
 # ===================================================================================================
+
+X = TypeVar("X", "type[Application]", str)
 
 
 class Application:
@@ -171,26 +172,26 @@ class Application:
     DESCRIPTION_MORE: str | None = None
     VERSION: str | None = None
     USAGE: str | None = None
-    COLOR_USAGE: Style | None = None
-    COLOR_USAGE_TITLE: str | None = None
-    COLOR_GROUPS: MutableMapping[str, Style] | None = None
-    COLOR_GROUP_TITLES: MutableMapping[str, Style] | None = None
+    COLOR_USAGE: Style = typing.cast(Style, None)
+    COLOR_USAGE_TITLE: Style | None = None
+    COLOR_GROUPS: MutableMapping[str, Style] = None  # type: ignore[assignment]
+    COLOR_GROUP_TITLES: MutableMapping[str, Style] = None  # type: ignore[assignment]
     CALL_MAIN_IF_NESTED_COMMAND: bool = True
     SUBCOMMAND_HELPMSG: str = T_("see '{parent} {sub} --help' for more info")
     ALLOW_ABBREV: bool = False
 
-    parent: Application | None = None
-    nested_command: tuple[Application, list[str]] | None = None
+    parent: Self | None = None
+    nested_command: tuple[type[Application], list[str]] | None = None
     _unbound_switches: ClassVar[tuple[str, ...]] = ()
 
-    def __new__(cls, executable=None):
+    def __new__(cls, executable: object | None = None) -> Self:
         """Allows running the class directly as a shortcut for main.
         This is necessary for some setup scripts that want a single function,
         instead of an expression with a dot in it."""
 
         if executable is None:
             # This return value was not a class instance, so __init__ is never called
-            return cls.run()
+            cls.run()
 
         return super().__new__(cls)
 
@@ -278,10 +279,24 @@ class Application:
             name.lstrip("-") for name in switch_names if name
         )
 
+    @typing.overload
     @classmethod
     def subcommand(
-        cls, name: str, subapp: Application | str | None = None
-    ) -> Callable[[Application], Application]:
+        cls, name: str, subapp: None = ...
+    ) -> Callable[[type[Application]], type[Application]]: ...
+
+    @typing.overload
+    @classmethod
+    def subcommand(cls, name: str, subapp: type[Application]) -> type[Application]: ...
+
+    @typing.overload
+    @classmethod
+    def subcommand(cls, name: str, subapp: str) -> str: ...
+
+    @classmethod
+    def subcommand(
+        cls, name: str, subapp: type[Application] | str | None = None
+    ) -> Callable[[type[Application]], type[Application]] | type[Application] | str:
         """Registers the given sub-application as a sub-command of this one. This method can be
         used both as a decorator and as a normal ``classmethod``::
 
@@ -303,14 +318,18 @@ class Application:
 
         """
 
-        def wrapper(subapp):
+        def wrapper(subapp: X) -> X:
             # Use the subcommand name (not subapp name) to ensure uniqueness
             # This allows the same subapp to be registered under multiple names
             attrname = f"_subcommand_{name}"
             setattr(cls, attrname, Subcommand(name, subapp))
             return subapp
 
-        return wrapper(subapp) if subapp else wrapper
+        if subapp is None:
+            return wrapper
+        if isinstance(subapp, str):
+            return wrapper(subapp)
+        return wrapper(subapp)
 
     def _get_partial_matches(self, partialname: str) -> list[str]:
         matches = []
@@ -412,6 +431,7 @@ class Application:
                 continue
 
             # handle argument
+            assert val is not None
             val = self._handle_argument(val, swinfo.argtype, name)
 
             if swinfo.func in swfuncs:
@@ -437,7 +457,7 @@ class Application:
         envindex = 0
         for env, swinfo in self._switches_by_envar.items():
             envindex -= 1
-            envval = local.env.get(env)
+            envval = local.env.get(env)  # type: ignore[no-untyped-call]
             if envval is None:
                 continue
 
@@ -462,9 +482,7 @@ class Application:
         """This is supplied to make subclassing and testing argument completion methods easier"""
 
     @staticmethod
-    def _handle_argument(
-        val: str | None, argtype: Callable[[str | None], T] | None, name: str
-    ) -> T:
+    def _handle_argument(val: str, argtype: Callable[[str], T] | None, name: str) -> T:
         if argtype:
             try:
                 return argtype(val)
@@ -475,14 +493,18 @@ class Application:
                     ).format(name=name, argtype=argtype, val=val, ex=ex)
                 ) from None
         else:
-            return NotImplemented
+            raise NotImplementedError("Cannot convert {val!r}")
 
-    def _validate_args(self, swfuncs, tailargs):
-        if self.help.__func__ in swfuncs:
+    def _validate_args(
+        self,
+        swfuncs: dict[Callable[..., Any], SwitchParseInfo],
+        tailargs: Sequence[str],
+    ) -> tuple[list[tuple[Callable[..., Any], tuple[Any, ...]]], list[str]]:
+        if self.help.__func__ in swfuncs:  # type: ignore[attr-defined]
             raise ShowHelp()
-        if self.helpall.__func__ in swfuncs:
+        if self.helpall.__func__ in swfuncs:  # type: ignore[attr-defined]
             raise ShowHelpAll()
-        if self.version.__func__ in swfuncs:
+        if self.version.__func__ in swfuncs:  # type: ignore[attr-defined]
             raise ShowVersion()
 
         requirements = {}
@@ -557,7 +579,7 @@ class Application:
         elif hasattr(m, "annotations") and m.annotations:
             annotations = typing.get_type_hints(self.main)
             args_names = list(m.args[1:])
-            positional = [None] * len(args_names)
+            positional: list[Any] = [None] * len(args_names)
             varargs = None
 
             # All args are positional, so convert kargs to positional
@@ -567,7 +589,7 @@ class Application:
                 elif item != "return":
                     positional[args_names.index(item)] = annotation
 
-            tailargs = self._positional_validate(
+            new_tailargs = self._positional_validate(
                 tailargs, positional, varargs, m.args[1:], m.varargs
             )
 
@@ -575,9 +597,16 @@ class Application:
             (f, a)
             for _, f, a in sorted((sf.index, f, sf.val) for f, sf in swfuncs.items())
         ]
-        return ordered, tailargs
+        return ordered, new_tailargs
 
-    def _positional_validate(self, args, validator_list, varargs, argnames, varargname):
+    def _positional_validate(
+        self,
+        args: Sequence[str],
+        validator_list: list[Callable[[str], Any]],
+        varargs: Callable[[str], Any] | None,
+        argnames: list[str],
+        varargname: str | None,
+    ) -> list[str]:
         """Makes sure args follows the validation given input"""
         out_args = list(args)
 
@@ -589,6 +618,7 @@ class Application:
 
         if len(args) > len(validator_list):
             if varargs is not None:
+                assert varargname is not None
                 out_args[len(validator_list) :] = [
                     self._handle_argument(a, varargs, varargname)
                     for a in args[len(validator_list) :]
@@ -598,12 +628,25 @@ class Application:
 
         return out_args
 
+    @typing.overload
+    @classmethod
+    def run(
+        cls, argv: list[str] | None = ..., *, exit: Literal[True] = ...
+    ) -> NoReturn: ...
+
+    @typing.overload
+    @classmethod
+    def run(
+        cls, argv: list[str] | None = ..., *, exit: Literal[False]
+    ) -> tuple[Self, int]: ...
+
     @classmethod
     def run(
         cls,
-        argv=None,
-        exit=True,  # pylint: disable=redefined-builtin
-    ):
+        argv: list[str] | None = None,
+        *,
+        exit: bool = True,  # pylint: disable=redefined-builtin
+    ) -> tuple[Self, int]:
         """
         Runs the application, taking the arguments from ``sys.argv`` by default if
         nothing is passed. If ``exit`` is
@@ -647,7 +690,8 @@ class Application:
             if not retcode and inst.nested_command:
                 subapp, argv = inst.nested_command
                 subapp.parent = inst
-                inst, retcode = subapp.run(argv, exit=False)
+                inst_app, retcode = subapp.run(argv, exit=False)
+                inst = typing.cast(Self, inst_app)
 
             if cleanup:
                 cleanup()
@@ -661,7 +705,7 @@ class Application:
             return inst, retcode
 
     @classmethod
-    def invoke(cls, *args, **switches):
+    def invoke(cls, *args: str, **switches: Any) -> tuple[Application, int]:
         """Invoke this application programmatically (as a function), in the same way ``run()``
         would. There are two key differences: the return value of ``main()`` is not converted to
         an integer (returned as-is), and exceptions are not swallowed either.
@@ -692,9 +736,12 @@ class Application:
 
         return inst, retcode
 
-    def _parse_kwd_args(self, switches):
+    def _parse_kwd_args(
+        self, switches: dict[str, Any]
+    ) -> dict[Callable[..., Any], SwitchParseInfo]:
         """Parses keywords (positional arguments), used by invoke."""
         swfuncs = {}
+        p: tuple[Any, ...]
         for index, (swname, val) in enumerate(switches.items(), 1):
             switch_local = getattr(type(self), swname)
             swinfo = self._switches_by_func[switch_local._switch_info.func]
@@ -717,7 +764,8 @@ class Application:
             swfuncs[swinfo.func] = SwitchParseInfo(swname, p, index)
         return swfuncs
 
-    def main(self, *args):
+    @typing.no_type_check
+    def main(self, *args: str) -> int:
         """Implement me (no need to call super)"""
         if self._subcommands:
             if args:
@@ -735,7 +783,7 @@ class Application:
         print(T_("main() not implemented"))
         return 1
 
-    def cleanup(self, retcode):
+    def cleanup(self, retcode: int) -> None:
         """Called after ``main()`` and all sub-applications have executed, to perform any necessary cleanup.
 
         :param retcode: the return code of ``main()``
@@ -747,7 +795,7 @@ class Application:
         group="Meta-switches",
         help=T_("""Prints help messages of all sub-commands and quits"""),
     )
-    def helpall(self):
+    def helpall(self) -> None:
         """Prints help messages of all sub-commands and quits"""
         self.help()
         print()
@@ -767,7 +815,7 @@ class Application:
         group="Meta-switches",
         help=T_("""Prints this help message and quits"""),
     )
-    def help(self):  # @ReservedAssignment
+    def help(self) -> None:  # @ReservedAssignment
         """Prints this help message and quits"""
         if self._get_prog_version():
             self.version()
@@ -775,7 +823,7 @@ class Application:
         if self.DESCRIPTION:
             print(self.DESCRIPTION.strip() + "\n")
 
-        def split_indentation(s):
+        def split_indentation(s: str) -> tuple[str, str]:
             """Identifies the initial indentation (all spaces) of the string and returns the indentation as well
             as the remainder of the line.
             """
@@ -784,7 +832,7 @@ class Application:
                 i += 1
             return s[:i], s[i:]
 
-        def paragraphs(text):
+        def paragraphs(text: str) -> Generator[tuple[str, str, str], None, None]:
             """Yields each paragraph of text along with its initial and subsequent indentations to be used by
             textwrap.TextWrapper.
 
@@ -798,7 +846,7 @@ class Application:
             initial_indent = ""
             subsequent_indent = ""
 
-            def current():
+            def current() -> Generator[tuple[str, str, str], None, None]:
                 """Yields the current result if present."""
                 if paragraph:
                     yield paragraph, initial_indent, subsequent_indent
@@ -816,12 +864,12 @@ class Application:
                     subsequent_indent = ""
                 else:
                     # Adding to current paragraph
-                    def is_list_item(line):
+                    def is_list_item(line: str) -> bool:
                         """Returns true if the first element of 'line' is a bullet character."""
                         bullets = ["-", "*", "/"]
                         return line[0] in bullets
 
-                    def has_invisible_bullet(line):
+                    def has_invisible_bullet(line: str) -> bool:
                         """Returns true if the first element of 'line' is the invisible bullet ('/')."""
                         return line[0] == "/"
 
@@ -852,7 +900,7 @@ class Application:
 
             yield from current()
 
-        def wrapped_paragraphs(text, width):
+        def wrapped_paragraphs(text: str, width: int) -> Generator[str, None, None]:
             """Yields each line of each paragraph of text after wrapping them on 'width' number of columns.
 
             :param text: The text to yield wrapped lines of
@@ -875,17 +923,18 @@ class Application:
                     yield ""
 
         cols, _ = get_terminal_size()
-        for line in wrapped_paragraphs(self.DESCRIPTION_MORE, cols):
-            print(line)
+        if self.DESCRIPTION_MORE is not None:
+            for line in wrapped_paragraphs(self.DESCRIPTION_MORE, cols):
+                print(line)
 
         m = inspect.getfullargspec(self.main)
-        tailargs = m.args[1:]  # skip self
+        tailargs_str = m.args[1:]  # skip self
         if m.defaults:
             for i, d in enumerate(reversed(m.defaults)):
-                tailargs[-i - 1] = f"[{tailargs[-i - 1]}={d}]"
+                tailargs_str[-i - 1] = f"[{tailargs_str[-i - 1]}={d}]"
         if m.varargs:
-            tailargs.append(f"{m.varargs}...")
-        tailargs = " ".join(tailargs)
+            tailargs_str.append(f"{m.varargs}...")
+        tailargs = " ".join(tailargs_str)
 
         utc = self.COLOR_USAGE_TITLE or self.COLOR_USAGE
         print(utc | T_("Usage:"))
@@ -904,13 +953,15 @@ class Application:
                 )
             )
 
-        by_groups = {}
+        by_groups: dict[str, list[SwitchInfo]] = {}
         for si in self._switches_by_func.values():
             if si.group not in by_groups:
                 by_groups[si.group] = []
             by_groups[si.group].append(si)
 
-        def switchs(by_groups, show_groups):
+        def switchs(
+            by_groups: dict[str, list[SwitchInfo]], show_groups: bool
+        ) -> Generator[tuple[SwitchInfo, str, Style], None, None]:
             for grp, swinfos in sorted(by_groups.items(), key=lambda item: item[0]):
                 if show_groups:
                     lgrp = T_(grp) if grp in _switch_groups else grp
@@ -945,7 +996,7 @@ class Application:
         indentation = "\n" + " " * (cols - wrapper.width)
 
         for switch_info, prefix, color in switchs(by_groups, True):
-            help_txt = switch_info.help
+            help_txt = switch_info.help or ""
             if switch_info.list:
                 help_txt += T_("; may be given multiple times")
             if switch_info.mandatory:
@@ -1000,10 +1051,12 @@ class Application:
                         padding = indentation
                     else:
                         padding = " " * max(cols - wrapper.width - len(name) - 4, 1)
-                    if colors.contains_colors(subcls.name):
-                        bodycolor = colors.extract(subcls.name)
-                    else:
-                        bodycolor = gc
+
+                    bodycolor = (
+                        colors.extract(subcls.name)
+                        if colors.contains_colors(subcls.name)
+                        else gc
+                    )
 
                     print(
                         description_indent.format(
@@ -1011,13 +1064,13 @@ class Application:
                         )
                     )
 
-    def _get_prog_version(self):
-        ver = None
-        curr = self
+    def _get_prog_version(self) -> str | None:
+        ver: str | None = None
+        curr: Application | None = self
         while curr is not None:
             ver = getattr(curr, "VERSION", None)
             if ver is not None:
-                return ver
+                return ver  # type: ignore[no-any-return]
             curr = curr.parent
         return ver
 
@@ -1027,7 +1080,7 @@ class Application:
         group="Meta-switches",
         help=T_("""Prints the program's version and quits"""),
     )
-    def version(self):
+    def version(self) -> None:
         """Prints the program's version and quits"""
         ver = self._get_prog_version()
         ver_name = ver if ver is not None else T_("(version not set)")

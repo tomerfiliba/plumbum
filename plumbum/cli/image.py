@@ -98,7 +98,7 @@ class ShowImageApp(cli.Application):
     )
 
     @cli.switch(["-c", "--colors"], cli.Range(1, 4), help="Level of color, 1-4")
-    def colors_set(self, n):  # pylint: disable=no-self-use
+    def colors_set(self, n: int) -> None:  # pylint: disable=no-self-use
         colors.use_color = n
 
     size = cli.SwitchAttr(["-s", "--size"], help="Size, should be in the form 100x150")
@@ -108,12 +108,10 @@ class ShowImageApp(cli.Application):
     )
 
     @cli.positional(cli.ExistingFile)
-    def main(self, filename):
-        size = None
-        if self.size:
-            size = map(int, self.size.split("x"))
+    def main(self, filename: str) -> None:
+        size = tuple(map(int, self.size.split("x"))) if self.size else None
 
-        Image(size, self.ratio).show(filename, self.double)
+        Image(size, self.ratio).show(filename, self.double)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":
