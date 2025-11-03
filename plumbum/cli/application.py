@@ -431,7 +431,8 @@ class Application:
                 continue
 
             # handle argument
-            assert val is not None
+            if typing.TYPE_CHECKING:
+                assert val is not None
             val = self._handle_argument(val, swinfo.argtype, name)
 
             if swinfo.func in swfuncs:
@@ -483,7 +484,7 @@ class Application:
 
     @staticmethod
     def _handle_argument(val: str, argtype: Callable[[str], T] | None, name: str) -> T:
-        if argtype:
+        if argtype is not None:
             try:
                 return argtype(val)
             except (TypeError, ValueError) as ex:
@@ -493,7 +494,8 @@ class Application:
                     ).format(name=name, argtype=argtype, val=val, ex=ex)
                 ) from None
         else:
-            raise NotImplementedError("Cannot convert {val!r}")
+            # TODO: This is required to handle (correctly) None, but probably could be done better
+            return NotImplemented  # type: ignore[no-any-return]
 
     def _validate_args(
         self,
@@ -568,7 +570,7 @@ class Application:
 
         # Positional argument validation
         if hasattr(self.main, "positional"):
-            tailargs = self._positional_validate(
+            new_tailargs = self._positional_validate(
                 tailargs,
                 self.main.positional,
                 self.main.positional_varargs,
@@ -592,6 +594,9 @@ class Application:
             new_tailargs = self._positional_validate(
                 tailargs, positional, varargs, m.args[1:], m.varargs
             )
+
+        else:
+            new_tailargs = list(tailargs)
 
         ordered = [
             (f, a)
@@ -631,13 +636,19 @@ class Application:
     @typing.overload
     @classmethod
     def run(
-        cls, argv: list[str] | None = ..., *, exit: Literal[True] = ...
+        cls,
+        argv: list[str] | None = ...,
+        *,
+        exit: Literal[True] = ...,  # pylint: disable=redefined-builtin
     ) -> NoReturn: ...
 
     @typing.overload
     @classmethod
     def run(
-        cls, argv: list[str] | None = ..., *, exit: Literal[False]
+        cls,
+        argv: list[str] | None = ...,
+        *,
+        exit: Literal[False],  # pylint: disable=redefined-builtin
     ) -> tuple[Self, int]: ...
 
     @classmethod
@@ -691,7 +702,7 @@ class Application:
                 subapp, argv = inst.nested_command
                 subapp.parent = inst
                 inst_app, retcode = subapp.run(argv, exit=False)
-                inst = typing.cast(Self, inst_app)
+                inst = inst_app  # type: ignore[assignment]
 
             if cleanup:
                 cleanup()
