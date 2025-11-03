@@ -9,8 +9,14 @@ import datetime
 import sys
 import warnings
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any
 
 from plumbum.cli.termsize import get_terminal_size
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from plumbum._compat.typing import Self
 
 
 class ProgressBase(ABC):
@@ -26,19 +32,21 @@ class ProgressBase(ABC):
 
     def __init__(
         self,
-        iterator=None,
-        length=None,
-        timer=True,
-        body=False,
-        has_output=False,
-        clear=True,
+        iterator: Iterable[Any] | None = None,
+        length: int | None = None,
+        timer: bool = True,
+        body: bool = False,
+        has_output: bool = False,
+        clear: bool = True,
     ):
         if length is None:
-            length = len(iterator)
+            length = len(iterator)  # type: ignore[arg-type]
         elif iterator is None:
             iterator = range(length)
         elif length is None and iterator is None:
             raise TypeError("Expected either an iterator or a length")
+
+        assert iterator is not None
 
         self.length = length
         self.iterator = iterator
@@ -47,21 +55,21 @@ class ProgressBase(ABC):
         self.has_output = has_output
         self.clear = clear
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.length
 
-    def __iter__(self):
+    def __iter__(self) -> Self:
         self.start()
         return self
 
     @abstractmethod
-    def start(self):
+    def start(self) -> None:
         """This should initialize the progress bar and the iterator"""
         self.iter = iter(self.iterator)
         self.value = -1 if self.body else 0
         self._start_time = datetime.datetime.now()
 
-    def __next__(self):
+    def __next__(self) -> Any:
         try:
             rval = next(self.iter)
             self.increment()
@@ -70,28 +78,30 @@ class ProgressBase(ABC):
             raise
         return rval
 
-    def next(self):
+    def next(self) -> Any:
         return next(self)
 
     @property
-    def value(self):
+    def value(self) -> int:
         """This is the current value, as a property so setting it can be customized"""
         return self._value
 
     @value.setter
-    def value(self, val):
+    def value(self, val: int) -> None:
         self._value = val
 
     @abstractmethod
-    def display(self):
+    def display(self) -> None:
         """Called to update the progress bar"""
 
-    def increment(self):
+    def increment(self) -> None:
         """Sets next value and displays the bar"""
         self.value += 1
         self.display()
 
-    def time_remaining(self):
+    def time_remaining(
+        self,
+    ) -> tuple[datetime.timedelta, datetime.timedelta] | tuple[None, None]:
         """Get the time remaining for the progress bar, guesses"""
         if self.value < 1:
             return None, None
@@ -104,7 +114,7 @@ class ProgressBase(ABC):
         time_remaining = time_each * (self.length - self.value)
         return elapsed_time, datetime.timedelta(0, time_remaining, 0)
 
-    def str_time_remaining(self):
+    def str_time_remaining(self) -> str:
         """Returns a string version of time remaining"""
         if self.value < 1:
             return "Starting...                         "
@@ -115,26 +125,28 @@ class ProgressBase(ABC):
         return f"{completed} completed, {remaining} remaining"
 
     @abstractmethod
-    def done(self):
+    def done(self) -> None:
         """Is called when the iterator is done."""
 
     @classmethod
-    def range(cls, *value, **kargs):
+    def range(cls, *value: int, **kargs: Any) -> Self:
         """Fast shortcut to create a range based progress bar, assumes work done in body"""
         return cls(range(*value), body=True, **kargs)
 
     @classmethod
-    def wrap(cls, iterator, length=None, **kargs):
+    def wrap(
+        cls, iterator: Iterable[Any], length: int | None = None, **kargs: Any
+    ) -> Self:
         """Shortcut to wrap an iterator that does not do all the work internally"""
         return cls(iterator, length, body=True, **kargs)
 
 
 class Progress(ProgressBase):
-    def start(self):
+    def start(self) -> None:
         super().start()
         self.display()
 
-    def done(self):
+    def done(self) -> None:
         self.value = self.length
         self.display()
         if self.clear and not self.has_output:
@@ -143,7 +155,7 @@ class Progress(ProgressBase):
             sys.stdout.write("\n")
         sys.stdout.flush()
 
-    def __str__(self):
+    def __str__(self) -> str:
         width = get_terminal_size(default=(0, 0))[0]
         if self.length == 0:
             self.width = 0
@@ -175,7 +187,7 @@ class Progress(ProgressBase):
             + pbar[self.width // 2 + len(str_percent) - 2 :]
         )
 
-    def display(self):
+    def display(self) -> None:
         disptxt = str(self)
         if self.width == 0 or self.has_output:
             sys.stdout.write(disptxt + "\n")
@@ -188,7 +200,7 @@ class Progress(ProgressBase):
 class ProgressIPy(ProgressBase):  # pragma: no cover
     HTMLBOX = '<div class="widget-hbox widget-progress"><div class="widget-label" style="display:block;">{0}</div></div>'
 
-    def __init__(self, *args, **kargs):
+    def __init__(self, *args: Any, **kargs: Any):
         # Ipython gives warnings when using widgets about the API potentially changing
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -202,29 +214,29 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
         self._label = HTML()
         self._box = HBox((self.prog, self._label))
 
-    def start(self):
+    def start(self) -> None:
         from IPython.display import display
 
         display(self._box)
         super().start()
 
     @property
-    def value(self):
+    def value(self) -> int:
         """This is the current value, -1 allowed (automatically fixed for display)"""
         return self._value
 
     @value.setter
-    def value(self, val):
+    def value(self, val: int) -> None:
         self._value = val
         self.prog.value = max(val, 0)
         self.prog.description = f"{self.value / self.length:.2%}"
         if self.timer and val > 0:
             self._label.value = self.HTMLBOX.format(self.str_time_remaining())
 
-    def display(self):
+    def display(self) -> None:
         pass
 
-    def done(self):
+    def done(self) -> None:
         if self.clear:
             self._box.close()
 
@@ -240,14 +252,11 @@ class ProgressAuto(ProgressBase):
     :param body: True if the slow portion occurs outside the iterator (in a loop, for example)
     """
 
-    def __new__(cls, *args, **kargs):
+    def __new__(cls, *args: Any, **kargs: Any) -> ProgressIPy | Progress:  # type: ignore[misc]
         """Uses the generator trick that if a cls instance is returned, the __init__ method is not called."""
         try:  # pragma: no cover
-            __IPYTHON__  # noqa: B018
-            try:
-                from traitlets import TraitError
-            except ImportError:  # Support for IPython < 4.0
-                from IPython.utils.traitlets import TraitError
+            __IPYTHON__  # type: ignore[name-defined] # noqa: B018
+            from traitlets import TraitError
 
             try:
                 return ProgressIPy(*args, **kargs)
@@ -261,7 +270,7 @@ ProgressAuto.register(ProgressIPy)
 ProgressAuto.register(Progress)
 
 
-def main():
+def main() -> None:
     import time
 
     tst = Progress.range(20)
