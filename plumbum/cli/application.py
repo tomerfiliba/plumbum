@@ -7,7 +7,7 @@ import sys
 import typing
 from collections import defaultdict
 from textwrap import TextWrapper
-from typing import ClassVar
+from typing import Any, ClassVar, TypeVar
 
 from plumbum import colors, local
 from plumbum.cli.i18n import get_translation_for
@@ -36,6 +36,9 @@ if typing.TYPE_CHECKING:
 
 _translation = get_translation_for(__name__)
 T_, ngettext = _translation.gettext, _translation.ngettext
+
+
+T = TypeVar("T")
 
 
 class ShowHelp(SwitchError):
@@ -163,7 +166,7 @@ class Application:
 
     """
 
-    PROGNAME: str | None = None
+    PROGNAME: str = typing.cast(str, None)  # Will always be set to str in __init__
     DESCRIPTION: str | None = None
     DESCRIPTION_MORE: str | None = None
     VERSION: str | None = None
@@ -177,7 +180,7 @@ class Application:
     ALLOW_ABBREV: bool = False
 
     parent: Application | None = None
-    nested_command: Application | None = None
+    nested_command: tuple[Application, list[str]] | None = None
     _unbound_switches: ClassVar[tuple[str, ...]] = ()
 
     def __new__(cls, executable=None):
@@ -309,7 +312,7 @@ class Application:
 
         return wrapper(subapp) if subapp else wrapper
 
-    def _get_partial_matches(self, partialname):
+    def _get_partial_matches(self, partialname: str) -> list[str]:
         matches = []
         for switch_ in self._switches_by_name:
             if switch_.startswith(partialname):
@@ -318,9 +321,11 @@ class Application:
                 ]
         return matches
 
-    def _parse_args(self, argv):
+    def _parse_args(
+        self, argv: list[str]
+    ) -> tuple[dict[Callable[..., None], Any], list[str]]:
         tailargs = []
-        swfuncs = {}
+        swfuncs: dict[Callable[..., None], Any] = {}
         index = 0
 
         while argv:
@@ -453,11 +458,13 @@ class Application:
         return swfuncs, tailargs
 
     @classmethod
-    def autocomplete(cls, argv):
+    def autocomplete(cls, argv: list[str]) -> None:
         """This is supplied to make subclassing and testing argument completion methods easier"""
 
     @staticmethod
-    def _handle_argument(val, argtype, name):
+    def _handle_argument(
+        val: str | None, argtype: Callable[[str | None], T] | None, name: str
+    ) -> T:
         if argtype:
             try:
                 return argtype(val)

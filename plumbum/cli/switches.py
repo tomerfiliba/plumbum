@@ -7,6 +7,7 @@ import dataclasses
 import inspect
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator
+from typing import Any
 
 from plumbum import local
 from plumbum.cli.i18n import get_translation_for
@@ -56,7 +57,7 @@ class SubcommandError(SwitchError):
 class SwitchInfo:
     names: builtins.list[str]
     envname: str | None
-    argtype: str | None
+    argtype: Callable[[str | None], Any] | None
     list: bool
     func: Callable[..., None]
     mandatory: bool
