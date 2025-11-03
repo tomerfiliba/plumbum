@@ -12,7 +12,7 @@ from plumbum.commands import ProcessExecutionError, shquote
 from plumbum.path.base import FSUser, Path
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Generator, Iterable
 
     from plumbum.machines.remote import BaseRemoteMachine
 
@@ -235,8 +235,7 @@ class RemotePath(Path):
         return self._glob(
             pattern,
             lambda pat: [
-                RemotePath(self.remote, m)
-                for m in self.remote._path_glob(self, pat)
+                RemotePath(self.remote, m) for m in self.remote._path_glob(self, pat)
             ],
         )
 
@@ -296,29 +295,35 @@ class RemotePath(Path):
                         errno.EEXIST, "File exists (on remote end)", str(self)
                     ) from None
 
-    def read(self, encoding=None):
+    def read(self, encoding: str | None = None) -> str | bytes:
         data = self.remote._path_read(self)
         if encoding:
             return data.decode(encoding)
         return data
 
-    def write(self, data, encoding=None):
+    def write(self, data: str | bytes, encoding: str | None = None) -> None:
         if encoding:
+            assert isinstance(data, str)
             data = data.encode(encoding)
         self.remote._path_write(self, data)
 
-    def touch(self):
+    def touch(self) -> None:
         self.remote._path_touch(str(self))
 
-    def chown(self, owner=None, group=None, recursive=None):
+    def chown(
+        self,
+        owner: int | str | None = None,
+        group: int | str | None = None,
+        recursive: bool | None = None,
+    ) -> None:
         self.remote._path_chown(
             self, owner, group, self.is_dir() if recursive is None else recursive
         )
 
-    def chmod(self, mode):
+    def chmod(self, mode: int) -> None:
         self.remote._path_chmod(mode, self)
 
-    def access(self, mode=0):
+    def access(self, mode: int = 0) -> bool:
         mode = self._access_mode_to_flags(mode)
         res = self.remote._path_stat(self)
         if res is None:
@@ -326,7 +331,7 @@ class RemotePath(Path):
         mask = res.st_mode & 0x1FF
         return ((mask >> 6) & mode) or ((mask >> 3) & mode)
 
-    def link(self, dst):
+    def link(self, dst: RemotePath | str) -> None:
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
@@ -336,7 +341,7 @@ class RemotePath(Path):
             )
         self.remote._path_link(self, dst, False)
 
-    def symlink(self, dst):
+    def symlink(self, dst: RemotePath | str) -> None:
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
@@ -346,7 +351,9 @@ class RemotePath(Path):
             )
         self.remote._path_link(self, dst, True)
 
-    def open(self, mode="r", bufsize=-1, *, encoding=None):
+    def open(
+        self, mode: str = "r", bufsize: int = -1, *, encoding: str | None = None
+    ) -> typing.IO[str] | typing.IO[bytes]:
         """
         Opens this path as a file.
 
@@ -364,46 +371,46 @@ class RemotePath(Path):
             "RemotePath.open only works for ParamikoMachine-associated paths for now"
         )
 
-    def as_uri(self, scheme="ssh"):
+    def as_uri(self, scheme: str = "ssh") -> str:
         suffix = urllib.pathname2url(str(self))
-        return f"{scheme}://{self.remote._fqhost}{suffix}"
+        # TODO: BaseRemoteMachine doesn't have this, but maybe just because it's not typed yet
+        return f"{scheme}://{self.remote._fqhost}{suffix}"  # type: ignore[attr-defined]
 
     @property
-    def stem(self):
+    def stem(self) -> str:
         return self.name.rsplit(".")[0]
 
     @property
-    def root(self):
+    def root(self) -> str:
         return "/"
 
     @property
-    def drive(self):
+    def drive(self) -> str:
         return ""
 
 
 class RemoteWorkdir(RemotePath):
     """Remote working directory manipulator"""
 
-    def __new__(cls, remote):
+    def __new__(cls, remote: BaseRemoteMachine) -> Self:
         return super().__new__(cls, remote, remote._session.run("pwd")[1].strip())
 
-    def __hash__(self):
-        raise TypeError("unhashable type")
+    __hash__ = None  # type: ignore[assignment]
 
-    def chdir(self, newdir):
+    def chdir(self, newdir: RemotePath | str) -> Self:
         """Changes the current working directory to the given one"""
         self.remote._session.run(f"cd {shquote(newdir)}")
         if hasattr(self.remote, "_cwd"):
             del self.remote._cwd
         return self.__class__(self.remote)
 
-    def getpath(self):
+    def getpath(self) -> RemotePath:
         """Returns the current working directory as a
         `remote path <plumbum.path.remote.RemotePath>` object"""
         return RemotePath(self.remote, self)
 
     @contextmanager
-    def __call__(self, newdir):
+    def __call__(self, newdir: RemotePath | str) -> Generator[RemotePath, None, None]:
         """A context manager used to ``chdir`` into a directory and then ``chdir`` back to
         the previous location; much like ``pushd``/``popd``.
 

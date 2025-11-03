@@ -309,7 +309,9 @@ class Path(str, ABC):
         """
 
     @abstractmethod
-    def open(self, mode: str = "r", *, encoding: str | None = None) -> IO:
+    def open(
+        self, mode: str = "r", *, encoding: str | None = None
+    ) -> IO[str] | IO[bytes]:
         """opens this path as a file"""
 
     @abstractmethod

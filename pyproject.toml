@@ -101,7 +101,6 @@ module = [
     "plumbum.commands.*",
     "plumbum.fs.*",
     "plumbum.machines.*",
-    "plumbum.path.*",
 ]
 disallow_any_generics = false
 disallow_subclassing_any = false
@@ -109,6 +108,13 @@ disallow_untyped_calls = false
 disallow_untyped_defs = false
 check_untyped_defs = false
 disallow_untyped_decorators = false
+warn_return_any = false
+
+[[tool.mypy.overrides]]
+module = [
+    "plumbum.path.*",
+]
+disallow_untyped_calls = false
 warn_return_any = false
 
 

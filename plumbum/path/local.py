@@ -6,11 +6,12 @@ import glob
 import logging
 import os
 import shutil
+import sys
 import urllib.parse as urlparse
 import urllib.request as urllib
 from collections.abc import Generator, Iterator
 from contextlib import contextmanager
-from typing import IO
+from typing import IO, NoReturn
 
 from plumbum.lib import IS_WIN32
 from plumbum.path.base import FSUser, Path
@@ -18,21 +19,21 @@ from plumbum.path.remote import RemotePath
 
 from .._compat.typing import Self
 
-try:
+if not sys.platform.startswith("win32"):
     from grp import getgrgid, getgrnam
     from pwd import getpwnam, getpwuid
-except ImportError:
+else:
 
-    def getpwuid(_x):  # type: ignore[misc]
+    def getpwuid(_x: int) -> tuple[None]:
         return (None,)
 
-    def getgrgid(_x):  # type: ignore[misc]
+    def getgrgid(_: int) -> tuple[None]:
         return (None,)
 
-    def getpwnam(_x):  # type: ignore[misc]
+    def getpwnam(_x: str) -> NoReturn:
         raise OSError("`getpwnam` not supported")
 
-    def getgrnam(_x):  # type: ignore[misc]
+    def getgrnam(_x: str) -> NoReturn:
         raise OSError("`getgrnam` not supported")
 
 
@@ -199,7 +200,9 @@ class LocalPath(Path):
             shutil.copy2(str(self), str(dst))
         return dst
 
-    def mkdir(self, mode=0o777, parents=True, exist_ok=True):
+    def mkdir(
+        self, mode: int = 0o777, parents: bool = True, exist_ok: bool = True
+    ) -> None:
         if not self.exists() or not exist_ok:
             try:
                 if parents:
@@ -211,7 +214,7 @@ class LocalPath(Path):
                 if ex.errno != errno.EEXIST or not exist_ok:
                     raise
 
-    def open(self, mode: str = "r", encoding: str | None = None) -> IO:
+    def open(self, mode: str = "r", encoding: str | None = None) -> IO[str] | IO[bytes]:
         return open(
             str(self),
             mode,
@@ -224,6 +227,7 @@ class LocalPath(Path):
         with self.open(mode) as f:
             data = f.read()
             if encoding:
+                assert isinstance(data, bytes)
                 return data.decode(encoding)
             return data
 
@@ -238,7 +242,7 @@ class LocalPath(Path):
         if mode is None:
             mode = "w" if isinstance(data, str) else "wb"
         with self.open(mode) as f:
-            f.write(data)
+            f.write(data)  # type: ignore[arg-type]
 
     def touch(self) -> None:
         with open(str(self), "a", encoding="utf-8"):
@@ -275,7 +279,7 @@ class LocalPath(Path):
     def access(self, mode: int = 0) -> bool:
         return os.access(str(self), self._access_mode_to_flags(mode))
 
-    def link(self, dst: LocalPath) -> None:
+    def link(self, dst: LocalPath | str) -> None:
         if isinstance(dst, RemotePath):
             raise TypeError(
                 f"Cannot create a hardlink from local path {self} to {dst!r}"
