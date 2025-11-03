@@ -19,9 +19,9 @@
     <img style="display: block; margin-left: auto; margin-right: auto; opacity: 0.7; width: 70px;"
     src="_static/github-logo.png" title="Github Repo"/></a>
     <br/>
-    <a alt="Build Status" href="https://github.com/tomerfiliba/plumbum/actions" target="_blank">
-    <img src="https://github.com/tomerfiliba/plumbum/workflows/CI/badge.svg"
-    style="display: block; margin-left: auto; margin-right: auto;" title="Travis CI status"></a>
+    <a alt="Build Status" href="https://github.com/tomerfiliba/plumbum/actions/workflows/ci.yml" target="_blank">
+    <img src="https://github.com/tomerfiliba/plumbum/actions/workflows/ci.yml/badge.svg"
+    style="display: block; margin-left: auto; margin-right: auto;" title="GitHub Actions CI status"></a>
     </div>
 
 Plumbum: Shell Combinators and More
