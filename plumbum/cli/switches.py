@@ -5,16 +5,24 @@ import collections.abc
 import contextlib
 import dataclasses
 import inspect
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Generator
-from typing import Any
+from typing import TYPE_CHECKING, Any, Generic
 
 from plumbum import local
+from plumbum._compat.typing import Self, TypeVar
 from plumbum.cli.i18n import get_translation_for
 from plumbum.lib import getdoc
 
 _translation = get_translation_for(__name__)
 _, ngettext = _translation.gettext, _translation.ngettext
+
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sized
+
+    from plumbum.cli.application import Application
+    from plumbum.path.local import LocalPath
 
 
 class SwitchError(Exception):
@@ -50,6 +58,9 @@ class SubcommandError(SwitchError):
     """Raised when there's something wrong with sub-commands"""
 
 
+T = TypeVar("T", default=str)
+
+
 # ===================================================================================================
 # The switch decorator
 # ===================================================================================================
@@ -69,19 +80,22 @@ class SwitchInfo:
     help: str | None
 
 
+F = TypeVar("F", bound=Callable[..., object])
+
+
 def switch(
-    names,
-    argtype=None,
-    argname=None,
-    list=False,  # pylint: disable=redefined-builtin
-    mandatory=False,
-    requires=(),
-    excludes=(),
-    help=None,  # pylint: disable=redefined-builtin
-    overridable=False,
-    group="Switches",
-    envname=None,
-):
+    names: Iterable[str],
+    argtype: Callable[[str], Any] | None = None,
+    argname: str | None = None,
+    list: bool = False,  # pylint: disable=redefined-builtin
+    mandatory: bool = False,
+    requires: Iterable[str] = (),
+    excludes: Iterable[str] = (),
+    help: str | None = None,  # pylint: disable=redefined-builtin
+    overridable: bool = False,
+    group: str = "Switches",
+    envname: str | None = None,
+) -> Callable[[F], F]:
     """
     A decorator that exposes functions as command-line switches. Usage::
 
@@ -201,7 +215,7 @@ def switch(
     return deco
 
 
-def autoswitch(*args, **kwargs):
+def autoswitch(*args: Any, **kwargs: Any) -> Callable[[F], F]:
     """A decorator that exposes a function as a switch, "inferring" the name of the switch
     from the function's name (converting to lower-case, and replacing underscores with hyphens).
     The arguments are the same as for :func:`switch <plumbum.cli.switch>`."""
@@ -215,7 +229,7 @@ def autoswitch(*args, **kwargs):
 # ===================================================================================================
 # Switch Attributes
 # ===================================================================================================
-class SwitchAttr:
+class SwitchAttr(Generic[T]):
     """
     A switch that stores its result in an attribute (descriptor). Usage::
 
@@ -236,14 +250,16 @@ class SwitchAttr:
     ATTR_NAME = "__plumbum_switchattr_dict__"
     VALUE = _("VALUE")
 
+    _default_value: Any
+
     def __init__(
         self,
-        names,
-        argtype=str,
-        default=None,
-        list=False,  # pylint: disable=redefined-builtin
-        argname=VALUE,
-        **kwargs,
+        names: Iterable[str],
+        argtype: Callable[[str], T] | None = str,  # type: ignore[assignment]
+        default: Any = None,
+        list: bool = False,  # pylint: disable=redefined-builtin
+        argname: str = VALUE,
+        **kwargs: Any,
     ):
         # Setting to prevent the help message from showing SwitchAttr's docstring
         self.__doc__ = "Sets an attribute"
@@ -255,7 +271,7 @@ class SwitchAttr:
                 kwargs["help"] = defaultmsg.lstrip("; ")
 
         switch(names, argtype=argtype, argname=argname, list=list, **kwargs)(self)
-        listtype = type([])
+        listtype = builtins.list
         if list:
             if default is None:
                 self._default_value = []
@@ -266,15 +282,15 @@ class SwitchAttr:
         else:
             self._default_value = default
 
-    def __call__(self, inst, val):
+    def __call__(self, inst: Application | None, val: T) -> None:
         self.__set__(inst, val)
 
-    def __get__(self, inst, cls):
+    def __get__(self, inst: Application | None, cls: object) -> T | Self:
         if inst is None:
             return self
         return getattr(inst, self.ATTR_NAME, {}).get(self, self._default_value)
 
-    def __set__(self, inst, val):
+    def __set__(self, inst: Application | None, val: T) -> None:
         if inst is None:
             raise AttributeError("cannot set an unbound SwitchAttr")
 
@@ -284,7 +300,7 @@ class SwitchAttr:
             getattr(inst, self.ATTR_NAME)[self] = val
 
 
-class Flag(SwitchAttr):
+class Flag(SwitchAttr[bool]):
     """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` for boolean flags. If the flag is not
     given, the value of this attribute is ``default``; if it is given, the value changes
     to ``not default``. Usage::
@@ -298,16 +314,16 @@ class Flag(SwitchAttr):
                    except for ``list`` and ``argtype``.
     """
 
-    def __init__(self, names, default=False, **kwargs):
+    def __init__(self, names: Iterable[str], default: bool = False, **kwargs: Any):
         SwitchAttr.__init__(
             self, names, argtype=None, default=default, list=False, **kwargs
         )
 
-    def __call__(self, inst):
+    def __call__(self, inst: Application | None) -> None:  # type: ignore[override]
         self.__set__(inst, not self._default_value)
 
 
-class CountOf(SwitchAttr):
+class CountOf(SwitchAttr[int]):
     """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` that counts the number of
     occurrences of the switch in the command line. Usage::
 
@@ -322,13 +338,13 @@ class CountOf(SwitchAttr):
                    except for ``list`` and ``argtype``.
     """
 
-    def __init__(self, names, default=0, **kwargs):
+    def __init__(self, names: Iterable[str], default: int = 0, **kwargs: Any):
         SwitchAttr.__init__(
             self, names, argtype=None, default=default, list=True, **kwargs
         )
         self._default_value = default  # issue #118
 
-    def __call__(self, inst, v):
+    def __call__(self, inst: Application | None, v: Sized) -> None:  # type: ignore[override]
         self.__set__(inst, len(v))
 
 
@@ -366,11 +382,11 @@ class positional:
 
     """
 
-    def __init__(self, *args, **kargs):
+    def __init__(self, *args: Any, **kargs: Any):
         self.args = args
         self.kargs = kargs
 
-    def __call__(self, function):
+    def __call__(self, function: F) -> F:
         m = inspect.getfullargspec(function)
         args_names = list(m.args[1:])
 
@@ -390,28 +406,28 @@ class positional:
             else:
                 positional_list[args_names.index(item)] = value
 
-        function.positional = positional_list
-        function.positional_varargs = varargs
+        function.positional = positional_list  # type: ignore[attr-defined]
+        function.positional_varargs = varargs  # type: ignore[attr-defined]
         return function
 
 
-class Validator(ABC):
+class Validator(Generic[T], metaclass=ABCMeta):
     __slots__ = ()
 
     @abstractmethod
-    def __call__(self, obj):
+    def __call__(self, obj: str) -> T:
         "Must be implemented for a Validator to work"
 
     # pylint: disable-next=no-self-use
-    def choices(self, partial=""):  # noqa: ARG002
+    def choices(self, partial: str = "") -> set[T]:  # noqa: ARG002
         """Should return set of valid choices, can be given optional partial info"""
         return set()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """If not overridden, will print the slots as args"""
 
         slots = {}
-        for cls in self.__mro__:
+        for cls in type(self).__mro__:
             for prop in getattr(cls, "__slots__", ()):
                 if prop[0] != "_":
                     slots[prop] = getattr(self, prop)
@@ -423,7 +439,7 @@ class Validator(ABC):
 # ===================================================================================================
 # Switch type validators
 # ===================================================================================================
-class Range(Validator):
+class Range(Validator[int]):
     """
     A switch-type validator that checks for the inclusion of a value in a certain range.
     Usage::
@@ -437,27 +453,27 @@ class Range(Validator):
 
     __slots__ = ("end", "start")
 
-    def __init__(self, start, end):
+    def __init__(self, start: int, end: int):
         self.start = start
         self.end = end
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"[{self.start:d}..{self.end:d}]"
 
-    def __call__(self, obj):
-        obj = int(obj)
-        if obj < self.start or obj > self.end:
+    def __call__(self, obj: str) -> int:
+        iobj = int(obj)
+        if iobj < self.start or iobj > self.end:
             raise ValueError(
                 _("Not in range [{0:d}..{1:d}]").format(self.start, self.end)
             )
-        return obj
+        return iobj
 
-    def choices(self, partial=""):  # noqa: ARG002
+    def choices(self, partial: str = "") -> set[int]:  # noqa: ARG002
         # TODO: Add partial handling
         return set(range(self.start, self.end + 1))
 
 
-class Set(Validator):
+class Set(Validator[str]):
     """
     A switch-type validator that checks that the value is contained in a defined
     set of values. Usage::
@@ -477,6 +493,8 @@ class Set(Validator):
                         this option.
     """
 
+    # TODO: This is typed for string only, though it tries to support more. __name__ seems required.
+
     def __init__(
         self,
         *values: str | Callable[[str], str],
@@ -492,7 +510,7 @@ class Set(Validator):
         self.values = values
         self.all_markers = all_markers
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         items = ", ".join(v if isinstance(v, str) else v.__name__ for v in self.values)
         return f"{{{items}}}"
 
@@ -516,7 +534,7 @@ class Set(Validator):
             with contextlib.suppress(ValueError):
                 yield opt(value)
 
-    def __call__(self, value: str, check_csv: bool = True) -> str | list[str]:
+    def __call__(self, value: str, check_csv: bool = True) -> str | list[str]:  # type: ignore[override]
         items = list(self._call_iter(value, check_csv))
         if not items:
             msg = f"Invalid value: {value} (Expected one of {self.values})"
@@ -525,7 +543,7 @@ class Set(Validator):
             return items
         return items[0]
 
-    def choices(self, partial=""):
+    def choices(self, partial: str = "") -> set[str]:
         choices = {opt if isinstance(opt, str) else f"({opt})" for opt in self.values}
         choices |= self.all_markers
         if partial:
@@ -535,26 +553,29 @@ class Set(Validator):
 
 CSV = Set(str, csv=True)
 
+A = TypeVar("A")
+B = TypeVar("B")
 
-class Predicate:
+
+class Predicate(Generic[A, B]):
     """A wrapper for a single-argument function with pretty printing"""
 
-    def __init__(self, func):
+    def __init__(self, func: Callable[[A], B]):
         self.func = func
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.func.__name__
 
-    def __call__(self, val):
+    def __call__(self, val: A) -> B:
         return self.func(val)
 
     # pylint: disable-next=no-self-use
-    def choices(self, partial=""):  # noqa: ARG002
+    def choices(self, partial: str = "") -> set[str]:  # noqa: ARG002
         return set()
 
 
 @Predicate
-def ExistingDirectory(val):
+def ExistingDirectory(val: str) -> LocalPath:
     """A switch-type validator that ensures that the given argument is an existing directory"""
     p = local.path(val)
     if not p.is_dir():
@@ -563,7 +584,7 @@ def ExistingDirectory(val):
 
 
 @Predicate
-def MakeDirectory(val):
+def MakeDirectory(val: str) -> LocalPath:
     p = local.path(val)
     if p.is_file():
         raise ValueError(f"{val} is a file, should be nonexistent, or a directory")
@@ -573,7 +594,7 @@ def MakeDirectory(val):
 
 
 @Predicate
-def ExistingFile(val):
+def ExistingFile(val: str) -> LocalPath:
     """A switch-type validator that ensures that the given argument is an existing file"""
     p = local.path(val)
     if not p.is_file():
@@ -582,7 +603,7 @@ def ExistingFile(val):
 
 
 @Predicate
-def NonexistentPath(val):
+def NonexistentPath(val: str) -> LocalPath:
     """A switch-type validator that ensures that the given argument is a nonexistent path"""
     p = local.path(val)
     if p.exists():
