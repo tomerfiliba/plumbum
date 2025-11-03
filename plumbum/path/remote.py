@@ -134,8 +134,8 @@ class RemotePath(Path):
         self.remote = remote
         return self
 
-    def _form(self, *parts: str) -> Self:
-        return self.__class__(self.remote, *parts)
+    def _form(self, *parts: str) -> RemotePath:
+        return RemotePath(self.remote, *parts)
 
     @property
     def _path(self) -> str:
@@ -148,7 +148,7 @@ class RemotePath(Path):
         return str(self).rsplit("/", 1)[1]
 
     @property
-    def dirname(self) -> Self | str:  # type: ignore[override]
+    def dirname(self) -> RemotePath | str:  # type: ignore[override]
         if "/" not in str(self):
             return str(self)
         return self.__class__(self.remote, str(self).rsplit("/", 1)[0])
@@ -179,15 +179,15 @@ class RemotePath(Path):
     def _get_info(self) -> tuple[BaseRemoteMachine, str]:  # type: ignore[override]
         return (self.remote, self._path)
 
-    def join(self, *parts: str) -> Self:  # type: ignore[override]
-        return self.__class__(self.remote, self, *parts)
+    def join(self, *parts: str) -> RemotePath:  # type: ignore[override]
+        return RemotePath(self.remote, self, *parts)
 
-    def list(self) -> list[Self]:
+    def list(self) -> list[RemotePath]:
         if not self.is_dir():
             return []
         return [self.join(fn) for fn in self.remote._path_listdir(self)]
 
-    def iterdir(self) -> Iterable[Self]:
+    def iterdir(self) -> Iterable[RemotePath]:
         if not self.is_dir():
             return ()
         return (self.join(fn) for fn in self.remote._path_listdir(self))
@@ -219,10 +219,10 @@ class RemotePath(Path):
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), "")
         return res
 
-    def with_name(self, name: str) -> Self:
+    def with_name(self, name: str) -> RemotePath:
         return self.__class__(self.remote, self.dirname) / name
 
-    def with_suffix(self, suffix: str, depth: int | None = 1) -> Self:
+    def with_suffix(self, suffix: str, depth: int | None = 1) -> RemotePath:
         if (suffix and not suffix.startswith(".")) or suffix == ".":
             raise ValueError(f"Invalid suffix {suffix!r}")
         name = self.name
@@ -231,7 +231,7 @@ class RemotePath(Path):
             name, _ = name.rsplit(".", 1)
         return self.__class__(self.remote, self.dirname) / (name + suffix)
 
-    def glob(self, pattern: str) -> builtins.list[Self]:
+    def glob(self, pattern: str) -> builtins.list[RemotePath]:
         return self._glob(
             pattern,
             lambda pat: [
@@ -247,7 +247,7 @@ class RemotePath(Path):
 
     unlink = delete
 
-    def move(self, dst: RemotePath | str) -> Self:
+    def move(self, dst: RemotePath | str) -> RemotePath:
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")
@@ -257,7 +257,7 @@ class RemotePath(Path):
             )
         return self.remote._path_move(self, dst)
 
-    def copy(self, dst: RemotePath | str, override: bool | None = False) -> Self:
+    def copy(self, dst: RemotePath | str, override: bool | None = False) -> RemotePath:
         if isinstance(dst, RemotePath):
             if dst.remote is not self.remote:
                 raise TypeError("dst points to a different remote machine")

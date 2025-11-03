@@ -71,16 +71,16 @@ class LocalPath(Path):
     def _get_info(self) -> str:
         return self._path
 
-    def _form(self, *parts: str) -> Self:
-        return self.__class__(*parts)
+    def _form(self, *parts: str) -> LocalPath:
+        return LocalPath(*parts)
 
     @property
     def name(self) -> str:
         return os.path.basename(str(self))
 
     @property
-    def dirname(self) -> Self:
-        return self.__class__(os.path.dirname(str(self)))
+    def dirname(self) -> LocalPath:
+        return LocalPath(os.path.dirname(str(self)))
 
     @property
     def suffix(self) -> str:
@@ -109,13 +109,13 @@ class LocalPath(Path):
         name = getgrgid(gid)[0]
         return FSUser(gid, name)
 
-    def join(self, *others: str) -> Self:  # type: ignore[override]
-        return self.__class__(self, *others)
+    def join(self, *others: str) -> LocalPath:  # type: ignore[override]
+        return LocalPath(self, *others)
 
-    def list(self) -> list[Self]:
+    def list(self) -> list[LocalPath]:
         return [self / fn for fn in os.listdir(str(self))]
 
-    def iterdir(self) -> Iterator[Self]:
+    def iterdir(self) -> Iterator[LocalPath]:
         try:
             return (self / fn.name for fn in os.scandir(str(self)))
         except AttributeError:
@@ -136,14 +136,14 @@ class LocalPath(Path):
     def stat(self) -> os.stat_result:
         return os.stat(str(self))
 
-    def with_name(self, name: str) -> Self:
-        return self.__class__(self.dirname) / name
+    def with_name(self, name: str) -> LocalPath:
+        return LocalPath(self.dirname) / name
 
     @property
     def stem(self) -> str:
         return self.name.rsplit(os.path.extsep)[0]
 
-    def with_suffix(self, suffix: str, depth: int | None = 1) -> Self:
+    def with_suffix(self, suffix: str, depth: int | None = 1) -> LocalPath:
         if (
             suffix and not suffix.startswith(os.path.extsep)
         ) or suffix == os.path.extsep:
@@ -152,13 +152,13 @@ class LocalPath(Path):
         depth = len(self.suffixes) if depth is None else min(depth, len(self.suffixes))
         for _ in range(depth):
             name, _ = os.path.splitext(name)
-        return self.__class__(self.dirname) / (name + suffix)
+        return LocalPath(self.dirname) / (name + suffix)
 
-    def glob(self, pattern: str) -> builtins.list[Self]:
+    def glob(self, pattern: str) -> builtins.list[LocalPath]:
         return self._glob(
             pattern,
             lambda pat: [
-                self.__class__(m)
+                LocalPath(m)
                 for m in glob.glob(os.path.join(glob.escape(str(self)), pat))
             ],
         )
@@ -176,16 +176,16 @@ class LocalPath(Path):
                 if ex.errno != errno.ENOENT:
                     raise
 
-    def move(self, dst: LocalPath) -> Self:
+    def move(self, dst: LocalPath) -> LocalPath:
         if isinstance(dst, RemotePath):
             raise TypeError(f"Cannot move local path {self} to {dst!r}")
         shutil.move(str(self), str(dst))
-        return self.__class__(dst)
+        return LocalPath(dst)
 
-    def copy(self, dst: LocalPath, override: bool | None = None) -> Self:
+    def copy(self, dst: LocalPath, override: bool | None = None) -> LocalPath:
         if isinstance(dst, RemotePath):
             raise TypeError(f"Cannot copy local path {self} to {dst!r}")
-        dst = self.__class__(dst)
+        dst = LocalPath(dst)
         if override is False and dst.exists():
             raise TypeError("File exists and override was not specified")
         if override:
@@ -341,7 +341,7 @@ class LocalWorkdir(LocalPath):
             return super().__new__(cls, *args)
         return super().__new__(cls, os.getcwd())
 
-    def chdir(self, newdir: LocalPath | str) -> Self:
+    def chdir(self, newdir: LocalPath | str) -> LocalWorkdir:
         """Changes the current working directory to the given one
 
         :param newdir: The destination director (a string or a ``LocalPath``)
@@ -357,7 +357,7 @@ class LocalWorkdir(LocalPath):
         return LocalPath(self._path)
 
     @contextmanager
-    def __call__(self, newdir: LocalPath | str) -> Generator[Self, None, None]:
+    def __call__(self, newdir: LocalPath | str) -> Generator[LocalWorkdir, None, None]:
         """A context manager used to ``chdir`` into a directory and then ``chdir`` back to
         the previous location; much like ``pushd``/``popd``.
 
