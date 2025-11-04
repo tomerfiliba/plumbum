@@ -126,7 +126,7 @@ def win32_daemonize(
     stdout: str | None = None,
     stderr: str | None = None,
     append: bool = True,
-) -> subprocess.Popen[bytes]:
+) -> subprocess.Popen[str]:
     if stdout is None:
         stdout = os.devnull
     if stderr is None:

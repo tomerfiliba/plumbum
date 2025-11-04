@@ -22,7 +22,7 @@ class Future:
     and stderr.
     """
 
-    proc: subprocess.Popen[bytes]
+    proc: subprocess.Popen[str]
     _expected_retcode: int | Container[int] | None
     _timeout: float | None
     _returncode: int | None
@@ -31,7 +31,7 @@ class Future:
 
     def __init__(
         self,
-        proc: subprocess.Popen[bytes],
+        proc: subprocess.Popen[str],
         expected_retcode: int | Container[int] | None,
         timeout: float | None = None,
     ) -> None:
@@ -431,7 +431,7 @@ class _NOHUP(ExecutionModifier):
             | plumbum.commands.base.StdoutRedirection
             | plumbum.commands.base.AppendingStdoutRedirection
         ),
-    ) -> subprocess.Popen[bytes]:
+    ) -> subprocess.Popen[str]:
         if isinstance(cmd, plumbum.commands.base.StdoutRedirection):
             stdout = cmd.file
             append = False
@@ -443,7 +443,7 @@ class _NOHUP(ExecutionModifier):
         else:
             stdout = self.stdout
             append = self.append
-        return cmd.nohup(self.cwd, stdout, self.stderr, append)
+        return cmd.nohup(self.cwd, stdout, self.stderr, append)  # type: ignore[arg-type]
 
 
 class LogPipe:
