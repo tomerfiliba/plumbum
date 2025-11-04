@@ -2,28 +2,34 @@ from __future__ import annotations
 
 import atexit
 import contextlib
+import enum
 import heapq
-import math
+import sys
 import time
 import typing
 from queue import Empty as QueueEmpty
 from queue import Queue
 from threading import Thread
+from typing import Any
 
 from plumbum.lib import IS_WIN32
 
 if typing.TYPE_CHECKING:
     import subprocess
-    from collections.abc import Callable, Generator
-    from typing import IO
+    from collections.abc import Callable, Container, Generator, Sequence
+    from typing import IO, Literal
 
 
 # ===================================================================================================
 # utility functions
 # ===================================================================================================
 def _check_process(
-    proc: subprocess.Popen, retcode: int, timeout: float, stdout: IO, stderr: IO
-) -> tuple[int, IO, IO]:
+    proc: subprocess.Popen,
+    retcode: int | Container[int] | None,
+    timeout: float | None,
+    stdout: str,
+    stderr: str,
+) -> tuple[int, str, str]:
     proc.verify(retcode, timeout, stdout, stderr)  # type: ignore[attr-defined]
     return proc.returncode, stdout, stderr
 
@@ -226,7 +232,7 @@ class ProcessLineTimedOut(Exception):
     """Raises by :func:`iter_lines <plumbum.commands.iter_lines>` when a ``line_timeout`` has been
     specified and it has elapsed before the process yielded another line"""
 
-    def __init__(self, msg, argv, machine):
+    def __init__(self, msg: str, argv: list[str] | None, machine: str | None):
         Exception.__init__(self, msg, argv, machine)
         self.argv = argv
         self.machine = machine
@@ -237,7 +243,7 @@ class CommandNotFound(AttributeError):
     :func:`RemoteMachine.which <plumbum.machines.remote.RemoteMachine.which>` when a
     command was not found in the system's ``PATH``"""
 
-    def __init__(self, program, path):
+    def __init__(self, program: object, path: object):
         super().__init__(self, program, path)
         self.program = program
         self.path = path
@@ -247,28 +253,28 @@ class CommandNotFound(AttributeError):
 # Timeout thread
 # ===================================================================================================
 class MinHeap:
-    def __init__(self, items=()):
+    def __init__(self, items: Sequence[tuple[float, subprocess.Popen]] = ()):
         self._items = list(items)
         heapq.heapify(self._items)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._items)
 
-    def push(self, item):
+    def push(self, item: tuple[float, subprocess.Popen]) -> None:
         heapq.heappush(self._items, item)
 
-    def pop(self):
+    def pop(self) -> None:
         heapq.heappop(self._items)
 
-    def peek(self):
+    def peek(self) -> tuple[float, subprocess.Popen]:
         return self._items[0]
 
 
-_timeout_queue = Queue()  # type: ignore[var-annotated]
+_timeout_queue = Queue[tuple[Any, float]]()
 _shutting_down = False
 
 
-def _timeout_thread_func():
+def _timeout_thread_func() -> None:
     waiting = MinHeap()
     try:
         while not _shutting_down:
@@ -292,7 +298,7 @@ def _timeout_thread_func():
                 with contextlib.suppress(OSError):
                     if proc.poll() is None:
                         proc.kill()
-                        proc._timed_out = True
+                        proc._timed_out = True  # type: ignore[attr-defined]
     except Exception:
         if _shutting_down:
             # to prevent all sorts of exceptions during interpreter shutdown
@@ -306,12 +312,12 @@ bgthd.daemon = True
 bgthd.start()
 
 
-def _register_proc_timeout(proc, timeout):
+def _register_proc_timeout(proc: subprocess.Popen, timeout: float | None) -> None:
     if timeout is not None:
         _timeout_queue.put((proc, time.time() + timeout))
 
 
-def _shutdown_bg_threads():
+def _shutdown_bg_threads() -> None:
     global _shutting_down  # noqa: PLW0603
     _shutting_down = True
     # Make sure this still exists (don't throw error in atexit!)
@@ -328,7 +334,11 @@ atexit.register(_shutdown_bg_threads)
 # ===================================================================================================
 # run_proc
 # ===================================================================================================
-def run_proc(proc, retcode, timeout=None):
+def run_proc(
+    proc: subprocess.Popen,
+    retcode: int | None | Container[int],
+    timeout: float | None = None,
+) -> tuple[int, str, str]:
     """Waits for the given process to terminate, with the expected exit code
 
     :param proc: a running Popen-like object, with all the expected methods.
@@ -348,14 +358,14 @@ def run_proc(proc, retcode, timeout=None):
     """
     _register_proc_timeout(proc, timeout)
     stdout, stderr = proc.communicate()
-    proc._end_time = time.time()
+    proc._end_time = time.time()  # type: ignore[attr-defined]
     if not stdout:
         stdout = b""
     if not stderr:
         stderr = b""
-    if getattr(proc, "custom_encoding", None):
-        stdout = stdout.decode(proc.custom_encoding, "ignore")
-        stderr = stderr.decode(proc.custom_encoding, "ignore")
+    if custom_encoding := getattr(proc, "custom_encoding", None):
+        stdout = stdout.decode(custom_encoding, "ignore")
+        stderr = stderr.decode(custom_encoding, "ignore")
 
     return _check_process(proc, retcode, timeout, stdout, stderr)
 
@@ -364,22 +374,67 @@ def run_proc(proc, retcode, timeout=None):
 # iter_lines
 # ===================================================================================================
 
-BY_POSITION = object()
-BY_TYPE = object()
+
+class Mode(enum.Enum):
+    BY_POSITION = enum.auto()
+    BY_TYPE = enum.auto()
+
+
+BY_POSITION = Mode.BY_POSITION
+BY_TYPE = Mode.BY_TYPE
 DEFAULT_ITER_LINES_MODE = BY_POSITION
-DEFAULT_BUFFER_SIZE = math.inf
+
+DEFAULT_BUFFER_SIZE = sys.maxsize
+
+
+@typing.overload
+def iter_lines(
+    proc: subprocess.Popen,
+    retcode: int = ...,
+    timeout: float | None = ...,
+    linesize: int = ...,
+    line_timeout: float | None = ...,
+    buffer_size: int | None = ...,
+    *,
+    mode: Literal[Mode.BY_POSITION] | None = ...,
+    _iter_lines: Callable[
+        [subprocess.Popen, Callable[[bytes], str], int, float | None],
+        Generator[tuple[int, str], None, None],
+    ] = _iter_lines,
+) -> Generator[tuple[int, str], None, None]: ...
+
+
+@typing.overload
+def iter_lines(
+    proc: subprocess.Popen,
+    retcode: int = ...,
+    timeout: float | None = ...,
+    linesize: int = ...,
+    line_timeout: float | None = ...,
+    buffer_size: int | None = ...,
+    *,
+    mode: Literal[Mode.BY_TYPE],
+    _iter_lines: Callable[
+        [subprocess.Popen, Callable[[bytes], str], int, float | None],
+        Generator[tuple[int, str], None, None],
+    ] = _iter_lines,
+) -> Generator[tuple[None, str] | tuple[str, None], None, None]: ...
 
 
 def iter_lines(
-    proc,
-    retcode=0,
-    timeout=None,
-    linesize=-1,
-    line_timeout=None,
-    buffer_size=None,
-    mode=None,
-    _iter_lines=_iter_lines,
-):
+    proc: subprocess.Popen,
+    retcode: int = 0,
+    timeout: float | None = None,
+    linesize: int = -1,
+    line_timeout: float | None = None,
+    buffer_size: int | None = None,
+    *,
+    mode: Mode | None = None,
+    _iter_lines: Callable[
+        [subprocess.Popen, Callable[[bytes], str], int, float | None],
+        Generator[tuple[int, str], None, None],
+    ] = _iter_lines,
+) -> Generator[tuple[int, str] | tuple[None, str] | tuple[str, None], None, None]:
     """Runs the given process (equivalent to run_proc()) and yields a tuples of (out, err) line pairs.
     If the exit code of the process does not match the expected one, :class:`ProcessExecutionError
     <plumbum.commands.ProcessExecutionError>` is raised.
@@ -415,32 +470,33 @@ def iter_lines(
 
     if buffer_size is None:
         buffer_size = DEFAULT_BUFFER_SIZE
-    buffer_size: int  # type: ignore[annotation-unchecked]
 
-    assert mode in (BY_POSITION, BY_TYPE)
+    assert mode in Mode
 
     encoding = getattr(proc, "custom_encoding", None) or "utf-8"
     decode = lambda s: s.decode(encoding, errors="replace").rstrip()  # noqa: E731
 
     _register_proc_timeout(proc, timeout)
 
-    buffers = [[], []]
+    buffers: list[list[tuple[str | None, str | None] | str]] = [[], []]
     for t, line in _iter_lines(proc, decode, linesize, line_timeout):
         # verify that the proc hasn't timed out yet
-        proc.verify(timeout=timeout, retcode=None, stdout=None, stderr=None)
+        proc.verify(timeout=timeout, retcode=None, stdout=None, stderr=None)  # type: ignore[attr-defined]
 
         buffer = buffers[t]
         if buffer_size > 0:
             buffer.append(line)
-            if buffer_size < math.inf:
+            if buffer_size < sys.maxsize:
                 del buffer[:-buffer_size]
 
         if mode is BY_POSITION:
-            ret = [None, None]
-            ret[t] = line
-            yield tuple(ret)
+            if t == 0:
+                yield (line, None)
+            else:
+                yield (None, line)
+
         elif mode is BY_TYPE:
             yield (t + 1), line  # 1=stdout, 2=stderr
 
     # this will take care of checking return code and timeouts
-    _check_process(proc, retcode, timeout, *("\n".join(s) + "\n" for s in buffers))
+    _check_process(proc, retcode, timeout, *("\n".join(s) + "\n" for s in buffers))  # type: ignore[arg-type]
