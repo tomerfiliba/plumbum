@@ -167,12 +167,13 @@ class Application:
 
     """
 
-    PROGNAME: str = typing.cast(str, None)  # Will always be set to str in __init__
+    # Some that are not typed None will always be set in __init__
+    PROGNAME: str = None  # type: ignore[assignment]
     DESCRIPTION: str | None = None
     DESCRIPTION_MORE: str | None = None
     VERSION: str | None = None
     USAGE: str | None = None
-    COLOR_USAGE: Style = typing.cast(Style, None)
+    COLOR_USAGE: Style = None  # type: ignore[assignment]
     COLOR_USAGE_TITLE: Style | None = None
     COLOR_GROUPS: MutableMapping[str, Style] = None  # type: ignore[assignment]
     COLOR_GROUP_TITLES: MutableMapping[str, Style] = None  # type: ignore[assignment]
