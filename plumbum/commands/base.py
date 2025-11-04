@@ -184,7 +184,7 @@ class BaseCommand:
         append: bool = True,
     ) -> subprocess.Popen[str]:
         """Runs a command detached."""
-        return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)
+        return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)  # type: ignore[no-untyped-call, no-any-return]
 
     @contextlib.contextmanager
     def bgrun(
@@ -265,64 +265,49 @@ class BaseCommand:
         :returns: A tuple of (return code, stdout, stderr)
         """
         with self.bgrun(args, **kwargs) as p:
-            return p.run()  # type: ignore[attr-defined]
-
-    def _use_modifier(
-        self,
-        modifier: type[plumbum.commands.modifiers.ExecutionModifier]
-        | plumbum.commands.modifiers.ExecutionModifier,
-        args: dict[str, Any],
-    ) -> Any:
-        """
-        Applies a modifier to the current object (e.g. FG, NOHUP)
-        :param modifier: The modifier class to apply (e.g. FG)
-        :param args: A dictionary of arguments to pass to this modifier
-        :return:
-        """
-        modifier_instance = modifier(**args)
-        return self & modifier_instance  # type: ignore[operator]
+            return p.run()  # type: ignore[attr-defined, no-any-return]
 
     def run_bg(self, **kwargs: Any) -> plumbum.commands.modifiers.Future:
         """
         Run this command in the background. Uses all arguments from the BG construct
         :py:class: `plumbum.commands.modifiers.BG`
         """
-        return self._use_modifier(plumbum.commands.modifiers.BG, kwargs)
+        return self & plumbum.commands.modifiers.BG(**kwargs)
 
     def run_fg(self, **kwargs: Any) -> None:
         """
         Run this command in the foreground. Uses all arguments from the FG construct
         :py:class: `plumbum.commands.modifiers.FG`
         """
-        return self._use_modifier(plumbum.commands.modifiers.FG, kwargs)
+        return self & plumbum.commands.modifiers.FG(**kwargs)
 
     def run_tee(self, **kwargs: Any) -> tuple[int, str, str]:
         """
         Run this command using the TEE construct. Inherits all arguments from TEE
         :py:class: `plumbum.commands.modifiers.TEE`
         """
-        return self._use_modifier(plumbum.commands.modifiers.TEE, kwargs)
+        return self & plumbum.commands.modifiers.TEE(**kwargs)
 
     def run_tf(self, **kwargs: Any) -> bool:
         """
         Run this command using the TF construct. Inherits all arguments from TF
         :py:class: `plumbum.commands.modifiers.TF`
         """
-        return self._use_modifier(plumbum.commands.modifiers.TF, kwargs)
+        return self & plumbum.commands.modifiers.TF(**kwargs)
 
     def run_retcode(self, **kwargs: Any) -> int:
         """
         Run this command using the RETCODE construct. Inherits all arguments from RETCODE
         :py:class: `plumbum.commands.modifiers.RETCODE`
         """
-        return self._use_modifier(plumbum.commands.modifiers.RETCODE, kwargs)
+        return self & plumbum.commands.modifiers.RETCODE(**kwargs)
 
-    def run_nohup(self, **kwargs: Any) -> subprocess.Popen[bytes]:
+    def run_nohup(self, **kwargs: Any) -> subprocess.Popen[str]:
         """
         Run this command using the NOHUP construct. Inherits all arguments from NOHUP
         :py:class: `plumbum.commands.modifiers.NOHUP`
         """
-        return self._use_modifier(plumbum.commands.modifiers.NOHUP, kwargs)
+        return self & plumbum.commands.modifiers.NOHUP(**kwargs)
 
 
 class BoundCommand(BaseCommand):
@@ -564,10 +549,10 @@ class StderrRedirection(BaseRedirection):
 
 
 class _ERROUT(int):
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "ERROUT"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "&1"
 
 

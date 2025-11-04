@@ -15,6 +15,8 @@ if typing.TYPE_CHECKING:
     from collections.abc import Container
     from typing import Any, TextIO
 
+    from plumbum._compat.typing import Self
+
 
 class Future:
     """Represents a "future result" of a running process. It basically wraps a ``Popen``
@@ -110,7 +112,7 @@ class ExecutionModifier:
         return f"{self.__class__.__name__}({mystrs_str})"
 
     @classmethod
-    def __call__(cls, *args: Any, **kwargs: Any) -> ExecutionModifier:
+    def __call__(cls, *args: Any, **kwargs: Any) -> Self:
         return cls(*args, **kwargs)
 
 
@@ -479,7 +481,7 @@ class LogPipe:
                 if self.prefix:
                     line = f"{self.prefix}: {line}"  # noqa: PLW2901
                 self.log(level, line)
-        return popen.returncode
+        return popen.returncode  # type: ignore[no-any-return]
 
 
 class PipeToLoggerMixin:

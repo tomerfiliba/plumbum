@@ -24,7 +24,7 @@ if typing.TYPE_CHECKING:
 # utility functions
 # ===================================================================================================
 def _check_process(
-    proc: subprocess.Popen,
+    proc: subprocess.Popen[str],
     retcode: int | Container[int] | None,
     timeout: float | None,
     stdout: str,
@@ -34,7 +34,7 @@ def _check_process(
     return proc.returncode, stdout, stderr
 
 
-def _get_piped_streams(proc: subprocess.Popen | None) -> list[tuple[int, IO]]:
+def _get_piped_streams(proc: subprocess.Popen[Any] | None) -> list[tuple[int, IO[Any]]]:
     """Get a list of all valid standard streams for proc that were opened with PIPE option.
 
     If proc was started from a Pipeline command, this function assumes it will have a
@@ -49,7 +49,7 @@ def _get_piped_streams(proc: subprocess.Popen | None) -> list[tuple[int, IO]]:
     """
     streams = []
 
-    def add_stream(type_: int, stream: IO | None) -> None:
+    def add_stream(type_: int, stream: IO[Any] | None) -> None:
         if stream is None or stream.closed:
             return
         streams.append((type_, stream))
@@ -63,7 +63,7 @@ def _get_piped_streams(proc: subprocess.Popen | None) -> list[tuple[int, IO]]:
 
 
 def _iter_lines_posix(
-    proc: subprocess.Popen,
+    proc: subprocess.Popen[bytes],
     decode: Callable[[bytes], str],
     linesize: int,
     line_timeout: float | None = None,
@@ -73,7 +73,7 @@ def _iter_lines_posix(
     streams = _get_piped_streams(proc)
 
     # Python 3.4+ implementation
-    def selector():
+    def selector() -> Generator[tuple[int, str], None, None]:
         sel = DefaultSelector()
         for stream_type, stream in streams:
             sel.register(stream, EVENT_READ, stream_type)
@@ -86,7 +86,8 @@ def _iter_lines_posix(
                     getattr(proc, "machine", None),
                 )
             for key, _mask in ready:
-                yield key.data, decode(key.fileobj.readline(linesize))
+                # We pass the stream to the selector, so we get a stream out
+                yield key.data, decode(key.fileobj.readline(linesize))  # type: ignore[union-attr]
 
     for ret in selector():
         yield ret
@@ -98,13 +99,13 @@ def _iter_lines_posix(
 
 
 def _iter_lines_win32(
-    proc: subprocess.Popen,
+    proc: subprocess.Popen[bytes],
     decode: Callable[[bytes], str],
     linesize: int,
     line_timeout: float | None = None,
 ) -> Generator[tuple[int, str], None, None]:
     class Piper(Thread):
-        def __init__(self, fd: int, pipe: IO):
+        def __init__(self, fd: int, pipe: IO[bytes]) -> None:
             super().__init__(name=f"PlumbumPiper{fd}Thread")
             self.pipe = pipe
             self.fd = fd
@@ -253,20 +254,20 @@ class CommandNotFound(AttributeError):
 # Timeout thread
 # ===================================================================================================
 class MinHeap:
-    def __init__(self, items: Sequence[tuple[float, subprocess.Popen]] = ()):
+    def __init__(self, items: Sequence[tuple[float, subprocess.Popen[str]]] = ()):
         self._items = list(items)
         heapq.heapify(self._items)
 
     def __len__(self) -> int:
         return len(self._items)
 
-    def push(self, item: tuple[float, subprocess.Popen]) -> None:
+    def push(self, item: tuple[float, subprocess.Popen[str]]) -> None:
         heapq.heappush(self._items, item)
 
     def pop(self) -> None:
         heapq.heappop(self._items)
 
-    def peek(self) -> tuple[float, subprocess.Popen]:
+    def peek(self) -> tuple[float, subprocess.Popen[str]]:
         return self._items[0]
 
 
@@ -312,7 +313,7 @@ bgthd.daemon = True
 bgthd.start()
 
 
-def _register_proc_timeout(proc: subprocess.Popen, timeout: float | None) -> None:
+def _register_proc_timeout(proc: subprocess.Popen[Any], timeout: float | None) -> None:
     if timeout is not None:
         _timeout_queue.put((proc, time.time() + timeout))
 
@@ -335,7 +336,7 @@ atexit.register(_shutdown_bg_threads)
 # run_proc
 # ===================================================================================================
 def run_proc(
-    proc: subprocess.Popen,
+    proc: subprocess.Popen[Any],
     retcode: int | None | Container[int],
     timeout: float | None = None,
 ) -> tuple[int, str, str]:
@@ -389,7 +390,7 @@ DEFAULT_BUFFER_SIZE = sys.maxsize
 
 @typing.overload
 def iter_lines(
-    proc: subprocess.Popen,
+    proc: subprocess.Popen[bytes],
     retcode: int = ...,
     timeout: float | None = ...,
     linesize: int = ...,
@@ -398,7 +399,7 @@ def iter_lines(
     *,
     mode: Literal[Mode.BY_POSITION] | None = ...,
     _iter_lines: Callable[
-        [subprocess.Popen, Callable[[bytes], str], int, float | None],
+        [subprocess.Popen[bytes], Callable[[bytes], str], int, float | None],
         Generator[tuple[int, str], None, None],
     ] = _iter_lines,
 ) -> Generator[tuple[int, str], None, None]: ...
@@ -406,7 +407,7 @@ def iter_lines(
 
 @typing.overload
 def iter_lines(
-    proc: subprocess.Popen,
+    proc: subprocess.Popen[bytes],
     retcode: int = ...,
     timeout: float | None = ...,
     linesize: int = ...,
@@ -415,14 +416,14 @@ def iter_lines(
     *,
     mode: Literal[Mode.BY_TYPE],
     _iter_lines: Callable[
-        [subprocess.Popen, Callable[[bytes], str], int, float | None],
+        [subprocess.Popen[bytes], Callable[[bytes], str], int, float | None],
         Generator[tuple[int, str], None, None],
     ] = _iter_lines,
 ) -> Generator[tuple[None, str] | tuple[str, None], None, None]: ...
 
 
 def iter_lines(
-    proc: subprocess.Popen,
+    proc: subprocess.Popen[bytes],
     retcode: int = 0,
     timeout: float | None = None,
     linesize: int = -1,
@@ -431,7 +432,7 @@ def iter_lines(
     *,
     mode: Mode | None = None,
     _iter_lines: Callable[
-        [subprocess.Popen, Callable[[bytes], str], int, float | None],
+        [subprocess.Popen[bytes], Callable[[bytes], str], int, float | None],
         Generator[tuple[int, str], None, None],
     ] = _iter_lines,
 ) -> Generator[tuple[int, str] | tuple[None, str] | tuple[str, None], None, None]:
