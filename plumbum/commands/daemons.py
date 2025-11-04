@@ -113,7 +113,7 @@ def posix_daemonize(
         while self.returncode is None:
             if self.poll() is None:
                 time.sleep(0.5)
-        return proc.returncode
+        return self.returncode
 
     proc.poll = poll  # type: ignore[method-assign]
     proc.wait = wait  # type: ignore[method-assign, assignment]
