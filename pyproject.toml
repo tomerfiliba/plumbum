@@ -98,7 +98,6 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = [
     "plumbum.commands.*",
-    "plumbum.fs.*",
     "plumbum.machines.*",
 ]
 disallow_any_generics = false
