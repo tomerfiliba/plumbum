@@ -97,7 +97,6 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = [
-    "plumbum.cli.*",
     "plumbum.commands.*",
     "plumbum.fs.*",
     "plumbum.machines.*",

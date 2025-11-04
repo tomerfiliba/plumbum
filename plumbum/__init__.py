@@ -37,6 +37,8 @@ See https://plumbum.readthedocs.io for full details
 
 from __future__ import annotations
 
+import typing
+
 # Avoids a circular import error later
 import plumbum.path  # noqa: F401
 from plumbum.commands import (
@@ -59,7 +61,7 @@ from plumbum.version import version
 __author__ = "Tomer Filiba (tomerfiliba@gmail.com)"
 __version__ = version
 
-__all__ = (
+__all__ = [
     "BG",
     "ERROUT",
     "FG",
@@ -81,9 +83,14 @@ __all__ = (
     "__version__",
     "cmd",
     "local",
-)
+]
 
 from . import cmd
+
+if typing.TYPE_CHECKING:
+    from plumbum.colorlib import ansicolors as colors  # noqa: F401
+
+    __all__.append("colors")
 
 
 def __dir__() -> list[str]:

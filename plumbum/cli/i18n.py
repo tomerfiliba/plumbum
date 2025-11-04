@@ -10,7 +10,7 @@ if loc is None or loc.startswith("en") or loc == "C":
         def gettext(self, str1: str) -> str:  # pylint: disable=no-self-use
             return str1
 
-        def ngettext(self, str1, strN, n):  # pylint: disable=no-self-use
+        def ngettext(self, str1: str, strN: str, n: int) -> str:  # pylint: disable=no-self-use
             if n == 1:
                 return str1.replace("{0}", str(n))
 

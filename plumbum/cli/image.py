@@ -1,21 +1,27 @@
 from __future__ import annotations
 
 import sys
+import typing
 
 from plumbum import colors
 
 from .. import cli
 from .termsize import get_terminal_size
 
+if typing.TYPE_CHECKING:
+    import PIL.Image
+
 
 class Image:
     __slots__ = ["char_ratio", "size"]
 
-    def __init__(self, size=None, char_ratio=2.45):
+    def __init__(self, size: tuple[int, int] | None = None, char_ratio: float = 2.45):
         self.size = size
         self.char_ratio = char_ratio
 
-    def best_aspect(self, orig, term):
+    def best_aspect(
+        self, orig: tuple[int, int], term: tuple[int, int]
+    ) -> tuple[int, int]:
         """Select a best possible size matching the original aspect ratio.
         Size is width, height.
         The char_ratio option gives the height of each char with respect
@@ -31,7 +37,7 @@ class Image:
 
         return term[0], int(term[0] * orig_ratio)
 
-    def show(self, filename, double=False):
+    def show(self, filename: str, double: bool = False) -> None:
         """Display an image on the command line. Can select a size or show in double resolution."""
 
         import PIL.Image
@@ -42,7 +48,7 @@ class Image:
             else self.show_pil(PIL.Image.open(filename))
         )
 
-    def _init_size(self, im):
+    def _init_size(self, im: PIL.Image.Image) -> tuple[int, int]:
         """Return the expected image size"""
         if self.size is None:
             term_size = get_terminal_size()
@@ -50,7 +56,7 @@ class Image:
 
         return self.size
 
-    def show_pil(self, im):
+    def show_pil(self, im: PIL.Image.Image) -> None:
         "Standard show routine"
         size = self._init_size(im)
         new_im = im.resize(size).convert("RGB")
@@ -58,12 +64,14 @@ class Image:
         for y in range(size[1]):
             for x in range(size[0] - 1):
                 pix = new_im.getpixel((x, y))
-                sys.stdout.write(colors.bg.rgb(*pix) + " ")  # '\u2588'
+                sys.stdout.write(
+                    colors.bg.rgb(*pix) + " "  # type: ignore[misc]
+                )  # '\u2588'
             sys.stdout.write(colors.reset + " \n")
         sys.stdout.write(colors.reset + "\n")
         sys.stdout.flush()
 
-    def show_pil_double(self, im):
+    def show_pil_double(self, im: PIL.Image.Image) -> None:
         "Show double resolution on some fonts"
 
         size = self._init_size(im)
@@ -75,7 +83,7 @@ class Image:
                 pix = new_im.getpixel((x, y * 2))
                 pixl = new_im.getpixel((x, y * 2 + 1))
                 sys.stdout.write(
-                    (colors.bg.rgb(*pixl) & colors.fg.rgb(*pix)) + "\u2580"
+                    (colors.bg.rgb(*pixl) & colors.fg.rgb(*pix)) + "\u2580"  # type: ignore[misc]
                 )
             sys.stdout.write(colors.reset + " \n")
         sys.stdout.write(colors.reset + "\n")
@@ -90,7 +98,7 @@ class ShowImageApp(cli.Application):
     )
 
     @cli.switch(["-c", "--colors"], cli.Range(1, 4), help="Level of color, 1-4")
-    def colors_set(self, n):  # pylint: disable=no-self-use
+    def colors_set(self, n: int) -> None:  # pylint: disable=no-self-use
         colors.use_color = n
 
     size = cli.SwitchAttr(["-s", "--size"], help="Size, should be in the form 100x150")
@@ -100,12 +108,10 @@ class ShowImageApp(cli.Application):
     )
 
     @cli.positional(cli.ExistingFile)
-    def main(self, filename):
-        size = None
-        if self.size:
-            size = map(int, self.size.split("x"))
+    def main(self, filename: str) -> None:
+        size = tuple(map(int, self.size.split("x"))) if self.size else None
 
-        Image(size, self.ratio).show(filename, self.double)
+        Image(size, self.ratio).show(filename, self.double)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":

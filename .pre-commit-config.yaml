@@ -36,6 +36,7 @@ repos:
       - types-paramiko
       - pytest
       - ipython
+      - pillow
 
 - repo: https://github.com/abravalheri/validate-pyproject
   rev: "v0.24.1"
