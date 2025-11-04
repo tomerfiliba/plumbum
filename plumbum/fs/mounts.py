@@ -8,11 +8,11 @@ class MountEntry:
     Represents a mount entry (device file, mount point and file system type)
     """
 
-    def __init__(self, dev: str, point: str, fstype: str, options: str):
+    def __init__(self, dev: str, point: str, fstype: str, options: str | None):
         self.dev = dev
         self.point = point
         self.fstype = fstype
-        self.options = options.split(",")
+        self.options = options.split(",") if options else []
 
     def __str__(self) -> str:
         options = ",".join(self.options)
