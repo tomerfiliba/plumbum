@@ -19,7 +19,7 @@ def get_pe_subsystem(filename: str) -> int | None:
         if f.read(4) != b"PE\x00\x00":
             return None
         f.seek(FILE_HEADER_SIZE + SUBSYSTEM_OFFSET, 1)
-        return struct.unpack("H", f.read(2))[0]
+        return struct.unpack("H", f.read(2))[0]  # type: ignore[no-any-return]
 
 
 # print(get_pe_subsystem("c:\\windows\\notepad.exe")) == 2

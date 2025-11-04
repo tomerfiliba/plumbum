@@ -105,7 +105,7 @@ class Path(str, ABC):
     def __contains__(self, item: object) -> bool:
         """Paths should support checking to see if an file or folder is in them."""
         try:
-            return (self / item.name).exists()  # type: ignore[attr-defined]
+            return (self / item.name).exists()  # type: ignore[attr-defined, no-any-return]
         except AttributeError:
             return (self / item).exists()  # type: ignore[operator]
 

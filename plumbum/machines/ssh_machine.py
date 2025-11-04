@@ -51,7 +51,7 @@ class SshTunnel:
             regex = re.compile(
                 r"^Allocated port (\d+) for remote forward to .+$", re.MULTILINE
             )
-            match = regex.search(session._startup_result[2])
+            match = regex.search(str(session._startup_result[2]))
             if match:
                 self._dport = match.group(1)
 
