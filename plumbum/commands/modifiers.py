@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import typing
 from logging import DEBUG, INFO
 from select import select
 from subprocess import PIPE
@@ -9,6 +10,13 @@ import plumbum.commands.base
 from plumbum.commands.processes import BY_TYPE, ProcessExecutionError, run_proc
 from plumbum.lib import read_fd_decode_safely
 
+if typing.TYPE_CHECKING:
+    import subprocess
+    from collections.abc import Container
+    from typing import Any, TextIO
+
+    from plumbum._compat.typing import Self
+
 
 class Future:
     """Represents a "future result" of a running process. It basically wraps a ``Popen``
@@ -16,7 +24,19 @@ class Future:
     and stderr.
     """
 
-    def __init__(self, proc, expected_retcode, timeout=None):
+    proc: subprocess.Popen[str]
+    _expected_retcode: int | Container[int] | None
+    _timeout: float | None
+    _returncode: int | None
+    _stdout: str | None
+    _stderr: str | None
+
+    def __init__(
+        self,
+        proc: subprocess.Popen[str],
+        expected_retcode: int | Container[int] | None,
+        timeout: float | None = None,
+    ) -> None:
         self.proc = proc
         self._expected_retcode = expected_retcode
         self._timeout = timeout
@@ -24,11 +44,11 @@ class Future:
         self._stdout = None
         self._stderr = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         running = self._returncode if self.ready() else "running"
-        return f"<Future {self.proc.argv!r} ({running})>"
+        return f"<Future {self.proc.args!r} ({running})>"
 
-    def poll(self):
+    def poll(self) -> bool:
         """Polls the underlying process for termination; returns ``False`` if still running,
         or ``True`` if terminated"""
         if self.proc.poll() is not None:
@@ -37,7 +57,7 @@ class Future:
 
     ready = poll
 
-    def wait(self):
+    def wait(self) -> None:
         """Waits for the process to terminate; will raise a
         :class:`plumbum.commands.ProcessExecutionError` in case of failure"""
         if self._returncode is not None:
@@ -47,21 +67,24 @@ class Future:
         )
 
     @property
-    def stdout(self):
+    def stdout(self) -> str:
         """The process' stdout; accessing this property will wait for the process to finish"""
         self.wait()
+        assert self._stdout is not None
         return self._stdout
 
     @property
-    def stderr(self):
+    def stderr(self) -> str:
         """The process' stderr; accessing this property will wait for the process to finish"""
         self.wait()
+        assert self._stderr is not None
         return self._stderr
 
     @property
-    def returncode(self):
+    def returncode(self) -> int:
         """The process' returncode; accessing this property will wait for the process to finish"""
         self.wait()
+        assert self._returncode is not None
         return self._returncode
 
 
@@ -73,7 +96,7 @@ class Future:
 class ExecutionModifier:
     __slots__ = ("__weakref__",)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Automatically creates a representation for given subclass with slots.
         Ignore hidden properties."""
         slots = {}
@@ -89,7 +112,7 @@ class ExecutionModifier:
         return f"{self.__class__.__name__}({mystrs_str})"
 
     @classmethod
-    def __call__(cls, *args, **kwargs):
+    def __call__(cls, *args: Any, **kwargs: Any) -> Self:
         return cls(*args, **kwargs)
 
 
@@ -114,12 +137,21 @@ class _BG(ExecutionModifier):
 
     __slots__ = ("kargs", "retcode", "timeout")
 
-    def __init__(self, retcode=0, timeout=None, **kargs):
+    kargs: dict[str, Any]
+    retcode: int | Container[int]
+    timeout: float | None
+
+    def __init__(
+        self,
+        retcode: int | Container[int] = 0,
+        timeout: float | None = None,
+        **kargs: Any,
+    ) -> None:
         self.retcode = retcode
         self.kargs = kargs
         self.timeout = timeout
 
-    def __rand__(self, cmd):
+    def __rand__(self, cmd: plumbum.commands.base.BaseCommand) -> Future:
         return Future(cmd.popen(**self.kargs), self.retcode, timeout=self.timeout)
 
 
@@ -139,11 +171,18 @@ class _FG(ExecutionModifier):
 
     __slots__ = ("retcode", "timeout")
 
-    def __init__(self, retcode=0, timeout=None):
+    retcode: int | Container[int]
+    timeout: float | None
+
+    def __init__(
+        self,
+        retcode: int | Container[int] = 0,
+        timeout: float | None = None,
+    ) -> None:
         self.retcode = retcode
         self.timeout = timeout
 
-    def __rand__(self, cmd):
+    def __rand__(self, cmd: plumbum.commands.base.BaseCommand) -> None:
         cmd(
             retcode=self.retcode,
             stdin=None,
@@ -167,7 +206,16 @@ class _TEE(ExecutionModifier):
 
     __slots__ = ("buffered", "retcode", "timeout")
 
-    def __init__(self, retcode=0, buffered=True, timeout=None):
+    retcode: int | Container[int]
+    buffered: bool
+    timeout: float | None
+
+    def __init__(
+        self,
+        retcode: int | Container[int] = 0,
+        buffered: bool = True,
+        timeout: float | None = None,
+    ) -> None:
         """`retcode` is the return code to expect to mean "success".  Set
         `buffered` to False to disable line-buffering the output, which may
         cause stdout and stderr to become more entangled than usual.
@@ -176,7 +224,7 @@ class _TEE(ExecutionModifier):
         self.buffered = buffered
         self.timeout = timeout
 
-    def __rand__(self, cmd):
+    def __rand__(self, cmd: plumbum.commands.base.BaseCommand) -> tuple[int, str, str]:
         with cmd.bgrun(
             retcode=self.retcode,
             stdin=None,
@@ -184,8 +232,8 @@ class _TEE(ExecutionModifier):
             stderr=PIPE,
             timeout=self.timeout,
         ) as p:
-            outbuf = []
-            errbuf = []
+            outbuf: list[bytes] = []
+            errbuf: list[bytes] = []
             out = p.stdout
             err = p.stderr
             buffers = {out: outbuf, err: errbuf}
@@ -253,12 +301,16 @@ class _TF(ExecutionModifier):
 
     __slots__ = ("FG", "retcode", "timeout")
 
+    retcode: int | Container[int]
+    FG: bool
+    timeout: float | None
+
     def __init__(
         self,
-        retcode=0,
-        FG=False,  # pylint: disable=redefined-outer-name
-        timeout=None,
-    ):
+        retcode: int | Container[int] = 0,
+        FG: bool = False,  # pylint: disable=redefined-outer-name
+        timeout: float | None = None,
+    ) -> None:
         """`retcode` is the return code to expect to mean "success".  Set
         `FG` to True to run in the foreground.
         """
@@ -267,10 +319,10 @@ class _TF(ExecutionModifier):
         self.timeout = timeout
 
     @classmethod
-    def __call__(cls, *args, **kwargs):
+    def __call__(cls, *args: Any, **kwargs: Any) -> _TF:
         return cls(*args, **kwargs)
 
-    def __rand__(self, cmd):
+    def __rand__(self, cmd: plumbum.commands.base.BaseCommand) -> bool:
         try:
             if self.FG:
                 cmd(
@@ -303,20 +355,23 @@ class _RETCODE(ExecutionModifier):
 
     __slots__ = ("foreground", "timeout")
 
+    foreground: bool
+    timeout: float | None
+
     def __init__(
         self,
-        FG=False,  # pylint: disable=redefined-outer-name
-        timeout=None,
-    ):
+        FG: bool = False,  # pylint: disable=redefined-outer-name
+        timeout: float | None = None,
+    ) -> None:
         """`FG` to True to run in the foreground."""
         self.foreground = FG
         self.timeout = timeout
 
     @classmethod
-    def __call__(cls, *args, **kwargs):
+    def __call__(cls, *args: Any, **kwargs: Any) -> _RETCODE:
         return cls(*args, **kwargs)
 
-    def __rand__(self, cmd):
+    def __rand__(self, cmd: plumbum.commands.base.BaseCommand) -> int:
         if self.foreground:
             result = cmd.run(
                 retcode=None, stdin=None, stdout=None, stderr=None, timeout=self.timeout
@@ -351,7 +406,18 @@ class _NOHUP(ExecutionModifier):
 
     __slots__ = ("append", "cwd", "stderr", "stdout")
 
-    def __init__(self, cwd=".", stdout="nohup.out", stderr=None, append=True):
+    cwd: str
+    stdout: str | TextIO
+    stderr: str | TextIO | None
+    append: bool
+
+    def __init__(
+        self,
+        cwd: str = ".",
+        stdout: str | TextIO = "nohup.out",
+        stderr: str | TextIO | None = None,
+        append: bool = True,
+    ) -> None:
         """Set ``cwd``, ``stdout``, or ``stderr``.
         Runs as a forked process. You can set ``append=False``, too.
         """
@@ -360,7 +426,14 @@ class _NOHUP(ExecutionModifier):
         self.stderr = stderr
         self.append = append
 
-    def __rand__(self, cmd):
+    def __rand__(
+        self,
+        cmd: (
+            plumbum.commands.base.BaseCommand
+            | plumbum.commands.base.StdoutRedirection
+            | plumbum.commands.base.AppendingStdoutRedirection
+        ),
+    ) -> subprocess.Popen[str]:
         if isinstance(cmd, plumbum.commands.base.StdoutRedirection):
             stdout = cmd.file
             append = False
@@ -372,19 +445,32 @@ class _NOHUP(ExecutionModifier):
         else:
             stdout = self.stdout
             append = self.append
-        return cmd.nohup(self.cwd, stdout, self.stderr, append)
+        return cmd.nohup(self.cwd, stdout, self.stderr, append)  # type: ignore[arg-type]
 
 
 class LogPipe:
-    def __init__(self, line_timeout, kw, levels, prefix, log):
+    line_timeout: float | None
+    kw: dict[str, Any]
+    levels: dict[int, int]
+    prefix: str | None
+    log: Any
+
+    def __init__(
+        self,
+        line_timeout: float | None,
+        kw: dict[str, Any],
+        levels: dict[int, int],
+        prefix: str | None,
+        log: Any,
+    ) -> None:
         self.line_timeout = line_timeout
         self.kw = kw
         self.levels = levels
         self.prefix = prefix
         self.log = log
 
-    def __rand__(self, cmd):
-        popen = cmd if hasattr(cmd, "iter_lines") else cmd.popen()
+    def __rand__(self, cmd: plumbum.commands.base.BaseCommand) -> int:
+        popen: Any = cmd if hasattr(cmd, "iter_lines") else cmd.popen()
         for typ, lines in popen.iter_lines(
             line_timeout=self.line_timeout, mode=BY_TYPE, **self.kw
         ):
@@ -395,7 +481,7 @@ class LogPipe:
                 if self.prefix:
                     line = f"{self.prefix}: {line}"  # noqa: PLW2901
                 self.log(level, line)
-        return popen.returncode
+        return popen.returncode  # type: ignore[no-any-return]
 
 
 class PipeToLoggerMixin:
@@ -442,15 +528,22 @@ class PipeToLoggerMixin:
 
     """
 
-    DEFAULT_LINE_TIMEOUT = 10 * 60
-    DEFAULT_STDOUT = "INFO"
-    DEFAULT_STDERR = "DEBUG"
-    INFO = INFO
-    DEBUG = DEBUG
+    DEFAULT_LINE_TIMEOUT: int = 10 * 60
+    DEFAULT_STDOUT: str = "INFO"
+    DEFAULT_STDERR: str = "DEBUG"
+    INFO: int = INFO
+    DEBUG: int = DEBUG
+
+    log: Any  # Should be a callable (int, str) -> None, but defined by subclass
 
     def pipe(
-        self, out_level=None, err_level=None, prefix=None, line_timeout=None, **kw
-    ):
+        self,
+        out_level: int | None = None,
+        err_level: int | None = None,
+        prefix: str | None = None,
+        line_timeout: float | None = None,
+        **kw: Any,
+    ) -> LogPipe:
         """
         Pipe a command's stdout and stderr lines into this logger.
 
@@ -476,19 +569,19 @@ class PipeToLoggerMixin:
 
         return LogPipe(line_timeout, kw, levels, prefix, self.log)
 
-    def pipe_info(self, prefix=None, **kw):
+    def pipe_info(self, prefix: str | None = None, **kw: Any) -> LogPipe:
         """
         Pipe a command's stdout and stderr lines into this logger (both at level INFO)
         """
         return self.pipe(self.INFO, self.INFO, prefix=prefix, **kw)
 
-    def pipe_debug(self, prefix=None, **kw):
+    def pipe_debug(self, prefix: str | None = None, **kw: Any) -> LogPipe:
         """
         Pipe a command's stdout and stderr lines into this logger (both at level DEBUG)
         """
         return self.pipe(self.DEBUG, self.DEBUG, prefix=prefix, **kw)
 
-    def __rand__(self, cmd):
+    def __rand__(self, cmd: plumbum.commands.base.BaseCommand) -> int:
         """
         Pipe a command's stdout and stderr lines into this logger.
         Log levels for each stream are determined by ``DEFAULT_STDOUT`` and ``DEFAULT_STDERR``.

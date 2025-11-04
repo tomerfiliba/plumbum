@@ -240,6 +240,7 @@ def pager(
 
     pg = pagercmd.popen(stdout=None, stderr=None)
     try:
+        assert pg.stdin is not None
         for row in rows:
             line = f"{row}\n"
             try:

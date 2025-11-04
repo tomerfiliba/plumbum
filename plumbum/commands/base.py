@@ -4,6 +4,7 @@ import contextlib
 import functools
 import shlex
 import subprocess
+import typing
 from subprocess import PIPE, Popen
 from tempfile import TemporaryFile
 from types import MethodType
@@ -11,6 +12,12 @@ from typing import ClassVar
 
 import plumbum.commands.modifiers
 from plumbum.commands.processes import iter_lines, run_proc
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Container, Generator, Sequence
+    from typing import Any
+
+    from plumbum.machines.base import BaseMachine
 
 __all__ = (
     "ERROUT",
@@ -41,13 +48,13 @@ class RedirectionError(Exception):
 # ===================================================================================================
 # Utilities
 # ===================================================================================================
-def shquote(text):
+def shquote(text: Any) -> str:
     """Quotes the given text with shell escaping (assumes as syntax similar to ``sh``)"""
     text = str(text)
     return shlex.quote(text)
 
 
-def shquote_list(seq):
+def shquote_list(seq: Sequence[Any]) -> list[str]:
     return [shquote(item) for item in seq]
 
 
@@ -59,34 +66,38 @@ class BaseCommand:
 
     __slots__ = ("__weakref__", "custom_encoding", "cwd", "env")
 
-    def __str__(self):
+    custom_encoding: str | None
+    cwd: str | None
+    env: dict[str, str] | None
+
+    def __str__(self) -> str:
         return " ".join(self.formulate())
 
-    def __or__(self, other):
+    def __or__(self, other: BaseCommand) -> Pipeline:
         """Creates a pipe with the other command"""
         return Pipeline(self, other)
 
-    def __gt__(self, file):
+    def __gt__(self, file: Any) -> StdoutRedirection:
         """Redirects the process' stdout to the given file"""
         return StdoutRedirection(self, file)
 
-    def __rshift__(self, file):
+    def __rshift__(self, file: Any) -> AppendingStdoutRedirection:
         """Redirects the process' stdout to the given file (appending)"""
         return AppendingStdoutRedirection(self, file)
 
-    def __ge__(self, file):
+    def __ge__(self, file: Any) -> StderrRedirection:
         """Redirects the process' stderr to the given file"""
         return StderrRedirection(self, file)
 
-    def __lt__(self, file):
+    def __lt__(self, file: Any) -> StdinRedirection:
         """Redirects the given file into the process' stdin"""
         return StdinRedirection(self, file)
 
-    def __lshift__(self, data):
+    def __lshift__(self, data: Any) -> StdinDataRedirection:
         """Redirects the given data into the process' stdin"""
         return StdinDataRedirection(self, data)
 
-    def __getitem__(self, args):
+    def __getitem__(self, args: Any) -> BaseCommand:
         """Creates a bound-command with the given arguments. Shortcut for
         bound_command."""
         if not isinstance(args, (tuple, list)):
@@ -95,7 +106,7 @@ class BaseCommand:
             ]
         return self.bound_command(*args)
 
-    def bound_command(self, *args):
+    def bound_command(self, *args: Any) -> BaseCommand:
         """Creates a bound-command with the given arguments"""
         if not args:
             return self
@@ -105,20 +116,20 @@ class BaseCommand:
 
         return BoundCommand(self, args)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> str:
         """A shortcut for `run(args)`, returning only the process' stdout"""
         return self.run(args, **kwargs)[1]
 
-    def _get_encoding(self):
+    def _get_encoding(self) -> str | None:
         raise NotImplementedError()
 
-    def with_env(self, **env):
+    def with_env(self, **env: str) -> BaseCommand:
         """Returns a BoundEnvCommand with the given environment variables"""
         if not env:
             return self
         return BoundEnvCommand(self, env=env)
 
-    def with_cwd(self, path):
+    def with_cwd(self, path: Any) -> BaseCommand:
         """
         Returns a BoundEnvCommand with the specified working directory.
         This overrides a cwd specified in a wrapping `machine.cwd()` context manager.
@@ -130,10 +141,10 @@ class BaseCommand:
     setenv = with_env
 
     @property
-    def machine(self):
+    def machine(self) -> BaseMachine:
         raise NotImplementedError()
 
-    def formulate(self, level=0, args=()):
+    def formulate(self, level: int = 0, args: Sequence[Any] = ()) -> list[str]:
         """Formulates the command into a command-line, i.e., a list of shell-quoted strings
         that can be executed by ``Popen`` or shells.
 
@@ -146,7 +157,7 @@ class BaseCommand:
         """
         raise NotImplementedError()
 
-    def popen(self, args=(), **kwargs):
+    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> subprocess.Popen[str]:
         """Spawns the given command, returning a ``Popen``-like object.
 
         .. note::
@@ -165,12 +176,20 @@ class BaseCommand:
         """
         raise NotImplementedError()
 
-    def nohup(self, cwd=".", stdout="nohup.out", stderr=None, append=True):
+    def nohup(
+        self,
+        cwd: str = ".",
+        stdout: str = "nohup.out",
+        stderr: str | None = None,
+        append: bool = True,
+    ) -> subprocess.Popen[str]:
         """Runs a command detached."""
-        return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)
+        return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)  # type: ignore[no-untyped-call, no-any-return]
 
     @contextlib.contextmanager
-    def bgrun(self, args=(), **kwargs):
+    def bgrun(
+        self, args: Sequence[Any] = (), **kwargs: Any
+    ) -> Generator[subprocess.Popen[str], None, None]:
         """Runs the given command as a context manager, allowing you to create a
         `pipeline <http://en.wikipedia.org/wiki/Pipeline_(computing)>`_ (not in the UNIX sense)
         of programs, parallelizing their work. In other words, instead of running programs
@@ -204,23 +223,23 @@ class BaseCommand:
         p = self.popen(args, **kwargs)
         was_run = [False]
 
-        def runner():
+        def runner() -> tuple[int, str, str] | None:
             if was_run[0]:
                 return None  # already done
             was_run[0] = True
             try:
                 return run_proc(p, retcode, timeout)
             finally:
-                del p.run  # to break cyclic reference p -> cell -> p
+                del p.run  # type: ignore[attr-defined]
                 for f in (p.stdin, p.stdout, p.stderr):
                     with contextlib.suppress(Exception):
-                        f.close()
+                        f.close()  # type: ignore[union-attr]
 
-        p.run = runner
+        p.run = runner  # type: ignore[attr-defined]
         yield p
         runner()
 
-    def run(self, args=(), **kwargs):
+    def run(self, args: Sequence[Any] = (), **kwargs: Any) -> tuple[int, str, str]:
         """Runs the given command (equivalent to popen() followed by
         :func:`run_proc <plumbum.commands.run_proc>`). If the exit code of the process does
         not match the expected one, :class:`ProcessExecutionError
@@ -246,82 +265,77 @@ class BaseCommand:
         :returns: A tuple of (return code, stdout, stderr)
         """
         with self.bgrun(args, **kwargs) as p:
-            return p.run()
+            return p.run()  # type: ignore[attr-defined, no-any-return]
 
-    def _use_modifier(self, modifier, args):
-        """
-        Applies a modifier to the current object (e.g. FG, NOHUP)
-        :param modifier: The modifier class to apply (e.g. FG)
-        :param args: A dictionary of arguments to pass to this modifier
-        :return:
-        """
-        modifier_instance = modifier(**args)
-        return self & modifier_instance
-
-    def run_bg(self, **kwargs):
+    def run_bg(self, **kwargs: Any) -> plumbum.commands.modifiers.Future:
         """
         Run this command in the background. Uses all arguments from the BG construct
         :py:class: `plumbum.commands.modifiers.BG`
         """
-        return self._use_modifier(plumbum.commands.modifiers.BG, kwargs)
+        return self & plumbum.commands.modifiers.BG(**kwargs)
 
-    def run_fg(self, **kwargs):
+    def run_fg(self, **kwargs: Any) -> None:
         """
         Run this command in the foreground. Uses all arguments from the FG construct
         :py:class: `plumbum.commands.modifiers.FG`
         """
-        return self._use_modifier(plumbum.commands.modifiers.FG, kwargs)
+        return self & plumbum.commands.modifiers.FG(**kwargs)
 
-    def run_tee(self, **kwargs):
+    def run_tee(self, **kwargs: Any) -> tuple[int, str, str]:
         """
         Run this command using the TEE construct. Inherits all arguments from TEE
         :py:class: `plumbum.commands.modifiers.TEE`
         """
-        return self._use_modifier(plumbum.commands.modifiers.TEE, kwargs)
+        return self & plumbum.commands.modifiers.TEE(**kwargs)
 
-    def run_tf(self, **kwargs):
+    def run_tf(self, **kwargs: Any) -> bool:
         """
         Run this command using the TF construct. Inherits all arguments from TF
         :py:class: `plumbum.commands.modifiers.TF`
         """
-        return self._use_modifier(plumbum.commands.modifiers.TF, kwargs)
+        return self & plumbum.commands.modifiers.TF(**kwargs)
 
-    def run_retcode(self, **kwargs):
+    def run_retcode(self, **kwargs: Any) -> int:
         """
         Run this command using the RETCODE construct. Inherits all arguments from RETCODE
         :py:class: `plumbum.commands.modifiers.RETCODE`
         """
-        return self._use_modifier(plumbum.commands.modifiers.RETCODE, kwargs)
+        return self & plumbum.commands.modifiers.RETCODE(**kwargs)
 
-    def run_nohup(self, **kwargs):
+    def run_nohup(self, **kwargs: Any) -> subprocess.Popen[str]:
         """
         Run this command using the NOHUP construct. Inherits all arguments from NOHUP
         :py:class: `plumbum.commands.modifiers.NOHUP`
         """
-        return self._use_modifier(plumbum.commands.modifiers.NOHUP, kwargs)
+        return self & plumbum.commands.modifiers.NOHUP(**kwargs)
 
 
 class BoundCommand(BaseCommand):
     __slots__ = ("args", "cmd")
 
-    def __init__(self, cmd, args):
+    cmd: BaseCommand
+    args: list[Any]
+
+    def __init__(self, cmd: BaseCommand, args: Sequence[Any]) -> None:
         self.cmd = cmd
         self.args = list(args)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"BoundCommand({self.cmd!r}, {self.args!r})"
 
-    def _get_encoding(self):
+    def _get_encoding(self) -> str | None:
         return self.cmd._get_encoding()
 
-    def formulate(self, level=0, args=()):
+    def formulate(self, level: int = 0, args: Sequence[Any] = ()) -> list[str]:
         return self.cmd.formulate(level + 1, self.args + list(args))
 
     @property
-    def machine(self):
+    def machine(self) -> BaseMachine:
         return self.cmd.machine
 
-    def popen(self, args=(), **kwargs):
+    def popen(
+        self, args: Sequence[Any] | str = (), **kwargs: Any
+    ) -> subprocess.Popen[str]:
         if isinstance(args, str):
             args = [
                 args,
@@ -332,30 +346,45 @@ class BoundCommand(BaseCommand):
 class BoundEnvCommand(BaseCommand):
     __slots__ = ("cmd",)
 
-    def __init__(self, cmd, env=None, cwd=None):
+    cmd: BaseCommand
+    env: dict[str, str]
+    cwd: str | None
+
+    def __init__(
+        self,
+        cmd: BaseCommand,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+    ) -> None:
         self.cmd = cmd
         self.env = env or {}
         self.cwd = cwd
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"BoundEnvCommand({self.cmd!r}, {self.env!r})"
 
-    def _get_encoding(self):
+    def _get_encoding(self) -> str | None:
         return self.cmd._get_encoding()
 
-    def formulate(self, level=0, args=()):
+    def formulate(self, level: int = 0, args: Sequence[Any] = ()) -> list[str]:
         return self.cmd.formulate(level, args)
 
     @property
-    def machine(self):
+    def machine(self) -> BaseMachine:
         return self.cmd.machine
 
-    def popen(self, args=(), cwd=None, env=None, **kwargs):
+    def popen(
+        self,
+        args: Sequence[Any] = (),
+        cwd: str | None = None,
+        env: dict[str, str] | None = None,
+        **kwargs: Any,
+    ) -> subprocess.Popen[str]:
         env = env or {}
         return self.cmd.popen(
             args,
             cwd=self.cwd if cwd is None else cwd,
-            env=dict(self.env, **env),
+            env={**self.env, **env},
             **kwargs,
         )
 
@@ -363,17 +392,20 @@ class BoundEnvCommand(BaseCommand):
 class Pipeline(BaseCommand):
     __slots__ = ("dstcmd", "srccmd")
 
-    def __init__(self, srccmd, dstcmd):
+    srccmd: BaseCommand
+    dstcmd: BaseCommand
+
+    def __init__(self, srccmd: BaseCommand, dstcmd: BaseCommand) -> None:
         self.srccmd = srccmd
         self.dstcmd = dstcmd
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Pipeline({self.srccmd!r}, {self.dstcmd!r})"
 
-    def _get_encoding(self):
+    def _get_encoding(self) -> str | None:
         return self.srccmd._get_encoding() or self.dstcmd._get_encoding()
 
-    def formulate(self, level=0, args=()):
+    def formulate(self, level: int = 0, args: Sequence[Any] = ()) -> list[str]:
         return [
             *self.srccmd.formulate(level + 1),
             "|",
@@ -381,10 +413,10 @@ class Pipeline(BaseCommand):
         ]
 
     @property
-    def machine(self):
+    def machine(self) -> BaseMachine:
         return self.srccmd.machine
 
-    def popen(self, args=(), **kwargs):
+    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> subprocess.Popen[str]:
         src_kwargs = kwargs.copy()
         src_kwargs["stdout"] = PIPE
         if "stdin" in kwargs:
@@ -394,37 +426,43 @@ class Pipeline(BaseCommand):
         kwargs["stdin"] = srcproc.stdout
         dstproc = self.dstcmd.popen(**kwargs)
         # allow p1 to receive a SIGPIPE if p2 exits
-        srcproc.stdout.close()
+        srcproc.stdout.close()  # type: ignore[union-attr]
         if srcproc.stdin and src_kwargs.get("stdin") != PIPE:
             srcproc.stdin.close()
-        dstproc.srcproc = srcproc
+        dstproc.srcproc = srcproc  # type: ignore[attr-defined]
 
         # monkey-patch .wait() to wait on srcproc as well (it's expected to die when dstproc dies)
         dstproc_wait = dstproc.wait
 
         @functools.wraps(Popen.wait)
-        def wait2(*args, **kwargs):
+        def wait2(*args: Any, **kwargs: Any) -> int:
             rc_dst = dstproc_wait(*args, **kwargs)
             rc_src = srcproc.wait(*args, **kwargs)
             dstproc.returncode = rc_dst or rc_src
             return dstproc.returncode
 
-        dstproc._proc.wait = wait2
+        dstproc._proc.wait = wait2  # type: ignore[attr-defined]
 
-        dstproc_verify = dstproc.verify
+        dstproc_verify = dstproc.verify  # type: ignore[attr-defined]
 
-        def verify(proc, retcode, timeout, stdout, stderr):
+        def verify(
+            proc: Any,
+            retcode: int | Container[int] | None,
+            timeout: float | None,
+            stdout: str,
+            stderr: str,
+        ) -> None:
             # TODO: right now it's impossible to specify different expected
             # return codes for different stages of the pipeline
             try:
-                or_retcode = [0, *list(retcode)]
+                or_retcode: list[int] | None = [0, *list(retcode)]  # type: ignore[call-overload]
             except TypeError:
                 # no-retcode-verification acts "greedily"
-                or_retcode = None if retcode is None else [0, retcode]
+                or_retcode = None if retcode is None else [0, retcode]  # type: ignore[list-item]
             proc.srcproc.verify(or_retcode, timeout, stdout, stderr)
             dstproc_verify(retcode, timeout, stdout, stderr)
 
-        dstproc.verify = MethodType(verify, dstproc)
+        dstproc.verify = MethodType(verify, dstproc)  # type: ignore[attr-defined]
 
         dstproc.stdin = srcproc.stdin
         return dstproc
@@ -438,17 +476,20 @@ class BaseRedirection(BaseCommand):
     KWARG: ClassVar[str]  # pylint: disable=declare-non-slot
     MODE: ClassVar[str]  # pylint: disable=declare-non-slot
 
-    def __init__(self, cmd, file):
+    cmd: BaseCommand
+    file: Any
+
+    def __init__(self, cmd: BaseCommand, file: Any) -> None:
         self.cmd = cmd
         self.file = file
 
-    def _get_encoding(self):
+    def _get_encoding(self) -> str | None:
         return self.cmd._get_encoding()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.cmd!r}, {self.file!r})"
 
-    def formulate(self, level=0, args=()):
+    def formulate(self, level: int = 0, args: Sequence[Any] = ()) -> list[str]:
         return [
             *self.cmd.formulate(level + 1, args),
             self.SYM,
@@ -456,12 +497,12 @@ class BaseRedirection(BaseCommand):
         ]
 
     @property
-    def machine(self):
+    def machine(self) -> BaseMachine:
         return self.cmd.machine
 
-    def popen(self, args=(), **kwargs):
-        from plumbum.machines.local import LocalPath
-        from plumbum.machines.remote import RemotePath
+    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> subprocess.Popen[str]:
+        from plumbum.path.local import LocalPath
+        from plumbum.path.remote import RemotePath
 
         if self.KWARG in kwargs and kwargs[self.KWARG] not in (PIPE, None):
             raise RedirectionError(f"{self.KWARG} is already redirected")
@@ -508,10 +549,10 @@ class StderrRedirection(BaseRedirection):
 
 
 class _ERROUT(int):
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "ERROUT"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "&1"
 
 
@@ -522,14 +563,17 @@ class StdinDataRedirection(BaseCommand):
     __slots__ = ("cmd", "data")
     CHUNK_SIZE = 16000
 
-    def __init__(self, cmd, data):
+    cmd: BaseCommand
+    data: bytes | str
+
+    def __init__(self, cmd: BaseCommand, data: bytes | str) -> None:
         self.cmd = cmd
         self.data = data
 
-    def _get_encoding(self):
+    def _get_encoding(self) -> str | None:
         return self.cmd._get_encoding()
 
-    def formulate(self, level=0, args=()):
+    def formulate(self, level: int = 0, args: Sequence[Any] = ()) -> list[str]:
         return [
             f"echo {shquote(self.data)}",
             "|",
@@ -537,19 +581,20 @@ class StdinDataRedirection(BaseCommand):
         ]
 
     @property
-    def machine(self):
+    def machine(self) -> BaseMachine:
         return self.cmd.machine
 
-    def popen(self, args=(), **kwargs):
+    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> subprocess.Popen[str]:
         if kwargs.get("stdin") not in (PIPE, None):
             raise RedirectionError("stdin is already redirected")
         data = self.data
-        if isinstance(data, str) and self._get_encoding() is not None:
-            data = data.encode(self._get_encoding())
+        encoding = self._get_encoding()
+        if isinstance(data, str) and encoding is not None:
+            data = data.encode(encoding)
         f = TemporaryFile()
         while data:
             chunk = data[: self.CHUNK_SIZE]
-            f.write(chunk)
+            f.write(chunk)  # type: ignore[arg-type]
             data = data[self.CHUNK_SIZE :]
         f.seek(0)
         kwargs["stdin"] = f
@@ -565,22 +610,24 @@ class ConcreteCommand(BaseCommand):
     # These must be defined by subclasses
     QUOTE_LEVEL: ClassVar[int]  # pylint: disable=declare-non-slot
 
-    def __init__(self, executable, encoding):
+    executable: Any
+
+    def __init__(self, executable: Any, encoding: str | None) -> None:
         self.executable = executable
         self.custom_encoding = encoding
         self.cwd = None
         self.env = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.executable)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{type(self).__name__}({self.executable})"
 
-    def _get_encoding(self):
+    def _get_encoding(self) -> str | None:
         return self.custom_encoding
 
-    def formulate(self, level=0, args=()):
+    def formulate(self, level: int = 0, args: Sequence[Any] = ()) -> list[str]:
         argv = [str(self.executable)]
         for a in args:
             if a is None:
@@ -601,8 +648,8 @@ class ConcreteCommand(BaseCommand):
         return argv
 
     @property
-    def machine(self):
+    def machine(self) -> BaseMachine:
         raise NotImplementedError()
 
-    def popen(self, args=(), **kwargs):
+    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> subprocess.Popen[str]:
         raise NotImplementedError()
