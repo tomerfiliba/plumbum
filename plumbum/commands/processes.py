@@ -5,22 +5,30 @@ import contextlib
 import heapq
 import math
 import time
+import typing
 from queue import Empty as QueueEmpty
 from queue import Queue
 from threading import Thread
 
 from plumbum.lib import IS_WIN32
 
+if typing.TYPE_CHECKING:
+    import subprocess
+    from collections.abc import Callable, Generator
+    from typing import IO
+
 
 # ===================================================================================================
 # utility functions
 # ===================================================================================================
-def _check_process(proc, retcode, timeout, stdout, stderr):
-    proc.verify(retcode, timeout, stdout, stderr)
+def _check_process(
+    proc: subprocess.Popen, retcode: int, timeout: float, stdout: IO, stderr: IO
+) -> tuple[int, IO, IO]:
+    proc.verify(retcode, timeout, stdout, stderr)  # type: ignore[attr-defined]
     return proc.returncode, stdout, stderr
 
 
-def _get_piped_streams(proc):
+def _get_piped_streams(proc: subprocess.Popen | None) -> list[tuple[int, IO]]:
     """Get a list of all valid standard streams for proc that were opened with PIPE option.
 
     If proc was started from a Pipeline command, this function assumes it will have a
@@ -35,7 +43,7 @@ def _get_piped_streams(proc):
     """
     streams = []
 
-    def add_stream(type_, stream):
+    def add_stream(type_: int, stream: IO | None) -> None:
         if stream is None or stream.closed:
             return
         streams.append((type_, stream))
@@ -48,7 +56,12 @@ def _get_piped_streams(proc):
     return streams
 
 
-def _iter_lines_posix(proc, decode, linesize, line_timeout=None):
+def _iter_lines_posix(
+    proc: subprocess.Popen,
+    decode: Callable[[bytes], str],
+    linesize: int,
+    line_timeout: float | None = None,
+) -> Generator[tuple[int, str], None, None]:
     from selectors import EVENT_READ, DefaultSelector
 
     streams = _get_piped_streams(proc)
@@ -78,9 +91,14 @@ def _iter_lines_posix(proc, decode, linesize, line_timeout=None):
             yield stream_type, decode(line)
 
 
-def _iter_lines_win32(proc, decode, linesize, line_timeout=None):
+def _iter_lines_win32(
+    proc: subprocess.Popen,
+    decode: Callable[[bytes], str],
+    linesize: int,
+    line_timeout: float | None = None,
+) -> Generator[tuple[int, str], None, None]:
     class Piper(Thread):
-        def __init__(self, fd, pipe):
+        def __init__(self, fd: int, pipe: IO):
             super().__init__(name=f"PlumbumPiper{fd}Thread")
             self.pipe = pipe
             self.fd = fd
@@ -88,17 +106,20 @@ def _iter_lines_win32(proc, decode, linesize, line_timeout=None):
             self.daemon = True
             super().start()
 
-        def read_from_pipe(self):
+        def read_from_pipe(self) -> bytes:
             return self.pipe.readline(linesize)
 
-        def run(self):
+        def run(self) -> None:
             for line in iter(self.read_from_pipe, b""):
                 queue.put((self.fd, decode(line)))
             # self.pipe.close()
 
     if line_timeout is None:
         line_timeout = float("inf")
-    queue = Queue()
+
+    queue = Queue[tuple[int, str]]()
+    assert proc.stdout
+    assert proc.stderr
     pipers = [Piper(0, proc.stdout), Piper(1, proc.stderr)]
     last_line_ts = time.time()
     empty = True
@@ -143,7 +164,16 @@ class ProcessExecutionError(OSError):
     well as the command line used to create the process (``argv``)
     """
 
-    def __init__(self, argv, retcode, stdout, stderr, message=None, *, host=None):
+    def __init__(
+        self,
+        argv: list[str],
+        retcode: int,
+        stdout: str | bytes,
+        stderr: str | bytes,
+        message: str | None = None,
+        *,
+        host: str | None = None,
+    ):
         # we can't use 'super' here since OSError only keeps the first 2 args,
         # which leads to failing in loading this object from a pickle.dumps.
         # pylint: disable-next=non-parent-init-called
@@ -160,7 +190,7 @@ class ProcessExecutionError(OSError):
         self.stdout = stdout
         self.stderr = stderr
 
-    def __str__(self):
+    def __str__(self) -> str:
         # avoid an import cycle
         from plumbum.commands.base import shquote_list
 
@@ -187,7 +217,7 @@ class ProcessTimedOut(Exception):
     """Raises by :func:`run_proc <plumbum.commands.run_proc>` when a ``timeout`` has been
     specified and it has elapsed before the process terminated"""
 
-    def __init__(self, msg, argv):
+    def __init__(self, msg: str, argv: list[str]):
         Exception.__init__(self, msg, argv)
         self.argv = argv
 
