@@ -2,24 +2,31 @@ from __future__ import annotations
 
 import re
 import socket
+import typing
 import warnings
 from contextlib import closing
 
-from plumbum.commands import ProcessExecutionError, shquote
+from plumbum.commands import BaseCommand, ProcessExecutionError, shquote
 from plumbum.lib import IS_WIN32
+from plumbum.machines.base import PopenWithAddons
 from plumbum.machines.local import local
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath
 
+if typing.TYPE_CHECKING:
+    from collections.abc import Sequence
+    from typing import Any
 
-def _get_free_port():
+
+def _get_free_port() -> int:
     """Attempts to find a free port."""
     s = socket.socket()
     with closing(s):
         s.bind(("localhost", 0))
-        return s.getsockname()[1]
+        port: int = s.getsockname()[1]
+        return port
 
 
 class SshTunnel:
@@ -28,7 +35,13 @@ class SshTunnel:
 
     __slots__ = ["__weakref__", "_dport", "_lport", "_reverse", "_session"]
 
-    def __init__(self, session, lport, dport, reverse):
+    def __init__(
+        self,
+        session: ShellSession,
+        lport: int | str,
+        dport: int | str,
+        reverse: bool,
+    ) -> None:
         self._session = session
         self._lport = lport
         self._dport = dport
@@ -42,32 +55,32 @@ class SshTunnel:
             if match:
                 self._dport = match.group(1)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         tunnel = self._session.proc if self._session.alive() else "(defunct)"
         return f"<SshTunnel {tunnel}>"
 
-    def __enter__(self):
+    def __enter__(self) -> SshTunnel:
         return self
 
-    def __exit__(self, t, v, tb):
+    def __exit__(self, t: object, v: object, tb: object) -> None:
         self.close()
 
-    def close(self):
+    def close(self) -> None:
         """Closes(terminates) the tunnel"""
         self._session.close()
 
     @property
-    def lport(self):
+    def lport(self) -> int | str:
         """Tunneled port or socket on the local machine."""
         return self._lport
 
     @property
-    def dport(self):
+    def dport(self) -> int | str:
         """Tunneled port or socket on the remote machine."""
         return self._dport
 
     @property
-    def reverse(self):
+    def reverse(self) -> bool:
         """Represents if the tunnel is a reverse tunnel."""
         return self._reverse
 
@@ -116,19 +129,19 @@ class SshMachine(BaseRemoteMachine):
 
     def __init__(
         self,
-        host,
-        user=None,
-        port=None,
-        keyfile=None,
-        ssh_command=None,
-        scp_command=None,
-        ssh_opts=(),
-        scp_opts=(),
-        password=None,
-        encoding="utf8",
-        connect_timeout=10,
-        new_session=False,
-    ):
+        host: str,
+        user: str | None = None,
+        port: int | None = None,
+        keyfile: str | None = None,
+        ssh_command: BaseCommand | None = None,
+        scp_command: BaseCommand | None = None,
+        ssh_opts: Sequence[str] = (),
+        scp_opts: Sequence[str] = (),
+        password: str | None = None,
+        encoding: str = "utf8",
+        connect_timeout: float | None = 10,
+        new_session: bool = False,
+    ) -> None:
         if ssh_command is None:
             if password is not None:
                 ssh_command = local["sshpass"]["-p", password, "ssh"]
@@ -165,11 +178,18 @@ class SshMachine(BaseRemoteMachine):
             new_session=new_session,
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"ssh://{self._fqhost}"
 
-    def popen(self, args, ssh_opts=(), env=None, cwd=None, **kwargs):
-        cmdline = []
+    def popen(
+        self,
+        args: Sequence[str] | str,
+        ssh_opts: Sequence[str] = (),
+        env: dict[str, str] | None = None,
+        cwd: str | LocalPath | None = None,
+        **kwargs: Any,
+    ) -> PopenWithAddons[str]:
+        cmdline: list[str] = []
         cmdline.extend(ssh_opts)
         cmdline.append(self._fqhost)
         if args:
@@ -188,10 +208,10 @@ class SshMachine(BaseRemoteMachine):
             if isinstance(args, (tuple, list)):
                 cmdline.extend(args)
             else:
-                cmdline.append(args)
+                cmdline.append(args)  # type: ignore[arg-type]
         return self._ssh_command[tuple(cmdline)].popen(**kwargs)
 
-    def nohup(self, command):
+    def nohup(self, command: BaseCommand) -> None:
         """
         Runs the given command using ``nohup`` and redirects std handles,
         allowing the command to run "detached" from its controlling TTY or parent.
@@ -204,7 +224,14 @@ class SshMachine(BaseRemoteMachine):
         )
         self.daemonic_popen(command, cwd=".", stdout=None, stderr=None, append=False)
 
-    def daemonic_popen(self, command, cwd=".", stdout=None, stderr=None, append=True):
+    def daemonic_popen(
+        self,
+        command: BaseCommand,
+        cwd: str = ".",
+        stdout: str | None = None,
+        stderr: str | None = None,
+        append: bool = True,
+    ) -> PopenWithAddons[str]:
         """
         Runs the given command using ``nohup`` and redirects std handles,
         allowing the command to run "detached" from its controlling TTY or parent.
@@ -230,6 +257,9 @@ class SshMachine(BaseRemoteMachine):
         )
         proc = self.popen(args, ssh_opts=["-f"])
         rc = proc.wait()
+        assert proc.stdin is not None
+        assert proc.stdout is not None
+        assert proc.stderr is not None
         try:
             if rc != 0:
                 raise ProcessExecutionError(
@@ -239,8 +269,9 @@ class SshMachine(BaseRemoteMachine):
             proc.stdin.close()
             proc.stdout.close()
             proc.stderr.close()
+        return proc
 
-    def session(self, isatty=False, new_session=False):
+    def session(self, isatty: bool = False, new_session: bool = False) -> ShellSession:
         return ShellSession(
             self.popen(
                 ["/bin/sh"], (["-tt"] if isatty else ["-T"]), new_session=new_session
@@ -253,13 +284,13 @@ class SshMachine(BaseRemoteMachine):
 
     def tunnel(
         self,
-        lport,
-        dport,
-        lhost="localhost",
-        dhost="localhost",
-        connect_timeout=5,  # noqa: ARG002
-        reverse=False,
-    ):
+        lport: int | str,
+        dport: int | str,
+        lhost: str | None = "localhost",
+        dhost: str | None = "localhost",
+        connect_timeout: float = 5,  # noqa: ARG002
+        reverse: bool = False,
+    ) -> SshTunnel:
         r"""Creates an SSH tunnel from the TCP port (``lport``) of the local machine
         (``lhost``, defaults to ``"localhost"``, but it can be any IP you can ``bind()``)
         to the remote TCP port (``dport``) of the destination machine (``dhost``, defaults
@@ -335,14 +366,14 @@ class SshMachine(BaseRemoteMachine):
         )
 
     @staticmethod
-    def _translate_drive_letter(path):
+    def _translate_drive_letter(path: str | LocalPath) -> str:
         # replace c:\some\path with /c/some/path
         path = str(path)
         if ":" in path:
             return "/" + path.replace(":", "").replace("\\", "/")
         return path
 
-    def download(self, src, dst):
+    def download(self, src: str | RemotePath, dst: str | LocalPath) -> None:
         if isinstance(src, LocalPath):
             raise TypeError(f"src of download cannot be {src!r}")
         if isinstance(src, RemotePath) and src.remote != self:
@@ -354,7 +385,7 @@ class SshMachine(BaseRemoteMachine):
             dst = self._translate_drive_letter(dst)
         self._scp_command(f"{self._fqhost}:{shquote(src)}", dst)
 
-    def upload(self, src, dst):
+    def upload(self, src: str | LocalPath, dst: str | RemotePath) -> None:
         if isinstance(src, RemotePath):
             raise TypeError(f"src of upload cannot be {src!r}")
         if isinstance(dst, LocalPath):
@@ -377,18 +408,18 @@ class PuttyMachine(SshMachine):
 
     def __init__(
         self,
-        host,
-        user=None,
-        port=None,
-        keyfile=None,
-        ssh_command=None,
-        scp_command=None,
-        ssh_opts=(),
-        scp_opts=(),
-        encoding="utf8",
-        connect_timeout=10,
-        new_session=False,
-    ):
+        host: str,
+        user: str | None = None,
+        port: int | None = None,
+        keyfile: str | None = None,
+        ssh_command: BaseCommand | None = None,
+        scp_command: BaseCommand | None = None,
+        ssh_opts: Sequence[str] = (),
+        scp_opts: Sequence[str] = (),
+        encoding: str = "utf8",
+        connect_timeout: float | None = 10,
+        new_session: bool = False,
+    ) -> None:
         if ssh_command is None:
             ssh_command = local["plink"]
         if scp_command is None:
@@ -398,8 +429,8 @@ class PuttyMachine(SshMachine):
         if user is None:
             user = local.env.user
         if port is not None:
-            ssh_opts.extend(["-P", str(port)])
-            scp_opts = [*list(scp_opts), "-P", str(port)]
+            ssh_opts = [*ssh_opts, "-P", str(port)]
+            scp_opts = [*scp_opts, "-P", str(port)]
             port = None
         SshMachine.__init__(
             self,
@@ -416,14 +447,15 @@ class PuttyMachine(SshMachine):
             new_session=new_session,
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"putty-ssh://{self._fqhost}"
 
-    def _translate_drive_letter(self, path):
+    @staticmethod
+    def _translate_drive_letter(path: str | LocalPath) -> str:
         # pscp takes care of windows paths automatically
-        return path
+        return str(path)
 
-    def session(self, isatty=False, new_session=False):
+    def session(self, isatty: bool = False, new_session: bool = False) -> ShellSession:
         return ShellSession(
             self.popen((), (["-t"] if isatty else ["-T"]), new_session=new_session),
             self.custom_encoding,

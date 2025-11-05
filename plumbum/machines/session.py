@@ -252,7 +252,7 @@ class ShellSession:
         self.isatty = isatty
         self._lock = threading.RLock()
         self._current: SessionPopen | None = None
-        self._startup_result: tuple[int | None, str | bytes, str | bytes] | None = None
+        self._startup_result: tuple[int | None, str, str] | None = None
         if connect_timeout:
 
             def closer() -> None:
