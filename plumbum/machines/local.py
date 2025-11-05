@@ -161,6 +161,10 @@ class LocalMachine(BaseMachine):
     def __init__(self) -> None:
         self._as_user_stack: list[Any] = []
 
+    @classmethod
+    def clear_program_cache(cls) -> None:
+        cls._program_cache.clear()
+
     if IS_WIN32:
         _EXTENSIONS: list[str] = [
             "",
