@@ -51,7 +51,7 @@ class SshTunnel:
             regex = re.compile(
                 r"^Allocated port (\d+) for remote forward to .+$", re.MULTILINE
             )
-            match = regex.search(str(session._startup_result[2]))
+            match = regex.search(session._startup_result[2])
             if match:
                 self._dport = match.group(1)
 
@@ -205,10 +205,10 @@ class SshMachine(BaseRemoteMachine):
             if envdelta:
                 cmdline.append("env")
                 cmdline.extend(f"{k}={shquote(v)}" for k, v in envdelta.items())
-            if isinstance(args, str):
-                cmdline.append(args)
-            else:
+            if isinstance(args, (tuple, list)):
                 cmdline.extend(args)
+            else:
+                cmdline.append(args)  # type: ignore[arg-type]
         return self._ssh_command[tuple(cmdline)].popen(**kwargs)
 
     def nohup(self, command: BaseCommand) -> None:
