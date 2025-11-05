@@ -8,7 +8,6 @@ from contextlib import closing
 
 from plumbum.commands import BaseCommand, ProcessExecutionError, shquote
 from plumbum.lib import IS_WIN32
-from plumbum.machines.base import PopenWithAddons
 from plumbum.machines.local import local
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
@@ -20,6 +19,7 @@ if typing.TYPE_CHECKING:
     from typing import Any
 
     from plumbum._compat.typing import Self
+    from plumbum.machines.base import PopenWithAddons
 
 
 def _get_free_port() -> int:

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import builtins
 import copy
 import errno
 import os
@@ -12,6 +11,7 @@ from plumbum.commands import ProcessExecutionError, shquote
 from plumbum.path.base import FSUser, Path
 
 if typing.TYPE_CHECKING:
+    import builtins
     from collections.abc import Generator, Iterable
 
     from plumbum.machines.remote import BaseRemoteMachine

@@ -6,7 +6,6 @@ import logging
 import os
 import stat
 import typing
-from collections.abc import Iterator, Sequence
 from typing import IO, Any
 
 from plumbum.commands.base import shquote
@@ -18,7 +17,7 @@ from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath, RemoteStatRes
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Callable, Generator
+    from collections.abc import Callable, Generator, Iterator, Sequence
 
     import paramiko
     from paramiko.channel import Channel
@@ -521,7 +520,7 @@ def _iter_lines(
 ) -> Generator[tuple[int, str], None, None]:
     from selectors import EVENT_READ, DefaultSelector
 
-    real_proc = typing.cast(ParamikoPopen, proc)
+    real_proc = typing.cast("ParamikoPopen", proc)
 
     # Python 3.4+ implementation
     def selector() -> Generator[None, None, None]:

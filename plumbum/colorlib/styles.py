@@ -15,11 +15,9 @@ import re
 import sys
 import typing
 from abc import ABCMeta, abstractmethod
-from collections.abc import Iterable
 from copy import copy
 from typing import Any, ClassVar, Literal, TextIO, TypeVar
 
-from .._compat.typing import Self
 from .names import (
     FindNearest,
     attributes_ansi,
@@ -28,6 +26,11 @@ from .names import (
     color_names,
     from_html,
 )
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from .._compat.typing import Self
 
 __all__ = [
     "ANSIStyle",
@@ -145,7 +148,7 @@ class Color:
         self.rgb = (0, 0, 0)
 
         # This will get set to a real int below!
-        self.number = typing.cast(int, None)
+        self.number = typing.cast("int", None)
         "Number of the original color, or closest color"
 
         self.representation = 4
@@ -339,7 +342,7 @@ class Color:
         other.representation = val
         if self.isreset:
             return other
-        other.number = typing.cast(int, None)
+        other.number = typing.cast("int", None)
         other._init_number()
         return other
 

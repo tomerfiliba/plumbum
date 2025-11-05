@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-import builtins
 import itertools
 import operator
 import os
 import typing
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Generator, Iterable, Iterator
 from functools import reduce
 from typing import IO, SupportsIndex, TypeVar
 
-from .._compat.typing import Self
+if typing.TYPE_CHECKING:
+    import builtins
+    from collections.abc import Callable, Generator, Iterable, Iterator
+
+    from .._compat.typing import Self
 
 FLAGS = {"f": os.F_OK, "w": os.W_OK, "r": os.R_OK, "x": os.X_OK}
 

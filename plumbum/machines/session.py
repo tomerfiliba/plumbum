@@ -6,7 +6,6 @@ import random
 import threading
 import time
 import typing
-from collections.abc import Container
 from typing import IO, Any
 
 from plumbum.commands import BaseCommand, run_proc
@@ -14,6 +13,8 @@ from plumbum.commands.processes import ProcessExecutionError
 from plumbum.machines.base import PopenAddons
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Container
+
     from plumbum._compat.typing import Self
     from plumbum.machines.base import PopenWithAddons
     from plumbum.machines.paramiko_machine import ParamikoPopen

@@ -9,11 +9,9 @@ import subprocess
 import sys
 import time
 import typing
-from collections.abc import Generator, Iterator, Sequence
 from contextlib import AbstractContextManager, contextmanager
 from subprocess import PIPE, Popen
 from tempfile import mkdtemp
-from types import TracebackType
 from typing import Any, ClassVar
 
 from plumbum.commands import CommandNotFound, ConcreteCommand
@@ -27,6 +25,9 @@ from plumbum.path.local import LocalPath, LocalWorkdir
 from plumbum.path.remote import RemotePath
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Generator, Iterator, Sequence
+    from types import TracebackType
+
     from plumbum.commands.base import BaseCommand
 
 

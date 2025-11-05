@@ -8,12 +8,15 @@ import functools
 import operator
 import sys
 import typing
-from collections.abc import Iterator, Mapping
 from typing import Any, Generic, TextIO, TypeVar
 
-from .._compat.typing import Self
 from .names import color_names, default_styles
 from .styles import ColorNotFound, Style
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Iterator, Mapping
+
+    from .._compat.typing import Self
 
 __all__ = ["ColorFactory", "StyleFactory"]
 

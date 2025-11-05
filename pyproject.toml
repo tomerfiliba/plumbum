@@ -177,6 +177,7 @@ extend-select = [
   "PGH",         # pygrep-hooks
   "PIE",         # flake8-pie
   "PL",          # pylint
+  "TC",          # flake8-type-checking
   "PT",          # flake8-pytest-style
   "PYI",         # flake8-pyi
   "RET",         # flake8-return
