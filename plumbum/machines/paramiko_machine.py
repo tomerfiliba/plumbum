@@ -5,6 +5,9 @@ import errno
 import logging
 import os
 import stat
+import typing
+from collections.abc import Iterator, Sequence
+from typing import IO, Any
 
 from plumbum.commands.base import shquote
 from plumbum.commands.processes import ProcessLineTimedOut, iter_lines
@@ -12,21 +15,30 @@ from plumbum.machines.base import PopenAddons
 from plumbum.machines.remote import BaseRemoteMachine
 from plumbum.machines.session import ShellSession
 from plumbum.path.local import LocalPath
-from plumbum.path.remote import RemotePath, StatRes
+from plumbum.path.remote import RemotePath, RemoteStatRes
 
-try:
-    # Sigh... we need to gracefully-import paramiko for Sphinx builds, etc
+if typing.TYPE_CHECKING:
+    from collections.abc import Callable, Generator
+
     import paramiko
-except ImportError:
+    from paramiko.channel import Channel
 
-    class paramiko:  # type: ignore[no-redef]
-        def __bool__(self):
-            return False
+    from plumbum.commands.base import BaseCommand
+    from plumbum.machines.base import PopenWithAddons
+else:
+    try:
+        # Sigh... we need to gracefully-import paramiko for Sphinx builds, etc
+        import paramiko
+    except ImportError:
 
-        def __getattr__(self, name):
-            raise ImportError("No module named paramiko")
+        class paramiko:
+            def __bool__(self):
+                return False
 
-    paramiko = paramiko()  # type: ignore[operator]
+            def __getattr__(self, name):
+                raise ImportError("No module named paramiko")
+
+        paramiko = paramiko()
 
 logger = logging.getLogger("plumbum.paramiko")
 
@@ -34,46 +46,46 @@ logger = logging.getLogger("plumbum.paramiko")
 class ParamikoPopen(PopenAddons):
     def __init__(
         self,
-        argv,
-        stdin,
-        stdout,
-        stderr,
-        encoding,
-        stdin_file=None,
-        stdout_file=None,
-        stderr_file=None,
-    ):
+        argv: Sequence[str],
+        stdin: paramiko.ChannelFile,
+        stdout: paramiko.ChannelFile,
+        stderr: paramiko.ChannelFile,
+        encoding: str,
+        stdin_file: IO[str] | None = None,
+        stdout_file: IO[str] | None = None,
+        stderr_file: IO[str] | None = None,
+    ) -> None:
         self.argv = argv
         self.channel = stdout.channel
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
         self.custom_encoding = encoding
-        self.returncode = None
-        self.pid = None
+        self.returncode: int | None = None
+        self.pid: int | None = None
         self.stdin_file = stdin_file
         self.stdout_file = stdout_file
         self.stderr_file = stderr_file
 
-    def poll(self):
+    def poll(self) -> int | None:
         if self.returncode is None and self.channel.exit_status_ready():
             return self.wait()
         return self.returncode
 
-    def wait(self):
+    def wait(self) -> int | None:
         if self.returncode is None:
             self.channel.recv_exit_status()
             self.returncode = self.channel.exit_status
             self.close()
         return self.returncode
 
-    def close(self):
+    def close(self) -> None:
         self.channel.shutdown_read()
         self.channel.shutdown_write()
         self.channel.close()
 
     @staticmethod
-    def kill():
+    def kill() -> None:
         # possible way to obtain pid:
         # "(cmd ; echo $?) & echo ?!"
         # and then client.exec_command("kill -9 %s" % (pid,))
@@ -81,12 +93,12 @@ class ParamikoPopen(PopenAddons):
 
     terminate = kill
 
-    def send_signal(self, sig):
+    def send_signal(self, sig: int) -> None:
         raise NotImplementedError()
 
-    def communicate(self):
-        stdout = []
-        stderr = []
+    def communicate(self) -> tuple[bytes, bytes]:
+        stdout: list[str] = []
+        stderr: list[str] = []
         infile = self.stdin_file
         sources = [
             ("1", stdout, self.stdout, self.stdout_file),
@@ -120,16 +132,20 @@ class ParamikoPopen(PopenAddons):
             else:
                 coll.append(line)
         self.wait()
-        stdout = "".join(s for s in stdout).encode(self.custom_encoding)
-        stderr = "".join(s for s in stderr).encode(self.custom_encoding)
-        return stdout, stderr
+        assert self.custom_encoding is not None
+        stdout_bytes = "".join(s for s in stdout).encode(self.custom_encoding)
+        stderr_bytes = "".join(s for s in stderr).encode(self.custom_encoding)
+        return stdout_bytes, stderr_bytes
 
-    def iter_lines(self, timeout=None, **kwargs):
+    def iter_lines(
+        self, timeout: float | None = None, **kwargs: Any
+    ) -> Iterator[tuple[int, str]]:
         if timeout is not None:
             raise NotImplementedError(
                 "The 'timeout' parameter is not supported with ParamikoMachine"
             )
-        return iter_lines(self, _iter_lines=_iter_lines, **kwargs)
+        self_view = typing.cast("PopenWithAddons[Any]", self)
+        return iter_lines(self_view, _iter_lines=_iter_lines, **kwargs)
 
     __iter__ = iter_lines
 
@@ -189,46 +205,46 @@ class ParamikoMachine(BaseRemoteMachine):
     """
 
     class RemoteCommand(BaseRemoteMachine.RemoteCommand):  # type: ignore[valid-type, misc]
-        def __or__(self, *_):
+        def __or__(self, *_: Any) -> Any:
             return NotImplemented
 
-        def __gt__(self, *_):
-            return NotImplemented
+    def __gt__(self, *_: Any) -> Any:
+        return NotImplemented
 
-        def __rshift__(self, *_):
-            return NotImplemented
+    def __rshift__(self, *_: Any) -> Any:
+        return NotImplemented
 
-        def __ge__(self, *_):
-            return NotImplemented
+    def __ge__(self, *_: Any) -> Any:
+        return NotImplemented
 
-        def __lt__(self, *_):
-            return NotImplemented
+    def __lt__(self, *_: Any) -> Any:
+        return NotImplemented
 
-        def __lshift__(self, *_):
-            return NotImplemented
+    def __lshift__(self, *_: Any) -> Any:
+        return NotImplemented
 
     def __init__(
         self,
-        host,
-        user=None,
-        port=None,
-        password=None,
-        keyfile=None,
-        load_system_host_keys=True,
-        missing_host_policy=None,
-        encoding="utf8",
-        look_for_keys=None,
-        connect_timeout=None,
-        keep_alive=0,
-        gss_auth=False,
-        gss_kex=None,
-        gss_deleg_creds=None,
-        gss_host=None,
-        get_pty=False,
-        load_system_ssh_config=False,
-    ):
+        host: str,
+        user: str | None = None,
+        port: int | None = None,
+        password: str | None = None,
+        keyfile: str | None = None,
+        load_system_host_keys: bool = True,
+        missing_host_policy: Any | None = None,
+        encoding: str = "utf8",
+        look_for_keys: bool | None = None,
+        connect_timeout: float | None = None,
+        keep_alive: int = 0,
+        gss_auth: bool = False,
+        gss_kex: bool | None = None,
+        gss_deleg_creds: bool | None = None,
+        gss_host: str | None = None,
+        get_pty: bool = False,
+        load_system_ssh_config: bool = False,
+    ) -> None:
         self.host = host
-        kwargs = {}
+        kwargs: dict[str, Any] = {}
         if user:
             self._fqhost = f"{user}@{host}"
             kwargs["username"] = user
@@ -265,19 +281,19 @@ class ParamikoMachine(BaseRemoteMachine):
                 kwargs["sock"] = paramiko.ProxyCommand(hostConfig["proxycommand"])
         self._client.connect(host, **kwargs)
         self._keep_alive = keep_alive
-        self._sftp = None
+        self._sftp: paramiko.SFTPClient | None = None
         self._get_pty = get_pty
         BaseRemoteMachine.__init__(self, encoding, connect_timeout)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"paramiko://{self._fqhost}"
 
-    def close(self):
+    def close(self) -> None:
         BaseRemoteMachine.close(self)
         self._client.close()
 
     @property
-    def sftp(self):
+    def sftp(self) -> paramiko.SFTPClient:
         """
         Returns an SFTP client on top of the current SSH connection; it can be used to manipulate
         files directly, much like an interactive FTP/SFTP session
@@ -288,15 +304,16 @@ class ParamikoMachine(BaseRemoteMachine):
 
     def session(
         self,
-        isatty=False,
-        term="vt100",
-        width=80,
-        height=24,
+        isatty: bool = False,
+        term: str = "vt100",
+        width: int = 80,
+        height: int = 24,
         *,
-        new_session=False,  # noqa: ARG002
-    ):
+        new_session: bool = False,  # noqa: ARG002
+    ) -> ShellSession:
         # new_session is ignored for ParamikoMachine
         trans = self._client.get_transport()
+        assert trans is not None
         trans.set_keepalive(self._keep_alive)
         chan = trans.open_session()
         if isatty:
@@ -309,16 +326,16 @@ class ParamikoMachine(BaseRemoteMachine):
         proc = ParamikoPopen(["<shell>"], stdin, stdout, stderr, self.custom_encoding)
         return ShellSession(proc, self.custom_encoding, isatty)
 
-    def popen(
+    def popen(  # type: ignore[override]
         self,
-        args,
-        stdin=None,
-        stdout=None,
-        stderr=None,
-        new_session=False,  # noqa: ARG002
-        env=None,
-        cwd=None,
-    ):
+        args: BaseCommand,
+        stdin: IO[str] | None = None,
+        stdout: IO[str] | None = None,
+        stderr: IO[str] | None = None,
+        new_session: bool = False,  # noqa: ARG002
+        env: dict[str, str] | None = None,
+        cwd: str | LocalPath | None = None,
+    ) -> ParamikoPopen:
         # new_session is ignored for ParamikoMachine
         argv = []
         envdelta = self.env.getdelta()
@@ -343,7 +360,7 @@ class ParamikoMachine(BaseRemoteMachine):
             stderr_file=stderr,
         )
 
-    def download(self, src, dst):
+    def download(self, src: str | RemotePath, dst: str | LocalPath) -> None:
         if isinstance(src, LocalPath):
             raise TypeError(f"src of download cannot be {src!r}")
         if isinstance(src, RemotePath) and src.remote != self:
@@ -355,7 +372,7 @@ class ParamikoMachine(BaseRemoteMachine):
             dst if isinstance(dst, LocalPath) else LocalPath(dst),
         )
 
-    def _download(self, src, dst):
+    def _download(self, src: RemotePath, dst: LocalPath) -> None:
         if src.is_dir():
             if not dst.exists():
                 self.sftp.mkdir(str(dst))
@@ -366,7 +383,7 @@ class ParamikoMachine(BaseRemoteMachine):
         else:
             self.sftp.get(str(src), str(dst))
 
-    def upload(self, src, dst):
+    def upload(self, src: str | LocalPath, dst: str | RemotePath) -> None:
         if isinstance(src, RemotePath):
             raise TypeError(f"src of upload cannot be {src!r}")
         if isinstance(dst, LocalPath):
@@ -378,7 +395,7 @@ class ParamikoMachine(BaseRemoteMachine):
             dst if isinstance(dst, RemotePath) else self.path(dst),
         )
 
-    def _upload(self, src, dst):
+    def _upload(self, src: LocalPath, dst: RemotePath) -> None:
         if src.is_dir():
             if not dst.exists():
                 self.sftp.mkdir(str(dst))
@@ -389,7 +406,9 @@ class ParamikoMachine(BaseRemoteMachine):
         else:
             self.sftp.put(str(src), str(dst))
 
-    def connect_sock(self, dport, dhost="localhost", ipv6=False):
+    def connect_sock(
+        self, dport: int, dhost: str = "localhost", ipv6: bool = False
+    ) -> SocketCompatibleChannel:
         """Returns a Paramiko ``Channel``, connected to dhost:dport on the remote machine.
         The ``Channel`` behaves like a regular socket; you can ``send`` and ``recv`` on it
         and the data will pass encrypted over SSH. Usage::
@@ -404,37 +423,39 @@ class ParamikoMachine(BaseRemoteMachine):
             dhost = "::1"
         srcaddr = ("::1", 0, 0, 0) if ipv6 else ("127.0.0.1", 0)
         trans = self._client.get_transport()
+        assert trans is not None
         trans.set_keepalive(self._keep_alive)
-        chan = trans.open_channel("direct-tcpip", (dhost, dport), srcaddr)
+        # TODO: I think the two args need to match, so ipv6 might be broken here
+        chan = trans.open_channel("direct-tcpip", (dhost, dport), srcaddr)  # type: ignore[arg-type]
         return SocketCompatibleChannel(chan)
 
     #
     # Path implementation
     #
-    def _path_listdir(self, fn):
-        return self.sftp.listdir(str(fn))
+    def _path_listdir(self, fn: str) -> list[str]:
+        return self.sftp.listdir(fn)
 
-    def _path_read(self, fn):
-        f = self.sftp.open(str(fn), "rb")
+    def _path_read(self, fn: str) -> bytes:
+        f = self.sftp.open(fn, "rb")
         data = f.read()
         f.close()
         return data
 
-    def _path_write(self, fn, data):
+    def _path_write(self, fn: str, data: str | bytes) -> None:
         if self.custom_encoding and isinstance(data, str):
             data = data.encode(self.custom_encoding)
-        f = self.sftp.open(str(fn), "wb")
+        f = self.sftp.open(fn, "wb")
         f.write(data)
         f.close()
 
-    def _path_stat(self, fn):
+    def _path_stat(self, fn: str) -> RemoteStatRes | None:
         try:
-            st = self.sftp.stat(str(fn))
+            st = self.sftp.stat(fn)
         except OSError as e:
             if e.errno == errno.ENOENT:
                 return None
             raise
-        res = StatRes(
+        res = RemoteStatRes(
             (
                 st.st_mode,
                 0,
@@ -446,16 +467,24 @@ class ParamikoMachine(BaseRemoteMachine):
                 st.st_atime,
                 st.st_mtime,
                 0,
-            )
+            )  # type: ignore[arg-type]
         )
 
+        assert st.st_mode is not None
         if stat.S_ISDIR(st.st_mode):
             res.text_mode = "directory"
         if stat.S_ISREG(st.st_mode):
             res.text_mode = "regular file"
         return res
 
-    def daemonic_popen(self, command, cwd="/", stdout=None, stderr=None, append=True):
+    def daemonic_popen(
+        self,
+        command: BaseCommand,
+        cwd: str = "/",
+        stdout: str | None = None,
+        stderr: str | None = None,
+        append: bool = True,
+    ) -> PopenWithAddons[str]:
         raise NotImplementedError("This is not implemented on ParamikoMachine!")
 
 
@@ -464,18 +493,18 @@ class ParamikoMachine(BaseRemoteMachine):
 # when the socket has been closed
 ###################################################################################################
 class SocketCompatibleChannel:
-    def __init__(self, chan):
+    def __init__(self, chan: Channel) -> None:
         self._chan = chan
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(self._chan, name)
 
-    def send(self, s):
+    def send(self, s: bytes) -> int:
         if self._chan.closed:
             raise OSError(errno.EBADF, "Bad file descriptor")
         return self._chan.send(s)
 
-    def recv(self, count):
+    def recv(self, count: int) -> bytes:
         if self._chan.closed:
             raise OSError(errno.EBADF, "Bad file descriptor")
         return self._chan.recv(count)
@@ -485,37 +514,39 @@ class SocketCompatibleChannel:
 # Custom iter_lines for paramiko.Channel
 ###################################################################################################
 def _iter_lines(
-    proc,
-    decode,  # noqa: ARG001
-    linesize,
-    line_timeout=None,
-):
+    proc: PopenWithAddons[Any],
+    decode: Callable[[bytes], str],  # noqa: ARG001
+    linesize: int,
+    line_timeout: float | None = None,
+) -> Generator[tuple[int, str], None, None]:
     from selectors import EVENT_READ, DefaultSelector
 
+    real_proc = typing.cast(ParamikoPopen, proc)
+
     # Python 3.4+ implementation
-    def selector():
+    def selector() -> Generator[None, None, None]:
         sel = DefaultSelector()
-        sel.register(proc.stdout.channel, EVENT_READ)
+        sel.register(real_proc.stdout.channel, EVENT_READ)
         while True:
             ready = sel.select(line_timeout)
             if not ready and line_timeout:
                 raise ProcessLineTimedOut(
                     "popen line timeout expired",
-                    getattr(proc, "argv", None),
-                    getattr(proc, "machine", None),
+                    getattr(real_proc, "argv", None),
+                    getattr(real_proc, "machine", None),
                 )
             for _key, _mask in ready:
                 yield
 
     for _ in selector():
-        if proc.stdout.channel.recv_ready():
-            yield 0, proc.stdout.readline(linesize)
-        if proc.stdout.channel.recv_stderr_ready():
-            yield 1, proc.stderr.readline(linesize)
-        if proc.poll() is not None:
+        if real_proc.stdout.channel.recv_ready():
+            yield 0, real_proc.stdout.readline(linesize)
+        if real_proc.stdout.channel.recv_stderr_ready():
+            yield 1, real_proc.stderr.readline(linesize)
+        if real_proc.poll() is not None:
             break
 
-    for line in proc.stdout:
+    for line in real_proc.stdout:
         yield 0, line
-    for line in proc.stderr:
+    for line in real_proc.stderr:
         yield 1, line
