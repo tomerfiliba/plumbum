@@ -299,8 +299,6 @@ ProgressAuto.register(Progress)
 
 
 def main() -> None:
-    import time
-
     tst = Progress.range(20)
     for _ in tst:
         time.sleep(1)
