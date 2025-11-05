@@ -88,9 +88,9 @@ __all__ = [
 from . import cmd
 
 if typing.TYPE_CHECKING:
-    from plumbum.colorlib import ansicolors as colors  # noqa: F401
+    from plumbum.colorlib import ansicolors as colors
 
-    __all__.append("colors")
+    __all__ += ["colors"]
 
 
 def __dir__() -> list[str]:

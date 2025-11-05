@@ -19,6 +19,8 @@ if typing.TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
 
+    from plumbum._compat.typing import Self
+
 
 def _get_free_port() -> int:
     """Attempts to find a free port."""
@@ -59,7 +61,7 @@ class SshTunnel:
         tunnel = self._session.proc if self._session.alive() else "(defunct)"
         return f"<SshTunnel {tunnel}>"
 
-    def __enter__(self) -> SshTunnel:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, t: object, v: object, tb: object) -> None:
