@@ -12,6 +12,8 @@ IS_WIN32 = sys.platform == "win32"
 
 
 class ProcInfo:
+    __slots__ = ("args", "pid", "stat", "uid")
+
     def __init__(self, pid: int, uid: int | str, stat: str, args: str):
         self.pid = pid
         self.uid = uid
@@ -39,8 +41,10 @@ def captured_stdout(stdin: str = "") -> Generator[TextIO, None, None]:
 
 
 class StaticProperty:
-    """This acts like a static property, allowing access via class or object.
-    This is a non-data descriptor."""
+    # This acts like a static property, allowing access via class or object.
+    # This is a non-data descriptor.
+
+    __slots__ = ("__doc__", "_function")
 
     def __init__(self, function: Callable[[], Any]):
         self._function = function

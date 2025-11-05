@@ -48,6 +48,8 @@ _EMPTY = object()
 class LocalPath(Path):
     """The class implementing local-machine paths"""
 
+    __slots__ = ()
+
     CASE_SENSITIVE = not IS_WIN32
 
     def __new__(cls, *parts: str) -> Self:
@@ -338,6 +340,7 @@ class LocalPath(Path):
 class LocalWorkdir(LocalPath):
     """Working directory manipulator"""
 
+    __slots__ = ()
     __hash__ = None  # type: ignore[assignment]
 
     def __new__(cls) -> Self:
