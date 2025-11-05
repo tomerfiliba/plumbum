@@ -9,6 +9,7 @@ With the ``Style`` class, any color can be directly called or given to a with st
 
 from __future__ import annotations
 
+import contextlib
 import os
 import platform
 import re
