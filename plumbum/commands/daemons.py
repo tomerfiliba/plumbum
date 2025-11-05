@@ -20,6 +20,8 @@ if typing.TYPE_CHECKING:
 class _fake_lock:
     """Needed to allow normal os.exit() to work without error"""
 
+    __slots__ = ()
+
     @staticmethod
     def acquire(_: bool) -> bool:
         return True

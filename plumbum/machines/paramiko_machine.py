@@ -32,6 +32,8 @@ else:
     except ImportError:
 
         class paramiko:
+            __slots__ = ()
+
             def __bool__(self):
                 return False
 
@@ -150,6 +152,13 @@ class ParamikoPopen(PopenAddons):
     __iter__ = iter_lines
 
 
+class RemoteCommand(BaseRemoteMachine.RemoteCommand):  # type: ignore[valid-type, misc]
+    __slots__ = ()
+
+    def __or__(self, *_: Any) -> Any:
+        return NotImplemented
+
+
 class ParamikoMachine(BaseRemoteMachine):
     """
     An implementation of :class:`remote machine <plumbum.machines.remote.BaseRemoteMachine>`
@@ -204,9 +213,9 @@ class ParamikoMachine(BaseRemoteMachine):
     :param bool load_system_ssh_config: read system SSH config for ProxyCommand configuration. default: False
     """
 
-    class RemoteCommand(BaseRemoteMachine.RemoteCommand):  # type: ignore[valid-type, misc]
-        def __or__(self, *_: Any) -> Any:
-            return NotImplemented
+    __slots__ = ("_client", "_fqhost", "_get_pty", "_keep_alive", "_sftp", "host")
+
+    RemoteCommand = RemoteCommand
 
     def __gt__(self, *_: Any) -> Any:
         return NotImplemented
@@ -493,6 +502,8 @@ class ParamikoMachine(BaseRemoteMachine):
 # when the socket has been closed
 ###################################################################################################
 class SocketCompatibleChannel:
+    __slots__ = ("_chan",)
+
     def __init__(self, chan: Channel) -> None:
         self._chan = chan
 

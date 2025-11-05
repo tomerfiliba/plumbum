@@ -266,6 +266,8 @@ class SwitchAttr(Generic[T]):
     ATTR_NAME = "__plumbum_switchattr_dict__"
     VALUE = _("VALUE")
 
+    __slots__ = ("_default_value", "_switch_info")
+
     _default_value: Any
 
     def __init__(
@@ -278,7 +280,7 @@ class SwitchAttr(Generic[T]):
         **kwargs: Any,
     ):
         # Setting to prevent the help message from showing SwitchAttr's docstring
-        self.__doc__ = "Sets an attribute"
+        self.__class__.__doc__ = "Sets an attribute"
         if default and argtype is not None:
             defaultmsg = _("; the default is {0}").format(default)
             if "help" in kwargs:
@@ -514,6 +516,8 @@ class Set(Validator[str]):
                         over. Something like {"*", "all"} would be a potential setting for
                         this option.
     """
+
+    __slots__ = ("all_markers", "case_sensitive", "csv", "values")
 
     # TODO: This is typed for string only, though it tries to support more. __name__ seems required.
 

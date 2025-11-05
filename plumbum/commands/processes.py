@@ -107,6 +107,8 @@ def _iter_lines_win32(
     line_timeout: float | None = None,
 ) -> Generator[tuple[int, str], None, None]:
     class Piper(Thread):
+        __slots__ = ("daemon", "empty", "fd", "pipe")
+
         def __init__(self, fd: int, pipe: IO[bytes]) -> None:
             super().__init__(name=f"PlumbumPiper{fd}Thread")
             self.pipe = pipe
@@ -256,6 +258,8 @@ class CommandNotFound(AttributeError):
 # Timeout thread
 # ===================================================================================================
 class MinHeap:
+    __slots__ = ("_items",)
+
     def __init__(self, items: Sequence[tuple[float, subprocess.Popen[str]]] = ()):
         self._items = list(items)
         heapq.heapify(self._items)

@@ -347,6 +347,8 @@ class FindNearest:
     """This is a class for finding the nearest color given rgb values.
     Different find methods are available."""
 
+    __slots__ = ("b", "g", "r")
+
     def __init__(self, r: int, g: int, b: int) -> None:
         self.r = r
         self.b = b

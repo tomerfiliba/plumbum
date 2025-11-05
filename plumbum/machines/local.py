@@ -157,6 +157,8 @@ class LocalMachine(BaseMachine):
     * ``custom_encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``)
     """
 
+    __slots__ = ("_as_user_stack", "_start_time")
+
     cwd = StaticProperty(LocalWorkdir)
     env = LocalEnv()
 

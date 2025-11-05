@@ -24,6 +24,15 @@ class Future:
     and stderr.
     """
 
+    __slots__ = (
+        "_expected_retcode",
+        "_returncode",
+        "_stderr",
+        "_stdout",
+        "_timeout",
+        "proc",
+    )
+
     proc: PopenWithAddons[str]
     _expected_retcode: int | Container[int] | None
     _timeout: float | None
@@ -137,10 +146,6 @@ class _BG(ExecutionModifier):
 
     __slots__ = ("kargs", "retcode", "timeout")
 
-    kargs: dict[str, Any]
-    retcode: int | Container[int]
-    timeout: float | None
-
     def __init__(
         self,
         retcode: int | Container[int] = 0,
@@ -170,9 +175,6 @@ class _FG(ExecutionModifier):
     """
 
     __slots__ = ("retcode", "timeout")
-
-    retcode: int | Container[int]
-    timeout: float | None
 
     def __init__(
         self,
@@ -205,10 +207,6 @@ class _TEE(ExecutionModifier):
     """
 
     __slots__ = ("buffered", "retcode", "timeout")
-
-    retcode: int | Container[int]
-    buffered: bool
-    timeout: float | None
 
     def __init__(
         self,
@@ -302,10 +300,6 @@ class _TF(ExecutionModifier):
 
     __slots__ = ("FG", "retcode", "timeout")
 
-    retcode: int | Container[int]
-    FG: bool
-    timeout: float | None
-
     def __init__(
         self,
         retcode: int | Container[int] = 0,
@@ -356,9 +350,6 @@ class _RETCODE(ExecutionModifier):
 
     __slots__ = ("foreground", "timeout")
 
-    foreground: bool
-    timeout: float | None
-
     def __init__(
         self,
         FG: bool = False,  # pylint: disable=redefined-outer-name
@@ -407,11 +398,6 @@ class _NOHUP(ExecutionModifier):
 
     __slots__ = ("append", "cwd", "stderr", "stdout")
 
-    cwd: str
-    stdout: str | TextIO
-    stderr: str | TextIO | None
-    append: bool
-
     def __init__(
         self,
         cwd: str = ".",
@@ -450,11 +436,7 @@ class _NOHUP(ExecutionModifier):
 
 
 class LogPipe:
-    line_timeout: float | None
-    kw: dict[str, Any]
-    levels: dict[int, int]
-    prefix: str | None
-    log: Any
+    __slots__ = ("kw", "levels", "line_timeout", "log", "prefix")
 
     def __init__(
         self,
@@ -528,6 +510,8 @@ class PipeToLoggerMixin:
             from logbook import DEBUG, INFO  # hook up with logbook's levels
 
     """
+
+    __slots__ = ()
 
     DEFAULT_LINE_TIMEOUT: int = 10 * 60
     DEFAULT_STDOUT: str = "INFO"

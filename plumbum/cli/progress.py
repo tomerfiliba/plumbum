@@ -167,6 +167,8 @@ class ProgressBase(Generic[T], metaclass=abc.ABCMeta):
 
 
 class Progress(ProgressBase[T]):
+    __slots__ = ("width",)
+
     def start(self) -> None:
         super().start()
         self.display()
@@ -223,6 +225,7 @@ class Progress(ProgressBase[T]):
 
 
 class ProgressIPy(ProgressBase[T]):  # pragma: no cover
+    __slots__ = ("_box", "_label", "prog")
     HTMLBOX = '<div class="widget-hbox widget-progress"><div class="widget-label" style="display:block;">{0}</div></div>'
 
     # pylint: disable-next=keyword-arg-before-vararg
@@ -255,7 +258,8 @@ class ProgressIPy(ProgressBase[T]):  # pragma: no cover
 
     @value.setter
     def value(self, val: int) -> None:
-        self._value = val
+        # Pylint false positive
+        self._value = val  # pylint: disable=assigning-non-slot
         self.prog.value = max(val, 0)
         self.prog.description = f"{self.value / self.length:.2%}"
         if self.timer and val > 0:
@@ -279,6 +283,8 @@ class ProgressAuto(ProgressBase[T]):  # pylint: disable=abstract-method
     :param timer: Try to time the completion status of the iterator
     :param body: True if the slow portion occurs outside the iterator (in a loop, for example)
     """
+
+    __slots__ = ()
 
     def __new__(cls, *args: Any, **kargs: Any) -> ProgressIPy[T] | Progress[T]:  # type: ignore[misc]
         """Uses the generator trick that if a cls instance is returned, the __init__ method is not called."""

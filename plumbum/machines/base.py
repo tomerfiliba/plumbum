@@ -90,9 +90,24 @@ class PopenWithAddons(typing.Protocol[AnyStr]):
     def kill(self) -> None: ...
 
 
+class MachineCmd:
+    __slots__ = ("_machine",)
+
+    def __init__(self, machine: BaseMachine) -> None:
+        self._machine = machine
+
+    def __getattr__(self, name: str) -> ConcreteCommand:
+        try:
+            return self._machine[name]
+        except CommandNotFound:
+            raise AttributeError(name) from None
+
+
 class BaseMachine(metaclass=abc.ABCMeta):
     """This is a base class for other machines. It contains common code to
     all machines in Plumbum."""
+
+    __slots__ = ("custom_encoding",)
 
     custom_encoding: str
 
@@ -151,18 +166,10 @@ class BaseMachine(metaclass=abc.ABCMeta):
     ) -> PopenWithAddons[str]:
         raise NotImplementedError("This is not implemented on this machine!")
 
-    class Cmd:
-        def __init__(self, machine: BaseMachine) -> None:
-            self._machine = machine
-
-        def __getattr__(self, name: str) -> ConcreteCommand:
-            try:
-                return self._machine[name]
-            except CommandNotFound:
-                raise AttributeError(name) from None
+    Cmd = MachineCmd
 
     @property
-    def cmd(self) -> Cmd:
+    def cmd(self) -> MachineCmd:
         return self.Cmd(self)
 
     @abc.abstractmethod

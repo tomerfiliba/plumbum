@@ -90,6 +90,8 @@ class AtomicFile:
     .. versionadded:: 1.3
     """
 
+    __slots__ = ("_fileobj", "_ignore_deletion", "_owned_by", "_thdlock", "path")
+
     CHUNK_SIZE = 32 * 1024
 
     def __init__(self, filename: str, ignore_deletion: bool = False):
@@ -209,6 +211,8 @@ class AtomicCounterFile:
     .. versionadded:: 1.3
     """
 
+    __slots__ = ("atomicfile", "initial")
+
     def __init__(self, atomicfile: AtomicFile, initial: int = 0):
         """
         :param atomicfile: an :class:`AtomicFile <plumbum.atomic.AtomicFile>` instance
@@ -276,6 +280,8 @@ class PidFile:
 
     .. versionadded:: 1.3
     """
+
+    __slots__ = ("_ctx", "atomicfile")
 
     def __init__(self, filename: str):
         self.atomicfile = AtomicFile(filename)
