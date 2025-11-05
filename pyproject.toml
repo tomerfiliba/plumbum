@@ -177,7 +177,6 @@ extend-select = [
   "PGH",         # pygrep-hooks
   "PIE",         # flake8-pie
   "PL",          # pylint
-  "TC",          # flake8-type-checking
   "PT",          # flake8-pytest-style
   "PYI",         # flake8-pyi
   "RET",         # flake8-return
@@ -185,6 +184,8 @@ extend-select = [
   "SIM",         # flake8-simplify
   "SLOT",        # flake8-slots
   "T20",         # flake8-print
+  "TC",          # flake8-type-checking
+  "TID",         # flake8-tidy-imports
   "UP",          # pyupgrade
   "YTT",         # flake8-2020
 ]

@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     import builtins
     from collections.abc import Generator, Iterator
 
-    from .._compat.typing import Self
+    from plumbum._compat.typing import Self
 
 if not sys.platform.startswith("win32"):
     from grp import getgrgid, getgrnam

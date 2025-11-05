@@ -31,7 +31,7 @@ from .names import (
 if typing.TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from .._compat.typing import Self
+    from plumbum._compat.typing import Self
 
 __all__ = [
     "ANSIStyle",

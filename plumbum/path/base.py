@@ -13,7 +13,7 @@ if typing.TYPE_CHECKING:
     import builtins
     from collections.abc import Callable, Generator, Iterable, Iterator
 
-    from .._compat.typing import Self
+    from plumbum._compat.typing import Self
 
 FLAGS = {"f": os.F_OK, "w": os.W_OK, "r": os.R_OK, "x": os.X_OK}
 
