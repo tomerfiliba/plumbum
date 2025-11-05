@@ -33,6 +33,7 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Build Tools",
     "Topic :: System :: Systems Administration",
+    "Typing :: Typed",
 ]
 keywords = [
     "path",
@@ -95,25 +96,6 @@ strict = true
 [[tool.mypy.overrides]]
 module = ["IPython.html.*", "IPython.utils.*", "pywintypes.*", "win32con.*", "win32file.*", "PIL.*", "ipywidgets.*", "traitlets.*"]
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = [
-    "plumbum.machines.*",
-]
-disallow_any_generics = false
-disallow_subclassing_any = false
-disallow_untyped_calls = false
-disallow_untyped_defs = false
-check_untyped_defs = false
-disallow_untyped_decorators = false
-warn_return_any = false
-
-[[tool.mypy.overrides]]
-module = [
-    "plumbum.path.*",
-]
-disallow_untyped_calls = false
-warn_return_any = false
 
 
 [tool.pytest.ini_options]

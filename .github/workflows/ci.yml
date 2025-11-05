@@ -7,9 +7,6 @@ on:
     - master
     - main
   pull_request:
-    branches:
-    - master
-    - main
 
 env:
   FORCE_COLOR: 3

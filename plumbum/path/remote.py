@@ -371,7 +371,7 @@ class RemotePath(Path):
             )
 
         if hasattr(self.remote, "sftp") and hasattr(self.remote.sftp, "open"):
-            return self.remote.sftp.open(self, mode, bufsize)
+            return self.remote.sftp.open(self, mode, bufsize)  # type: ignore[no-any-return]
 
         raise NotImplementedError(
             "RemotePath.open only works for ParamikoMachine-associated paths for now"
