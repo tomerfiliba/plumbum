@@ -55,9 +55,10 @@ class RemoteEnv(BaseEnv[RemotePath]):
         BaseEnv.__setitem__(self, name, value)
         self.remote._session.run(f"export {name}={shquote(value)}")
 
-    def pop(self, name: str, *default: str) -> None:
-        BaseEnv.pop(self, name, *default)
+    def pop(self, name: str, *default: str) -> str | None:
+        value = BaseEnv.pop(self, name, *default)
         self.remote._session.run(f"unset {name}")
+        return value
 
     def update(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         BaseEnv.update(self, *args, **kwargs)
