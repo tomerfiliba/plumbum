@@ -24,7 +24,7 @@ T = TypeVar("T")
 
 # must not inherit from AttributeError, so not to mess with python's attribute-lookup flow
 class EnvironmentVariableError(KeyError):
-    __slots__ = ()
+    pass
 
 
 class _BaseVar(Generic[V], metaclass=abc.ABCMeta):

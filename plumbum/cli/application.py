@@ -64,6 +64,8 @@ class SwitchParseInfo:
 
 
 class Subcommand:
+    __slots__ = ("name", "subapplication")
+
     def __init__(self, name: str, subapplication: type[Application] | str):
         self.name = name
         self.subapplication = subapplication

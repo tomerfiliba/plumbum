@@ -7,6 +7,8 @@ loc = locale.getlocale()[0]
 if loc is None or loc.startswith("en") or loc == "C":
 
     class NullTranslation:
+        __slots__ = ()
+
         def gettext(self, str1: str) -> str:  # pylint: disable=no-self-use
             return str1
 
