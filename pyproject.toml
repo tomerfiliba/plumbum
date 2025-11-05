@@ -94,7 +94,7 @@ enable_error_code = ["ignore-without-code", "truthy-bool", "redundant-expr"]
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["IPython.html.*", "IPython.utils.*", "pywintypes.*", "win32con.*", "win32file.*", "PIL.*", "ipywidgets.*", "traitlets.*"]
+module = ["IPython.html.*", "IPython.utils.*", "pywintypes.*", "win32con.*", "win32file.*", "ipywidgets.*", "traitlets.*"]
 ignore_missing_imports = true
 
 
