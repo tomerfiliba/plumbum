@@ -2,22 +2,27 @@ from __future__ import annotations
 
 import contextlib
 import re
+import typing
+from collections.abc import Generator, Sequence
 from tempfile import NamedTemporaryFile
 
 from plumbum.commands import CommandNotFound, ConcreteCommand, shquote
 from plumbum.lib import ProcInfo
-from plumbum.machines.base import BaseMachine
+from plumbum.machines.base import BaseMachine, PopenWithAddons
 from plumbum.machines.env import BaseEnv
 from plumbum.path.local import LocalPath
-from plumbum.path.remote import RemotePath, RemoteWorkdir, StatRes
+from plumbum.path.remote import RemotePath, RemoteStatRes, RemoteWorkdir
+
+if typing.TYPE_CHECKING:
+    from plumbum.machines.session import ShellSession
 
 
-class RemoteEnv(BaseEnv):
+class RemoteEnv(BaseEnv[RemotePath]):
     """The remote machine's environment; exposes a dict-like interface"""
 
     __slots__ = ["_orig", "remote"]
 
-    def __init__(self, remote):
+    def __init__(self, remote: BaseRemoteMachine) -> None:
         session = remote._session
         # GNU env has a -0 argument; use it if present. Otherwise,
         # fall back to calling printenv on each (possible) variable
@@ -40,27 +45,27 @@ class RemoteEnv(BaseEnv):
 
         super().__init__(remote.path, ":", _curr=_curr)
         self.remote = remote
-        self._orig = self._curr.copy()
+        self._orig = dict(self._curr)
 
-    def __delitem__(self, name):
+    def __delitem__(self, name: str) -> None:
         BaseEnv.__delitem__(self, name)
         self.remote._session.run(f"unset {name}")
 
-    def __setitem__(self, name, value):
+    def __setitem__(self, name: str, value: str) -> None:
         BaseEnv.__setitem__(self, name, value)
         self.remote._session.run(f"export {name}={shquote(value)}")
 
-    def pop(self, name, *default):
+    def pop(self, name: str, *default: str) -> None:
         BaseEnv.pop(self, name, *default)
         self.remote._session.run(f"unset {name}")
 
-    def update(self, *args, **kwargs):
+    def update(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         BaseEnv.update(self, *args, **kwargs)
         self.remote._session.run(
             "export " + " ".join(f"{k}={shquote(v)}" for k, v in self.getdict().items())
         )
 
-    def expand(self, expr):
+    def expand(self, expr: str) -> str:
         """Expands any environment variables and home shortcuts found in ``expr``
         (like ``os.path.expanduser`` combined with ``os.path.expandvars``)
 
@@ -70,7 +75,7 @@ class RemoteEnv(BaseEnv):
         :returns: The expanded string"""
         return self.remote.expand(expr)
 
-    def expanduser(self, expr):
+    def expanduser(self, expr: str) -> str:
         """Expand home shortcuts (e.g., ``~/foo/bar`` or ``~john/foo/bar``)
 
         :param expr: An expression containing home shortcuts
@@ -82,7 +87,7 @@ class RemoteEnv(BaseEnv):
     #    BaseEnv.clear(self, *args, **kwargs)
     #    self.remote._session.run("export %s" % " ".join("%s=%s" % (k, v) for k, v in self.getdict()))
 
-    def getdelta(self):
+    def getdelta(self) -> dict[str, str]:
         """Returns the difference between the this environment and the original environment of
         the remote machine"""
         self._curr["PATH"] = self.path.join()
@@ -105,23 +110,33 @@ class RemoteCommand(ConcreteCommand):
     __slots__ = ("remote",)
     QUOTE_LEVEL = 1
 
-    def __init__(self, remote, executable, encoding="auto"):
+    def __init__(
+        self, remote: BaseRemoteMachine, executable: RemotePath, encoding: str = "auto"
+    ) -> None:
         self.remote = remote
         ConcreteCommand.__init__(
             self, executable, remote.custom_encoding if encoding == "auto" else encoding
         )
 
     @property
-    def machine(self):
+    def machine(self) -> BaseRemoteMachine:
         return self.remote
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"RemoteCommand({self.remote!r}, {self.executable!r})"
 
-    def popen(self, args=(), **kwargs):
-        return self.remote.popen(self[args], **kwargs)
+    def popen(
+        self, args: Sequence[typing.Any] | str = (), **kwargs: typing.Any
+    ) -> PopenWithAddons[str]:
+        return self.remote.popen(self[args], **kwargs)  # type: ignore[arg-type]
 
-    def nohup(self, cwd=".", stdout="nohup.out", stderr=None, append=True):
+    def nohup(
+        self,
+        cwd: str = ".",
+        stdout: str = "nohup.out",
+        stderr: str | None = None,
+        append: bool = True,
+    ) -> PopenWithAddons[str]:
         """Runs a command detached."""
         return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)
 
@@ -133,13 +148,15 @@ class ClosedRemoteMachine(Exception):
 class ClosedRemote:
     __slots__ = ["__weakref__", "_obj"]
 
-    def __init__(self, obj):
+    def __init__(self, obj: object) -> None:
         self._obj = obj
 
-    def close(self):
+    def close(self) -> None:
         pass
 
-    def __getattr__(self, name):
+    def __getattr__(
+        self, name: str
+    ) -> typing.NoReturn:  # pragma: no cover - always raises
         raise ClosedRemoteMachine(f"{self._obj!r} has been closed")
 
 
@@ -163,21 +180,28 @@ class BaseRemoteMachine(BaseMachine):
     RemoteCommand = RemoteCommand
 
     @property
-    def cwd(self):
+    def cwd(self) -> RemoteWorkdir:
         if not hasattr(self, "_cwd"):
             self._cwd = RemoteWorkdir(self)
         return self._cwd
 
-    def __init__(self, encoding="utf8", connect_timeout=10, new_session=False):
+    def __init__(
+        self,
+        encoding: str = "utf8",
+        connect_timeout: float | None = 10,
+        new_session: bool = False,
+    ) -> None:
         self.custom_encoding = encoding
         self.connect_timeout = connect_timeout
-        self._session = self.session(new_session=new_session)
+        self._session: ShellSession | ClosedRemote = self.session(
+            new_session=new_session
+        )
         self.uname = self._get_uname()
         self.env = RemoteEnv(self)
-        self._python = None
-        self._program_cache = {}
+        self._python: ConcreteCommand | None = None
+        self._program_cache: dict[tuple[str, str], RemotePath] = {}
 
-    def _get_uname(self):
+    def _get_uname(self) -> str:
         rc, out, _ = self._session.run("uname", retcode=None)
         if rc == 0:
             return out.strip()
@@ -191,22 +215,22 @@ class BaseRemoteMachine(BaseMachine):
         # all POSIX systems should have uname. make an educated guess it's Windows
         return "Windows"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self}>"
 
-    def __enter__(self):
+    def __enter__(self) -> BaseRemoteMachine:
         return self
 
-    def __exit__(self, t, v, tb):
+    def __exit__(self, t: object, v: object, tb: object) -> None:
         self.close()
 
-    def close(self):
+    def close(self) -> None:
         """closes the connection to the remote machine; all paths and programs will
         become defunct"""
         self._session.close()
         self._session = ClosedRemote(self)
 
-    def path(self, *parts):
+    def path(self, *parts: str | RemotePath | LocalPath) -> RemotePath:
         """A factory for :class:`RemotePaths <plumbum.path.remote.RemotePath>`.
         Usage: ``p = rem.path("/usr", "lib", "python2.7")``
         """
@@ -217,7 +241,7 @@ class BaseRemoteMachine(BaseMachine):
             parts2.append(self.expanduser(str(p)))
         return RemotePath(self, *parts2)
 
-    def which(self, progname):
+    def which(self, progname: str) -> RemotePath:
         """Looks up a program in the ``PATH``. If the program is not found, raises
         :class:`CommandNotFound <plumbum.commands.CommandNotFound>`
 
@@ -245,7 +269,7 @@ class BaseRemoteMachine(BaseMachine):
 
         raise CommandNotFound(progname, self.env.path)
 
-    def __getitem__(self, cmd):
+    def __getitem__(self, cmd: str | RemotePath | LocalPath) -> ConcreteCommand:
         """Returns a `Command` object representing the given program. ``cmd`` can be a string or
         a :class:`RemotePath <plumbum.path.remote.RemotePath>`; if it is a path, a command
         representing this path will be returned; otherwise, the program name will be looked up in
@@ -269,39 +293,43 @@ class BaseRemoteMachine(BaseMachine):
         raise TypeError(f"cmd must not be a LocalPath: {cmd!r}")
 
     @property
-    def python(self):
+    def python(self) -> ConcreteCommand:
         """A command that represents the default remote python interpreter"""
         if not self._python:
             self._python = self["python3"]
         return self._python
 
-    def session(self, isatty=False, *, new_session=False):
+    def session(
+        self, isatty: bool = False, *, new_session: bool = False
+    ) -> ShellSession:
         """Creates a new :class:`ShellSession <plumbum.session.ShellSession>` object; this invokes the user's
         shell on the remote machine and executes commands on it over stdin/stdout/stderr
         """
         raise NotImplementedError()
 
-    def download(self, src, dst):
+    def download(self, src: str | RemotePath, dst: str | LocalPath) -> None:
         """Downloads a remote file/directory (``src``) to a local destination (``dst``).
         ``src`` must be a string or a :class:`RemotePath <plumbum.path.remote.RemotePath>`
         pointing to this remote machine, and ``dst`` must be a string or a
         :class:`LocalPath <plumbum.machines.local.LocalPath>`"""
         raise NotImplementedError()
 
-    def upload(self, src, dst):
+    def upload(self, src: str | LocalPath, dst: str | RemotePath) -> None:
         """Uploads a local file/directory (``src``) to a remote destination (``dst``).
         ``src`` must be a string or a :class:`LocalPath <plumbum.machines.local.LocalPath>`,
         and ``dst`` must be a string or a :class:`RemotePath <plumbum.path.remote.RemotePath>`
         pointing to this remote machine"""
         raise NotImplementedError()
 
-    def popen(self, args, **kwargs):
+    def popen(
+        self, args: Sequence[typing.Any] | str, **kwargs: typing.Any
+    ) -> PopenWithAddons[str]:
         """Spawns the given command on the remote machine, returning a ``Popen``-like object;
         do not use this method directly, unless you need "low-level" control on the remote
         process"""
         raise NotImplementedError()
 
-    def list_processes(self):
+    def list_processes(self) -> Generator[ProcInfo, None, None]:
         """
         Returns information about all running processes (on POSIX systems: using ``ps``)
 
@@ -314,7 +342,7 @@ class BaseRemoteMachine(BaseMachine):
             parts = line.strip().split()
             yield ProcInfo(int(parts[0]), int(parts[1]), parts[2], " ".join(parts[3:]))
 
-    def pgrep(self, pattern):
+    def pgrep(self, pattern: str) -> Generator[ProcInfo, None, None]:
         """
         Process grep: return information about all processes whose command-line args match the given regex pattern
         """
@@ -324,7 +352,7 @@ class BaseRemoteMachine(BaseMachine):
                 yield procinfo
 
     @contextlib.contextmanager
-    def tempdir(self):
+    def tempdir(self) -> Generator[RemotePath, None, None]:
         """A context manager that creates a remote temporary directory, which is removed when
         the context exits"""
         _, out, _ = self._session.run(
@@ -339,13 +367,13 @@ class BaseRemoteMachine(BaseMachine):
     #
     # Path implementation
     #
-    def _path_listdir(self, fn):
+    def _path_listdir(self, fn: str) -> list[str]:
         files = self._session.run(f"ls -a {shquote(fn)}")[1].splitlines()
         files.remove(".")
         files.remove("..")
         return files
 
-    def _path_glob(self, fn, pattern):
+    def _path_glob(self, fn: str, pattern: str) -> list[str]:
         # shquote does not work here due to the way bash loops use space as a separator
         pattern = pattern.replace(" ", r"\ ")
         fn = fn.replace(" ", r"\ ")
@@ -356,7 +384,7 @@ class BaseRemoteMachine(BaseMachine):
             return []  # pattern expansion failed
         return matches
 
-    def _path_getuid(self, fn):
+    def _path_getuid(self, fn: str) -> list[str]:
         stat_cmd = (
             "stat -c '%u,%U' "
             if self.uname not in ("Darwin", "FreeBSD")
@@ -364,7 +392,7 @@ class BaseRemoteMachine(BaseMachine):
         )
         return self._session.run(stat_cmd + shquote(fn))[1].strip().split(",")
 
-    def _path_getgid(self, fn):
+    def _path_getgid(self, fn: str) -> list[str]:
         stat_cmd = (
             "stat -c '%g,%G' "
             if self.uname not in ("Darwin", "FreeBSD")
@@ -372,7 +400,7 @@ class BaseRemoteMachine(BaseMachine):
         )
         return self._session.run(stat_cmd + shquote(fn))[1].strip().split(",")
 
-    def _path_stat(self, fn):
+    def _path_stat(self, fn: str) -> RemoteStatRes | None:
         if self.uname not in ("Darwin", "FreeBSD"):
             stat_cmd = "stat -c '%F,%f,%i,%d,%h,%u,%g,%s,%X,%Y,%Z' "
         else:
@@ -382,36 +410,46 @@ class BaseRemoteMachine(BaseMachine):
             return None
         statres = out.strip().split(",")
         text_mode = statres.pop(0).lower()
-        res = StatRes((int(statres[0], 16), *tuple(int(sr) for sr in statres[1:])))
+        res = RemoteStatRes(
+            (int(statres[0], 16), *tuple(int(sr) for sr in statres[1:]))  # type: ignore[arg-type]
+        )
         res.text_mode = text_mode
         return res
 
-    def _path_delete(self, fn):
+    def _path_delete(self, fn: str) -> None:
         self._session.run(f"rm -rf {shquote(fn)}")
 
-    def _path_move(self, src, dst):
+    def _path_move(self, src: str, dst: str) -> RemotePath:
         self._session.run(f"mv {shquote(src)} {shquote(dst)}")
+        return RemotePath(self, dst)
 
-    def _path_copy(self, src, dst):
+    def _path_copy(self, src: str, dst: str) -> RemotePath:
         self._session.run(f"cp -r {shquote(src)} {shquote(dst)}")
+        return RemotePath(self, dst)
 
     def _path_mkdir(
         self,
-        fn,
-        mode=None,  # noqa: ARG002
-        minus_p=True,
-    ):
+        fn: str,
+        mode: int | None = None,  # noqa: ARG002
+        minus_p: bool = True,
+    ) -> None:
         p_str = "-p " if minus_p else ""
         cmd = f"mkdir {p_str}{shquote(fn)}"
         self._session.run(cmd)
 
-    def _path_chmod(self, mode, fn):
+    def _path_chmod(self, mode: int, fn: str) -> None:
         self._session.run(f"chmod {mode:o} {shquote(fn)}")
 
-    def _path_touch(self, path):
+    def _path_touch(self, path: str) -> None:
         self._session.run(f"touch {path}")
 
-    def _path_chown(self, fn, owner, group, recursive):
+    def _path_chown(
+        self,
+        fn: str,
+        owner: int | str | None,
+        group: int | str | None,
+        recursive: bool,
+    ) -> None:
         args = ["chown"]
         if recursive:
             args.append("-R")
@@ -424,29 +462,30 @@ class BaseRemoteMachine(BaseMachine):
         args.append(shquote(fn))
         self._session.run(" ".join(args))
 
-    def _path_read(self, fn):
+    def _path_read(self, fn: str) -> bytes:
         data = self["cat"](fn)
         if self.custom_encoding and isinstance(data, str):
             return data.encode(self.custom_encoding)
-        return data
+        return typing.cast(bytes, data)
 
-    def _path_write(self, fn, data):
+    def _path_write(self, fn: str, data: bytes | str) -> None:
         if self.custom_encoding and isinstance(data, str):
             data = data.encode(self.custom_encoding)
+        assert isinstance(data, (bytes, bytearray))
         with NamedTemporaryFile() as f:
             f.write(data)
             f.flush()
             f.seek(0)
             self.upload(f.name, fn)
 
-    def _path_link(self, src, dst, symlink):
+    def _path_link(self, src: str, dst: str, symlink: bool) -> None:
         symlink_str = "-s " if symlink else ""
         self._session.run(f"ln {symlink_str}{shquote(src)} {shquote(dst)}")
 
-    def expand(self, expr):
+    def expand(self, expr: str) -> str:
         return self._session.run(f"echo {expr}")[1].strip()
 
-    def expanduser(self, expr):
+    def expanduser(self, expr: str) -> str:
         if not any(part.startswith("~") for part in expr.split("/")):
             return expr
         # we escape all $ signs to avoid expanding env-vars
