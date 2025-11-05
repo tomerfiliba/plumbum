@@ -155,11 +155,9 @@ def _iter_lines_win32(
     for piper in pipers:
         piper.join()
 
-    while True:
-        try:
+    with contextlib.suppress(QueueEmpty):
+        while True:
             yield queue.get_nowait()
-        except QueueEmpty:
-            break
 
 
 _iter_lines = _iter_lines_win32 if IS_WIN32 else _iter_lines_posix

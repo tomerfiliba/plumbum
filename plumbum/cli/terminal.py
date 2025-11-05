@@ -131,7 +131,8 @@ def choose(
         try:
             choice = int(choice)
             if choice not in choices:
-                raise ValueError()
+                sys.stdout.write("Invalid choice selection, please try again\n")
+                continue
         except ValueError:
             sys.stdout.write("Invalid choice, please try again\n")
             continue

@@ -129,13 +129,17 @@ class BaseMachine(metaclass=abc.ABCMeta):
         """
         try:
             command = self[cmd]
-            if not command.executable.exists():
-                raise CommandNotFound(cmd, command.executable)
-            return command
         except CommandNotFound:
             if othercommands:
-                return self.get(othercommands[0], *othercommands[1:])
+                return self.get(*othercommands)
             raise
+
+        if not command.executable.exists():
+            if othercommands:
+                return self.get(*othercommands)
+            raise CommandNotFound(cmd, command.executable)
+
+        return command
 
     def __contains__(self, cmd: str) -> bool:
         """Tests for the existence of the command, e.g., ``"ls" in plumbum.local``.
