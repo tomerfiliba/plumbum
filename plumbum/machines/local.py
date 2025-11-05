@@ -13,7 +13,7 @@ from collections.abc import Generator, Sequence
 from contextlib import AbstractContextManager, contextmanager
 from subprocess import PIPE, Popen
 from tempfile import mkdtemp
-from typing import Any
+from typing import Any, ClassVar
 
 from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.commands.daemons import posix_daemonize, win32_daemonize
@@ -156,10 +156,14 @@ class LocalMachine(BaseMachine):
 
     custom_encoding = sys.getfilesystemencoding()
     uname = platform.uname()[0]
-    _program_cache: dict[tuple[str, str], LocalPath] = {}
+    _program_cache: ClassVar[dict[tuple[str, str], LocalPath]] = {}
 
     def __init__(self) -> None:
         self._as_user_stack: list[Any] = []
+
+    @classmethod
+    def clear_program_cache(cls) -> None:
+        cls._program_cache.clear()
 
     if IS_WIN32:
         _EXTENSIONS: list[str] = [
@@ -442,18 +446,17 @@ class LocalMachine(BaseMachine):
                     self.which("runas"),
                 )
             )
+        elif username is None:
+            self._as_user_stack.append(
+                lambda argv: (["sudo", *list(argv)], self.which("sudo"))
+            )
         else:
-            if username is None:
-                self._as_user_stack.append(
-                    lambda argv: (["sudo", *list(argv)], self.which("sudo"))
+            self._as_user_stack.append(
+                lambda argv: (
+                    ["sudo", "-u", username, *list(argv)],
+                    self.which("sudo"),
                 )
-            else:
-                self._as_user_stack.append(
-                    lambda argv: (
-                        ["sudo", "-u", username, *list(argv)],
-                        self.which("sudo"),
-                    )
-                )
+            )
         try:
             yield
         finally:

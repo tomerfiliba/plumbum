@@ -94,7 +94,6 @@ class BaseMachine(metaclass=abc.ABCMeta):
     """This is a base class for other machines. It contains common code to
     all machines in Plumbum."""
 
-    _program_cache: dict[tuple[str, str], typing.Any]
     custom_encoding: str
 
     @abc.abstractmethod
@@ -166,6 +165,7 @@ class BaseMachine(metaclass=abc.ABCMeta):
     def cmd(self) -> Cmd:
         return self.Cmd(self)
 
+    @abc.abstractmethod
     def clear_program_cache(self) -> None:
         """
         Clear the program cache, which is populated via ``machine.which(progname)`` calls.
@@ -173,4 +173,3 @@ class BaseMachine(metaclass=abc.ABCMeta):
         This cache speeds up the lookup of a program in the machines PATH, and is particularly
         effective for RemoteMachines.
         """
-        self._program_cache.clear()

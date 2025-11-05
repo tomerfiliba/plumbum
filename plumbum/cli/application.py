@@ -447,13 +447,12 @@ class Application:
                             swfuncs[swinfo.func].swname, swname
                         )
                     )
+            elif swinfo.list:
+                swfuncs[swinfo.func] = SwitchParseInfo(swname, ([val],), index)
+            elif val is NotImplemented:
+                swfuncs[swinfo.func] = SwitchParseInfo(swname, (), index)
             else:
-                if swinfo.list:
-                    swfuncs[swinfo.func] = SwitchParseInfo(swname, ([val],), index)
-                elif val is NotImplemented:
-                    swfuncs[swinfo.func] = SwitchParseInfo(swname, (), index)
-                else:
-                    swfuncs[swinfo.func] = SwitchParseInfo(swname, (val,), index)
+                swfuncs[swinfo.func] = SwitchParseInfo(swname, (val,), index)
 
         # Extracting arguments from environment variables
         envindex = 0
@@ -900,15 +899,14 @@ class Application:
                         while i < len(line) and line[i] == " ":
                             i += 1
                         subsequent_indent = indent + " " * i
+                    elif not paragraph:
+                        # Start a new paragraph
+                        paragraph = line
+                        initial_indent = indent
+                        subsequent_indent = indent
                     else:
-                        if not paragraph:
-                            # Start a new paragraph
-                            paragraph = line
-                            initial_indent = indent
-                            subsequent_indent = indent
-                        else:
-                            # Add to current paragraph
-                            paragraph = paragraph + " " + line
+                        # Add to current paragraph
+                        paragraph = paragraph + " " + line
 
             yield from current()
 

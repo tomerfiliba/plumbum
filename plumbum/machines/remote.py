@@ -100,9 +100,8 @@ class RemoteEnv(BaseEnv[RemotePath]):
         for k, v in self._orig.items():
             if k not in self._curr:
                 delta[k] = ""
-            else:
-                if v != self._curr[k]:
-                    delta[k] = self._curr[k]
+            elif v != self._curr[k]:
+                delta[k] = self._curr[k]
 
         return delta
 
@@ -201,6 +200,9 @@ class BaseRemoteMachine(BaseMachine):
         self.env = RemoteEnv(self)
         self._python: ConcreteCommand | None = None
         self._program_cache: dict[tuple[str, str], RemotePath] = {}
+
+    def clear_program_cache(self) -> None:
+        self._program_cache.clear()
 
     def _get_uname(self) -> str:
         rc, out, _ = self._session.run("uname", retcode=None)

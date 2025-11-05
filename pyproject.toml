@@ -134,14 +134,13 @@ messages_control.disable = [
   "duplicate-code",  # TODO: check
   "fixme",
   "import-error",
-  "import-outside-toplevel",  # TODO: see if this can be limited to certain imports
+  "import-outside-toplevel",
   "invalid-name",
   "line-too-long",
   "missing-class-docstring",
   "missing-function-docstring",
   "missing-module-docstring",
   "no-member",
-  #"non-parent-init-called", # TODO: should be looked at
   "protected-access",
   "too-few-public-methods",
   "too-many-arguments",
@@ -155,10 +154,8 @@ messages_control.disable = [
   "too-many-return-statements",
   "too-many-statements",
   "too-many-positional-arguments",
-  "unidiomatic-typecheck", # TODO: might be able to remove
   "unnecessary-lambda-assignment", # TODO: 4 instances
-  "unused-import", # identical to flake8 but has typing false positives
-  "eval-used",  # Needed for Python <3.10 annotations
+  "unused-import", # Covered by ruff
   "unused-argument", # Covered by ruff
   "global-statement", # Covered by ruff
   "pointless-statement", # Covered by ruff
@@ -187,11 +184,9 @@ extend-select = [
   "YTT",         # flake8-2020
 ]
 ignore = [
-  "E501",
-  "PLR",
-  "E721",    # Type comparisons (TODO)
-  "PT011",   # TODO: add match parameter
-  "RUF012",  # ClassVar required if mutable
+  "PLR09",   # Too many X
+  "PLR2004", # Magic comparison
+  "PT011",   # Too broad test catching (TODO: add match or specialize)
   "PLC0415", # Import at top of file
 ]
 flake8-unused-arguments.ignore-variadic-names = true
@@ -199,9 +194,9 @@ isort.required-imports = ["from __future__ import annotations"]
 isort.known-first-party = ["plumbum"]
 
 [tool.ruff.lint.per-file-ignores]
-"examples/*" = ["T20"]
+"examples/*" = ["T20", "RUF012"]
 "experiments/*" = ["T20"]
-"tests/*" = ["T20"]
+"tests/*" = ["T20", "RUF012"]
 "plumbum/cli/application.py" = ["T20"]
 "plumbum/commands/base.py" = ["SIM115"]
 "plumbum/commands/daemons.py" = ["SIM115"]
