@@ -5,6 +5,7 @@ import re
 import typing
 from collections.abc import Generator, Sequence
 from tempfile import NamedTemporaryFile
+from typing import ClassVar
 
 from plumbum.commands import CommandNotFound, ConcreteCommand, shquote
 from plumbum.lib import ProcInfo
@@ -100,9 +101,8 @@ class RemoteEnv(BaseEnv[RemotePath]):
         for k, v in self._orig.items():
             if k not in self._curr:
                 delta[k] = ""
-            else:
-                if v != self._curr[k]:
-                    delta[k] = self._curr[k]
+            elif v != self._curr[k]:
+                delta[k] = self._curr[k]
 
         return delta
 
@@ -180,6 +180,8 @@ class BaseRemoteMachine(BaseMachine):
     # allow inheritors to override the RemoteCommand class
     RemoteCommand = RemoteCommand
 
+    _program_cache: ClassVar[dict[tuple[str, str], RemotePath]] = {}
+
     @property
     def cwd(self) -> RemoteWorkdir:
         if not hasattr(self, "_cwd"):
@@ -200,7 +202,6 @@ class BaseRemoteMachine(BaseMachine):
         self.uname = self._get_uname()
         self.env = RemoteEnv(self)
         self._python: ConcreteCommand | None = None
-        self._program_cache: dict[tuple[str, str], RemotePath] = {}
 
     def _get_uname(self) -> str:
         rc, out, _ = self._session.run("uname", retcode=None)

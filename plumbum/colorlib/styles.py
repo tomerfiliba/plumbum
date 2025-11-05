@@ -775,7 +775,7 @@ class HTMLStyle(Style):
     actually can be a handy way to quickly color html text."""
 
     __slots__ = ()
-    attribute_names = {
+    attribute_names: ClassVar = {
         "bold": "b",
         "em": "em",
         "italics": "i",

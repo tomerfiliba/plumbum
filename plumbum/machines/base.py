@@ -4,6 +4,7 @@ import abc
 import os
 import subprocess
 import typing
+from typing import ClassVar
 
 from plumbum.commands.processes import (
     CommandNotFound,
@@ -94,7 +95,7 @@ class BaseMachine(metaclass=abc.ABCMeta):
     """This is a base class for other machines. It contains common code to
     all machines in Plumbum."""
 
-    _program_cache: dict[tuple[str, str], typing.Any]
+    _program_cache: ClassVar[dict[tuple[str, str], typing.Any]] = {}
     custom_encoding: str
 
     @abc.abstractmethod
