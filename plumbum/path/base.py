@@ -353,7 +353,9 @@ class Path(str, ABC):
         """
 
     @staticmethod
-    def _access_mode_to_flags(mode: int, flags: dict[str, int] | None = None) -> int:
+    def _access_mode_to_flags(
+        mode: int | str, flags: dict[str, int] | None = None
+    ) -> int:
         if flags is None:
             flags = FLAGS
 
@@ -363,7 +365,7 @@ class Path(str, ABC):
         return mode
 
     @abstractmethod
-    def access(self, mode: int = 0) -> bool:
+    def access(self, mode: int | str = 0) -> bool:
         """Test file existence or permission bits
 
         :param mode: a bitwise-or of access bits, or a string-representation thereof:

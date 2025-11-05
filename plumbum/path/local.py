@@ -276,7 +276,7 @@ class LocalPath(Path):
             raise OSError("os.chmod() not supported")
         os.chmod(str(self), mode)
 
-    def access(self, mode: int = 0) -> bool:
+    def access(self, mode: int | str = 0) -> bool:
         return os.access(str(self), self._access_mode_to_flags(mode))
 
     def link(self, dst: LocalPath | str) -> None:
