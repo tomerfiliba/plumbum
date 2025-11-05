@@ -211,13 +211,13 @@ class Application:
         # Allow None for the colors
         self.COLOR_GROUPS = defaultdict(
             lambda: colors.do_nothing,
-            {} if self.COLOR_GROUPS is None else self.COLOR_GROUPS,
+            {} if self.COLOR_GROUPS is None else self.COLOR_GROUPS,  # type: ignore[redundant-expr]
         )
 
         self.COLOR_GROUP_TITLES = defaultdict(
             lambda: colors.do_nothing,
             self.COLOR_GROUPS
-            if self.COLOR_GROUP_TITLES is None
+            if self.COLOR_GROUP_TITLES is None  # type: ignore[redundant-expr]
             else self.COLOR_GROUP_TITLES,
         )
         if type(self).COLOR_USAGE is None:
@@ -459,7 +459,7 @@ class Application:
         envindex = 0
         for env, swinfo in self._switches_by_envar.items():
             envindex -= 1
-            envval = local.env.get(env)  # type: ignore[no-untyped-call]
+            envval = local.env.get(env)
             if envval is None:
                 continue
 

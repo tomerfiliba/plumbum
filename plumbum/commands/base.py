@@ -17,7 +17,8 @@ if typing.TYPE_CHECKING:
     from collections.abc import Container, Generator, Sequence
     from typing import Any
 
-    from plumbum.machines.base import BaseMachine
+    from plumbum._compat.typing import Self
+    from plumbum.machines.base import BaseMachine, PopenWithAddons
 
 __all__ = (
     "ERROUT",
@@ -97,7 +98,7 @@ class BaseCommand:
         """Redirects the given data into the process' stdin"""
         return StdinDataRedirection(self, data)
 
-    def __getitem__(self, args: Any) -> BaseCommand:
+    def __getitem__(self, args: Any) -> BoundCommand:
         """Creates a bound-command with the given arguments. Shortcut for
         bound_command."""
         if not isinstance(args, (tuple, list)):
@@ -106,7 +107,13 @@ class BaseCommand:
             ]
         return self.bound_command(*args)
 
-    def bound_command(self, *args: Any) -> BaseCommand:
+    @typing.overload
+    def bound_command(self) -> Self: ...
+
+    @typing.overload
+    def bound_command(self, *args: Any) -> BoundCommand: ...
+
+    def bound_command(self, *args: Any) -> Self | BoundCommand:
         """Creates a bound-command with the given arguments"""
         if not args:
             return self
@@ -157,7 +164,7 @@ class BaseCommand:
         """
         raise NotImplementedError()
 
-    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> subprocess.Popen[str]:
+    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> PopenWithAddons[str]:
         """Spawns the given command, returning a ``Popen``-like object.
 
         .. note::
@@ -182,14 +189,14 @@ class BaseCommand:
         stdout: str = "nohup.out",
         stderr: str | None = None,
         append: bool = True,
-    ) -> subprocess.Popen[str]:
+    ) -> PopenWithAddons[str]:
         """Runs a command detached."""
-        return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)  # type: ignore[no-untyped-call, no-any-return]
+        return self.machine.daemonic_popen(self, cwd, stdout, stderr, append)
 
     @contextlib.contextmanager
     def bgrun(
         self, args: Sequence[Any] = (), **kwargs: Any
-    ) -> Generator[subprocess.Popen[str], None, None]:
+    ) -> Generator[PopenWithAddons[str], None, None]:
         """Runs the given command as a context manager, allowing you to create a
         `pipeline <http://en.wikipedia.org/wiki/Pipeline_(computing)>`_ (not in the UNIX sense)
         of programs, parallelizing their work. In other words, instead of running programs
@@ -223,7 +230,7 @@ class BaseCommand:
         p = self.popen(args, **kwargs)
         was_run = [False]
 
-        def runner() -> tuple[int, str, str] | None:
+        def runner() -> tuple[int | None, str | bytes, str | bytes] | None:
             if was_run[0]:
                 return None  # already done
             was_run[0] = True
@@ -302,7 +309,7 @@ class BaseCommand:
         """
         return self & plumbum.commands.modifiers.RETCODE(**kwargs)
 
-    def run_nohup(self, **kwargs: Any) -> subprocess.Popen[str]:
+    def run_nohup(self, **kwargs: Any) -> PopenWithAddons[str]:
         """
         Run this command using the NOHUP construct. Inherits all arguments from NOHUP
         :py:class: `plumbum.commands.modifiers.NOHUP`
@@ -335,7 +342,7 @@ class BoundCommand(BaseCommand):
 
     def popen(
         self, args: Sequence[Any] | str = (), **kwargs: Any
-    ) -> subprocess.Popen[str]:
+    ) -> PopenWithAddons[str]:
         if isinstance(args, str):
             args = [
                 args,
@@ -379,7 +386,7 @@ class BoundEnvCommand(BaseCommand):
         cwd: str | None = None,
         env: dict[str, str] | None = None,
         **kwargs: Any,
-    ) -> subprocess.Popen[str]:
+    ) -> PopenWithAddons[str]:
         env = env or {}
         return self.cmd.popen(
             args,
@@ -416,7 +423,7 @@ class Pipeline(BaseCommand):
     def machine(self) -> BaseMachine:
         return self.srccmd.machine
 
-    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> subprocess.Popen[str]:
+    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> PopenWithAddons[str]:
         src_kwargs = kwargs.copy()
         src_kwargs["stdout"] = PIPE
         if "stdin" in kwargs:
@@ -443,7 +450,7 @@ class Pipeline(BaseCommand):
 
         dstproc._proc.wait = wait2  # type: ignore[attr-defined]
 
-        dstproc_verify = dstproc.verify  # type: ignore[attr-defined]
+        dstproc_verify = dstproc.verify
 
         def verify(
             proc: Any,
@@ -462,7 +469,7 @@ class Pipeline(BaseCommand):
             proc.srcproc.verify(or_retcode, timeout, stdout, stderr)
             dstproc_verify(retcode, timeout, stdout, stderr)
 
-        dstproc.verify = MethodType(verify, dstproc)  # type: ignore[attr-defined]
+        dstproc.verify = MethodType(verify, dstproc)  # type: ignore[method-assign]
 
         dstproc.stdin = srcproc.stdin
         return dstproc
@@ -500,7 +507,7 @@ class BaseRedirection(BaseCommand):
     def machine(self) -> BaseMachine:
         return self.cmd.machine
 
-    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> subprocess.Popen[str]:
+    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> PopenWithAddons[str]:
         from plumbum.path.local import LocalPath
         from plumbum.path.remote import RemotePath
 
@@ -584,7 +591,7 @@ class StdinDataRedirection(BaseCommand):
     def machine(self) -> BaseMachine:
         return self.cmd.machine
 
-    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> subprocess.Popen[str]:
+    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> PopenWithAddons[str]:
         if kwargs.get("stdin") not in (PIPE, None):
             raise RedirectionError("stdin is already redirected")
         data = self.data
@@ -651,5 +658,5 @@ class ConcreteCommand(BaseCommand):
     def machine(self) -> BaseMachine:
         raise NotImplementedError()
 
-    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> subprocess.Popen[str]:
+    def popen(self, args: Sequence[Any] = (), **kwargs: Any) -> PopenWithAddons[str]:
         raise NotImplementedError()

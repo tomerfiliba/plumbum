@@ -11,11 +11,11 @@ from plumbum.commands.processes import BY_TYPE, ProcessExecutionError, run_proc
 from plumbum.lib import read_fd_decode_safely
 
 if typing.TYPE_CHECKING:
-    import subprocess
     from collections.abc import Container
     from typing import Any, TextIO
 
     from plumbum._compat.typing import Self
+    from plumbum.machines.base import PopenWithAddons
 
 
 class Future:
@@ -24,16 +24,16 @@ class Future:
     and stderr.
     """
 
-    proc: subprocess.Popen[str]
+    proc: PopenWithAddons[str]
     _expected_retcode: int | Container[int] | None
     _timeout: float | None
     _returncode: int | None
-    _stdout: str | None
-    _stderr: str | None
+    _stdout: str | bytes | None
+    _stderr: str | bytes | None
 
     def __init__(
         self,
-        proc: subprocess.Popen[str],
+        proc: PopenWithAddons[str],
         expected_retcode: int | Container[int] | None,
         timeout: float | None = None,
     ) -> None:
@@ -67,14 +67,14 @@ class Future:
         )
 
     @property
-    def stdout(self) -> str:
+    def stdout(self) -> str | bytes:
         """The process' stdout; accessing this property will wait for the process to finish"""
         self.wait()
         assert self._stdout is not None
         return self._stdout
 
     @property
-    def stderr(self) -> str:
+    def stderr(self) -> str | bytes:
         """The process' stderr; accessing this property will wait for the process to finish"""
         self.wait()
         assert self._stderr is not None
@@ -279,6 +279,7 @@ class _TEE(ExecutionModifier):
             p.wait()  # To get return code in p
             stdout = "".join([x.decode("utf-8") for x in outbuf])
             stderr = "".join([x.decode("utf-8") for x in errbuf])
+            assert p.returncode is not None
             return p.returncode, stdout, stderr
 
 
@@ -433,7 +434,7 @@ class _NOHUP(ExecutionModifier):
             | plumbum.commands.base.StdoutRedirection
             | plumbum.commands.base.AppendingStdoutRedirection
         ),
-    ) -> subprocess.Popen[str]:
+    ) -> PopenWithAddons[str]:
         if isinstance(cmd, plumbum.commands.base.StdoutRedirection):
             stdout = cmd.file
             append = False

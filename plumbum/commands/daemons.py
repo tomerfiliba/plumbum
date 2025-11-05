@@ -14,6 +14,7 @@ from plumbum.commands.processes import ProcessExecutionError
 
 if typing.TYPE_CHECKING:
     from plumbum.commands.base import BaseCommand
+    from plumbum.machines.base import PopenWithAddons
 
 
 class _fake_lock:
@@ -34,7 +35,7 @@ def posix_daemonize(
     stdout: str | None = None,
     stderr: str | None = None,
     append: bool = True,
-) -> subprocess.Popen[bytes]:
+) -> PopenWithAddons[str]:
     if stdout is None:
         stdout = os.devnull
     if stderr is None:
@@ -117,7 +118,7 @@ def posix_daemonize(
 
     proc.poll = poll  # type: ignore[method-assign]
     proc.wait = wait  # type: ignore[method-assign, assignment]
-    return proc
+    return proc  # type: ignore[return-value]
 
 
 def win32_daemonize(
@@ -126,7 +127,7 @@ def win32_daemonize(
     stdout: str | None = None,
     stderr: str | None = None,
     append: bool = True,
-) -> subprocess.Popen[str]:
+) -> PopenWithAddons[str]:
     if stdout is None:
         stdout = os.devnull
     if stderr is None:

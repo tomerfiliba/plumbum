@@ -12,7 +12,7 @@ IS_WIN32 = sys.platform == "win32"
 
 
 class ProcInfo:
-    def __init__(self, pid: int, uid: int, stat: str, args: str):
+    def __init__(self, pid: int, uid: int | str, stat: str, args: str):
         self.pid = pid
         self.uid = uid
         self.stat = stat
