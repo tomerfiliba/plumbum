@@ -107,7 +107,7 @@ def _iter_lines_win32(
     line_timeout: float | None = None,
 ) -> Generator[tuple[int, str], None, None]:
     class Piper(Thread):
-        __slots__ = ("daemon", "empty", "fd", "pipe")
+        __slots__ = ("empty", "fd", "pipe")
 
         def __init__(self, fd: int, pipe: IO[bytes]) -> None:
             super().__init__(name=f"PlumbumPiper{fd}Thread")
