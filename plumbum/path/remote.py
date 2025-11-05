@@ -85,19 +85,25 @@ class StatRes:
     ctime = st_ctime
 
 
+class RemoteStatRes(StatRes):
+    """Remote POSIX-like stat result"""
+
+    text_mode: str  # e.g., "directory", "regular file", etc.
+
+
 class RemotePath(Path):
     """The class implementing remote-machine paths"""
 
     remote: BaseRemoteMachine
 
-    def __new__(cls, remote: BaseRemoteMachine, *parts: str) -> Self:
-        if not parts:
+    def __new__(cls, remote: BaseRemoteMachine, *parts_str: str) -> Self:
+        if not parts_str:
             raise TypeError("At least one path part is required (none given)")
         windows = remote.uname.lower() == "windows"
         normed: list[str] = []
 
-        parts = tuple(
-            map(str, parts)
+        parts: tuple[str, ...] = tuple(
+            map(str, parts_str)
         )  # force the paths into string, so subscription works properly
         # Simple skip if path is absolute
         if parts[0] and parts[0][0] not in ("/", "\\"):
@@ -213,7 +219,7 @@ class RemotePath(Path):
     def exists(self) -> bool:
         return self.remote._path_stat(self) is not None
 
-    def stat(self) -> StatRes:  # type: ignore[override]
+    def stat(self) -> RemoteStatRes:  # type: ignore[override]
         res = self.remote._path_stat(self)
         if res is None:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), "")
@@ -323,13 +329,13 @@ class RemotePath(Path):
     def chmod(self, mode: int) -> None:
         self.remote._path_chmod(mode, self)
 
-    def access(self, mode: int = 0) -> bool:
+    def access(self, mode: int | str = 0) -> bool:
         mode = self._access_mode_to_flags(mode)
         res = self.remote._path_stat(self)
         if res is None:
             return False
         mask = res.st_mode & 0x1FF
-        return ((mask >> 6) & mode) or ((mask >> 3) & mode)
+        return bool((mask >> 6) & mode) or bool((mask >> 3) & mode)
 
     def link(self, dst: RemotePath | str) -> None:
         if isinstance(dst, RemotePath):
