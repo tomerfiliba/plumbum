@@ -9,10 +9,11 @@ import subprocess
 import sys
 import time
 import typing
-from collections.abc import Generator, Sequence
+from collections.abc import Generator, Iterator, Sequence
 from contextlib import AbstractContextManager, contextmanager
 from subprocess import PIPE, Popen
 from tempfile import mkdtemp
+from types import TracebackType
 from typing import Any, ClassVar
 
 from plumbum.commands import CommandNotFound, ConcreteCommand
@@ -35,14 +36,19 @@ class PlumbumLocalPopen(PopenAddons):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self._proc = Popen(*args, **kwargs)  # pylint: disable=consider-using-with
 
-    def __iter__(self) -> Generator[tuple[int, str], None, None]:
+    def __iter__(self) -> Iterator[tuple[int, str]]:
         return self.iter_lines()
 
     def __enter__(self) -> Popen[bytes]:
         return self._proc.__enter__()
 
-    def __exit__(self, *args: Any, **kwargs: Any) -> None:
-        return self._proc.__exit__(*args, **kwargs)
+    def __exit__(
+        self,
+        t: type[BaseException] | None,
+        v: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
+        return self._proc.__exit__(t, v, tb)
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._proc, name)

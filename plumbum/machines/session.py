@@ -14,6 +14,7 @@ from plumbum.commands.processes import ProcessExecutionError
 from plumbum.machines.base import PopenAddons
 
 if typing.TYPE_CHECKING:
+    from plumbum._compat.typing import Self
     from plumbum.machines.base import PopenWithAddons
     from plumbum.machines.paramiko_machine import ParamikoPopen
 
@@ -269,7 +270,7 @@ class ShellSession:
             if connect_timeout:
                 timer.cancel()
 
-    def __enter__(self) -> ShellSession:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, t: object, v: object, tb: object) -> None:

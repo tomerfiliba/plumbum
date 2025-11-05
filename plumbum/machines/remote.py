@@ -14,6 +14,7 @@ from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath, RemoteStatRes, RemoteWorkdir
 
 if typing.TYPE_CHECKING:
+    from plumbum._compat.typing import Self
     from plumbum.machines.session import ShellSession
 
 
@@ -221,7 +222,7 @@ class BaseRemoteMachine(BaseMachine):
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self}>"
 
-    def __enter__(self) -> BaseRemoteMachine:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, t: object, v: object, tb: object) -> None:

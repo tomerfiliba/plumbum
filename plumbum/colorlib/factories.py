@@ -127,7 +127,7 @@ class ColorFactory(Generic[S]):
         """This will reset the color on leaving the with statement."""
         return self
 
-    def __exit__(self, _type: Any, _value: Any, _traceback: Any) -> None:
+    def __exit__(self, _type: object, _value: object, _traceback: object) -> None:
         """This resets a FG/BG color or all styles,
         due to different definition of RESET for the
         factories."""

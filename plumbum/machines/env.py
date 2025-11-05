@@ -23,7 +23,7 @@ AnyPath = typing.TypeVar("AnyPath", bound="Path")
 AnyPath_co = typing.TypeVar("AnyPath_co", bound="Path", covariant=True)
 
 
-class EnvPathList(typing.Generic[AnyPath], list[AnyPath]):
+class EnvPathList(list[AnyPath], typing.Generic[AnyPath]):
     __slots__ = ("__weakref__", "_path_factory", "_pathsep")
 
     def __init__(self, path_factory: Callable[[str], AnyPath], pathsep: str) -> None:

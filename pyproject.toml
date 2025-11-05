@@ -166,16 +166,18 @@ exclude = ["docs/conf.py"]
 
 [tool.ruff.lint]
 extend-select = [
-  "B",           # flake8-bugbear
-  "I",           # isort
   "ARG",         # flake8-unused-arguments
+  "B",           # flake8-bugbear
   "C4",          # flake8-comprehensions
+  "FURB",        # refurb
+  "I",           # isort
   "ICN",         # flake8-import-conventions
   "ISC",         # flake8-implicit-str-concat
   "PGH",         # pygrep-hooks
   "PIE",         # flake8-pie
   "PL",          # pylint
   "PT",          # flake8-pytest-style
+  "PYI",         # flake8-pyi
   "RET",         # flake8-return
   "RUF",         # Ruff-specific
   "SIM",         # flake8-simplify
@@ -189,6 +191,7 @@ ignore = [
   "PT011",   # Too broad test catching (TODO: add match or specialize)
   "PLC0415", # Import at top of file
 ]
+typing-modules = ["plumbum._compat.typing"]
 flake8-unused-arguments.ignore-variadic-names = true
 isort.required-imports = ["from __future__ import annotations"]
 isort.known-first-party = ["plumbum"]
