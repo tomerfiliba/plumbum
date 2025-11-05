@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import abc
 import os
-import subprocess
 import typing
 
 from plumbum.commands.processes import (
@@ -12,6 +11,7 @@ from plumbum.commands.processes import (
 )
 
 if typing.TYPE_CHECKING:
+    import subprocess
     from collections.abc import Container, Sequence
 
     from plumbum.commands.base import BaseCommand, ConcreteCommand

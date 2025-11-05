@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 import plumbum
 from plumbum._testtools import skip_on_windows
-from plumbum.commands import BaseCommand
+
+if TYPE_CHECKING:
+    from plumbum.commands import BaseCommand
 
 
 @skip_on_windows

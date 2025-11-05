@@ -7,7 +7,8 @@ import typing
 from collections.abc import Callable, Iterator, MutableMapping
 from typing import Any, Final, Generic, TypeVar
 
-from ._compat.typing import Self
+if typing.TYPE_CHECKING:
+    from ._compat.typing import Self
 
 
 class _NoDefault:

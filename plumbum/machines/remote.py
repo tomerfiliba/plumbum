@@ -3,7 +3,6 @@ from __future__ import annotations
 import contextlib
 import re
 import typing
-from collections.abc import Generator, Sequence
 from tempfile import NamedTemporaryFile
 
 from plumbum.commands import CommandNotFound, ConcreteCommand, shquote
@@ -14,6 +13,8 @@ from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath, RemoteStatRes, RemoteWorkdir
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Generator, Sequence
+
     from plumbum._compat.typing import Self
     from plumbum.machines.session import ShellSession
 
@@ -480,7 +481,7 @@ class BaseRemoteMachine(BaseMachine):
         data = self["cat"](fn)
         if self.custom_encoding and isinstance(data, str):
             return data.encode(self.custom_encoding)
-        return typing.cast(bytes, data)
+        return typing.cast("bytes", data)
 
     def _path_write(self, fn: str, data: bytes | str) -> None:
         if self.custom_encoding and isinstance(data, str):

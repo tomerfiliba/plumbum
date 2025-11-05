@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import builtins
-import collections.abc
 import contextlib
 import dataclasses
 import inspect
@@ -20,6 +19,7 @@ _, ngettext = _translation.gettext, _translation.ngettext
 
 
 if TYPE_CHECKING:
+    import collections.abc
     from collections.abc import Iterable, Sized
 
     from plumbum.cli.application import Application

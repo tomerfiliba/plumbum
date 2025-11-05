@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from plumbum import FG, cli, local
 from plumbum.cmd import convert, pdflatex
-from plumbum.path.local import LocalPath
 from plumbum.path.utils import delete
+
+if TYPE_CHECKING:
+    from plumbum.path.local import LocalPath
 
 
 def image_comp(item: LocalPath) -> None:

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import builtins
 import errno
 import glob
 import logging
@@ -9,15 +8,18 @@ import shutil
 import sys
 import urllib.parse as urlparse
 import urllib.request as urllib
-from collections.abc import Generator, Iterator
 from contextlib import contextmanager
-from typing import IO
+from typing import IO, TYPE_CHECKING
 
 from plumbum.lib import IS_WIN32
 from plumbum.path.base import FSUser, Path
 from plumbum.path.remote import RemotePath
 
-from .._compat.typing import Self
+if TYPE_CHECKING:
+    import builtins
+    from collections.abc import Generator, Iterator
+
+    from .._compat.typing import Self
 
 if not sys.platform.startswith("win32"):
     from grp import getgrgid, getgrnam

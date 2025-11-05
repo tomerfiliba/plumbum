@@ -3,10 +3,12 @@ from __future__ import annotations
 import inspect
 import os
 import sys
-from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from io import IOBase, StringIO
-from typing import Any, TextIO
+from typing import TYPE_CHECKING, Any, TextIO
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
 
 IS_WIN32 = sys.platform == "win32"
 

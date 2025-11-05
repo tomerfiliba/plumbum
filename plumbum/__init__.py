@@ -85,11 +85,11 @@ __all__ = [
     "local",
 ]
 
+from plumbum.colorlib import ansicolors as colors
+
 from . import cmd
 
 if typing.TYPE_CHECKING:
-    from plumbum.colorlib import ansicolors as colors
-
     __all__ += ["colors"]
 
 
