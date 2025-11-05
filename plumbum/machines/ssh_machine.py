@@ -129,6 +129,8 @@ class SshMachine(BaseRemoteMachine):
                         Ctrl+C (SIGINT)
     """
 
+    __slots__ = ("_fqhost", "_scp_command", "_ssh_command", "host")
+
     def __init__(
         self,
         host: str,
@@ -407,6 +409,8 @@ class PuttyMachine(SshMachine):
 
     Arguments are the same as for :class:`plumbum.machines.remote.SshMachine`
     """
+
+    __slots__ = ()
 
     def __init__(
         self,

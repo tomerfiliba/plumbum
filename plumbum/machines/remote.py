@@ -177,6 +177,16 @@ class BaseRemoteMachine(BaseMachine):
     There also is a _cwd attribute that exists if the cwd is not current (del if cwd is changed).
     """
 
+    __slots__ = (
+        "_cwd",
+        "_program_cache",
+        "_python",
+        "_session",
+        "connect_timeout",
+        "env",
+        "uname",
+    )
+
     # allow inheritors to override the RemoteCommand class
     RemoteCommand = RemoteCommand
 

@@ -236,6 +236,16 @@ class ShellSession:
                             is seen, the shell process is killed
     """
 
+    __slots__ = (
+        "_current",
+        "_lock",
+        "_startup_result",
+        "custom_encoding",
+        "host",
+        "isatty",
+        "proc",
+    )
+
     def __init__(
         self,
         proc: PopenWithAddons[Any] | SessionPopen | ParamikoPopen,
