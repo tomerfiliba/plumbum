@@ -6,6 +6,6 @@ import plumbum
 def __getattr__(name: str) -> plumbum.machines.LocalCommand:
     """The module-hack that allows us to use ``from plumbum.cmd import some_program``"""
     try:
-        return plumbum.local[name]  # type: ignore[no-any-return]
+        return plumbum.local[name]
     except plumbum.CommandNotFound:
         raise AttributeError(name) from None
