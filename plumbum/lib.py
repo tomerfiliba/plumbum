@@ -81,7 +81,7 @@ def read_fd_decode_safely(fd: IOBase, size: int = 4096) -> tuple[bytes, str]:
     for _ in range(3):
         try:
             return data, data.decode("utf-8")
-        except UnicodeDecodeError as e:
+        except UnicodeDecodeError as e:  # noqa: PERF203
             if e.reason != "unexpected end of data":
                 raise
             data += os.read(fd.fileno(), 1)

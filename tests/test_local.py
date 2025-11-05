@@ -919,9 +919,7 @@ for _ in range({num_of_increments}):
     time.sleep(0.1)
 """
 
-        procs = []
-        for _ in range(num_of_procs):
-            procs.append(local.python["-c", code].popen())
+        procs = [local.python["-c", code].popen() for _ in range(num_of_procs)]
         results = []
         for p in procs:
             out, _ = p.communicate()

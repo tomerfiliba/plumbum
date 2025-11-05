@@ -329,9 +329,9 @@ class _TF(ExecutionModifier):
                 )
             else:
                 cmd(retcode=self.retcode, timeout=self.timeout)
-            return True
         except ProcessExecutionError:
             return False
+        return True
 
 
 class _RETCODE(ExecutionModifier):

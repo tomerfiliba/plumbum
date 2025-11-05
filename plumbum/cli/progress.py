@@ -6,8 +6,8 @@ Progress bar
 from __future__ import annotations
 
 import abc
-import datetime
 import sys
+import time
 import warnings
 from typing import TYPE_CHECKING, Any, Generic
 
@@ -71,7 +71,7 @@ class ProgressBase(Generic[T], metaclass=abc.ABCMeta):
         self.has_output = has_output
         self.clear = clear
         self.iter: Iterator[T] | None = None
-        self._start_time: datetime.datetime | None = None
+        self._start_time: float | None = None
         self._value: int | None = None
 
     def __len__(self) -> int:
@@ -86,7 +86,7 @@ class ProgressBase(Generic[T], metaclass=abc.ABCMeta):
         """This should initialize the progress bar and the iterator"""
         self.iter = iter(self.iterator)
         self.value = -1 if self.body else 0
-        self._start_time = datetime.datetime.now()
+        self._start_time = time.perf_counter()
 
     def __next__(self) -> T:
         if self.iter is None:
@@ -124,30 +124,24 @@ class ProgressBase(Generic[T], metaclass=abc.ABCMeta):
 
     def time_remaining(
         self,
-    ) -> tuple[datetime.timedelta, datetime.timedelta] | tuple[None, None]:
+    ) -> tuple[float, float] | tuple[None, None]:
         """Get the time remaining for the progress bar, guesses"""
         if self.value is None or self.value < 1:
             return None, None
         if self._start_time is None:
             raise ValueError("Iteration not started")
-        elapsed_time = datetime.datetime.now() - self._start_time
-        time_each = (
-            elapsed_time.days * 24 * 60 * 60
-            + elapsed_time.seconds
-            + elapsed_time.microseconds / 1000000.0
-        ) / self.value
+        elapsed_time = time.perf_counter() - self._start_time
+        time_each = elapsed_time / self.value
         time_remaining = time_each * (self.length - self.value)
-        return elapsed_time, datetime.timedelta(0, time_remaining, 0)
+        return elapsed_time, time_remaining
 
     def str_time_remaining(self) -> str:
         """Returns a string version of time remaining"""
         if self.value is None or self.value < 1:
-            return "Starting...                         "
+            return "Starting..."
 
-        elapsed_time, time_remaining = list(map(str, self.time_remaining()))
-        completed = elapsed_time.split(".")[0]
-        remaining = time_remaining.split(".")[0]
-        return f"{completed} completed, {remaining} remaining"
+        completed, remaining = self.time_remaining()
+        return f"{completed:.0} completed, {remaining:.0} remaining"
 
     @abc.abstractmethod
     def done(self) -> None:

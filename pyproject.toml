@@ -169,11 +169,13 @@ extend-select = [
   "ARG",         # flake8-unused-arguments
   "B",           # flake8-bugbear
   "C4",          # flake8-comprehensions
+  "DTZ",         # flake8-datetimez
   "FA",          # flake8-future-annotations
   "FURB",        # refurb
   "I",           # isort
   "ICN",         # flake8-import-conventions
   "ISC",         # flake8-implicit-str-concat
+  "PERF",        # perflint
   "PGH",         # pygrep-hooks
   "PIE",         # flake8-pie
   "PL",          # pylint
@@ -186,6 +188,7 @@ extend-select = [
   "T20",         # flake8-print
   "TC",          # flake8-type-checking
   "TID",         # flake8-tidy-imports
+  "TRY",         # tryceratops
   "UP",          # pyupgrade
   "YTT",         # flake8-2020
 ]
@@ -194,6 +197,7 @@ ignore = [
   "PLR2004", # Magic comparison
   "PT011",   # Too broad test catching (TODO: add match or specialize)
   "PLC0415", # Import at top of file
+  "TRY003",  # Long messages outside exceptions
 ]
 typing-modules = ["plumbum._compat.typing"]
 flake8-unused-arguments.ignore-variadic-names = true
