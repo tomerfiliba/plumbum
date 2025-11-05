@@ -253,7 +253,7 @@ def pager(
     finally:
         with contextlib.suppress(Exception):
             rows.close()  # type: ignore[attr-defined]
-        if pg and pg.poll() is None:
+        if pg and pg.poll() is None:  # type: ignore[truthy-bool]
             with contextlib.suppress(Exception):
                 pg.terminate()
             os.system("reset")
