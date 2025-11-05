@@ -13,7 +13,7 @@ class MyApp(cli.Application):
     COLOR_GROUP_TITLES = {"Meta-switches": colors.bold & colors.yellow}
     opts = cli.Flag("--ops", help=colors.magenta | "This is help")
 
-    def main(self):
+    def main(self) -> None:
         print("HI")
 
 

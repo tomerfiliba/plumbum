@@ -96,7 +96,7 @@ class GeetCommit(cli.Application):
     auto_add = cli.Flag("-a", help="automatically add changed files")
     message = cli.SwitchAttr("-m", str, mandatory=True, help="sets the commit message")
 
-    def main(self):
+    def main(self) -> None:
         print("committing...")
 
 
@@ -109,7 +109,7 @@ class GeetPush(cli.Application):
 
     tags = cli.Flag("--tags", help="whether to push tags (default is False)")
 
-    def main(self, remote, branch="master"):
+    def main(self, remote: str, branch: str = "master") -> None:
         print(f"pushing to {remote}/{branch}...")
 
 

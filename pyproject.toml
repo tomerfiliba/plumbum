@@ -86,7 +86,7 @@ docs = [
 
 
 [tool.mypy]
-files = ["plumbum"]
+files = ["plumbum", "examples"]
 python_version = "3.9"
 warn_unused_configs = true
 warn_unreachable = false

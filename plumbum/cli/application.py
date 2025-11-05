@@ -168,7 +168,7 @@ class Application:
     """
 
     # Some that are not typed None will always be set in __init__
-    PROGNAME: str = None  # type: ignore[assignment]
+    PROGNAME: str | Style = None  # type: ignore[assignment]
     DESCRIPTION: str | None = None
     DESCRIPTION_MORE: str | None = None
     VERSION: str | None = None
@@ -178,7 +178,9 @@ class Application:
     COLOR_GROUPS: MutableMapping[str, Style] = None  # type: ignore[assignment]
     COLOR_GROUP_TITLES: MutableMapping[str, Style] = None  # type: ignore[assignment]
     CALL_MAIN_IF_NESTED_COMMAND: bool = True
-    SUBCOMMAND_HELPMSG: str = T_("see '{parent} {sub} --help' for more info")
+    SUBCOMMAND_HELPMSG: str | Literal[False] = T_(
+        "see '{parent} {sub} --help' for more info"
+    )
     ALLOW_ABBREV: bool = False
 
     parent: Self | None = None
@@ -196,12 +198,14 @@ class Application:
 
         return super().__new__(cls)
 
-    def __init__(self, executable: str):
+    def __init__(self, executable: str | None = None):
+        assert executable is not None
+
         # Filter colors
 
         if self.PROGNAME is None:
             self.PROGNAME = os.path.basename(executable)
-        elif isinstance(self.PROGNAME, colors._style):
+        elif isinstance(self.PROGNAME, Style):
             self.PROGNAME = self.PROGNAME | os.path.basename(executable)
         elif colors.filter(self.PROGNAME) == "":
             self.PROGNAME = colors.extract(self.PROGNAME) | os.path.basename(executable)
@@ -957,6 +961,7 @@ class Application:
                     )
                 else:
                     self.USAGE = T_("    {progname} [SWITCHES] {tailargs}\n")
+            assert not isinstance(self.PROGNAME, Style)
             print(
                 self.USAGE.format(
                     progname=colors.filter(self.PROGNAME), tailargs=tailargs

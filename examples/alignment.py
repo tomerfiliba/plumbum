@@ -9,7 +9,7 @@ class App(cli.Application):
     # x = cli.SwitchAttr("--lala")
     y = cli.Flag("-f")
 
-    def main(self, x, y):
+    def main(self, x: str, y: str) -> None:
         pass
 
 
@@ -17,7 +17,7 @@ class App(cli.Application):
 class Bar(cli.Application):
     z = cli.Flag("-z")
 
-    def main(self, z, w):
+    def main(self, z: str, w: str) -> None:
         pass
 
 
