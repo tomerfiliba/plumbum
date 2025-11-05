@@ -14,9 +14,8 @@ if typing.TYPE_CHECKING:
     import builtins
     from collections.abc import Generator, Iterable
 
+    from plumbum._compat.typing import Self
     from plumbum.machines.remote import BaseRemoteMachine
-
-    from .._compat.typing import Self
 
 
 class StatRes:

@@ -16,7 +16,7 @@ from .styles import ColorNotFound, Style
 if typing.TYPE_CHECKING:
     from collections.abc import Iterator, Mapping
 
-    from .._compat.typing import Self
+    from plumbum._compat.typing import Self
 
 __all__ = ["ColorFactory", "StyleFactory"]
 

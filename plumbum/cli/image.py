@@ -3,9 +3,8 @@ from __future__ import annotations
 import sys
 import typing
 
-from plumbum import colors
+from plumbum import cli, colors
 
-from .. import cli
 from .termsize import get_terminal_size
 
 if typing.TYPE_CHECKING:
