@@ -17,7 +17,7 @@ requires-python = ">=3.9"
 dynamic = ["version"]
 dependencies = [
     "pywin32; platform_system=='Windows' and platform_python_implementation!='PyPy'",
-    "typing_extensions; python_version<'3.11'",
+    "typing_extensions; python_version<'3.13'",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -88,11 +88,12 @@ docs = [
 files = ["plumbum"]
 python_version = "3.9"
 warn_unused_configs = true
-enable_error_code = ["ignore-without-code", "truthy-bool"]
+warn_unreachable = false
+enable_error_code = ["ignore-without-code", "truthy-bool", "redundant-expr"]
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["IPython.html.*", "IPython.utils.*", "pywintypes.*", "win32con.*", "win32file.*", "PIL.*", "ipywidgets.*", "traitlets.*", "plumbum.version"]
+module = ["IPython.html.*", "IPython.utils.*", "pywintypes.*", "win32con.*", "win32file.*", "PIL.*", "ipywidgets.*", "traitlets.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

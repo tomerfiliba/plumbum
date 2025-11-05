@@ -59,8 +59,14 @@ class TypedEnv(MutableMapping[str, str]):
     __slots__ = ["_defined_keys", "_env"]
 
     class _BaseVar(Generic[V], metaclass=abc.ABCMeta):
-        def __init__(self, name: str, default: V | _NoDefault = NO_DEFAULT):
-            self.names = tuple(name) if isinstance(name, (tuple, list)) else (name,)
+        def __init__(
+            self,
+            name: str | tuple[str, ...] | list[str],
+            default: V | _NoDefault = NO_DEFAULT,
+        ):
+            self.names: tuple[str, ...] = (
+                tuple(name) if isinstance(name, (tuple, list)) else (name,)
+            )
             self.name = self.names[0]
             self.default = default
 

@@ -9,7 +9,7 @@ IMAGE_SUBSYSTEM_WINDOWS_GUI = 2
 IMAGE_SUBSYSTEM_WINDOWS_CUI = 3
 
 
-def get_pe_subsystem(filename):
+def get_pe_subsystem(filename: str) -> int | None:
     with open(filename, "rb") as f:
         if f.read(2) != b"MZ":
             return None
