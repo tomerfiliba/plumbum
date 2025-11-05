@@ -97,7 +97,7 @@ class RemoteStatRes(StatRes):
 class RemotePath(Path):
     """The class implementing remote-machine paths"""
 
-    __slots__ = ("remote",)
+    __slots__ = ("CASE_SENSITIVE", "remote")
     remote: BaseRemoteMachine
 
     def __new__(cls, remote: BaseRemoteMachine, *parts_str: str) -> Self:
