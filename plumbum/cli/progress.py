@@ -5,21 +5,25 @@ Progress bar
 
 from __future__ import annotations
 
+import abc
 import datetime
 import sys
 import warnings
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Generic
 
+from plumbum._compat.typing import TypeVar
 from plumbum.cli.termsize import get_terminal_size
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator
 
     from plumbum._compat.typing import Self
 
 
-class ProgressBase(ABC):
+T = TypeVar("T", default=int)
+
+
+class ProgressBase(Generic[T], metaclass=abc.ABCMeta):
     """Base class for progress bars. Customize for types of progress bars.
 
     :param iterator: The iterator to wrap with a progress bar
@@ -30,9 +34,21 @@ class ProgressBase(ABC):
     :param clear: Clear the progress bar afterwards, if applicable.
     """
 
+    __slots__ = (
+        "_start_time",
+        "_value",
+        "body",
+        "clear",
+        "has_output",
+        "iter",
+        "iterator",
+        "length",
+        "timer",
+    )
+
     def __init__(
         self,
-        iterator: Iterable[Any] | None = None,
+        iterator: Iterable[T] | None = None,
         length: int | None = None,
         timer: bool = True,
         body: bool = False,
@@ -42,7 +58,7 @@ class ProgressBase(ABC):
         if length is None:
             length = len(iterator)  # type: ignore[arg-type]
         elif iterator is None:
-            iterator = range(length)
+            iterator = range(length)  # type: ignore[assignment]
         elif length is None and iterator is None:
             raise TypeError("Expected either an iterator or a length")
 
@@ -54,6 +70,9 @@ class ProgressBase(ABC):
         self.body = body
         self.has_output = has_output
         self.clear = clear
+        self.iter: Iterator[T] | None = None
+        self._start_time: datetime.datetime | None = None
+        self._value: int | None = None
 
     def __len__(self) -> int:
         return self.length
@@ -62,14 +81,16 @@ class ProgressBase(ABC):
         self.start()
         return self
 
-    @abstractmethod
+    @abc.abstractmethod
     def start(self) -> None:
         """This should initialize the progress bar and the iterator"""
         self.iter = iter(self.iterator)
         self.value = -1 if self.body else 0
         self._start_time = datetime.datetime.now()
 
-    def __next__(self) -> Any:
+    def __next__(self) -> T:
+        if self.iter is None:
+            raise ValueError("Iteration not started")
         try:
             rval = next(self.iter)
             self.increment()
@@ -78,11 +99,11 @@ class ProgressBase(ABC):
             raise
         return rval
 
-    def next(self) -> Any:
+    def next(self) -> T:
         return next(self)
 
     @property
-    def value(self) -> int:
+    def value(self) -> int | None:
         """This is the current value, as a property so setting it can be customized"""
         return self._value
 
@@ -90,12 +111,14 @@ class ProgressBase(ABC):
     def value(self, val: int) -> None:
         self._value = val
 
-    @abstractmethod
+    @abc.abstractmethod
     def display(self) -> None:
         """Called to update the progress bar"""
 
     def increment(self) -> None:
         """Sets next value and displays the bar"""
+        if self.value is None:
+            raise ValueError("Iteration not started")
         self.value += 1
         self.display()
 
@@ -103,8 +126,10 @@ class ProgressBase(ABC):
         self,
     ) -> tuple[datetime.timedelta, datetime.timedelta] | tuple[None, None]:
         """Get the time remaining for the progress bar, guesses"""
-        if self.value < 1:
+        if self.value is None or self.value < 1:
             return None, None
+        if self._start_time is None:
+            raise ValueError("Iteration not started")
         elapsed_time = datetime.datetime.now() - self._start_time
         time_each = (
             elapsed_time.days * 24 * 60 * 60
@@ -116,7 +141,7 @@ class ProgressBase(ABC):
 
     def str_time_remaining(self) -> str:
         """Returns a string version of time remaining"""
-        if self.value < 1:
+        if self.value is None or self.value < 1:
             return "Starting...                         "
 
         elapsed_time, time_remaining = list(map(str, self.time_remaining()))
@@ -124,14 +149,14 @@ class ProgressBase(ABC):
         remaining = time_remaining.split(".")[0]
         return f"{completed} completed, {remaining} remaining"
 
-    @abstractmethod
+    @abc.abstractmethod
     def done(self) -> None:
         """Is called when the iterator is done."""
 
     @classmethod
     def range(cls, *value: int, **kargs: Any) -> Self:
         """Fast shortcut to create a range based progress bar, assumes work done in body"""
-        return cls(range(*value), body=True, **kargs)
+        return cls(range(*value), body=True, **kargs)  # type: ignore[arg-type]
 
     @classmethod
     def wrap(
@@ -141,7 +166,7 @@ class ProgressBase(ABC):
         return cls(iterator, length, body=True, **kargs)
 
 
-class Progress(ProgressBase):
+class Progress(ProgressBase[T]):
     def start(self) -> None:
         super().start()
         self.display()
@@ -157,11 +182,11 @@ class Progress(ProgressBase):
 
     def __str__(self) -> str:
         width = get_terminal_size(default=(0, 0))[0]
-        if self.length == 0:
+        if not self.length:
             self.width = 0
             return "0/0 complete"
 
-        percent = max(self.value, 0) / self.length
+        percent = max(self.value or 0, 0) / self.length
         ending = " " + (
             self.str_time_remaining()
             if self.timer
@@ -197,10 +222,11 @@ class Progress(ProgressBase):
         sys.stdout.flush()
 
 
-class ProgressIPy(ProgressBase):  # pragma: no cover
+class ProgressIPy(ProgressBase[T]):  # pragma: no cover
     HTMLBOX = '<div class="widget-hbox widget-progress"><div class="widget-label" style="display:block;">{0}</div></div>'
 
-    def __init__(self, *args: Any, **kargs: Any):
+    # pylint: disable-next=keyword-arg-before-vararg
+    def __init__(self, iterator: Iterable[T] | None = None, *args: Any, **kargs: Any):
         # Ipython gives warnings when using widgets about the API potentially changing
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -209,7 +235,7 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
             except ImportError:  # Support IPython < 4.0
                 from IPython.html.widgets import HTML, HBox, IntProgress
 
-        super().__init__(*args, **kargs)
+        super().__init__(iterator, *args, **kargs)
         self.prog = IntProgress(max=self.length)
         self._label = HTML()
         self._box = HBox((self.prog, self._label))
@@ -223,6 +249,8 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
     @property
     def value(self) -> int:
         """This is the current value, -1 allowed (automatically fixed for display)"""
+        if self._value is None:
+            return -1
         return self._value
 
     @value.setter
@@ -241,7 +269,7 @@ class ProgressIPy(ProgressBase):  # pragma: no cover
             self._box.close()
 
 
-class ProgressAuto(ProgressBase):
+class ProgressAuto(ProgressBase[T]):  # pylint: disable=abstract-method
     """Automatically selects the best progress bar (IPython HTML or text). Does not work with qtconsole
     (as that is correctly identified as identical to notebook, since the kernel is the same); it will still
     iterate, but no graphical indication will be displayed.
@@ -252,7 +280,7 @@ class ProgressAuto(ProgressBase):
     :param body: True if the slow portion occurs outside the iterator (in a loop, for example)
     """
 
-    def __new__(cls, *args: Any, **kargs: Any) -> ProgressIPy | Progress:  # type: ignore[misc]
+    def __new__(cls, *args: Any, **kargs: Any) -> ProgressIPy[T] | Progress[T]:  # type: ignore[misc]
         """Uses the generator trick that if a cls instance is returned, the __init__ method is not called."""
         try:  # pragma: no cover
             __IPYTHON__  # type: ignore[name-defined] # noqa: B018

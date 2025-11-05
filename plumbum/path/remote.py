@@ -22,6 +22,7 @@ if typing.TYPE_CHECKING:
 class StatRes:
     """POSIX-like stat result"""
 
+    __slots__ = ("_tup",)
     _tup: tuple[int, int, int, int, int, int, int, float, float, float]
 
     def __init__(
@@ -88,12 +89,15 @@ class StatRes:
 class RemoteStatRes(StatRes):
     """Remote POSIX-like stat result"""
 
+    __slots__ = ("text_mode",)
+
     text_mode: str  # e.g., "directory", "regular file", etc.
 
 
 class RemotePath(Path):
     """The class implementing remote-machine paths"""
 
+    __slots__ = ("CASE_SENSITIVE", "remote")
     remote: BaseRemoteMachine
 
     def __new__(cls, remote: BaseRemoteMachine, *parts_str: str) -> Self:
@@ -397,6 +401,8 @@ class RemotePath(Path):
 
 class RemoteWorkdir(RemotePath):
     """Remote working directory manipulator"""
+
+    __slots__ = ()
 
     def __new__(cls, remote: BaseRemoteMachine) -> Self:
         return super().__new__(cls, remote, remote._session.run("pwd")[1].strip())

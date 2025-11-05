@@ -67,6 +67,21 @@ T = TypeVar("T", default=str)
 # ===================================================================================================
 @dataclasses.dataclass
 class SwitchInfo:
+    # Python 3.10+ can use slots=True
+    __slots__ = (
+        "argname",
+        "argtype",
+        "envname",
+        "excludes",
+        "func",
+        "group",
+        "help",
+        "list",
+        "mandatory",
+        "names",
+        "overridable",
+        "requires",
+    )
     names: builtins.list[str]
     envname: str | None
     argtype: Callable[[str], Any] | None

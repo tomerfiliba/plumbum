@@ -38,6 +38,7 @@ class Path(str, ABC):
     :class:`RemotePath <plumbum.path.remote.RemotePath>`.
     """
 
+    __slots__ = ()
     CASE_SENSITIVE = True
 
     def __repr__(self) -> str:
@@ -473,6 +474,8 @@ class RelativePath:
 
     Relative paths are created by subtracting paths (``Path.relative_to``)
     """
+
+    __slots__ = ("parts",)
 
     def __init__(self, parts: list[str]):
         self.parts = parts

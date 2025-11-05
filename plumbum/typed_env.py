@@ -27,6 +27,108 @@ class EnvironmentVariableError(KeyError):
     pass
 
 
+class _BaseVar(Generic[V], metaclass=abc.ABCMeta):
+    __slots__ = ("default", "name", "names")
+
+    def __init__(
+        self,
+        name: str | tuple[str, ...] | list[str],
+        default: V | _NoDefault = NO_DEFAULT,
+    ):
+        self.names: tuple[str, ...] = (
+            tuple(name) if isinstance(name, (tuple, list)) else (name,)
+        )
+        self.name = self.names[0]
+        self.default = default
+
+    @abc.abstractmethod
+    def convert(self, value: str) -> V:
+        pass
+
+    @typing.overload
+    def __get__(self, instance: TypedEnv, owner: type[TypedEnv]) -> V: ...
+
+    @typing.overload
+    def __get__(self, instance: None, owner: type[TypedEnv]) -> Self: ...
+
+    def __get__(self, instance: TypedEnv | None, owner: type[TypedEnv]) -> V | Self:
+        if not instance:
+            return self
+        try:
+            return self.convert(instance._raw_get(*self.names))
+        except EnvironmentVariableError:
+            if isinstance(self.default, _NoDefault):
+                raise
+            return self.default
+
+    def __set__(self, instance: TypedEnv, value: V) -> None:
+        instance[self.name] = value
+
+
+class Str(_BaseVar[str]):
+    __slots__ = ()
+
+    def convert(self, value: str) -> str:
+        return value
+
+
+class Bool(_BaseVar[bool]):
+    """
+    Converts 'yes|true|1|no|false|0' to the appropriate boolean value.
+    Case-insensitive. Throws a ``ValueError`` for any other value.
+    """
+
+    __slots__ = ()
+
+    def convert(self, value: str) -> bool:
+        value = value.lower()
+        if value not in {"yes", "no", "true", "false", "1", "0"}:
+            raise ValueError(f"Unrecognized boolean value: {value!r}")
+        return value in {"yes", "true", "1"}
+
+    def __set__(self, instance: TypedEnv, value: bool) -> None:
+        instance[self.name] = "yes" if value else "no"
+
+
+class Int(_BaseVar[int]):
+    __slots__ = ()
+
+    def convert(self, value: str) -> int:
+        return int(value)
+
+
+class Float(_BaseVar[float]):
+    __slots__ = ()
+
+    def convert(self, value: str) -> float:
+        return float(value)
+
+
+class CSV(_BaseVar[list[str]]):
+    __slots__ = ("separator", "type")
+    """
+    Comma-separated-strings get split using the ``separator`` (',' by default) into
+    a list of objects of type ``type`` (``str`` by default).
+    """
+
+    def __init__(
+        self,
+        name: str,
+        default: list[str] | _NoDefault = NO_DEFAULT,
+        type: Callable[[str], str] = str,
+        separator: str = ",",
+    ):  # pylint:disable=redefined-builtin
+        super().__init__(name, default=default)
+        self.type = type
+        self.separator = separator
+
+    def __set__(self, instance: TypedEnv, value: list[str]) -> None:
+        instance[self.name] = self.separator.join(map(str, value))
+
+    def convert(self, value: str) -> list[str]:
+        return [self.type(v.strip()) for v in value.split(self.separator)]
+
+
 class TypedEnv(MutableMapping[str, str]):
     """
     This object can be used in 'exploratory' mode:
@@ -56,94 +158,13 @@ class TypedEnv(MutableMapping[str, str]):
         assert False
     """
 
-    __slots__ = ["_defined_keys", "_env"]
+    __slots__ = ("_defined_keys", "_env")
 
-    class _BaseVar(Generic[V], metaclass=abc.ABCMeta):
-        def __init__(
-            self,
-            name: str | tuple[str, ...] | list[str],
-            default: V | _NoDefault = NO_DEFAULT,
-        ):
-            self.names: tuple[str, ...] = (
-                tuple(name) if isinstance(name, (tuple, list)) else (name,)
-            )
-            self.name = self.names[0]
-            self.default = default
-
-        @abc.abstractmethod
-        def convert(self, value: str) -> V:
-            pass
-
-        @typing.overload
-        def __get__(self, instance: TypedEnv, owner: type[TypedEnv]) -> V: ...
-
-        @typing.overload
-        def __get__(self, instance: None, owner: type[TypedEnv]) -> Self: ...
-
-        def __get__(self, instance: TypedEnv | None, owner: type[TypedEnv]) -> V | Self:
-            if not instance:
-                return self
-            try:
-                return self.convert(instance._raw_get(*self.names))
-            except EnvironmentVariableError:
-                if isinstance(self.default, _NoDefault):
-                    raise
-                return self.default
-
-        def __set__(self, instance: TypedEnv, value: V) -> None:
-            instance[self.name] = value
-
-    class Str(_BaseVar[str]):
-        def convert(self, value: str) -> str:
-            return value
-
-    class Bool(_BaseVar[bool]):
-        """
-        Converts 'yes|true|1|no|false|0' to the appropriate boolean value.
-        Case-insensitive. Throws a ``ValueError`` for any other value.
-        """
-
-        def convert(self, value: str) -> bool:
-            value = value.lower()
-            if value not in {"yes", "no", "true", "false", "1", "0"}:
-                raise ValueError(f"Unrecognized boolean value: {value!r}")
-            return value in {"yes", "true", "1"}
-
-        def __set__(self, instance: TypedEnv, value: bool) -> None:
-            instance[self.name] = "yes" if value else "no"
-
-    class Int(_BaseVar[int]):
-        def convert(self, value: str) -> int:
-            return int(value)
-
-    class Float(_BaseVar[float]):
-        def convert(self, value: str) -> float:
-            return float(value)
-
-    class CSV(_BaseVar[list[str]]):
-        """
-        Comma-separated-strings get split using the ``separator`` (',' by default) into
-        a list of objects of type ``type`` (``str`` by default).
-        """
-
-        def __init__(
-            self,
-            name: str,
-            default: list[str] | _NoDefault = NO_DEFAULT,
-            type: Callable[[str], str] = str,
-            separator: str = ",",
-        ):  # pylint:disable=redefined-builtin
-            super().__init__(name, default=default)
-            self.type = type
-            self.separator = separator
-
-        def __set__(self, instance: TypedEnv, value: list[str]) -> None:
-            instance[self.name] = self.separator.join(map(str, value))
-
-        def convert(self, value: str) -> list[str]:
-            return [self.type(v.strip()) for v in value.split(self.separator)]
-
-    # =========
+    Str = Str
+    Bool = Bool
+    Int = Int
+    Float = Float
+    CSV = CSV
 
     def __init__(self, env: MutableMapping[str, str] | None = None):
         if env is None:
@@ -152,7 +173,7 @@ class TypedEnv(MutableMapping[str, str]):
         self._defined_keys = {
             k
             for (k, v) in inspect.getmembers(self.__class__)
-            if isinstance(v, self._BaseVar)
+            if isinstance(v, _BaseVar)
         }
 
     def __iter__(self) -> Iterator[str]:
