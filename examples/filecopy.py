@@ -13,17 +13,17 @@ class FileCopier(cli.Application):
     overwrite = cli.Flag("-o", help="If given, overwrite existing files")
 
     @cli.switch(["-l", "--log-to-file"], argtype=str)
-    def log_to_file(self, filename):
+    def log_to_file(self, filename: str) -> None:
         """logs all output to the given file"""
         handler = logging.FileHandler(filename)
         logger.addHandler(handler)
 
     @cli.switch(["--verbose"], requires=["--log-to-file"])
-    def set_debug(self):
+    def set_debug(self) -> None:
         """Sets verbose mode"""
         logger.setLevel(logging.DEBUG)
 
-    def main(self, src, dst):
+    def main(self, src: str, dst: str) -> None:
         if local.path(dst).exists():
             if not self.overwrite:
                 logger.debug("Oh no! That's terrible")

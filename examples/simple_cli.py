@@ -47,11 +47,11 @@ class MyCompiler(cli.Application):
     include_dirs = cli.SwitchAttr("-I", list=True, help="Specify include directories")
 
     @cli.switch("-loglevel", int)
-    def set_log_level(self, level):
+    def set_log_level(self, level: int) -> None:
         """Sets the log-level of the logger"""
         logging.root.setLevel(level)
 
-    def main(self, *srcfiles):
+    def main(self, *srcfiles: str) -> None:
         print("Verbose:", self.verbose)
         print("Include dirs:", self.include_dirs)
         print("Compiling:", srcfiles)

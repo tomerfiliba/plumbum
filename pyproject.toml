@@ -86,7 +86,7 @@ docs = [
 
 
 [tool.mypy]
-files = ["plumbum"]
+files = ["plumbum", "examples"]
 python_version = "3.9"
 warn_unused_configs = true
 warn_unreachable = false
@@ -94,7 +94,7 @@ enable_error_code = ["ignore-without-code", "truthy-bool", "redundant-expr"]
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["IPython.html.*", "IPython.utils.*", "pywintypes.*", "win32con.*", "win32file.*", "PIL.*", "ipywidgets.*", "traitlets.*"]
+module = ["IPython.html.*", "IPython.utils.*", "ipywidgets"]
 ignore_missing_imports = true
 
 
