@@ -106,7 +106,7 @@ norecursedirs = ["examples", "experiments"]
 filterwarnings = [
   "always",
 ]
-log_cli_level = "INFO"
+log_level = "INFO"
 xfail_strict = true
 required_plugins = ["pytest-timeout", "pytest-mock"]
 timeout = 300
