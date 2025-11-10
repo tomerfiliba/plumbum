@@ -35,7 +35,7 @@ repos:
     additional_dependencies:
       - types-paramiko
       - types-colorama
-      - pytest
+      - pytest<9  # pytest 9 requires Python 3.10+
       - ipython
       - pillow
 
