@@ -595,7 +595,7 @@ class Application:
             for item, annotation in annotations.items():
                 if item == m.varargs:
                     varargs = annotation
-                elif item != "return":
+                elif item != "return" and item in args_names:
                     positional[args_names.index(item)] = annotation
 
             new_tailargs = self._positional_validate(
