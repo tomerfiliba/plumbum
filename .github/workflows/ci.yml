@@ -40,14 +40,16 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.11", "3.14"]
-        os: [ubuntu-22.04, windows-latest] # macos-15 has the same issue as ubuntu-24.04
+        os: [ubuntu-latest, windows-latest, macos-latest]
         include:
         - python-version: 'pypy-3.10'
-          os: ubuntu-22.04
+          os: ubuntu-latest
         - python-version: '3.10'
-          os: ubuntu-22.04
+          os: ubuntu-latest
+        - python-version: '3.12'
+          os: ubuntu-latest
         - python-version: '3.13'
-          os: ubuntu-22.04
+          os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -90,7 +92,7 @@ jobs:
         NoHostAuthenticationForLocalhost yes
         EOF
 
-        ssh-keygen -q -f ~/.ssh/id_rsa -N ''
+        ssh-keygen -q -f ~/.ssh/id_rsa -N '' -t rsa -m PEM
         cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
         chmod 600 ~/.ssh/authorized_keys
 
@@ -109,13 +111,10 @@ jobs:
 
   coverage:
     needs: [tests]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
-    - uses: actions/setup-python@v6
-      with:
-        python-version: "3.x"
     - name: Install coveralls
-      run: pip install coveralls
+      run: pipx install coveralls
     - name: Coveralls Finished
       run: coveralls --service=github --finish
       env:
