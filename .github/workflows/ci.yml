@@ -81,9 +81,17 @@ jobs:
       if: runner.os != 'Windows'
       run: |
         if [ "${{ runner.os }}" = "Linux" ]; then
+          # Install and start SSH server on Ubuntu
+          sudo apt-get update -qq
+          sudo apt-get install -y openssh-server
+          sudo systemctl enable ssh
           sudo systemctl start ssh
+          sudo systemctl status ssh
         elif [ "${{ runner.os }}" = "macOS" ]; then
+          # Enable remote login on macOS
           sudo systemsetup -setremotelogin on
+          # Wait a moment for the service to start
+          sleep 2
         fi
 
     - name: Setup SSH tests
