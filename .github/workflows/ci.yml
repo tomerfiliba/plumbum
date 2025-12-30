@@ -109,7 +109,7 @@ jobs:
         NoHostAuthenticationForLocalhost yes
         EOF
 
-        ssh-keygen -q -f ~/.ssh/id_rsa -N ''
+        ssh-keygen -q -f ~/.ssh/id_rsa -N '' -t rsa -m PEM
         cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
         chmod 600 ~/.ssh/authorized_keys
 
