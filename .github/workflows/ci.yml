@@ -87,11 +87,13 @@ jobs:
           sudo systemctl enable ssh
           sudo systemctl start ssh
           sudo systemctl status ssh
+          # Wait for SSH service to be fully ready
+          sleep 5
         elif [ "${{ runner.os }}" = "macOS" ]; then
           # Enable remote login on macOS
           sudo systemsetup -setremotelogin on
-          # Wait a moment for the service to start
-          sleep 2
+          # Wait for the service to be fully ready
+          sleep 10
         fi
 
     - name: Setup SSH tests
