@@ -88,10 +88,9 @@ jobs:
         mkdir -p ~/.ssh
         chmod 700 ~/.ssh
         cat <<'EOF' >> ~/.ssh/config
-        Host localhost
-          StrictHostKeyChecking no
-          UserKnownHostsFile /dev/null
-          NoHostAuthenticationForLocalhost yes
+        StrictHostKeyChecking no
+        UserKnownHostsFile /dev/null
+        NoHostAuthenticationForLocalhost yes
         EOF
 
         ssh-keygen -q -f ~/.ssh/id_rsa -N ''
