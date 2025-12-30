@@ -40,14 +40,14 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.11", "3.14"]
-        os: [ubuntu-22.04, windows-latest] # macos-15 has the same issue as ubuntu-24.04
+        os: [ubuntu-24.04, windows-latest, macos-15]
         include:
         - python-version: 'pypy-3.10'
-          os: ubuntu-22.04
+          os: ubuntu-24.04
         - python-version: '3.10'
-          os: ubuntu-22.04
+          os: ubuntu-24.04
         - python-version: '3.13'
-          os: ubuntu-22.04
+          os: ubuntu-24.04
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -76,6 +76,15 @@ jobs:
       run: |
         uv venv --python ${{ matrix.python-version }}
         uv pip install -e.[test] pytest-github-actions-annotate-failures
+
+    - name: Start SSH service
+      if: runner.os != 'Windows'
+      run: |
+        if [ "${{ runner.os }}" = "Linux" ]; then
+          sudo systemctl start ssh
+        elif [ "${{ runner.os }}" = "macOS" ]; then
+          sudo systemsetup -setremotelogin on
+        fi
 
     - name: Setup SSH tests
       if: runner.os != 'Windows'
