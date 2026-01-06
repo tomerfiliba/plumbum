@@ -371,7 +371,9 @@ class BaseRemoteMachine(BaseMachine):
         """A context manager that creates a remote temporary directory, which is removed when
         the context exits"""
         _, out, _ = self._session.run(
-            "mktemp -d 2>/dev/null || mktemp -d tmp.XXXXXXXXXX"
+            # -t -> acknowledge $TMPDIR, default to /tmp, so we work
+            # -also in places where $HOME is read only
+            "mktemp -d 2>/dev/null || mktemp -t -d tmp.XXXXXXXXXX"
         )
         local_dir = self.path(out.strip())
         try:
