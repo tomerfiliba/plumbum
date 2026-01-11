@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import pickle
+import re
 import signal
 import sys
 import time
@@ -9,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from posix_cmd import skip_if_no_posix_tools
 import plumbum
 from plumbum import (
     BG,
@@ -35,8 +37,10 @@ SDIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestLocalPopen:
+
+    @skip_if_no_posix_tools
     def test_contextmanager(self):
-        command = ["dir"] if IS_WIN32 else ["ls"]
+        command = "ls"
         with PlumbumLocalPopen(command):
             pass
 
@@ -53,7 +57,7 @@ class TestLocalPath:
         name = self.longpath.dirname
         assert isinstance(name, LocalPath)
         assert (
-            str(name).replace("\\", "/").lstrip("C:").lstrip("D:")
+            re.sub(r"^.:", "", str(name).replace("\\", "/"))
             == "/some/long/path/to"
         )
 
@@ -306,6 +310,7 @@ class TestLocalPath:
 
 @pytest.mark.usefixtures("testdir")
 class TestLocalMachine:
+
     def test_getattr(self):
         pb = plumbum
         assert getattr(pb.cmd, "does_not_exist", 1) == 1
@@ -315,7 +320,7 @@ class TestLocalMachine:
         assert str(ls_cmd2) == str(local["ls"])
 
     # TODO: This probably fails because of odd ls behavior
-    @skip_on_windows
+    @skip_if_no_posix_tools
     def test_imports(self):
         from plumbum.cmd import ls
 
@@ -463,7 +468,7 @@ class TestLocalMachine:
         local["ls"]
         assert local.python("-c", "print('hi there')").splitlines() == ["hi there"]
 
-    @skip_on_windows
+    @skip_if_no_posix_tools
     def test_piping(self):
         from plumbum.cmd import grep, ls
 
@@ -473,7 +478,7 @@ class TestLocalMachine:
         chain = ls["-a"] | grep["test"] | grep["local"]
         assert "test_local.py" in chain().splitlines()
 
-    @skip_on_windows
+    @skip_if_no_posix_tools
     def test_redirection(self):
         from plumbum.cmd import cat, grep, ls, rm
 
@@ -499,7 +504,7 @@ class TestLocalMachine:
         assert rc == 2
         assert "usage" in out.lower()
 
-    @skip_on_windows
+    @skip_if_no_posix_tools
     def test_popen(self):
         from plumbum.cmd import ls
 
@@ -520,7 +525,7 @@ class TestLocalMachine:
         with pytest.raises(ProcessTimedOut):
             sleep(3, timeout=1)
 
-    @skip_on_windows
+    @skip_if_no_posix_tools
     def test_pipe_stderr(self, capfd):
         from plumbum.cmd import cat, head
 
@@ -553,7 +558,7 @@ class TestLocalMachine:
                 print(i, "out:", out)
         assert i in (2, 3)  # Mac is a bit flakey
 
-    @skip_on_windows
+    @skip_if_no_posix_tools
     def test_iter_lines_buffer_size(self):
         from plumbum.cmd import bash
 
@@ -581,7 +586,7 @@ class TestLocalMachine:
         assert counts[1] in (3, 4)  # Mac is a bit flakey
         assert counts[2] in (2, 3)  # Mac is a bit flakey
 
-    @skip_on_windows
+    @skip_if_no_posix_tools
     def test_iter_lines_error(self):
         from plumbum.cmd import ls
 
@@ -592,6 +597,9 @@ class TestLocalMachine:
         assert (
             "ls: unrecognized option" in err.value.stderr
             and "--bla" in err.value.stderr
+        ) or (
+            "ls: unknown option" in err.value.stderr
+            and "-- bla" in err.value.stderr
         ) or "ls: illegal option -- -" in err.value.stderr
 
     @skip_on_windows
@@ -666,7 +674,7 @@ class TestLocalMachine:
         assert cmd & modifier == expected
         assert capfd.readouterr() == ("meow", "")
 
-    @skip_on_windows
+    @skip_if_no_posix_tools
     def test_logger_pipe(self):
         from plumbum.cmd import bash
         from plumbum.commands.modifiers import PipeToLoggerMixin
@@ -693,7 +701,7 @@ class TestLocalMachine:
         assert logs[-1] == (0, "echo: ccc")
         assert ret == 1
 
-    @skip_on_windows
+    @skip_if_no_posix_tools
     def test_logger_pipe_line_timeout(self):
         from plumbum.cmd import bash
         from plumbum.commands.modifiers import PipeToLoggerMixin
