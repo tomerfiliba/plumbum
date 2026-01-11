@@ -46,36 +46,39 @@ if not sys.platform.startswith("win32"):
             finally:
                 fcntl.flock(fileno, fcntl.LOCK_UN)
 else:
-    import msvcrt
     import ctypes
-    from ctypes.wintypes import (
-        HANDLE, BOOL, DWORD, LPVOID as PVOID, WPARAM as ULONG_PTR
-    )
+    import msvcrt
+    from ctypes.wintypes import BOOL, DWORD, HANDLE
+    from ctypes.wintypes import LPVOID as PVOID
+    from ctypes.wintypes import WPARAM as ULONG_PTR
 
     kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
     # Refer: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-lockfileex
     LOCKFILE_FAIL_IMMEDIATELY = 0x01
-    LOCKFILE_EXCLUSIVE_LOCK   = 0x02
+    LOCKFILE_EXCLUSIVE_LOCK = 0x02
 
     # Refer: https://learn.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-overlapped
     class OVERLAPPED(ctypes.Structure):
         class DUMMYUNIONNAME(ctypes.Union):
             class DUMMYSTRUCTNAME(ctypes.Structure):
-                _fields_ = [
+                _fields_ = (
                     ("Offset", DWORD),
                     ("OffsetHigh", DWORD),
-                ]
-            _fields_ = [
+                )
+
+            _fields_ = (
                 ("_offsets", DUMMYSTRUCTNAME),
                 ("Pointer", PVOID),
-            ]
-        _fields_ = [
+            )
+
+        _fields_ = (
             ("Internal", ULONG_PTR),
             ("InternalHigh", ULONG_PTR),
             ("_offsets_or_ptr", DUMMYUNIONNAME),
             ("hEvent", HANDLE),
-        ]
+        )
+
     LPOVERLAPPED = ctypes.POINTER(OVERLAPPED)
 
     # Refer: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-lockfile
@@ -83,10 +86,10 @@ else:
     LockFile.restype = BOOL
     LockFile.argtypes = [
         HANDLE,  # hFile
-        DWORD,   # dwFileOffsetLow
-        DWORD,   # dwFileOffsetHigh
-        DWORD,   # nNumberOfBytesToLockLow
-        DWORD,   # nNumberOfBytesToLockHigh
+        DWORD,  # dwFileOffsetLow
+        DWORD,  # dwFileOffsetHigh
+        DWORD,  # nNumberOfBytesToLockLow
+        DWORD,  # nNumberOfBytesToLockHigh
     ]
 
     # Refer: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-unlockfile
@@ -94,10 +97,10 @@ else:
     UnlockFile.restype = BOOL
     UnlockFile.argtypes = [
         HANDLE,  # hFile,
-        DWORD,   # dwFileOffsetLow,
-        DWORD,   # dwFileOffsetHigh,
-        DWORD,   # nNumberOfBytesToUnlockLow,
-        DWORD,   # nNumberOfBytesToUnlockHigh
+        DWORD,  # dwFileOffsetLow,
+        DWORD,  # dwFileOffsetHigh,
+        DWORD,  # nNumberOfBytesToUnlockLow,
+        DWORD,  # nNumberOfBytesToUnlockHigh
     ]
 
     # Refer: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-lockfileex
@@ -105,10 +108,10 @@ else:
     LockFileEx.restype = BOOL
     LockFileEx.argtypes = [
         HANDLE,  # hFile
-        DWORD,   # dwFlags
-        DWORD,   # dwReserved - must be set to zero
-        DWORD,   # nNumberOfBytesToLockLow
-        DWORD,   # nNumberOfBytesToLockHigh
+        DWORD,  # dwFlags
+        DWORD,  # dwReserved - must be set to zero
+        DWORD,  # nNumberOfBytesToLockLow
+        DWORD,  # nNumberOfBytesToLockHigh
         LPOVERLAPPED,  # lpOverlapped
     ]
 
@@ -117,15 +120,15 @@ else:
     UnlockFileEx.restype = BOOL
     UnlockFileEx.argtypes = [
         HANDLE,  # hFile
-        DWORD,   # dwReserved - must be set to zero
-        DWORD,   # nNumberOfBytesToUnlockLow
-        DWORD,   # nNumberOfBytesToUnlockHigh
+        DWORD,  # dwReserved - must be set to zero
+        DWORD,  # nNumberOfBytesToUnlockLow
+        DWORD,  # nNumberOfBytesToUnlockHigh
         LPOVERLAPPED,  # lpOverlapped
     ]
 
     # Errors and Error flags
     GetLastError = kernel32.GetLastError
-    GetLastError.restype  = DWORD
+    GetLastError.restype = DWORD
     GetLastError.argtypes = []
 
     @contextlib.contextmanager
@@ -134,8 +137,7 @@ else:
         overlapped = OVERLAPPED()
         ok = LockFileEx(
             hndl,
-            LOCKFILE_EXCLUSIVE_LOCK
-            | (0 if blocking else LOCKFILE_FAIL_IMMEDIATELY),
+            LOCKFILE_EXCLUSIVE_LOCK | (0 if blocking else LOCKFILE_FAIL_IMMEDIATELY),
             0,
             0xFFFFFFFF,
             0xFFFFFFFF,
