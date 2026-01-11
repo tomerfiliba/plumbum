@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import pickle
+import re
 import signal
 import sys
 import time
@@ -9,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+import posix_cmd  # POSIX command aliases for Windows
 import plumbum
 from plumbum import (
     BG,
@@ -35,6 +37,7 @@ SDIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestLocalPopen:
+
     def test_contextmanager(self):
         command = ["dir"] if IS_WIN32 else ["ls"]
         with PlumbumLocalPopen(command):
@@ -53,7 +56,7 @@ class TestLocalPath:
         name = self.longpath.dirname
         assert isinstance(name, LocalPath)
         assert (
-            str(name).replace("\\", "/").lstrip("C:").lstrip("D:")
+            re.sub(r"^.:", "", str(name).replace("\\", "/"))
             == "/some/long/path/to"
         )
 
@@ -592,6 +595,9 @@ class TestLocalMachine:
         assert (
             "ls: unrecognized option" in err.value.stderr
             and "--bla" in err.value.stderr
+        ) or (
+            "ls: unknown option" in err.value.stderr
+            and "-- bla" in err.value.stderr
         ) or "ls: illegal option -- -" in err.value.stderr
 
     @skip_on_windows
