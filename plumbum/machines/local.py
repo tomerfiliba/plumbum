@@ -13,6 +13,7 @@ from contextlib import AbstractContextManager, contextmanager
 from subprocess import PIPE, Popen
 from tempfile import mkdtemp
 from typing import Any, ClassVar
+from types import MappingProxyType
 
 from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.commands.daemons import posix_daemonize, win32_daemonize
@@ -25,7 +26,7 @@ from plumbum.path.local import LocalPath, LocalWorkdir
 from plumbum.path.remote import RemotePath
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Generator, Iterator, Sequence
+    from collections.abc import Generator, Iterator, Sequence, Mapping
     from types import TracebackType
 
     from plumbum.commands.base import BaseCommand
@@ -158,7 +159,7 @@ class LocalMachine(BaseMachine):
     * ``custom_encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``)
     """
 
-    __slots__ = ("_as_user_stack", "_start_time")
+    __slots__ = ("_as_user_stack", "_aliases", "_start_time")
 
     cwd = StaticProperty(LocalWorkdir)
     env = LocalEnv()
@@ -169,6 +170,7 @@ class LocalMachine(BaseMachine):
 
     def __init__(self) -> None:
         self._as_user_stack: list[Any] = []
+        self._aliases: dict[str, str | LocalPath] = {}
 
     @classmethod
     def clear_program_cache(cls) -> None:
@@ -240,6 +242,21 @@ class LocalMachine(BaseMachine):
             parts2.append(self.env.expanduser(str(p)))
         return LocalPath(os.path.join(*parts2))
 
+    def alias(self: LocalMachine, name: str, path: str | LocalPath) -> None:
+        """Register a command alias for plumbum.local.
+        Example:
+            local.alias("ls", "C:/Git/usr/bin/ls.exe")
+        """
+        self._aliases[name] = path
+
+    def unalias(self: LocalMachine, name: str) -> None:
+        """Remove an alias if it exists."""
+        self._aliases.pop(name, None)
+
+    def aliases(self: LocalMachine) -> Mapping[str, str | LocalPath]:
+        """Return a read-only view of registered aliases."""
+        return MappingProxyType(self._aliases)
+
     def __contains__(self, cmd: str) -> bool:
         try:
             self[cmd]
@@ -255,6 +272,11 @@ class LocalMachine(BaseMachine):
 
             ls = local["ls"]
         """
+
+        # Resolve aliases before falling back to the default behavior.
+        cmd_key = str(cmd)
+        if cmd_key in self._aliases:
+            cmd = self._aliases[cmd_key]
 
         if isinstance(cmd, LocalPath):
             return LocalCommand(cmd)
