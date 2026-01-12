@@ -50,6 +50,8 @@ jobs:
           os: ubuntu-latest
         - python-version: '3.13'
           os: ubuntu-latest
+        - python-version: '3.15'
+          os: ubuntu-latest
     runs-on: ${{ matrix.os }}
 
     steps:
