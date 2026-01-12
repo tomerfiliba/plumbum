@@ -126,11 +126,6 @@ else:
         LPOVERLAPPED,  # lpOverlapped
     ]
 
-    # Errors and Error flags
-    GetLastError = kernel32.GetLastError
-    GetLastError.restype = DWORD
-    GetLastError.argtypes = []
-
     @contextlib.contextmanager
     def locked_file(fileno: int, blocking: bool = True) -> Generator[None, None, None]:
         hndl = msvcrt.get_osfhandle(fileno)
@@ -144,13 +139,16 @@ else:
             ctypes.byref(overlapped),
         )
         if not ok:
-            raise OSError(GetLastError())
+            raise ctypes.WinError(ctypes.get_last_error())
         try:
             yield
         finally:
+            exc = sys.exc_info()[1]
             ok = UnlockFile(hndl, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF)
             if not ok:
-                raise OSError(GetLastError())
+                next_exc = ctypes.WinError(ctypes.get_last_error())
+                if exc is None: exc, next_exc = next_exc, None
+                raise exc from next_exc
 
 
 class AtomicFile:
