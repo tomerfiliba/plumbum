@@ -4,6 +4,7 @@ import contextlib
 import re
 import typing
 from tempfile import NamedTemporaryFile
+from typing import TYPE_CHECKING, Any
 
 from plumbum.commands import CommandNotFound, ConcreteCommand, shquote
 from plumbum.lib import ProcInfo
@@ -12,7 +13,7 @@ from plumbum.machines.env import BaseEnv
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath, RemoteStatRes, RemoteWorkdir
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
 
     from plumbum._compat.typing import Self
@@ -506,3 +507,80 @@ class BaseRemoteMachine(BaseMachine):
         # we escape all $ signs to avoid expanding env-vars
         expr_repl = expr.replace("$", "\\$")
         return self._session.run(f"echo {expr_repl}")[1].strip()
+
+
+class AsyncRemoteMachine:
+    """Async version of BaseRemoteMachine.
+
+    This class provides async access to remote commands via SSH.
+    It wraps a sync RemoteMachine and provides async execution methods.
+
+    Example::
+
+        from plumbum.machines.ssh_machine import AsyncSshMachine
+
+        async with AsyncSshMachine("host") as rem:
+            ls = rem["ls"]
+            result = await ls("-la")
+
+    .. versionadded:: 2.0
+    """
+
+    __slots__ = ("_sync_machine",)
+
+    def __init__(self, sync_machine: BaseRemoteMachine):
+        """Initialize with a sync remote machine to wrap.
+
+        Args:
+            sync_machine: The sync remote machine to wrap
+        """
+        self._sync_machine = sync_machine
+
+    def __getitem__(self, cmd: str | RemotePath | LocalPath) -> Any:
+        """Get an async remote command by name or path.
+
+        This delegates to the sync machine for command lookup, then wraps it.
+
+        Args:
+            cmd: Command name (will be looked up in PATH) or RemotePath
+
+        Returns:
+            AsyncRemoteCommand instance
+
+        Raises:
+            CommandNotFound: If command is not found in PATH
+        """
+        from plumbum.commands.async_ import AsyncRemoteCommand
+
+        sync_cmd = self._sync_machine[cmd]
+        return AsyncRemoteCommand(sync_cmd)
+
+    def __contains__(self, cmd: str) -> bool:
+        """Check if a command exists in remote PATH."""
+        return cmd in self._sync_machine
+
+    @property
+    def cwd(self) -> Any:
+        """Current working directory on remote machine."""
+        return self._sync_machine.cwd
+
+    @property
+    def env(self) -> Any:
+        """Environment variables on remote machine."""
+        return self._sync_machine.env
+
+    def path(self, *parts: str | RemotePath | LocalPath) -> RemotePath:
+        """Create a RemotePath from parts."""
+        return self._sync_machine.path(*parts)
+
+    def close(self) -> None:
+        """Close the connection to the remote machine."""
+        self._sync_machine.close()
+
+    async def __aenter__(self) -> Self:
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, t: object, v: object, tb: object) -> None:
+        """Async context manager exit."""
+        self.close()

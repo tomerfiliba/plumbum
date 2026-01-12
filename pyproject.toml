@@ -47,6 +47,8 @@ keywords = [
     "execution",
     "color",
     "cli",
+    "async",
+    "asyncio",
 ]
 
 [project.urls]
@@ -71,6 +73,7 @@ test = [
     "coverage[toml]",
     "paramiko",
     "psutil",
+    "pytest-asyncio>=0.21.0",
     "pytest-cov",
     "pytest-mock",
     "pytest-timeout",
@@ -108,7 +111,7 @@ filterwarnings = [
 ]
 log_level = "INFO"
 xfail_strict = true
-required_plugins = ["pytest-timeout", "pytest-mock"]
+required_plugins = ["pytest-timeout", "pytest-mock", "pytest-asyncio"]
 timeout = 300
 optional_tests = """
   ssh: requires self ssh access to run
