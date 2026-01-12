@@ -46,36 +46,110 @@ if not sys.platform.startswith("win32"):
             finally:
                 fcntl.flock(fileno, fcntl.LOCK_UN)
 else:
+    import ctypes
     import msvcrt
+    from ctypes.wintypes import BOOL, DWORD, HANDLE
+    from ctypes.wintypes import LPVOID as PVOID
+    from ctypes.wintypes import WPARAM as ULONG_PTR
 
-    try:
-        from pywintypes import error as WinError
-        from win32con import LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY
-        from win32file import OVERLAPPED, LockFileEx, UnlockFile
-    except ImportError:
-        print(  # noqa: T201
-            "On Windows, Plumbum requires Python for Windows Extensions (pywin32)"
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    # Refer: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-lockfileex
+    LOCKFILE_FAIL_IMMEDIATELY = 0x01
+    LOCKFILE_EXCLUSIVE_LOCK = 0x02
+
+    # Refer: https://learn.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-overlapped
+    class OVERLAPPED(ctypes.Structure):
+        class DUMMYUNIONNAME(ctypes.Union):
+            class DUMMYSTRUCTNAME(ctypes.Structure):
+                _fields_ = (
+                    ("Offset", DWORD),
+                    ("OffsetHigh", DWORD),
+                )
+
+            _fields_ = (
+                ("_offsets", DUMMYSTRUCTNAME),
+                ("Pointer", PVOID),
+            )
+
+        _fields_ = (
+            ("Internal", ULONG_PTR),
+            ("InternalHigh", ULONG_PTR),
+            ("_offsets_or_ptr", DUMMYUNIONNAME),
+            ("hEvent", HANDLE),
         )
-        raise
+
+    LPOVERLAPPED = ctypes.POINTER(OVERLAPPED)
+
+    # Refer: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-lockfile
+    LockFile = kernel32.LockFile
+    LockFile.restype = BOOL
+    LockFile.argtypes = [
+        HANDLE,  # hFile
+        DWORD,  # dwFileOffsetLow
+        DWORD,  # dwFileOffsetHigh
+        DWORD,  # nNumberOfBytesToLockLow
+        DWORD,  # nNumberOfBytesToLockHigh
+    ]
+
+    # Refer: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-unlockfile
+    UnlockFile = kernel32.UnlockFile
+    UnlockFile.restype = BOOL
+    UnlockFile.argtypes = [
+        HANDLE,  # hFile,
+        DWORD,  # dwFileOffsetLow,
+        DWORD,  # dwFileOffsetHigh,
+        DWORD,  # nNumberOfBytesToUnlockLow,
+        DWORD,  # nNumberOfBytesToUnlockHigh
+    ]
+
+    # Refer: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-lockfileex
+    LockFileEx = kernel32.LockFileEx
+    LockFileEx.restype = BOOL
+    LockFileEx.argtypes = [
+        HANDLE,  # hFile
+        DWORD,  # dwFlags
+        DWORD,  # dwReserved - must be set to zero
+        DWORD,  # nNumberOfBytesToLockLow
+        DWORD,  # nNumberOfBytesToLockHigh
+        LPOVERLAPPED,  # lpOverlapped
+    ]
+
+    # Refer: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-unlockfileex
+    UnlockFileEx = kernel32.UnlockFileEx
+    UnlockFileEx.restype = BOOL
+    UnlockFileEx.argtypes = [
+        HANDLE,  # hFile
+        DWORD,  # dwReserved - must be set to zero
+        DWORD,  # nNumberOfBytesToUnlockLow
+        DWORD,  # nNumberOfBytesToUnlockHigh
+        LPOVERLAPPED,  # lpOverlapped
+    ]
 
     @contextlib.contextmanager
     def locked_file(fileno: int, blocking: bool = True) -> Generator[None, None, None]:
         hndl = msvcrt.get_osfhandle(fileno)
-        try:
-            LockFileEx(
-                hndl,
-                LOCKFILE_EXCLUSIVE_LOCK
-                | (0 if blocking else LOCKFILE_FAIL_IMMEDIATELY),
-                0xFFFFFFFF,
-                0xFFFFFFFF,
-                OVERLAPPED(),
-            )
-        except WinError as ex:
-            raise OSError(*ex.args) from None
+        overlapped = OVERLAPPED()
+        ok = LockFileEx(
+            hndl,
+            LOCKFILE_EXCLUSIVE_LOCK | (0 if blocking else LOCKFILE_FAIL_IMMEDIATELY),
+            0,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            ctypes.byref(overlapped),
+        )
+        if not ok:
+            raise ctypes.WinError(ctypes.get_last_error())
         try:
             yield
         finally:
-            UnlockFile(hndl, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF)
+            exc = sys.exc_info()[1]
+            ok = UnlockFile(hndl, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF)
+            if not ok:
+                next_exc = ctypes.WinError(ctypes.get_last_error())
+                if exc is None:
+                    exc, next_exc = next_exc, None
+                raise exc from next_exc
 
 
 class AtomicFile:
