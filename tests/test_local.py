@@ -9,8 +9,8 @@ import time
 from pathlib import Path
 
 import pytest
-
 from posix_cmd import skip_if_no_posix_tools
+
 import plumbum
 from plumbum import (
     BG,
@@ -37,7 +37,6 @@ SDIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestLocalPopen:
-
     @skip_if_no_posix_tools
     def test_contextmanager(self):
         command = "ls"
@@ -307,7 +306,6 @@ class TestLocalPath:
 
 @pytest.mark.usefixtures("testdir")
 class TestLocalMachine:
-
     def test_getattr(self):
         pb = plumbum
         assert getattr(pb.cmd, "does_not_exist", 1) == 1
