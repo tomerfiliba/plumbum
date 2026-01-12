@@ -137,7 +137,7 @@ class TestLocalPath:
             local.path("/opt/lib"),
         ]:
             delta = p.relative_to(src)
-            assert src + delta == p
+            assert src / delta == p
 
     def test_read_write(self):
         with local.tempdir() as dir:
