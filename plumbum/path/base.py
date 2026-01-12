@@ -50,14 +50,6 @@ class Path(str, ABC):
         """Joins two paths"""
         return self.join(other)
 
-    def __add__(self, other: str | Self) -> Self:
-        """Attaches text to path"""
-        return self.__class__(str(self) + str(other))
-
-    def __radd__(self, other: str) -> Self:
-        """Attaches text to path"""
-        return self.__class__(other + str(self))
-
     @typing.overload
     def __getitem__(self, key: str | Path) -> Self: ...
 
