@@ -56,10 +56,7 @@ class TestLocalPath:
     def test_dirname(self):
         name = self.longpath.dirname
         assert isinstance(name, LocalPath)
-        assert (
-            re.sub(r"^.:", "", str(name).replace("\\", "/"))
-            == "/some/long/path/to"
-        )
+        assert re.sub(r"^.:", "", str(name).replace("\\", "/")) == "/some/long/path/to"
 
     def test_uri(self):
         if IS_WIN32:
@@ -595,12 +592,16 @@ class TestLocalMachine:
                 pass
             assert i == 1
         assert (
-            "ls: unrecognized option" in err.value.stderr
-            and "--bla" in err.value.stderr
-        ) or (
-            "ls: unknown option" in err.value.stderr
-            and "-- bla" in err.value.stderr
-        ) or "ls: illegal option -- -" in err.value.stderr
+            (
+                "ls: unrecognized option" in err.value.stderr
+                and "--bla" in err.value.stderr
+            )
+            or (
+                "ls: unknown option" in err.value.stderr
+                and "-- bla" in err.value.stderr
+            )
+            or "ls: illegal option -- -" in err.value.stderr
+        )
 
     @skip_on_windows
     def test_iter_lines_line_timeout(self):
