@@ -147,7 +147,8 @@ else:
             ok = UnlockFile(hndl, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF)
             if not ok:
                 next_exc = ctypes.WinError(ctypes.get_last_error())
-                if exc is None: exc, next_exc = next_exc, None
+                if exc is None:
+                    exc, next_exc = next_exc, None
                 raise exc from next_exc
 
 
