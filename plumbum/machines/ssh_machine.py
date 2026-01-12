@@ -384,7 +384,7 @@ class SshMachine(BaseRemoteMachine):
             raise TypeError(f"src {src!r} points to a different remote machine")
         if isinstance(dst, RemotePath):
             raise TypeError(f"dst of download cannot be {dst!r}")
-        if IS_WIN32:
+        if not IS_WIN32:
             src = self._translate_drive_letter(src)
             dst = self._translate_drive_letter(dst)
         self._scp_command(f"{self._fqhost}:{shquote(src)}", dst)
@@ -396,7 +396,7 @@ class SshMachine(BaseRemoteMachine):
             raise TypeError(f"dst of upload cannot be {dst!r}")
         if isinstance(dst, RemotePath) and dst.remote != self:
             raise TypeError(f"dst {dst!r} points to a different remote machine")
-        if IS_WIN32:
+        if not IS_WIN32:
             src = self._translate_drive_letter(src)
             dst = self._translate_drive_letter(dst)
         self._scp_command(src, f"{self._fqhost}:{shquote(dst)}")
