@@ -5,7 +5,7 @@ import contextlib
 from plumbum import local
 from plumbum._testtools import skip_on_windows
 
-with contextlib.suppress(ImportError, ModuleNotFoundError):
+with contextlib.suppress(ImportError):
     from plumbum.cmd import printenv
 
 
