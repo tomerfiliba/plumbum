@@ -866,7 +866,6 @@ class TestLocalMachine:
             os.waitpid(proc.pid, 0)
         proc.wait()
 
-    @skip_on_windows
     def test_atomic_file(self):
         af1 = AtomicFile("tmp.txt")
         af2 = AtomicFile("tmp.txt")
@@ -874,9 +873,9 @@ class TestLocalMachine:
         af2.write_atomic(b"bar")
         assert af1.read_atomic() == b"bar"
         assert af2.read_atomic() == b"bar"
-        local.path("tmp.txt").delete()
+        if not IS_WIN32:
+            local.path("tmp.txt").delete()
 
-    @skip_on_windows
     def test_atomic_file2(self):
         af = AtomicFile("tmp.txt")
 
@@ -893,7 +892,8 @@ except (OSError, IOError):
             output = local.python("-c", code)
             assert output.strip() == "already locked"
 
-        local.path("tmp.txt").delete()
+        if not IS_WIN32:
+            local.path("tmp.txt").delete()
 
     @skip_on_windows
     def test_pid_file(self):
@@ -909,9 +909,9 @@ except PidFileTaken:
             output = local.python("-c", code)
             assert output.strip() == "already locked"
 
-        local.path("mypid").delete()
+        if not IS_WIN32:
+            local.path("mypid").delete()
 
-    @skip_on_windows
     def test_atomic_counter(self):
         local.path("counter").delete()
         num_of_procs = 20
@@ -937,9 +937,10 @@ for _ in range({num_of_increments}):
         assert len(set(results)) == len(results)
         assert min(results) == 0
         assert max(results) == num_of_procs * num_of_increments - 1
-        local.path("counter").delete()
 
-    @skip_on_windows
+        if not IS_WIN32:
+            local.path("counter").delete()
+
     def test_atomic_counter2(self):
         local.path("counter").delete()
         afc = AtomicCounterFile.open("counter")
@@ -955,7 +956,8 @@ for _ in range({num_of_increments}):
         assert afc.next() == 71
         assert afc.next() == 72
 
-        local.path("counter").delete()
+        if not IS_WIN32:
+            local.path("counter").delete()
 
     @skip_on_windows
     @pytest.mark.skipif("printenv" not in local, reason="printenv is missing")
