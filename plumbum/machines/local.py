@@ -242,18 +242,18 @@ class LocalMachine(BaseMachine):
             parts2.append(self.env.expanduser(str(p)))
         return LocalPath(os.path.join(*parts2))
 
-    def alias(self: LocalMachine, name: str, path: str | LocalPath) -> None:
+    def alias(self, name: str, path: str | LocalPath) -> None:
         """Register a command alias for plumbum.local.
         Example:
             local.alias("ls", "C:/Git/usr/bin/ls.exe")
         """
         self._aliases[name] = path
 
-    def unalias(self: LocalMachine, name: str) -> None:
+    def unalias(self, name: str) -> None:
         """Remove an alias if it exists."""
         self._aliases.pop(name, None)
 
-    def aliases(self: LocalMachine) -> Mapping[str, str | LocalPath]:
+    def aliases(self) -> Mapping[str, str | LocalPath]:
         """Return a read-only view of registered aliases."""
         return MappingProxyType(self._aliases)
 
