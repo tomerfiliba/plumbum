@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import re
 import socket
-import typing
 import warnings
 from contextlib import closing
+from typing import TYPE_CHECKING, Any
 
 from plumbum.commands import BaseCommand, ProcessExecutionError, shquote
 from plumbum.lib import IS_WIN32
@@ -14,9 +14,8 @@ from plumbum.machines.session import ShellSession
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from collections.abc import Sequence
-    from typing import Any
 
     from plumbum._compat.typing import Self
     from plumbum.machines.base import PopenWithAddons
@@ -468,3 +467,112 @@ class PuttyMachine(SshMachine):
             isatty,
             self.connect_timeout,
         )
+
+
+class AsyncSshMachine:
+    """Async version of SshMachine.
+
+    This class provides async SSH command execution. It wraps a sync SshMachine
+    and provides async execution methods.
+
+    Example::
+
+        from plumbum.machines.ssh_machine import AsyncSshMachine
+
+        async with AsyncSshMachine("hostname") as rem:
+            result = await rem["ls"]("-la")
+
+            # Concurrent execution
+            results = await asyncio.gather(
+                rem["echo"]("task1"),
+                rem["echo"]("task2"),
+            )
+
+    .. versionadded:: 2.0
+    """
+
+    __slots__ = ("_sync_machine",)
+
+    def __init__(
+        self,
+        host: str,
+        user: str | None = None,
+        port: int | None = None,
+        keyfile: str | None = None,
+        ssh_command: BaseCommand | None = None,
+        scp_command: BaseCommand | None = None,
+        ssh_opts: Sequence[str] = (),
+        scp_opts: Sequence[str] = (),
+        password: str | None = None,
+        encoding: str = "utf8",
+        connect_timeout: float | None = 10,
+        new_session: bool = False,
+    ) -> None:
+        """Initialize async SSH machine.
+
+        Args:
+            host: The host name to connect to (SSH server)
+            user: The user to connect as (if None, the default will be used)
+            port: The server's port (if None, the default will be used)
+            keyfile: The path to the identity file (if None, the default will be used)
+            ssh_command: The ssh command to use (if None, the default will be used)
+            scp_command: The scp command to use (if None, the default will be used)
+            ssh_opts: Any additional options for ssh (a list of strings)
+            scp_opts: Any additional options for scp (a list of strings)
+            password: The password to use (requires sshpass)
+            encoding: The remote machine's encoding (defaults to UTF8)
+            connect_timeout: Connection timeout (default 10 seconds)
+            new_session: Whether to start as a new session leader
+        """
+        sync_machine = SshMachine(
+            host=host,
+            user=user,
+            port=port,
+            keyfile=keyfile,
+            ssh_command=ssh_command,
+            scp_command=scp_command,
+            ssh_opts=ssh_opts,
+            scp_opts=scp_opts,
+            password=password,
+            encoding=encoding,
+            connect_timeout=connect_timeout,
+            new_session=new_session,
+        )
+        self._sync_machine = sync_machine
+
+    def __getitem__(self, cmd: str | RemotePath | LocalPath) -> Any:
+        """Get an async remote command by name or path."""
+        from plumbum.commands.async_ import AsyncRemoteCommand
+
+        sync_cmd = self._sync_machine[cmd]
+        return AsyncRemoteCommand(sync_cmd)
+
+    def __contains__(self, cmd: str) -> bool:
+        """Check if a command exists in remote PATH."""
+        return cmd in self._sync_machine
+
+    @property
+    def cwd(self) -> Any:
+        """Current working directory on remote machine."""
+        return self._sync_machine.cwd
+
+    @property
+    def env(self) -> Any:
+        """Environment variables on remote machine."""
+        return self._sync_machine.env
+
+    def path(self, *parts: str | RemotePath | LocalPath) -> RemotePath:
+        """Create a RemotePath from parts."""
+        return self._sync_machine.path(*parts)
+
+    def close(self) -> None:
+        """Close the connection to the remote machine."""
+        self._sync_machine.close()
+
+    async def __aenter__(self) -> Self:
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, t: object, v: object, tb: object) -> None:
+        """Async context manager exit."""
+        self.close()

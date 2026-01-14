@@ -490,3 +490,80 @@ Attributes:
 * ``env`` - the local environment
 * ``custom_encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``)
 """
+
+
+class AsyncLocalMachine:
+    """Async version of LocalMachine.
+
+    This class provides async access to local commands and utilities.
+    It delegates to the sync LocalMachine for command lookup and wraps
+    the results in AsyncLocalCommand.
+
+    Example::
+
+        from plumbum.machines.local import async_local
+
+        # Command lookup delegates to sync local machine
+        ls = async_local["ls"]
+
+        # Execution is async
+        result = await ls("-la")
+
+    .. versionadded:: 2.0
+    """
+
+    def __getitem__(self, cmd: str | LocalPath) -> Any:
+        """Get an async command by name or path.
+
+        This delegates to local[cmd] to get the sync command, then wraps it.
+
+        Args:
+            cmd: Command name (will be looked up in PATH) or LocalPath
+
+        Returns:
+            AsyncLocalCommand instance
+
+        Raises:
+            CommandNotFound: If command is not found in PATH
+        """
+        from plumbum.commands.async_ import AsyncLocalCommand
+
+        # Delegate to sync local machine for command lookup
+        sync_cmd = local[cmd]
+        return AsyncLocalCommand(sync_cmd)
+
+    def __contains__(self, cmd: str) -> bool:
+        """Check if a command exists in PATH."""
+        # Delegate to sync local machine
+        return cmd in local
+
+    @property
+    def cwd(self) -> LocalPath:
+        """Current working directory."""
+        return local.cwd  # type: ignore[no-any-return]
+
+    @property
+    def env(self) -> LocalEnv:
+        """Environment variables."""
+        return local.env
+
+    def path(self, *parts: str) -> Any:
+        """Create a LocalPath from parts."""
+        return local.path(*parts)
+
+
+async_local = AsyncLocalMachine()
+"""Async version of the local machine singleton.
+
+Use this to access async commands::
+
+    from plumbum import async_local
+    # or
+    from plumbum.machines.local import async_local
+
+    async def main():
+        result = await async_local["ls"]("-la")
+        print(result)
+
+.. versionadded:: 2.0
+"""
