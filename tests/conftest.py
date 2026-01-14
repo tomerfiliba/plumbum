@@ -71,6 +71,9 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    # Consistent locale for tests
+    os.environ["LANG"] = "C"
+
     # register all optional tests declared in ini file as markers
     # https://docs.pytest.org/en/latest/writing_plugins.html#registering-custom-markers
 
