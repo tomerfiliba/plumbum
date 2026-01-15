@@ -893,7 +893,7 @@ class TestLocalMachine:
         p.terminate()
 
     # Hangs sometimes on Windows
-    @skip_if_no_posix_tools
+    @skip_on_windows
     @pytest.mark.timeout(20)
     def test_local_daemon(self):
         from plumbum.cmd import sleep
