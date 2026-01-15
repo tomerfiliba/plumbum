@@ -149,8 +149,7 @@ else:
                 next_exc = ctypes.WinError(ctypes.get_last_error())
                 if exc is None:
                     raise next_exc from None
-                else:
-                    raise exc from next_exc
+                raise exc from next_exc
 
 
 class AtomicFile:
