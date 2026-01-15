@@ -159,18 +159,18 @@ class LocalMachine(BaseMachine):
     * ``custom_encoding`` - the local machine's default encoding (``sys.getfilesystemencoding()``)
     """
 
-    __slots__ = ("_aliases", "_as_user_stack", "_start_time")
+    __slots__ = ("_as_user_stack", "_start_time")
 
     cwd = StaticProperty(LocalWorkdir)
     env = LocalEnv()
 
     custom_encoding = sys.getfilesystemencoding()
     uname = platform.uname()[0]
+    _aliases: ClassVar[dict[str, str | LocalPath]] = {}
     _program_cache: ClassVar[dict[tuple[str, str], LocalPath]] = {}
 
     def __init__(self) -> None:
         self._as_user_stack: list[Any] = []
-        self._aliases: dict[str, str | LocalPath] = {}
 
     @classmethod
     def clear_program_cache(cls) -> None:
@@ -221,14 +221,27 @@ class LocalMachine(BaseMachine):
         with contextlib.suppress(KeyError):
             return cls._program_cache[key]
 
+        # Resolve aliases before falling back to the default behavior.
+        if progname in cls._aliases:
+            alias_path = cls._aliases[progname]
+            if alias_path:
+                if isinstance(alias_path, LocalPath):
+                    if alias_path.exists():
+                        cls._program_cache[(progname, "")] = alias_path
+                        return alias_path
+                else:
+                    pass
+                    # cls._program_cache[(progname, "")] = alias_path
+                    # return alias_path
+
         alternatives = [progname]
         if "_" in progname:
             alternatives += [progname.replace("_", "-"), progname.replace("_", ".")]
         for pn in alternatives:
-            path = cls._which(pn)
-            if path:
-                cls._program_cache[key] = path
-                return path
+            prog_path = cls._which(pn)
+            if prog_path:
+                cls._program_cache[key] = prog_path
+                return prog_path
         raise CommandNotFound(progname, list(cls.env.path))
 
     def path(self, *parts: str) -> LocalPath:
@@ -252,6 +265,10 @@ class LocalMachine(BaseMachine):
     def unalias(self, name: str) -> None:
         """Remove an alias if it exists."""
         self._aliases.pop(name, None)
+
+    def clear_aliases(self) -> None:
+        """Remove all aliases."""
+        self._aliases.clear()
 
     def aliases(self) -> Mapping[str, str | LocalPath]:
         """Return a read-only view of registered aliases."""

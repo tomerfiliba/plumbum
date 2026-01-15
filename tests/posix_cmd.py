@@ -16,7 +16,10 @@ if IS_WIN32:
         GIT_BIN_PATH = GIT_PATH.dirname.dirname.join("usr/bin")
     if GIT_BIN_PATH:
         GIT_ALIASES = {
+            "sh": GIT_BIN_PATH.join("sh.exe"),
             "bash": GIT_BIN_PATH.join("bash.exe"),
+            "true": GIT_BIN_PATH.join("true.exe"),
+            "false": GIT_BIN_PATH.join("false.exe"),
             "ls": GIT_BIN_PATH.join("ls.exe"),
             "pwd": GIT_BIN_PATH.join("pwd.exe"),
             "rm": GIT_BIN_PATH.join("rm.exe"),
@@ -37,6 +40,11 @@ if IS_WIN32:
             "clear": GIT_BIN_PATH.join("clear.exe"),
             "basename": GIT_BIN_PATH.join("basename.exe"),
             "dirname": GIT_BIN_PATH.join("dirname.exe"),
+            "printenv": GIT_BIN_PATH.join("printenv.exe"),
+            "chattr": GIT_BIN_PATH.join("chattr.exe"),
+            "chmod": GIT_BIN_PATH.join("chmod.exe"),
+            "chown": GIT_BIN_PATH.join("chown.exe"),
+            "cksum": GIT_BIN_PATH.join("cksum.exe"),
         }
         for name, exe_path in GIT_ALIASES.items():
             local.alias(name, exe_path)

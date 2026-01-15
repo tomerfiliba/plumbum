@@ -32,14 +32,36 @@ from plumbum.lib import IS_WIN32
 from plumbum.machines.local import LocalCommand, PlumbumLocalPopen
 from plumbum.path import RelativePath
 
+if IS_WIN32:
+    import ctypes
+    from ctypes.wintypes import BOOL, DWORD
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    # ctypes based replacement for win32api.GenerateConsoleCtrlEvent()
+
+    # Refer: https://learn.microsoft.com/en-us/windows/console/generateconsolectrlevent
+    # Send a specified signal to a console process group that shares
+    # the console associated with the calling process.
+    GenerateConsoleCtrlEvent = kernel32.GenerateConsoleCtrlEvent
+    GenerateConsoleCtrlEvent.restype = BOOL
+    GenerateConsoleCtrlEvent.argtypes = [
+        DWORD,  # dwControlEvent   # Signal to generate
+        DWORD,  # dwProcessGroupId # Process group to get signal
+    ]
+
+    # Refer: https://learn.microsoft.com/en-us/windows/console/generateconsolectrlevent
+    # Control events for GenerateConsoleCtrlEvent
+    CTRL_C_EVENT = 0
+    CTRL_BREAK_EVENT = 1
+
 # This is a string since we are testing local paths
 SDIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestLocalPopen:
-    @skip_if_no_posix_tools
     def test_contextmanager(self):
-        command = "ls"
+        command = ["cmd.exe", "/C", "dir"] if IS_WIN32 else ["ls"]
         with PlumbumLocalPopen(command):
             pass
 
@@ -306,6 +328,7 @@ class TestLocalPath:
 
 @pytest.mark.usefixtures("testdir")
 class TestLocalMachine:
+    @skip_if_no_posix_tools
     def test_getattr(self):
         pb = plumbum
         assert getattr(pb.cmd, "does_not_exist", 1) == 1
@@ -328,10 +351,12 @@ class TestLocalMachine:
         with pytest.raises(ImportError):
             from plumbum.cmd import non_exist1N9  # noqa: F401
 
+    @skip_if_no_posix_tools
     def test_pathlib(self):
         ls_path = Path(local.which("ls"))
         assert "test_local.py" in local[ls_path]().splitlines()
 
+    @skip_if_no_posix_tools
     def test_get(self):
         assert str(local["ls"]) == str(local.get("ls"))
         assert str(local["ls"]) == str(local.get("non_exist1N9", "ls"))
@@ -343,6 +368,7 @@ class TestLocalMachine:
         with pytest.raises(CommandNotFound):
             local.get("non_exist1N9", "/tmp/non_exist1N8")
 
+    @skip_if_no_posix_tools
     def test_shadowed_by_dir(self):
         real_ls = local["ls"]
         with local.tempdir() as tdir, local.cwd(tdir):
@@ -361,6 +387,7 @@ class TestLocalMachine:
         assert "FG" in repr(FG)
 
     @skip_on_windows
+    @skip_if_no_posix_tools
     def test_cwd(self):
         from plumbum.cmd import ls
 
@@ -380,7 +407,6 @@ class TestLocalMachine:
         with pytest.raises(OSError):
             local.cwd.chdir("../non_exist1N9")
 
-    @skip_on_windows
     def test_mixing_chdir(self):
         assert local.cwd == os.getcwd()
         os.chdir("../plumbum")
@@ -414,7 +440,6 @@ class TestLocalMachine:
                 found = True
         assert found
 
-    @skip_on_windows
     def test_glob_spaces(self):
         fileloc = local.cwd / "file with space.txt"
         assert fileloc.exists()
@@ -455,6 +480,7 @@ class TestLocalMachine:
             p = local.which("dummy-executable")
             assert p == local.cwd / "not-in-path" / "dummy-executable"
 
+    @skip_if_no_posix_tools
     def test_local(self):
         assert "plumbum" in str(local.cwd)
         assert "PATH" in local.env.getdict()
@@ -508,12 +534,14 @@ class TestLocalMachine:
         assert p.returncode == 0
         assert "test_local.py" in out.decode(local.encoding).splitlines()
 
+    @skip_if_no_posix_tools
     def test_run(self):
         from plumbum.cmd import grep, ls
 
         rc, _out, _err = (ls | grep["non_exist1N9"]).run(retcode=1)
         assert rc == 1
 
+    @skip_if_no_posix_tools
     def test_timeout(self):
         from plumbum.cmd import sleep
 
@@ -533,6 +561,7 @@ class TestLocalMachine:
         assert "urndom" in capfd.readouterr()[1]
 
     @skip_on_windows
+    @skip_if_no_posix_tools
     def test_fair_error_attribution(self):
         # use LocalCommand directly for predictable argv
         false = LocalCommand("false")
@@ -542,6 +571,7 @@ class TestLocalMachine:
         assert e.value.argv == ["false"]
 
     @skip_on_windows
+    @skip_if_no_posix_tools
     def test_iter_lines_timeout(self):
         from plumbum.cmd import bash
 
@@ -564,6 +594,7 @@ class TestLocalMachine:
         assert e.value.stdout == "\n".join(map(str, range(95, 100))) + "\n"
 
     @skip_on_windows
+    @skip_if_no_posix_tools
     def test_iter_lines_timeout_by_type(self):
         from plumbum.cmd import bash
         from plumbum.commands.processes import BY_TYPE
@@ -719,6 +750,7 @@ class TestLocalMachine:
             # Order is important on mac
             cmd & logger.pipe(line_timeout=0.45)
 
+    @skip_if_no_posix_tools
     def test_arg_expansion(self):
         from plumbum.cmd import ls
 
@@ -738,6 +770,7 @@ class TestLocalMachine:
         out = sh.run("echo $FOO")[1]
         assert out.splitlines() == ["17"]
 
+    @skip_if_no_posix_tools
     def test_quoting(self):
         ssh = local["ssh"]
         pwd = local["pwd"]
@@ -758,6 +791,7 @@ class TestLocalMachine:
             ls("-a", "")  # check that empty strings are rendered correctly
         assert execinfo.value.argv[-2:] == ["-a", ""]
 
+    @skip_if_no_posix_tools
     def test_exception_pickling(self):
         import pickle
 
@@ -825,16 +859,18 @@ class TestLocalMachine:
 
     def _generate_sigint(self):
         with pytest.raises(KeyboardInterrupt):  # noqa: PT012
-            if sys.platform == "win32":
-                from win32api import GenerateConsoleCtrlEvent
-
-                GenerateConsoleCtrlEvent(0, 0)  # send Ctrl+C to current TTY
+            if IS_WIN32:
+                # send Ctrl+C to current TTY
+                ok = GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0)
+                if not ok:
+                    raise ctypes.WinError(ctypes.get_last_error())
             else:
                 os.kill(0, signal.SIGINT)
             time.sleep(1)
 
     @skip_without_tty
     @skip_on_windows
+    @skip_if_no_posix_tools
     def test_same_sesion(self):
         from plumbum.cmd import sleep
 
@@ -845,6 +881,7 @@ class TestLocalMachine:
         assert p.poll() is not None
 
     @skip_without_tty
+    @skip_if_no_posix_tools
     def test_new_session(self):
         from plumbum.cmd import sleep
 
@@ -856,7 +893,7 @@ class TestLocalMachine:
         p.terminate()
 
     # Hangs sometimes on Windows
-    @skip_on_windows
+    @skip_if_no_posix_tools
     @pytest.mark.timeout(20)
     def test_local_daemon(self):
         from plumbum.cmd import sleep
@@ -959,7 +996,7 @@ for _ in range({num_of_increments}):
         if not IS_WIN32:
             local.path("counter").delete()
 
-    @skip_on_windows
+    @skip_if_no_posix_tools
     @pytest.mark.skipif("printenv" not in local, reason="printenv is missing")
     def test_bound_env(self):
         from plumbum.cmd import printenv
@@ -970,30 +1007,45 @@ for _ in range({num_of_increments}):
             assert printenv.with_env(FOO="sea", BAR="world")("FOO") == "sea\n"
             assert printenv("FOO") == "hello\n"
 
-        assert local.cmd.pwd.with_cwd("/")() == "/\n"
-        assert local.cmd.pwd["-L"].with_env(A="X").with_cwd("/")() == "/\n"
+        path = local.cmd.pwd.with_cwd("/")()
+        if IS_WIN32:
+            assert path[:1] == "/"
+            assert path[1:2].isalpha()
+            path = path[:1] + path[2:]
+        assert path == "/\n"
+        path = local.cmd.pwd["-L"].with_env(A="X").with_cwd("/")()
+        if IS_WIN32:
+            assert path[:1] == "/"
+            assert path[1:2].isalpha()
+            path = path[:1] + path[2:]
+        assert path == "/\n"
 
+    @skip_if_no_posix_tools
     def test_nesting_lists_as_argv(self):
         from plumbum.cmd import ls
 
         c = ls["-l", ["-a", "*.py"]]
         assert c.formulate()[1:] == ["-l", "-a", "*.py"]
 
+    @skip_if_no_posix_tools
     def test_contains_ls(self):
         assert "ls" in local
 
     def test_issue_139(self):
         LocalPath(local.cwd)
 
+    @skip_if_no_posix_tools
     def test_pipeline_failure(self):
         from plumbum.cmd import head, ls
 
         with pytest.raises(ProcessExecutionError):
             (ls["--no-such-option"] | head)()
 
+    @skip_if_no_posix_tools
     def test_cmd(self):
         local.cmd.ls("/tmp")
 
+    @skip_if_no_posix_tools
     def test_pipeline_retcode(self):
         "From PR #288"
         from plumbum.cmd import echo, grep
@@ -1003,6 +1055,7 @@ for _ in range({num_of_increments}):
         print((echo["one two three four"] | grep["two"] | grep["five"])(retcode=None))
         print((echo["one two three four"] | grep["six"] | grep["five"])(retcode=None))
 
+    @skip_if_no_posix_tools
     def test_pipeline_stdin(self):
         from subprocess import PIPE
 
@@ -1012,6 +1065,7 @@ for _ in range({num_of_increments}):
             future.stdin.write(b"foobar")
             future.stdin.close()
 
+    @skip_if_no_posix_tools
     def test_run_bg(self):
         from plumbum.cmd import ls
 
@@ -1019,6 +1073,7 @@ for _ in range({num_of_increments}):
         f.wait()
         assert "test_local.py" in f.stdout
 
+    @skip_if_no_posix_tools
     def test_run_fg(self, capfd):
         from plumbum.cmd import ls
 
@@ -1027,6 +1082,7 @@ for _ in range({num_of_increments}):
         assert "test_local.py" in stdout
 
     @skip_on_windows
+    @skip_if_no_posix_tools
     def test_run_tee(self, capfd):
         from plumbum.cmd import echo
 
@@ -1034,18 +1090,21 @@ for _ in range({num_of_increments}):
         assert result[1] == "This is fun\n"
         assert capfd.readouterr()[0] == "This is fun\n"
 
+    @skip_if_no_posix_tools
     def test_run_tf(self):
         from plumbum.cmd import ls
 
         f = ls["-l"].run_tf()
         assert f is True
 
+    @skip_if_no_posix_tools
     def test_run_retcode(self):
         from plumbum.cmd import ls
 
         f = ls["-l"].run_retcode()
         assert f == 0
 
+    @skip_if_no_posix_tools
     def test_run_nohup(self):
         from plumbum.cmd import ls
 
@@ -1061,6 +1120,7 @@ class TestLocalEncoding:
     except NameError:
         richstr = chr(40960)
 
+    @skip_if_no_posix_tools
     def test_inout_rich(self):
         from plumbum.cmd import echo
 
