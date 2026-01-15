@@ -12,6 +12,7 @@ import typing
 from contextlib import AbstractContextManager, contextmanager
 from subprocess import PIPE, Popen
 from tempfile import mkdtemp
+from types import MappingProxyType
 from typing import Any, ClassVar
 
 from plumbum.commands import CommandNotFound, ConcreteCommand
@@ -25,7 +26,7 @@ from plumbum.path.local import LocalPath, LocalWorkdir
 from plumbum.path.remote import RemotePath
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Generator, Iterator, Sequence
+    from collections.abc import Generator, Iterator, Mapping, Sequence
     from types import TracebackType
 
     from plumbum.commands.base import BaseCommand
@@ -165,6 +166,7 @@ class LocalMachine(BaseMachine):
 
     custom_encoding = sys.getfilesystemencoding()
     uname = platform.uname()[0]
+    _aliases: ClassVar[dict[str, str | LocalPath]] = {}
     _program_cache: ClassVar[dict[tuple[str, str], LocalPath]] = {}
 
     def __init__(self) -> None:
@@ -219,14 +221,27 @@ class LocalMachine(BaseMachine):
         with contextlib.suppress(KeyError):
             return cls._program_cache[key]
 
+        # Resolve aliases before falling back to the default behavior.
+        if progname in cls._aliases:
+            alias_path = cls._aliases[progname]
+            if alias_path:
+                if isinstance(alias_path, LocalPath):
+                    if alias_path.exists():
+                        cls._program_cache[(progname, "")] = alias_path
+                        return alias_path
+                else:
+                    pass
+                    # cls._program_cache[(progname, "")] = alias_path
+                    # return alias_path
+
         alternatives = [progname]
         if "_" in progname:
             alternatives += [progname.replace("_", "-"), progname.replace("_", ".")]
         for pn in alternatives:
-            path = cls._which(pn)
-            if path:
-                cls._program_cache[key] = path
-                return path
+            prog_path = cls._which(pn)
+            if prog_path:
+                cls._program_cache[key] = prog_path
+                return prog_path
         raise CommandNotFound(progname, list(cls.env.path))
 
     def path(self, *parts: str) -> LocalPath:
@@ -239,6 +254,25 @@ class LocalMachine(BaseMachine):
                 raise TypeError(f"Cannot construct LocalPath from {p!r}")
             parts2.append(self.env.expanduser(str(p)))
         return LocalPath(os.path.join(*parts2))
+
+    def alias(self, name: str, path: str | LocalPath) -> None:
+        """Register a command alias for plumbum.local.
+        Example:
+            local.alias("ls", "C:/Git/usr/bin/ls.exe")
+        """
+        self._aliases[name] = path
+
+    def unalias(self, name: str) -> None:
+        """Remove an alias if it exists."""
+        self._aliases.pop(name, None)
+
+    def clear_aliases(self) -> None:
+        """Remove all aliases."""
+        self._aliases.clear()
+
+    def aliases(self) -> Mapping[str, str | LocalPath]:
+        """Return a read-only view of registered aliases."""
+        return MappingProxyType(self._aliases)
 
     def __contains__(self, cmd: str) -> bool:
         try:
@@ -255,6 +289,11 @@ class LocalMachine(BaseMachine):
 
             ls = local["ls"]
         """
+
+        # Resolve aliases before falling back to the default behavior.
+        cmd_key = str(cmd)
+        if cmd_key in self._aliases:
+            cmd = self._aliases[cmd_key]
 
         if isinstance(cmd, LocalPath):
             return LocalCommand(cmd)
