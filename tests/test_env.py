@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 import contextlib
+import os
 
 import pytest
 from posix_cmd import skip_if_no_posix_tools
@@ -68,8 +68,9 @@ class TestEnv:
             local.env["simple_plum"] = "thing"
         assert "simple_plum" not in local.env
 
-    @pytest.mark.skipif("HOME" not in os.environ,
-                        reason="environment variable HOME is not set")
+    @pytest.mark.skipif(
+        "HOME" not in os.environ, reason="environment variable HOME is not set"
+    )
     def test_home(self):
         assert local.env.home == local.env["HOME"]
         old_home = local.env.home
