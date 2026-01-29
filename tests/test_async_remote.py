@@ -7,11 +7,12 @@ import asyncio
 import pytest
 
 from plumbum import SshMachine
+from plumbum._testtools import skip_on_windows
 from plumbum.commands import ProcessExecutionError
-from plumbum.commands.async_ import AsyncRemoteCommand
+from plumbum.commands.async_ import AsyncRemoteCommand, AsyncRETCODE, AsyncTEE, AsyncTF
 from plumbum.machines.ssh_machine import AsyncSshMachine
 
-pytestmark = pytest.mark.ssh
+pytestmark = [pytest.mark.ssh, skip_on_windows]
 
 TEST_HOST = "127.0.0.1"
 
@@ -92,7 +93,9 @@ class TestAsyncRemotePipeline:
         async with AsyncSshMachine(TEST_HOST) as rem:
             ls = rem["ls"]
             grep = rem["grep"]
+            touch = rem["touch"]
 
+            await touch("testfile.txt")
             pipeline = ls | grep["test"]
             result = await pipeline.run()
 
@@ -154,7 +157,6 @@ class TestAsyncRemoteModifiers:
     @pytest.mark.asyncio
     async def test_async_tf_remote(self):
         """Test AsyncTF with remote command."""
-        from plumbum.commands.async_ import AsyncTF
 
         async with AsyncSshMachine(TEST_HOST) as rem:
             true_cmd = rem["true"]
@@ -164,7 +166,6 @@ class TestAsyncRemoteModifiers:
     @pytest.mark.asyncio
     async def test_async_retcode_remote(self):
         """Test AsyncRETCODE with remote command."""
-        from plumbum.commands.async_ import AsyncRETCODE
 
         async with AsyncSshMachine(TEST_HOST) as rem:
             true_cmd = rem["true"]
@@ -174,13 +175,65 @@ class TestAsyncRemoteModifiers:
     @pytest.mark.asyncio
     async def test_async_tee_remote(self):
         """Test AsyncTEE with remote command."""
-        from plumbum.commands.async_ import AsyncTEE
 
         async with AsyncSshMachine(TEST_HOST) as rem:
             echo = rem["echo"]
             retcode, stdout, _stderr = await (echo["hello"] & AsyncTEE)
             assert retcode == 0
             assert "hello" in stdout
+
+
+class TestAsyncRemotePipelineSemantics:
+    """Tests for remote pipeline semantics (pipefail)."""
+
+    @pytest.mark.asyncio
+    async def test_pipeline_first_command_fails(self):
+        """Test that remote pipeline fails when first command fails (false | true).
+
+        This verifies that async remote pipelines use pipefail semantics,
+        matching the sync behavior where any stage failure causes pipeline failure.
+        """
+        async with AsyncSshMachine(TEST_HOST) as rem:
+            false_cmd = rem["false"]
+            true_cmd = rem["true"]
+
+            with pytest.raises(ProcessExecutionError) as exc_info:
+                await (false_cmd | true_cmd).run()
+
+            assert exc_info.value.retcode != 0
+
+    @pytest.mark.asyncio
+    async def test_pipeline_last_command_fails(self):
+        """Test that remote pipeline fails when last command fails (true | false)."""
+        async with AsyncSshMachine(TEST_HOST) as rem:
+            true_cmd = rem["true"]
+            false_cmd = rem["false"]
+
+            with pytest.raises(ProcessExecutionError) as exc_info:
+                await (true_cmd | false_cmd).run()
+
+            assert exc_info.value.retcode != 0
+
+    @pytest.mark.asyncio
+    async def test_pipeline_all_succeed(self):
+        """Test that remote pipeline succeeds when all commands succeed."""
+        async with AsyncSshMachine(TEST_HOST) as rem:
+            echo = rem["echo"]
+            cat = rem["cat"]
+
+            result = await (echo["test"] | cat).run()
+            assert result.returncode == 0
+            assert "test" in result.stdout
+
+    @pytest.mark.asyncio
+    async def test_pipeline_with_retcode_disabled(self):
+        """Test that remote pipeline doesn't fail when retcode checking is disabled."""
+        async with AsyncSshMachine(TEST_HOST) as rem:
+            false_cmd = rem["false"]
+            true_cmd = rem["true"]
+
+            result = await (false_cmd | true_cmd).run(retcode=None)
+            assert result.returncode != 0
 
 
 class TestAsyncRemoteIntegration:

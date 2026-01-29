@@ -142,14 +142,14 @@ class AsyncCommandMixin:
 
         return _run()
 
-    def __or__(self, other: AsyncCommandMixin) -> AsyncPipeline:
+    def __or__(self, other: AsyncCommandMixin) -> Self:
         """Create a pipeline using the base command's logic.
 
         This delegates to the sync command's __or__ method to create a sync
-        Pipeline, then wraps it in an AsyncPipeline.
+        Pipeline, then wraps it with the same type as self.
         """
         sync_pipeline = self._base_cmd | other._base_cmd
-        return AsyncPipeline(sync_pipeline)
+        return self.__class__(sync_pipeline)
 
     def formulate(self, level: int = 0, args: Sequence[Any] = ()) -> list[str]:
         """Delegate formulation to the base command.
@@ -186,62 +186,17 @@ class AsyncCommandMixin:
             ProcessExecutionError: If return code doesn't match expected
             asyncio.TimeoutError: If timeout is exceeded
         """
-        # Use base command's formulate method
-        argv = self._base_cmd.formulate(0, args)
+        loop = asyncio.get_event_loop()
 
-        # Get encoding from base command
-        encoding = self._base_cmd._get_encoding() or local.custom_encoding
-
-        # Merge environment - reuse base command's env if set
-        full_env = dict(local.env.getdict())
-        base_env = getattr(self._base_cmd, "env", None)
-        if base_env:
-            full_env.update(base_env)
-        if env:
-            full_env.update(env)
-
-        # Use base command's cwd if set
-        base_cwd = getattr(self._base_cmd, "cwd", None)
-        working_dir = cwd or base_cwd or str(local.cwd)
-
-        # Create subprocess
-        proc = await asyncio.create_subprocess_exec(
-            *argv,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            cwd=working_dir,
-            env=full_env,
-        )
-
-        # Wait for completion with timeout
-        try:
-            stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                proc.communicate(), timeout=timeout
+        def _run_sync() -> tuple[int, str, str]:
+            retcode_val, stdout, stderr = self._base_cmd.run(
+                args, retcode=retcode, timeout=timeout, cwd=cwd, env=env
             )
-        except asyncio.TimeoutError:
-            proc.kill()
-            await proc.wait()
-            raise
+            return retcode_val, stdout, stderr
 
-        # Decode output
-        stdout = stdout_bytes.decode(encoding, errors="ignore") if stdout_bytes else ""
-        stderr = stderr_bytes.decode(encoding, errors="ignore") if stderr_bytes else ""
+        retcode_val, stdout, stderr = await loop.run_in_executor(None, _run_sync)
 
-        # Check return code - reuse the same logic as sync commands
-        if retcode is not None:
-            expected_codes: set[int] = (
-                {retcode} if isinstance(retcode, int) else set(retcode)  # type: ignore[call-overload]
-            )
-
-            if proc.returncode not in expected_codes:
-                raise ProcessExecutionError(
-                    argv=argv,
-                    retcode=proc.returncode,
-                    stdout=stdout,
-                    stderr=stderr,
-                )
-
-        return AsyncResult(proc.returncode or 0, stdout, stderr)
+        return AsyncResult(retcode_val, stdout, stderr)
 
     async def popen(
         self,
@@ -262,10 +217,8 @@ class AsyncCommandMixin:
         Returns:
             asyncio.subprocess.Process instance
         """
-        # Use base command's formulate method
         argv = self._base_cmd.formulate(0, args)
 
-        # Merge environment - reuse base command's env if set
         full_env = dict(local.env.getdict())
         base_env = getattr(self._base_cmd, "env", None)
         if base_env:
@@ -273,11 +226,9 @@ class AsyncCommandMixin:
         if env:
             full_env.update(env)
 
-        # Use base command's cwd if set
         base_cwd = getattr(self._base_cmd, "cwd", None)
         working_dir = cwd or base_cwd or str(local.cwd)
 
-        # Create subprocess
         return await asyncio.create_subprocess_exec(
             *argv,
             stdout=asyncio.subprocess.PIPE,
@@ -307,120 +258,6 @@ class AsyncCommand(AsyncCommandMixin):
     """
 
     __slots__ = ()
-
-
-class AsyncPipeline(AsyncCommandMixin):
-    """Async wrapper for Pipeline.
-
-    This class wraps a sync Pipeline and provides async execution capabilities.
-    It reuses the pipeline's formulation logic, which already includes the pipe
-    symbols and proper command chaining.
-
-    Example::
-
-        # Pipeline creation delegates to sync commands
-        pipeline = async_local["ls"] | async_local["grep"]["py"]
-
-        # Execution is async
-        result = await pipeline.run()
-    """
-
-    __slots__ = ()
-
-    def __or__(self, other: AsyncCommandMixin) -> AsyncPipeline:
-        """Add another command to the pipeline using base pipeline logic."""
-        # Create a new sync pipeline, then wrap it
-        sync_pipeline = self._base_cmd | other._base_cmd
-        return AsyncPipeline(sync_pipeline)
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Coroutine[Any, Any, str]:
-        """Execute the pipeline and return stdout."""
-
-        async def _run() -> str:
-            result = await self.run(args, **kwargs)
-            return result.stdout
-
-        return _run()
-
-    async def run(
-        self,
-        args: Sequence[Any] = (),
-        retcode: int | Container[int] | None = 0,
-        timeout: float | None = None,
-        cwd: str | None = None,
-        env: dict[str, str] | None = None,
-    ) -> AsyncResult:
-        """Run the pipeline asynchronously.
-
-        Args:
-            args: Additional arguments for the last command in the pipeline
-            retcode: Expected return code(s) for the last command
-            timeout: Maximum time to wait for pipeline completion
-            cwd: Working directory
-            env: Environment variables
-
-        Returns:
-            AsyncResult from the last command in the pipeline
-        """
-        # Use base pipeline's formulate method to build the command
-        argv = self._base_cmd.formulate(0, args)
-
-        # Build shell command from formulated args
-        # The formulate method already includes the pipe symbols
-        shell_cmd = " ".join(argv)
-
-        # Get encoding from base command
-        encoding = self._base_cmd._get_encoding() or local.custom_encoding
-
-        # Merge environment - reuse base command's env if set
-        full_env = dict(local.env.getdict())
-        base_env = getattr(self._base_cmd, "env", None)
-        if base_env:
-            full_env.update(base_env)
-        if env:
-            full_env.update(env)
-
-        # Use base command's cwd if set
-        base_cwd = getattr(self._base_cmd, "cwd", None)
-        working_dir = cwd or base_cwd or str(local.cwd)
-
-        # Execute via shell
-        proc = await asyncio.create_subprocess_shell(
-            shell_cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            cwd=working_dir,
-            env=full_env,
-        )
-
-        try:
-            stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                proc.communicate(), timeout=timeout
-            )
-        except asyncio.TimeoutError:
-            proc.kill()
-            await proc.wait()
-            raise
-
-        # Decode output
-        stdout = stdout_bytes.decode(encoding, errors="ignore") if stdout_bytes else ""
-        stderr = stderr_bytes.decode(encoding, errors="ignore") if stderr_bytes else ""
-
-        # Check return code - reuse the same logic as sync commands
-        if retcode is not None:
-            expected_codes: set[int] = (
-                {retcode} if isinstance(retcode, int) else set(retcode)  # type: ignore[call-overload]
-            )
-
-            if proc.returncode not in expected_codes:
-                raise ProcessExecutionError(
-                    argv=argv,
-                    retcode=proc.returncode,
-                    stdout=stdout,
-                    stderr=stderr,
-                )
-
-        return AsyncResult(proc.returncode or 0, stdout, stderr)
 
 
 class AsyncLocalCommand(AsyncCommand):
@@ -703,7 +540,6 @@ AsyncTEE = _AsyncTEE()
 __all__ = (
     "AsyncCommand",
     "AsyncLocalCommand",
-    "AsyncPipeline",
     "AsyncRETCODE",
     "AsyncRemoteCommand",
     "AsyncResult",

@@ -444,6 +444,120 @@ class TestAsyncPipeline:
         with pytest.raises(asyncio.TimeoutError):
             await pipeline.run(timeout=0.5)
 
+    @pytest.mark.asyncio
+    @skip_on_windows
+    async def test_pipeline_first_command_fails(self):
+        """Test that pipeline fails when first command fails (false | true).
+
+        This mirrors the sync test_fair_error_attribution test in test_local.py.
+        When a pipeline fails, the error should be properly detected regardless
+        of which stage failed.
+        """
+        false_cmd = async_local["false"]
+        true_cmd = async_local["true"]
+
+        with pytest.raises(ProcessExecutionError) as exc_info:
+            await (false_cmd | true_cmd)()
+
+        # Verify that the pipeline failed (non-zero return code)
+        assert exc_info.value.retcode != 0
+
+    @pytest.mark.asyncio
+    @skip_on_windows
+    async def test_pipeline_middle_command_fails(self):
+        """Test that pipeline fails when middle command fails (true | false | true)."""
+        true_cmd = async_local["true"]
+        false_cmd = async_local["false"]
+
+        with pytest.raises(ProcessExecutionError) as exc_info:
+            await (true_cmd | false_cmd | true_cmd)()
+
+        assert exc_info.value.retcode != 0
+
+    @pytest.mark.asyncio
+    @skip_on_windows
+    async def test_pipeline_last_command_fails(self):
+        """Test that pipeline fails when last command fails (true | false)."""
+        true_cmd = async_local["true"]
+        false_cmd = async_local["false"]
+
+        with pytest.raises(ProcessExecutionError) as exc_info:
+            await (true_cmd | false_cmd)()
+
+        assert exc_info.value.retcode != 0
+
+    @pytest.mark.asyncio
+    @skip_on_windows
+    async def test_pipeline_all_commands_succeed(self):
+        """Test that pipeline succeeds when all commands succeed."""
+        echo = async_local["echo"]
+        cat = async_local["cat"]
+
+        result = await (echo["test"] | cat)()
+        assert "test" in result
+
+    @pytest.mark.asyncio
+    @skip_on_windows
+    async def test_pipeline_with_retcode_disabled(self):
+        """Test that pipeline doesn't fail when retcode checking is disabled."""
+        false_cmd = async_local["false"]
+        true_cmd = async_local["true"]
+
+        # Should not raise when retcode=None
+        result = await (false_cmd | true_cmd).run(retcode=None)
+        assert result.returncode != 0
+
+    @pytest.mark.asyncio
+    @skip_on_windows
+    async def test_long_pipeline_4_stages(self):
+        """Test pipeline with 4 stages."""
+        echo = async_local["echo"]
+        grep = async_local["grep"]
+        sort = async_local["sort"]
+        wc = async_local["wc"]
+
+        # 4-stage pipeline: echo | grep | sort | wc
+        pipeline = echo["apple\nbanana\napricot"] | grep["^a"] | sort | wc["-l"]
+        result = await pipeline()
+
+        # Should have 2 lines (apple, apricot)
+        assert "2" in result
+
+    @pytest.mark.asyncio
+    @skip_on_windows
+    async def test_long_pipeline_5_stages(self):
+        """Test pipeline with 5 stages."""
+        echo = async_local["echo"]
+        grep = async_local["grep"]
+        sort = async_local["sort"]
+        uniq = async_local["uniq"]
+        wc = async_local["wc"]
+
+        # 5-stage pipeline: echo | grep | sort | uniq | wc
+        data = "apple\napple\nbanana\napricot\napricot\napricot"
+        pipeline = echo[data] | grep["^a"] | sort | uniq | wc["-l"]
+        result = await pipeline()
+
+        # Should have 2 unique lines (apple, apricot)
+        assert "2" in result
+
+    @pytest.mark.asyncio
+    @skip_on_windows
+    async def test_long_pipeline_error_in_middle(self):
+        """Test that error in middle of long pipeline is detected."""
+        echo = async_local["echo"]
+        false_cmd = async_local["false"]
+        true_cmd = async_local["true"]
+        cat = async_local["cat"]
+
+        # 4-stage pipeline with failure in stage 2
+        pipeline = echo["test"] | false_cmd | true_cmd | cat
+
+        with pytest.raises(ProcessExecutionError) as exc_info:
+            await pipeline()
+
+        assert exc_info.value.retcode != 0
+
 
 class TestAsyncLocalMachine:
     """Tests for AsyncLocalMachine."""

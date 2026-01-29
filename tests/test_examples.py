@@ -11,6 +11,8 @@ from pathlib import Path
 
 import pytest
 
+from plumbum._testtools import skip_on_windows
+
 EXAMPLES_DIR = Path(__file__).parent.parent / "examples"
 
 
@@ -73,6 +75,7 @@ class TestExamples:
         assert "Mixing Sync and Async" in result.stdout
 
     @pytest.mark.ssh
+    @skip_on_windows
     def test_async_remote_example_runs(self):
         """Test that async_remote.py runs without errors.
 
