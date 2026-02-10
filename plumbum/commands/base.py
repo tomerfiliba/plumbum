@@ -11,7 +11,11 @@ from types import MethodType
 from typing import ClassVar
 
 import plumbum.commands.modifiers
-from plumbum.commands.processes import iter_lines, run_proc
+from plumbum.commands.processes import (
+    ProcessTimedOut,
+    iter_lines,
+    run_proc,
+)
 
 if typing.TYPE_CHECKING:
     from collections.abc import Container, Generator, Sequence
@@ -459,6 +463,16 @@ class Pipeline(BaseCommand):
             stdout: str,
             stderr: str,
         ) -> None:
+            # Check if any process in the pipeline has timed out
+            # If so, raise ProcessTimedOut instead of ProcessExecutionError
+            if getattr(proc.srcproc, "_timed_out", False) or getattr(
+                proc, "_timed_out", False
+            ):
+                raise ProcessTimedOut(
+                    f"Process did not terminate within {timeout} seconds",
+                    getattr(proc, "argv", None),
+                )
+
             # TODO: right now it's impossible to specify different expected
             # return codes for different stages of the pipeline
             try:

@@ -57,7 +57,7 @@ import asyncio
 import sys
 from typing import TYPE_CHECKING, Any
 
-from plumbum.commands.processes import ProcessExecutionError
+from plumbum.commands.processes import ProcessExecutionError, ProcessTimedOut
 from plumbum.machines.local import local
 
 if sys.version_info >= (3, 11):
@@ -194,7 +194,10 @@ class AsyncCommandMixin:
             )
             return retcode_val, stdout, stderr
 
-        retcode_val, stdout, stderr = await loop.run_in_executor(None, _run_sync)
+        try:
+            retcode_val, stdout, stderr = await loop.run_in_executor(None, _run_sync)
+        except ProcessTimedOut as e:
+            raise asyncio.TimeoutError() from e
 
         return AsyncResult(retcode_val, stdout, stderr)
 
