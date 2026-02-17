@@ -199,7 +199,8 @@ class TestHTMLColor:
     def test_from_ansi_string_global_reset(self):
         mystr = "\033[31mThis is a string\033[0m"
         seq = list(htmlcolors.from_ansi_string(mystr))
-        assert seq == [htmlcolors.red, "This is a string", htmlcolors.fg.reset]
+        # Base from_ansi_string produces a global reset style for code 0
+        assert seq == [htmlcolors.red, "This is a string", htmlcolors.reset]
         assert (
             htmlcolors.sequence_to_string(seq)
             == '<font color="#C00000">This is a string</font>'
@@ -208,14 +209,15 @@ class TestHTMLColor:
     def test_from_ansi_string_with_bold(self):
         mystr = "\033[31mThis is a string\033[1m with bold\033[39m and reset\033[0m"
         seq = list(htmlcolors.from_ansi_string(mystr))
-        # The reset style preserves active attributes for proper HTML generation
+        # Base from_ansi_string produces plain styles, sequence_to_string handles closing order
         assert seq == [
             htmlcolors.red,
             "This is a string",
             htmlcolors.bold,
             " with bold",
-            htmlcolors.bold + htmlcolors.fg.reset,  # Reset with bold preserved
+            htmlcolors.fg.reset,  # Code 39 foreground reset
             " and reset",
+            htmlcolors.reset,  # Code 0 global reset
         ]
         assert (
             htmlcolors.sequence_to_string(seq)

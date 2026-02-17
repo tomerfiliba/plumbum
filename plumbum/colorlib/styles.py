@@ -675,7 +675,7 @@ class Style(metaclass=ABCMeta):
             yield ansi_string[last_end:]
 
     @classmethod
-    def sequence_to_string(cls, sequence: Iterable[Self | str]) -> str:
+    def sequence_to_string(cls, sequence: Iterable[Style | str]) -> str:
         """This is the opposite of from_ansi_string, it takes a list of styles and strings and concatenates them."""
         return "".join(str(s) for s in sequence)
 
@@ -827,73 +827,62 @@ class HTMLStyle(Style):
     end = "<br/>\n"
 
     @classmethod
-    def _make_reset(
-        cls, current_attributes: dict[str, bool], color_type: Literal["fg", "bg"]
-    ) -> Self:
-        """Helper to create a reset style with current attributes preserved"""
-        reset_style = cls(attributes=current_attributes.copy())
-        is_fg = color_type == "fg"
-        setattr(reset_style, color_type, cls.color_class(fg=is_fg))
-        return reset_style
-
-    @classmethod
-    def from_ansi_string(cls, ansi_string: str) -> Iterator[str | Self]:
-        """This will read in a string with interleaved codes"""
-        # Special handling as we need the correct resets to close tags
-        last_end = 0
-        open: list[Literal["fg", "bg"]] = []
+    def sequence_to_string(cls, sequence: Iterable[Style | str]) -> str:
+        """Convert sequence of styles and strings to HTML, handling tag closing order"""
+        open_styles: list[Literal["fg", "bg"]] = []
         current_attributes: dict[str, bool] = {}
+        parts: list[str] = []
 
-        for res in cls.ANSI_REG.finditer(ansi_string):
-            if res.start() > last_end:
-                yield ansi_string[last_end : res.start()]
+        def append_reset(color_type: Literal["fg", "bg"]) -> None:
+            reset = cls(attributes=current_attributes.copy())
+            setattr(reset, color_type, cls.color_class(fg=color_type == "fg"))
+            parts.append(str(reset))
 
-            style = cls()
-            for group in res.groups():
-                sequence = map(int, group.split(";"))
-                style.add_ansi(sequence)
+        def close_until(color_type: Literal["fg", "bg"]) -> None:
+            while open_styles and open_styles[-1] != color_type:
+                append_reset(open_styles.pop())
+            if open_styles:
+                open_styles.pop()
 
-            # Track attributes in the current style
-            if style.attributes:
-                current_attributes.update(style.attributes)
+        for item in sequence:
+            if isinstance(item, str):
+                parts.append(item)
+            else:
+                # Update tracked attributes
+                if item.attributes:
+                    current_attributes.update(item.attributes)
 
-            # Handle foreground and background resets
-            if style.fg and style.fg.isreset:
-                while open and open[-1] != "fg":
-                    open.pop()
-                if open:
-                    open.pop()
-                yield cls._make_reset(current_attributes, "fg")
-            elif style.fg:
-                open.append("fg")
+                # Handle foreground resets
+                if item.fg and item.fg.isreset:
+                    close_until("fg")
+                    append_reset("fg")
+                elif item.fg:
+                    open_styles.append("fg")
+                    parts.append(str(item))
 
-            if style.bg and style.bg.isreset:
-                while open and open[-1] != "bg":
-                    open.pop()
-                if open:
-                    open.pop()
-                yield cls._make_reset(current_attributes, "bg")
-            elif style.bg:
-                open.append("bg")
+                # Handle background resets
+                if item.bg and item.bg.isreset:
+                    close_until("bg")
+                    append_reset("bg")
+                elif item.bg:
+                    open_styles.append("bg")
+                    parts.append(str(item))
 
-            # Handle global reset or yield the style
-            if style.isreset:
-                while open:
-                    yield cls._make_reset(current_attributes, open.pop())
-                current_attributes.clear()
-            elif not (style.fg and style.fg.isreset) and not (
-                style.bg and style.bg.isreset
-            ):
-                yield style
+                # Handle global reset
+                if item.isreset:
+                    while open_styles:
+                        append_reset(open_styles.pop())
+                    current_attributes.clear()
 
-            last_end = res.end()
+                # Yield plain styles that aren't resets
+                if not item.fg and not item.bg and not item.isreset:
+                    parts.append(str(item))
 
         # Close any remaining open tags
-        if last_end < len(ansi_string):
-            yield ansi_string[last_end:]
+        while open_styles:
+            append_reset(open_styles.pop())
 
-        while open:
-            yield cls._make_reset(current_attributes, open.pop())
+        return "".join(parts)
 
     def __str__(self) -> str:
         if self.isreset:
