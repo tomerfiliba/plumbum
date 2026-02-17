@@ -223,3 +223,25 @@ class TestHTMLColor:
             htmlcolors.sequence_to_string(seq)
             == '<font color="#C00000">This is a string<b> with bold</b></font> and reset'
         )
+
+    def test_from_ansi_string_background_only(self):
+        # ANSI 41: red background, 49: background reset
+        mystr = "\033[41mThis is a string\033[49m"
+        seq = list(htmlcolors.from_ansi_string(mystr))
+        # Ensure sequence_to_string correctly renders a pure background color span
+        assert htmlcolors.sequence_to_string(seq) == htmlcolors.bg.red["This is a string"]
+
+    def test_from_ansi_string_foreground_and_background(self):
+        # ANSI 31: red foreground, 44: blue background, 39: fg reset, 49: bg reset
+        mystr = "\033[31;44mThis is a string\033[39;49m"
+        seq = list(htmlcolors.from_ansi_string(mystr))
+        # Expected HTML is what we'd get by applying both fg and bg styles together
+        expected = "This is a string" | (htmlcolors.red & htmlcolors.bg.blue)
+        assert htmlcolors.sequence_to_string(seq) == expected
+
+    def test_from_ansi_string_background_with_global_reset(self):
+        # ANSI 44: blue background, 0: global reset
+        mystr = "\033[44mThis is a string\033[0m"
+        seq = list(htmlcolors.from_ansi_string(mystr))
+        # Global reset should close the background span at the end, yielding the same as bg only
+        assert htmlcolors.sequence_to_string(seq) == htmlcolors.bg.blue["This is a string"]

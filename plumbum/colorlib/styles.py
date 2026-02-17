@@ -874,7 +874,7 @@ class HTMLStyle(Style):
                         append_reset(open_styles.pop())
                     current_attributes.clear()
 
-                # Yield plain styles that aren't resets
+                # Append plain styles that aren't resets
                 if not item.fg and not item.bg and not item.isreset:
                     parts.append(str(item))
 
