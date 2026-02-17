@@ -29,7 +29,7 @@ from .names import (
 )
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Iterable, Iterator, MutableSequence, Sequence
 
     from plumbum._compat.typing import Self
 
@@ -828,35 +828,48 @@ class HTMLStyle(Style):
 
     @classmethod
     def sequence_to_string(cls, sequence: Iterable[Style | str]) -> str:
+        return "".join(cls._sequence_to_sequence(sequence))
+
+    @classmethod
+    def _append_reset(cls, color_type: str, open_tags: Sequence[str]) -> str:
+        # Close a color with all currently open attributes maintained
+        open_attrs = {t: True for t in open_tags if t not in ("fg", "bg")}
+        reset = cls(attributes=open_attrs)
+        setattr(reset, color_type, cls.color_class(fg=color_type == "fg"))
+        return str(reset)
+
+    @classmethod
+    def _close_until_color(
+        cls, color_type: str, open_tags: MutableSequence[str]
+    ) -> Iterator[str]:
+        # Close all tags until we find the color type to close
+        while open_tags and open_tags[-1] != color_type:
+            tag = open_tags.pop()
+            if tag in ("fg", "bg"):
+                yield cls._append_reset(tag, open_tags)
+            else:
+                yield str(cls(attributes={tag: False}))
+        if open_tags:
+            open_tags.pop()
+
+    @classmethod
+    def _sequence_to_sequence(cls, sequence: Iterable[Style | str]) -> Iterator[str]:
         """Convert sequence of styles and strings to HTML, handling tag closing order"""
-        open_styles: list[Literal["fg", "bg"]] = []
-        open_attributes: set[str] = set()  # Track which attributes are currently open
-        parts: list[str] = []
-
-        def append_reset(color_type: Literal["fg", "bg"]) -> None:
-            # Only include attributes that are currently open
-            reset_attrs = dict.fromkeys(open_attributes, True)
-            reset = cls(attributes=reset_attrs)
-            setattr(reset, color_type, cls.color_class(fg=color_type == "fg"))
-            parts.append(str(reset))
-
-        def close_until(color_type: Literal["fg", "bg"]) -> None:
-            while open_styles and open_styles[-1] != color_type:
-                append_reset(open_styles.pop())
-            if open_styles:
-                open_styles.pop()
+        open_tags: list[str] = []  # Stack of open tags: "fg", "bg", or attribute names
 
         for item in sequence:
             if isinstance(item, str):
-                parts.append(item)
+                yield item
             else:
-                # Update tracked attributes and track which ones are open
+                # Update tracked attributes
                 if item.attributes:
                     for attr, value in item.attributes.items():
                         if value:
-                            open_attributes.add(attr)
-                        else:
-                            open_attributes.discard(attr)
+                            if attr not in open_tags:
+                                open_tags.append(attr)
+                        # Close attributes that are being disabled
+                        elif attr in open_tags:
+                            yield from cls._close_until_color(attr, open_tags)
 
                 # Track if we appended this item to avoid duplicates
                 item_appended = False
@@ -866,38 +879,43 @@ class HTMLStyle(Style):
                 bg_is_reset = item.bg and item.bg.isreset
 
                 # Close and reset open colors in reverse order to maintain proper HTML structure
-                if bg_is_reset and "bg" in open_styles:
-                    close_until("bg")
-                    append_reset("bg")
+                if bg_is_reset and "bg" in open_tags:
+                    yield from cls._close_until_color("bg", open_tags)
+                    yield cls._append_reset("bg", open_tags)
 
-                if fg_is_reset and "fg" in open_styles:
-                    close_until("fg")
-                    append_reset("fg")
+                if fg_is_reset and "fg" in open_tags:
+                    yield from cls._close_until_color("fg", open_tags)
+                    yield cls._append_reset("fg", open_tags)
 
                 # If not resetting, open new colors
                 if item.bg and not bg_is_reset:
-                    open_styles.append("bg")
+                    open_tags.append("bg")
                     item_appended = True
 
                 if item.fg and not fg_is_reset:
-                    open_styles.append("fg")
+                    open_tags.append("fg")
                     item_appended = True
 
                 # Handle global reset
                 if item.isreset:
-                    while open_styles:
-                        append_reset(open_styles.pop())
-                    open_attributes.clear()
+                    while open_tags:
+                        tag = open_tags.pop()
+                        if tag in ("fg", "bg"):
+                            yield cls._append_reset(tag, open_tags)
+                        else:
+                            yield str(cls(attributes={tag: False}))
 
                 # Append the item once if we have fg, bg, or other styles
                 if item_appended or (not item.fg and not item.bg and not item.isreset):
-                    parts.append(str(item))
+                    yield str(item)
 
         # Close any remaining open tags
-        while open_styles:
-            append_reset(open_styles.pop())
-
-        return "".join(parts)
+        while open_tags:
+            tag = open_tags.pop()
+            if tag in ("fg", "bg"):
+                yield cls._append_reset(tag, open_tags)
+            else:
+                yield str(cls(attributes={tag: False}))
 
     def __str__(self) -> str:
         if self.isreset:
