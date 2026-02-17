@@ -29,7 +29,7 @@ from .names import (
 )
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator
 
     from plumbum._compat.typing import Self
 
@@ -658,6 +658,27 @@ class Style(metaclass=ABCMeta):
                 result.add_ansi(sequence, filter_resets)
         return result
 
+    @classmethod
+    def from_ansi_string(cls, ansi_string: str) -> Iterator[str | Self]:
+        """This will read in a string with interleaved codes"""
+        last_end = 0
+        for res in cls.ANSI_REG.finditer(ansi_string):
+            if res.start() > last_end:
+                yield ansi_string[last_end : res.start()]
+            style = cls()
+            for group in res.groups():
+                sequence = map(int, group.split(";"))
+                style.add_ansi(sequence)
+            yield style
+            last_end = res.end()
+        if last_end < len(ansi_string):
+            yield ansi_string[last_end:]
+
+    @classmethod
+    def sequence_to_string(cls, sequence: Iterable[Self | str]) -> str:
+        """This is the opposite of from_ansi_string, it takes a list of styles and strings and concatenates them."""
+        return "".join(str(s) for s in sequence)
+
     def add_ansi(self, sequence: Iterable[int], filter_resets: bool = False) -> None:
         """Adds a sequence of ansi numbers to the class. Will ignore resets if filter_resets is True."""
 
@@ -805,26 +826,107 @@ class HTMLStyle(Style):
     }
     end = "<br/>\n"
 
+    @classmethod
+    def _make_reset(
+        cls, current_attributes: dict[str, bool], color_type: Literal["fg", "bg"]
+    ) -> Self:
+        """Helper to create a reset style with current attributes preserved"""
+        reset_style = cls(attributes=current_attributes.copy())
+        is_fg = color_type == "fg"
+        setattr(reset_style, color_type, cls.color_class(fg=is_fg))
+        return reset_style
+
+    @classmethod
+    def from_ansi_string(cls, ansi_string: str) -> Iterator[str | Self]:
+        """This will read in a string with interleaved codes"""
+        # Special handling as we need the correct resets to close tags
+        last_end = 0
+        open: list[Literal["fg", "bg"]] = []
+        current_attributes: dict[str, bool] = {}
+
+        for res in cls.ANSI_REG.finditer(ansi_string):
+            if res.start() > last_end:
+                yield ansi_string[last_end : res.start()]
+
+            style = cls()
+            for group in res.groups():
+                sequence = map(int, group.split(";"))
+                style.add_ansi(sequence)
+
+            # Track attributes in the current style
+            if style.attributes:
+                current_attributes.update(style.attributes)
+
+            # Handle foreground and background resets
+            if style.fg and style.fg.isreset:
+                while open and open[-1] != "fg":
+                    open.pop()
+                if open:
+                    open.pop()
+                yield cls._make_reset(current_attributes, "fg")
+            elif style.fg:
+                open.append("fg")
+
+            if style.bg and style.bg.isreset:
+                while open and open[-1] != "bg":
+                    open.pop()
+                if open:
+                    open.pop()
+                yield cls._make_reset(current_attributes, "bg")
+            elif style.bg:
+                open.append("bg")
+
+            # Handle global reset or yield the style
+            if style.isreset:
+                while open:
+                    yield cls._make_reset(current_attributes, open.pop())
+                current_attributes.clear()
+            elif not (style.fg and style.fg.isreset) and not (
+                style.bg and style.bg.isreset
+            ):
+                yield style
+
+            last_end = res.end()
+
+        # Close any remaining open tags
+        if last_end < len(ansi_string):
+            yield ansi_string[last_end:]
+
+        while open:
+            yield cls._make_reset(current_attributes, open.pop())
+
     def __str__(self) -> str:
         if self.isreset:
             raise ResetNotSupported("HTML does not support global resets!")
 
         result = ""
 
+        # Don't open tags if we're closing fg/bg
+        fg_resetting = self.fg and self.fg.isreset
+        bg_resetting = self.bg and self.bg.isreset
+
         if self.bg and not self.bg.isreset:
             result += f'<span style="background-color: {self.bg.hex_code}">'
         if self.fg and not self.fg.isreset:
             result += f'<font color="{self.fg.hex_code}">'
-        for attr in sorted(self.attributes):
-            if self.attributes[attr]:
-                result += "<" + self.attribute_names[attr] + ">"
+
+        # Only open attribute tags if we're not resetting
+        if not (fg_resetting or bg_resetting):
+            for attr in sorted(self.attributes):
+                if self.attributes[attr]:
+                    result += "<" + self.attribute_names[attr] + ">"
 
         for attr in sorted(self.attributes, reverse=True):
             if not self.attributes[attr]:
                 result += "</" + self.attribute_names[attr].split(" ")[0] + ">"
-        if self.fg and self.fg.isreset:
+
+        # Close all open attributes before closing the foreground tag
+        if fg_resetting:
+            for attr in sorted(self.attributes, reverse=True):
+                if self.attributes[attr]:
+                    result += "</" + self.attribute_names[attr].split(" ")[0] + ">"
             result += "</font>"
-        if self.bg and self.bg.isreset:
+        if bg_resetting:
             result += "</span>"
 
         return result

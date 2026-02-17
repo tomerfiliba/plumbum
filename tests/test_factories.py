@@ -114,6 +114,12 @@ class TestANSIColor:
         col = colors.reset
         assert col == colors.from_ansi(str(col))
 
+    def testFromAnsiString(self):
+        mystr = "\033[31mThis is a string\033[39m"
+        seq = list(colors.from_ansi_string(mystr))
+        assert seq == [colors.red, "This is a string", colors.fg.reset]
+        assert colors.sequence_to_string(seq) == mystr
+
     def testWrappedColor(self):
         string = "This is a string"
         wrapped = "\033[31mThis is a string\033[39m"
@@ -180,3 +186,38 @@ class TestHTMLColor:
         assert "This is tagged" | htmlcolors.red & htmlcolors.em == twin_tagged
         assert "This is tagged" | htmlcolors.em & htmlcolors.red == twin_tagged
         assert htmlcolors.em & htmlcolors.red | "This is tagged" == twin_tagged
+
+    def test_from_ansi_string(self):
+        mystr = "\033[31mThis is a string\033[39m"
+        seq = list(htmlcolors.from_ansi_string(mystr))
+        assert seq == [htmlcolors.red, "This is a string", htmlcolors.fg.reset]
+        assert (
+            htmlcolors.sequence_to_string(seq)
+            == '<font color="#C00000">This is a string</font>'
+        )
+
+    def test_from_ansi_string_global_reset(self):
+        mystr = "\033[31mThis is a string\033[0m"
+        seq = list(htmlcolors.from_ansi_string(mystr))
+        assert seq == [htmlcolors.red, "This is a string", htmlcolors.fg.reset]
+        assert (
+            htmlcolors.sequence_to_string(seq)
+            == '<font color="#C00000">This is a string</font>'
+        )
+
+    def test_from_ansi_string_with_bold(self):
+        mystr = "\033[31mThis is a string\033[1m with bold\033[39m and reset\033[0m"
+        seq = list(htmlcolors.from_ansi_string(mystr))
+        # The reset style preserves active attributes for proper HTML generation
+        assert seq == [
+            htmlcolors.red,
+            "This is a string",
+            htmlcolors.bold,
+            " with bold",
+            htmlcolors.bold + htmlcolors.fg.reset,  # Reset with bold preserved
+            " and reset",
+        ]
+        assert (
+            htmlcolors.sequence_to_string(seq)
+            == '<font color="#C00000">This is a string<b> with bold</b></font> and reset'
+        )

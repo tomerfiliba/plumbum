@@ -274,6 +274,18 @@ The library was written primarily for ANSI color sequences, but can also easily 
 systems. See :ref:`guide-colorlib` for information on how the system works. An HTML version is available as
 ``plumbum.colorlib.htmlcolors``.
 
+You can read in a colored ANSI string into a sequence of strings and styles
+with ``from_ansi_string``. You can convert such a sequence back into a string
+with ``sequence_to_string``. Note that ``from_ansi_string`` in ``HTMLStyle`` is
+customized to handle closing escape sequences correctly. For example::
+
+    from plumbum.colorlib import htmlcolors
+
+    html = html_colors.sequence_to_string(htmlcolors.from_ansi_string(help_output))
+
+.. versionadded:: 1.11
+
+
 See Also
 ========
 

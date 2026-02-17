@@ -14,7 +14,7 @@ from .names import color_names, default_styles
 from .styles import ColorNotFound, Style
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Iterator, Mapping
+    from collections.abc import Iterable, Iterator, Mapping
 
     from plumbum._compat.typing import Self
 
@@ -172,6 +172,14 @@ class StyleFactory(ColorFactory[S]):
     def from_ansi(self, ansi_sequence: str) -> S:
         """Calling this is a shortcut for creating a style from an ANSI sequence."""
         return self._style.from_ansi(ansi_sequence)
+
+    def from_ansi_string(self, ansi_string: str) -> Iterator[S | str]:
+        """Calling this is a shortcut for creating a style from an ANSI string."""
+        return self._style.from_ansi_string(ansi_string)
+
+    def sequence_to_string(self, sequence: Iterable[S | str]) -> str:
+        """Converts a sequence of styles and strings into a single string with ANSI codes."""
+        return self._style.sequence_to_string(sequence)
 
     @property
     def stdout(self) -> TextIO:
