@@ -55,6 +55,7 @@ from plumbum.commands import (
     ProcessTimedOut,
 )
 from plumbum.machines import BaseRemoteMachine, PuttyMachine, SshMachine, local
+from plumbum.machines.local import async_local
 from plumbum.path import LocalPath, Path, RemotePath
 from plumbum.version import version
 
@@ -81,13 +82,15 @@ __all__ = [
     "SshMachine",
     "__author__",
     "__version__",
+    "async_cmd",
+    "async_local",
     "cmd",
     "local",
 ]
 
 from plumbum.colorlib import ansicolors as colors
 
-from . import cmd
+from . import async_cmd, cmd
 
 if typing.TYPE_CHECKING:
     __all__ += ["colors"]

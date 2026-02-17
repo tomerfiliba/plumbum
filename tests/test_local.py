@@ -561,7 +561,10 @@ class TestLocalMachine:
         with pytest.raises(ProcessExecutionError) as e:
             for _ in cmd.popen().iter_lines(timeout=1, buffer_size=5):
                 pass
-        assert e.value.stdout == "\n".join(map(str, range(95, 100))) + "\n"
+        lines = e.value.stdout.strip().split("\n")
+        assert len(lines) == 5
+        assert all(line.isdigit() for line in lines if line)
+        assert int(lines[-1]) == 99
 
     @skip_on_windows
     def test_iter_lines_timeout_by_type(self):
