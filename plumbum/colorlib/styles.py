@@ -830,11 +830,13 @@ class HTMLStyle(Style):
     def sequence_to_string(cls, sequence: Iterable[Style | str]) -> str:
         """Convert sequence of styles and strings to HTML, handling tag closing order"""
         open_styles: list[Literal["fg", "bg"]] = []
-        current_attributes: dict[str, bool] = {}
+        open_attributes: set[str] = set()  # Track which attributes are currently open
         parts: list[str] = []
 
         def append_reset(color_type: Literal["fg", "bg"]) -> None:
-            reset = cls(attributes=current_attributes.copy())
+            # Only include attributes that are currently open
+            reset_attrs = dict.fromkeys(open_attributes, True)
+            reset = cls(attributes=reset_attrs)
             setattr(reset, color_type, cls.color_class(fg=color_type == "fg"))
             parts.append(str(reset))
 
@@ -848,34 +850,47 @@ class HTMLStyle(Style):
             if isinstance(item, str):
                 parts.append(item)
             else:
-                # Update tracked attributes
+                # Update tracked attributes and track which ones are open
                 if item.attributes:
-                    current_attributes.update(item.attributes)
+                    for attr, value in item.attributes.items():
+                        if value:
+                            open_attributes.add(attr)
+                        else:
+                            open_attributes.discard(attr)
 
-                # Handle foreground resets
-                if item.fg and item.fg.isreset:
-                    close_until("fg")
-                    append_reset("fg")
-                elif item.fg:
-                    open_styles.append("fg")
-                    parts.append(str(item))
+                # Track if we appended this item to avoid duplicates
+                item_appended = False
 
-                # Handle background resets
-                if item.bg and item.bg.isreset:
+                # Handle resets - check which colors need resetting
+                fg_is_reset = item.fg and item.fg.isreset
+                bg_is_reset = item.bg and item.bg.isreset
+
+                # Close and reset open colors in reverse order to maintain proper HTML structure
+                if bg_is_reset and "bg" in open_styles:
                     close_until("bg")
                     append_reset("bg")
-                elif item.bg:
+
+                if fg_is_reset and "fg" in open_styles:
+                    close_until("fg")
+                    append_reset("fg")
+
+                # If not resetting, open new colors
+                if item.bg and not bg_is_reset:
                     open_styles.append("bg")
-                    parts.append(str(item))
+                    item_appended = True
+
+                if item.fg and not fg_is_reset:
+                    open_styles.append("fg")
+                    item_appended = True
 
                 # Handle global reset
                 if item.isreset:
                     while open_styles:
                         append_reset(open_styles.pop())
-                    current_attributes.clear()
+                    open_attributes.clear()
 
-                # Append plain styles that aren't resets
-                if not item.fg and not item.bg and not item.isreset:
+                # Append the item once if we have fg, bg, or other styles
+                if item_appended or (not item.fg and not item.bg and not item.isreset):
                     parts.append(str(item))
 
         # Close any remaining open tags

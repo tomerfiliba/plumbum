@@ -229,7 +229,9 @@ class TestHTMLColor:
         mystr = "\033[41mThis is a string\033[49m"
         seq = list(htmlcolors.from_ansi_string(mystr))
         # Ensure sequence_to_string correctly renders a pure background color span
-        assert htmlcolors.sequence_to_string(seq) == htmlcolors.bg.red["This is a string"]
+        assert (
+            htmlcolors.sequence_to_string(seq) == htmlcolors.bg.red["This is a string"]
+        )
 
     def test_from_ansi_string_foreground_and_background(self):
         # ANSI 31: red foreground, 44: blue background, 39: fg reset, 49: bg reset
@@ -244,4 +246,6 @@ class TestHTMLColor:
         mystr = "\033[44mThis is a string\033[0m"
         seq = list(htmlcolors.from_ansi_string(mystr))
         # Global reset should close the background span at the end, yielding the same as bg only
-        assert htmlcolors.sequence_to_string(seq) == htmlcolors.bg.blue["This is a string"]
+        assert (
+            htmlcolors.sequence_to_string(seq) == htmlcolors.bg.blue["This is a string"]
+        )
