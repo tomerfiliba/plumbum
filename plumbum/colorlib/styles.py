@@ -10,6 +10,7 @@ With the ``Style`` class, any color can be directly called or given to a with st
 from __future__ import annotations
 
 import contextlib
+import dataclasses
 import os
 import platform
 import re
@@ -29,7 +30,7 @@ from .names import (
 )
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator, MutableSequence, Sequence
+    from collections.abc import Iterable, Iterator
 
     from plumbum._compat.typing import Self
 
@@ -135,6 +136,8 @@ class Color:
         r_or_color: None | int | Color | str = None,
         g: int | None = None,
         b: int | None = None,
+        /,
+        *,
         fg: bool = True,
     ):
         """This works from color values, or tries to load non-simple ones."""
@@ -152,7 +155,7 @@ class Color:
         self.number = typing.cast("int", None)
         "Number of the original color, or closest color"
 
-        self.representation = 4
+        self.representation = 2
         "0 for off, 1 for 8 colors, 2 for 16 colors, 3 for 256 colors, 4 for true color"
 
         self.exact = True
@@ -242,6 +245,7 @@ class Color:
             color = color.replace("_", "")
 
         if color == "reset":
+            self.representation = 2
             return
 
         if isinstance(color, str) and color in _lower_camel_names:
@@ -287,11 +291,13 @@ class Color:
 
     def __repr__(self) -> str:
         """This class has a smart representation that shows name and color (if not unique)."""
-        name = ["Deactivated:", " Basic:", "", " Full:", " True:"][self.representation]
-        name += "" if self.fg else " Background"
+        name = ["Deactivated: ", "BasicColor: ", "", "FullColor: ", "TrueColor: "][
+            self.representation
+        ]
+        name += "Foreground" if self.fg else "Background"
         name += " " + self.name_camelcase
         name += "" if self.exact else " " + self.hex_code
-        return name[1:]
+        return name
 
     def __eq__(self, other: object) -> bool:
         """Reset colors are equal, otherwise rgb have to match."""
@@ -351,6 +357,12 @@ class Color:
         """Only converts if val is lower than representation"""
 
         return self if self.representation <= val else self.to_representation(val)
+
+    def reset(self) -> Self:
+        """This is a shortcut to get a reset color, keeps the same representation."""
+        retval = self.__class__()
+        retval.representation = self.representation
+        return retval
 
 
 S = TypeVar("S", "Style", str)
@@ -443,10 +455,10 @@ class Style(metaclass=ABCMeta):
 
         # Reset only if color present
         if self.fg:
-            other.fg = self.fg.__class__()
+            other.fg = self.fg.reset()
 
         if self.bg:
-            other.bg = self.bg.__class__()
+            other.bg = self.bg.reset()
 
         return other
 
@@ -485,8 +497,12 @@ class Style(metaclass=ABCMeta):
                     result.attributes[attribute] = self.attributes[attribute]
             if not result.fg:
                 result.fg = self.fg
+            elif result.fg.isreset and self.fg:
+                result.fg.representation = self.fg.representation
             if not result.bg:
                 result.bg = self.bg
+            elif result.bg.isreset and self.bg:
+                result.bg.representation = self.bg.representation
             return result
 
         return other.__class__(self) + other
@@ -494,6 +510,18 @@ class Style(metaclass=ABCMeta):
     def __radd__(self, other: str) -> str:
         """This only gets called if the string is on the left side. (Not safe)"""
         return other + other.__class__(self)
+
+    def _clean_resets(self) -> Self:
+        """This removes resets from the style"""
+        other = copy(self)
+        if other.fg and other.fg.isreset:
+            other.fg = None
+        if other.bg and other.bg.isreset:
+            other.bg = None
+        for attribute in list(other.attributes):
+            if not other.attributes[attribute]:
+                del other.attributes[attribute]
+        return other
 
     def wrap(self, wrap_this: str) -> str:
         """Wrap a string in this style and its inverse."""
@@ -793,7 +821,7 @@ class ANSIStyle(Style):
     """This is a subclass for ANSI styles. Use it to get
     color on sys.stdout tty terminals on posix systems.
 
-    Set ``use_color = True/False`` if you want to control color
+    Set ``use_color = 0 # up to 4`` if you want to control color
     for anything using this Style."""
 
     __slots__ = ()
@@ -807,6 +835,44 @@ class ANSIStyle(Style):
             if self.use_color
             else ""
         )
+
+
+@dataclasses.dataclass(init=False, eq=True)
+class HTMLTag:
+    """This is a helper for HTMLStyle"""
+
+    __slots__ = ("attributes", "closing", "name")
+    name: str
+    attributes: dict[str, str]
+    closing: bool
+
+    def __init__(self, name: str, closing: bool = False, /, **attributes: str) -> None:
+        self.name = name
+        self.attributes = attributes
+        self.closing = closing
+
+    @classmethod
+    def from_attr_name(cls, tag_string: str) -> HTMLTag:
+        name, _, attr = tag_string.partition(" ")
+        if not attr:
+            return cls(name)
+
+        # We don't join attributes, so only supporting one is fine for now.
+        attr_name, _, attr_value = attr.partition("=")
+        if attr_value.startswith('"') and attr_value.endswith('"'):
+            attr_value = attr_value[1:-1]
+        return cls(name, **{attr_name: attr_value})
+
+    def __str__(self) -> str:
+        if self.closing:
+            return f"</{self.name}>"
+        if self.attributes:
+            attr_string = " ".join(f'{k}="{v}"' for k, v in self.attributes.items())
+            return f"<{self.name} {attr_string}>"
+        return f"<{self.name}>"
+
+    def close(self) -> Self:
+        return self.__class__(self.name, True, **self.attributes)
 
 
 class HTMLStyle(Style):
@@ -831,124 +897,79 @@ class HTMLStyle(Style):
         return "".join(cls._sequence_to_sequence(sequence))
 
     @classmethod
-    def _append_reset(cls, color_type: str, open_tags: Sequence[str]) -> str:
-        # Close a color with all currently open attributes maintained
-        open_attrs = {t: True for t in open_tags if t not in ("fg", "bg")}
-        reset = cls(attributes=open_attrs)
-        setattr(reset, color_type, cls.color_class(fg=color_type == "fg"))
-        return str(reset)
-
-    @classmethod
-    def _close_until_color(
-        cls, color_type: str, open_tags: MutableSequence[str]
-    ) -> Iterator[str]:
-        # Close all tags until we find the color type to close
-        while open_tags and open_tags[-1] != color_type:
-            tag = open_tags.pop()
-            if tag in ("fg", "bg"):
-                yield cls._append_reset(tag, open_tags)
-            else:
-                yield str(cls(attributes={tag: False}))
-        if open_tags:
-            open_tags.pop()
-
-    @classmethod
     def _sequence_to_sequence(cls, sequence: Iterable[Style | str]) -> Iterator[str]:
         """Convert sequence of styles and strings to HTML, handling tag closing order"""
-        open_tags: list[str] = []  # Stack of open tags: "fg", "bg", or attribute names
+        current_tags: list[HTMLTag] = []
+        current_style = cls()
 
         for item in sequence:
             if isinstance(item, str):
                 yield item
+            elif item.isreset:
+                for tag in reversed(current_tags):
+                    yield str(tag.close())
+                current_tags = []
             else:
-                # Update tracked attributes
-                if item.attributes:
-                    for attr, value in item.attributes.items():
-                        if value:
-                            if attr not in open_tags:
-                                open_tags.append(attr)
-                        # Close attributes that are being disabled
-                        elif attr in open_tags:
-                            yield from cls._close_until_color(attr, open_tags)
+                current_style += item  # type: ignore[assignment]
+                current_style = current_style._clean_resets()
+                new_tags = list(current_style._get_tags())
 
-                # Track if we appended this item to avoid duplicates
-                item_appended = False
+                # Find common prefix between current and new tags
+                common_prefix_len = 0
+                for i, (old, new) in enumerate(zip(current_tags, new_tags)):
+                    if old == new:
+                        common_prefix_len = i + 1
+                    else:
+                        break
 
-                # Handle resets - check which colors need resetting
-                fg_is_reset = item.fg and item.fg.isreset
-                bg_is_reset = item.bg and item.bg.isreset
+                # Close tags that are different (in reverse order)
+                for tag in reversed(current_tags[common_prefix_len:]):
+                    yield str(tag.close())
 
-                # Close and reset open colors in reverse order to maintain proper HTML structure
-                if bg_is_reset and "bg" in open_tags:
-                    yield from cls._close_until_color("bg", open_tags)
-                    yield cls._append_reset("bg", open_tags)
+                # Open new tags that are different
+                for tag in new_tags[common_prefix_len:]:
+                    yield str(tag)
 
-                if fg_is_reset and "fg" in open_tags:
-                    yield from cls._close_until_color("fg", open_tags)
-                    yield cls._append_reset("fg", open_tags)
+                current_tags = new_tags
 
-                # If not resetting, open new colors
-                if item.bg and not bg_is_reset:
-                    open_tags.append("bg")
-                    item_appended = True
+        for tag in reversed(current_tags):
+            yield str(tag.close())
 
-                if item.fg and not fg_is_reset:
-                    open_tags.append("fg")
-                    item_appended = True
-
-                # Handle global reset
-                if item.isreset:
-                    while open_tags:
-                        tag = open_tags.pop()
-                        if tag in ("fg", "bg"):
-                            yield cls._append_reset(tag, open_tags)
-                        else:
-                            yield str(cls(attributes={tag: False}))
-
-                # Append the item once if we have fg, bg, or other styles
-                if item_appended or (not item.fg and not item.bg and not item.isreset):
-                    yield str(item)
-
-        # Close any remaining open tags
-        while open_tags:
-            tag = open_tags.pop()
-            if tag in ("fg", "bg"):
-                yield cls._append_reset(tag, open_tags)
-            else:
-                yield str(cls(attributes={tag: False}))
-
-    def __str__(self) -> str:
-        if self.isreset:
-            raise ResetNotSupported("HTML does not support global resets!")
-
-        result = ""
-
+    def _get_tags(self) -> Iterator[HTMLTag]:
         # Don't open tags if we're closing fg/bg
         fg_resetting = self.fg and self.fg.isreset
         bg_resetting = self.bg and self.bg.isreset
 
         if self.bg and not self.bg.isreset:
-            result += f'<span style="background-color: {self.bg.hex_code}">'
+            yield HTMLTag("span", style=f"background-color: {self.bg.hex_code}")
         if self.fg and not self.fg.isreset:
-            result += f'<font color="{self.fg.hex_code}">'
+            yield HTMLTag("font", color=self.fg.hex_code)
 
         # Only open attribute tags if we're not resetting
         if not (fg_resetting or bg_resetting):
             for attr in sorted(self.attributes):
                 if self.attributes[attr]:
-                    result += "<" + self.attribute_names[attr] + ">"
+                    yield HTMLTag.from_attr_name(self.attribute_names[attr])
 
+        # Closing instead
         for attr in sorted(self.attributes, reverse=True):
             if not self.attributes[attr]:
-                result += "</" + self.attribute_names[attr].split(" ")[0] + ">"
-
+                yield HTMLTag.from_attr_name(self.attribute_names[attr]).close()
         # Close all open attributes before closing the foreground tag
         if fg_resetting:
-            for attr in sorted(self.attributes, reverse=True):
-                if self.attributes[attr]:
-                    result += "</" + self.attribute_names[attr].split(" ")[0] + ">"
-            result += "</font>"
+            yield HTMLTag("font").close()
         if bg_resetting:
-            result += "</span>"
+            yield HTMLTag("span").close()
 
-        return result
+    def __str__(self) -> str:
+        if self.isreset:
+            raise ResetNotSupported("HTML does not support global resets!")
+
+        return "".join(str(tag) for tag in self._get_tags())
+
+    def __eq__(self, other: object) -> bool:
+        if self.isreset:
+            return isinstance(other, HTMLStyle) and other.isreset
+        return super().__eq__(other)
+
+    __hash__ = None

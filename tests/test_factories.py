@@ -221,7 +221,7 @@ class TestHTMLColor:
         ]
         assert (
             htmlcolors.sequence_to_string(seq)
-            == '<font color="#C00000">This is a string<b> with bold</b></font> and reset'
+            == '<font color="#C00000">This is a string<b> with bold</b></font><b> and reset</b>'
         )
 
     def test_from_ansi_string_background_only(self):
@@ -248,4 +248,63 @@ class TestHTMLColor:
         # Global reset should close the background span at the end, yielding the same as bg only
         assert (
             htmlcolors.sequence_to_string(seq) == htmlcolors.bg.blue["This is a string"]
+        )
+
+    def test_from_ansi_string_bold_then_color(self):
+        # Start with bold, then add foreground color
+        mystr = "\033[1mBold\033[31m text\033[39m more\033[21m"
+        seq = list(htmlcolors.from_ansi_string(mystr))
+        result = htmlcolors.sequence_to_string(seq)
+        assert (
+            result == '<b>Bold</b><font color="#C00000"><b> text</b></font><b> more</b>'
+        )
+
+    def test_from_ansi_string_color_then_bold_then_reset_bold(self):
+        # Color, add bold, reset bold while color still active
+        mystr = "\033[31mRed\033[1m bold\033[21m plain red\033[39m"
+        seq = list(htmlcolors.from_ansi_string(mystr))
+        result = htmlcolors.sequence_to_string(seq)
+        # Bold should be closed before the color closes
+        assert result == '<font color="#C00000">Red<b> bold</b> plain red</font>'
+
+    def test_from_ansi_string_bold_and_color_mixed(self):
+        # Interleaved color and bold changes
+        mystr = "\033[1mBold\033[32m green bold\033[39m just bold\033[21m"
+        seq = list(htmlcolors.from_ansi_string(mystr))
+        result = htmlcolors.sequence_to_string(seq)
+        assert (
+            result
+            == '<b>Bold</b><font color="#00C000"><b> green bold</b></font><b> just bold</b>'
+        )
+
+    def test_from_ansi_string_underline_with_color(self):
+        # Test with underline attribute and color changes
+        mystr = "\033[4mUnderscore\033[34m blue\033[39m underscore\033[24m"
+        seq = list(htmlcolors.from_ansi_string(mystr))
+        result = htmlcolors.sequence_to_string(seq)
+        assert (
+            result
+            == '<span style="text-decoration: underline;">Underscore</span><font color="#0000C0"><span style="text-decoration: underline;"> blue</span></font><span style="text-decoration: underline;"> underscore</span>'
+        )
+
+    def test_from_ansi_string_multiple_colors_with_attributes(self):
+        # Multiple color changes while attribute is active
+        mystr = "\033[1;31mRed bold\033[32m green bold\033[38;5;208m orange bold\033[21m attributes only\033[39m"
+        seq = list(htmlcolors.from_ansi_string(mystr))
+        result = htmlcolors.sequence_to_string(seq)
+        assert (
+            result
+            == '<font color="#C00000"><b>Red bold</b></font><font color="#00C000"><b> green bold</b></font><font color="#FF8700"><b> orange bold</b> attributes only</font>'
+        )
+
+    def test_from_ansi_string_complex_nesting(self):
+        # Complex: fg+bg with bold, then remove bold, then remove fg
+        mystr = (
+            "\033[31;44;1mRed bold on blue\033[21m just red on blue\033[39m just blue"
+        )
+        seq = list(htmlcolors.from_ansi_string(mystr))
+        result = htmlcolors.sequence_to_string(seq)
+        assert (
+            result
+            == '<span style="background-color: #0000C0"><font color="#C00000"><b>Red bold on blue</b> just red on blue</font> just blue</span>'
         )
