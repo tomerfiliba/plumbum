@@ -276,8 +276,8 @@ systems. See :ref:`guide-colorlib` for information on how the system works. An H
 
 You can read in a colored ANSI string into a sequence of strings and styles
 with ``from_ansi_string``. You can convert such a sequence back into a string
-with ``sequence_to_string``. Note that ``sequence_to_string`` in ``HTMLStyle`` is
-customized to handle closing escape sequences correctly. For example::
+with ``sequence_to_string``. Note that ``sequence_to_string`` in ``HTMLStyle``
+is customized to handle closing tags correctly. For example::
 
     from plumbum.colorlib import htmlcolors
 

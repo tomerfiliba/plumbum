@@ -85,8 +85,8 @@ class ResetNotSupported(Exception):
 
 class Color:
     """\
-    Loaded with ``(r, g, b, fg)`` or ``(color, fg=fg)``. The second signature is a short cut
-    and will try full and hex loading.
+    Loaded with ``(r, g, b, fg=fg)`` or ``(color, fg=fg)``. The second
+    signature is a shortcut and will try full and hex loading.
 
     This class stores the idea of a color, rather than a specific implementation.
     It provides as many different tools for representations as possible, and can be subclassed
@@ -175,6 +175,7 @@ class Color:
 
         elif isinstance(r_or_color, int) and g is not None and b is not None:
             self.rgb = (r_or_color, g, b)
+            self.representation = 4
             self._init_number()
         else:
             raise ColorNotFound("Invalid parameters for a color!")
@@ -360,7 +361,7 @@ class Color:
 
     def reset(self) -> Self:
         """This is a shortcut to get a reset color, keeps the same representation."""
-        retval = self.__class__()
+        retval = self.__class__(fg=self.fg)
         retval.representation = self.representation
         return retval
 
@@ -838,7 +839,7 @@ class ANSIStyle(Style):
 
 
 @dataclasses.dataclass(init=False, eq=True)
-class HTMLTag:
+class _HTMLTag:
     """This is a helper for HTMLStyle"""
 
     __slots__ = ("attributes", "closing", "name")
@@ -852,7 +853,7 @@ class HTMLTag:
         self.closing = closing
 
     @classmethod
-    def from_attr_name(cls, tag_string: str) -> HTMLTag:
+    def from_attr_name(cls, tag_string: str) -> _HTMLTag:
         name, _, attr = tag_string.partition(" ")
         if not attr:
             return cls(name)
@@ -899,7 +900,7 @@ class HTMLStyle(Style):
     @classmethod
     def _sequence_to_sequence(cls, sequence: Iterable[Style | str]) -> Iterator[str]:
         """Convert sequence of styles and strings to HTML, handling tag closing order"""
-        current_tags: list[HTMLTag] = []
+        current_tags: list[_HTMLTag] = []
         current_style = cls()
 
         for item in sequence:
@@ -909,6 +910,7 @@ class HTMLStyle(Style):
                 for tag in reversed(current_tags):
                     yield str(tag.close())
                 current_tags = []
+                current_style = cls()
             else:
                 current_style += item  # type: ignore[assignment]
                 current_style = current_style._clean_resets()
@@ -935,31 +937,31 @@ class HTMLStyle(Style):
         for tag in reversed(current_tags):
             yield str(tag.close())
 
-    def _get_tags(self) -> Iterator[HTMLTag]:
+    def _get_tags(self) -> Iterator[_HTMLTag]:
         # Don't open tags if we're closing fg/bg
         fg_resetting = self.fg and self.fg.isreset
         bg_resetting = self.bg and self.bg.isreset
 
         if self.bg and not self.bg.isreset:
-            yield HTMLTag("span", style=f"background-color: {self.bg.hex_code}")
+            yield _HTMLTag("span", style=f"background-color: {self.bg.hex_code}")
         if self.fg and not self.fg.isreset:
-            yield HTMLTag("font", color=self.fg.hex_code)
+            yield _HTMLTag("font", color=self.fg.hex_code)
 
         # Only open attribute tags if we're not resetting
         if not (fg_resetting or bg_resetting):
             for attr in sorted(self.attributes):
                 if self.attributes[attr]:
-                    yield HTMLTag.from_attr_name(self.attribute_names[attr])
+                    yield _HTMLTag.from_attr_name(self.attribute_names[attr])
 
         # Closing instead
         for attr in sorted(self.attributes, reverse=True):
             if not self.attributes[attr]:
-                yield HTMLTag.from_attr_name(self.attribute_names[attr]).close()
+                yield _HTMLTag.from_attr_name(self.attribute_names[attr]).close()
         # Close all open attributes before closing the foreground tag
         if fg_resetting:
-            yield HTMLTag("font").close()
+            yield _HTMLTag("font").close()
         if bg_resetting:
-            yield HTMLTag("span").close()
+            yield _HTMLTag("span").close()
 
     def __str__(self) -> str:
         if self.isreset:
