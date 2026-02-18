@@ -308,3 +308,12 @@ class TestHTMLColor:
             result
             == '<span style="background-color: #0000C0"><font color="#C00000"><b>Red bold on blue</b> just red on blue</font> just blue</span>'
         )
+
+    def test_from_ansi_string_no_color(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setattr(htmlcolors, "use_color", 0)
+        mystr = (
+            "\033[31;44;1mRed bold on blue\033[21m just red on blue\033[39m just blue"
+        )
+        seq = list(htmlcolors.from_ansi_string(mystr))
+        result = htmlcolors.sequence_to_string(seq)
+        assert result == "Red bold on blue just red on blue just blue"

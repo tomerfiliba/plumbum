@@ -906,6 +906,8 @@ class HTMLStyle(Style):
         for item in sequence:
             if isinstance(item, str):
                 yield item
+            elif not cls.use_color:
+                pass
             elif item.isreset:
                 for tag in reversed(current_tags):
                     yield str(tag.close())
@@ -964,6 +966,8 @@ class HTMLStyle(Style):
             yield _HTMLTag("span").close()
 
     def __str__(self) -> str:
+        if not self.use_color:
+            return ""
         if self.isreset:
             raise ResetNotSupported("HTML does not support global resets!")
 
