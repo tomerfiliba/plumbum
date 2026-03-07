@@ -531,7 +531,7 @@ class AsyncSshMachine:
                 rem["echo"]("task2"),
             )
 
-    .. versionadded:: 1.11
+    .. versionadded:: 2.0
     """
 
     __slots__ = ("_sync_machine",)

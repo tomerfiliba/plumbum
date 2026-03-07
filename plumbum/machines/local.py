@@ -546,7 +546,7 @@ class AsyncLocalMachine:
         # Execution is async
         result = await ls("-la")
 
-    .. versionadded:: 1.11
+    .. versionadded:: 2.0
     """
 
     def __getitem__(self, cmd: str | LocalPath) -> AsyncLocalCommand:
@@ -603,7 +603,7 @@ Use this to access async commands::
         result = await async_local["ls"]("-la")
         print(result)
 
-.. versionadded:: 1.11
+.. versionadded:: 2.0
 """
 
 __all__ = [
