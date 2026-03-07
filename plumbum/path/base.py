@@ -8,7 +8,7 @@ import typing
 import warnings
 from abc import ABC, abstractmethod
 from functools import reduce
-from typing import IO, SupportsIndex, TypeVar, cast
+from typing import IO, SupportsIndex, TypeVar
 
 if typing.TYPE_CHECKING:
     import builtins
@@ -350,8 +350,7 @@ class Path(str, ABC):
                 return data.encode("utf-8")
             assert isinstance(data, bytes)
             return data
-        else:
-            return data
+        return data
 
     def read_text(self, encoding: str | None = None, errors: str | None = None) -> str:
         """Returns the contents of this file as ``str``."""
@@ -461,20 +460,18 @@ class Path(str, ABC):
 
         Creates a symbolic link at ``self`` that points to ``target``.
         """
-        target_path = cast(
-            "Self", self._form(target) if type(target) is str else target
-        )
-        target_path.symlink(self)
+        if not isinstance(target, Path):
+            target = self._form(target)
+        target.symlink(self)
 
     def hardlink_to(self, target: Self | str) -> None:
         """Pathlib-compatible hard-link creation.
 
         Creates a hard link at ``self`` that points to ``target``.
         """
-        target_path = cast(
-            "Self", self._form(target) if type(target) is str else target
-        )
-        target_path.link(self)
+        if not isinstance(target, Path):
+            target = self._form(target)
+        target.link(self)
 
     @abstractmethod
     def unlink(self) -> None:
@@ -522,23 +519,25 @@ class Path(str, ABC):
 
     def is_relative_to(self, other: Self | str) -> bool:
         """Returns ``True`` when this path is within ``other``."""
-        base = cast("Self", self._form(other) if type(other) is str else other)
-        if self.anchor != base.anchor:
+        if not isinstance(other, Path):
+            other = self._form(other)
+        if self.anchor != other.anchor:
             return False
 
         if self.CASE_SENSITIVE:
             parts = self.split()
-            base_parts = base.split()
+            base_parts = other.split()
         else:
             parts = [part.lower() for part in self.split()]
-            base_parts = [part.lower() for part in base.split()]
+            base_parts = [part.lower() for part in other.split()]
         return len(parts) >= len(base_parts) and parts[: len(base_parts)] == base_parts
 
     def samefile(self, other: Self | str) -> bool:
         """Returns ``True`` if this path and ``other`` point to the same file."""
-        other_path = cast("Self", self._form(other) if type(other) is str else other)
+        if not isinstance(other, Path):
+            other = self._form(other)
         st = self.stat()
-        other_st = other_path.stat()
+        other_st = other.stat()
         return (st.st_dev, st.st_ino) == (other_st.st_dev, other_st.st_ino)
 
     def match(self, pattern: str) -> bool:
@@ -566,7 +565,7 @@ class Path(str, ABC):
         """Recursively glob under this path."""
         return [path for path in self.walk() if path.match(pattern)]
 
-    def relative_to(self, source: Self) -> RelativePath:
+    def relative_to(self, source: Self | str) -> RelativePath:
         """Computes the "relative path" require to get from ``source`` to ``self``. They satisfy the invariant
         ``source_path + (target_path - source_path) == target_path``. For example::
 
@@ -577,7 +576,7 @@ class Path(str, ABC):
             /var/log/messages - /opt              = [.., var, log, messages]
             /var/log/messages - /opt/lib          = [.., .., var, log, messages]
         """
-        if type(source) is str:
+        if not isinstance(source, Path):
             source = self._form(source)
         parts = self.split()
         baseparts = source.split()
@@ -586,7 +585,7 @@ class Path(str, ABC):
         )
         return RelativePath([".."] * (len(baseparts) - ancestors) + parts[ancestors:])
 
-    def __sub__(self, other: Self) -> RelativePath:
+    def __sub__(self, other: Self | str) -> RelativePath:
         """Same as ``self.relative_to(other)``"""
         return self.relative_to(other)
 
