@@ -48,7 +48,7 @@ Example Usage
         result = await (async_local["ls"] | async_local["grep"]["py"])()
         print(result)
 
-.. versionadded:: 1.11
+.. versionadded:: 2.0
 """
 
 from __future__ import annotations
@@ -292,7 +292,7 @@ class AsyncRemoteCommand(AsyncCommand):
             ls = rem["ls"]
             result = await ls("-la")
 
-    .. versionadded:: 1.11
+    .. versionadded:: 2.0
     """
 
     __slots__ = ()
@@ -350,7 +350,7 @@ class _AsyncTF(AsyncExecutionModifier):
         # Check for specific exit code
         result = await (async_local["grep"]["pattern", "file.txt"] & AsyncTF(retcode=(0, 1)))
 
-    .. versionadded:: 1.11
+    .. versionadded:: 2.0
     """
 
     __slots__ = ("retcode", "timeout")
@@ -393,7 +393,7 @@ class _AsyncRETCODE(AsyncExecutionModifier):
         code = await (async_local["ls"]["/nonexistent"] & AsyncRETCODE)
         print(f"Exit code: {code}")
 
-    .. versionadded:: 1.11
+    .. versionadded:: 2.0
     """
 
     __slots__ = ("timeout",)
@@ -429,7 +429,7 @@ class _AsyncTEE(AsyncExecutionModifier):
         # With custom expected return code
         retcode, stdout, stderr = await (async_local["grep"]["pattern"] & AsyncTEE(retcode=(0, 1)))
 
-    .. versionadded:: 1.11
+    .. versionadded:: 2.0
     """
 
     __slots__ = ("retcode", "timeout")
