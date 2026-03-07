@@ -256,6 +256,7 @@ class _TEE(ExecutionModifier):
                     progress = False
                     ready, _, _ = select((out, err), (), ())
                     for fd in ready:
+                        assert fd
                         buf = buffers[fd]
                         data, text = read_fd_decode_safely(fd, 4096)
                         if not data:  # eof

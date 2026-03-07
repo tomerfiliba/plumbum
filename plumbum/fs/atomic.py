@@ -201,7 +201,7 @@ class AtomicFile:
         """
         self.close()
         self._fileobj = os.fdopen(
-            os.open(str(self.path), os.O_CREAT | os.O_RDWR, 384), "r+b", 0
+            os.open(str(self.path), os.O_CREAT | os.O_RDWR, 0o600), "r+b", 0
         )
 
     @contextlib.contextmanager

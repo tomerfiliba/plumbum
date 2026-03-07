@@ -165,6 +165,7 @@ messages_control.disable = [
 
 [tool.ruff]
 exclude = ["docs/conf.py"]
+show-fixes = true
 
 [tool.ruff.lint]
 extend-select = [
@@ -212,6 +213,7 @@ isort.known-first-party = ["plumbum"]
 "plumbum/cli/application.py" = ["T20"]
 "plumbum/commands/base.py" = ["SIM115"]
 "plumbum/commands/daemons.py" = ["SIM115"]
+
 
 [tool.codespell]
 ignore-words-list = "ans,switchs,hart,ot,twoo,fo"
