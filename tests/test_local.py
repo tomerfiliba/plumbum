@@ -211,6 +211,47 @@ class TestLocalPath:
             one.delete()
             assert not one.is_file()
 
+    def test_pathlib_common_helpers(self):
+        with local.tempdir() as tmp:
+            nested = tmp.joinpath("a", "b", "file.txt")
+            nested.dirname.mkdir(parents=True)
+
+            assert nested == tmp / "a" / "b" / "file.txt"
+            assert nested.is_absolute()
+            assert nested.as_posix().endswith("/a/b/file.txt")
+            assert nested.anchor == nested.drive + nested.root
+            assert nested.is_relative_to(tmp)
+            assert not tmp.is_relative_to(nested)
+
+            text = "hello\nworld"
+            assert nested.write_text(text, encoding="utf-8") == len(text)
+            assert nested.read_text(encoding="utf-8") == text
+
+            payload = b"\x00\x01\x02"
+            assert nested.write_bytes(payload) == len(payload)
+            assert nested.read_bytes() == payload
+
+            renamed = nested.with_stem("renamed")
+            assert renamed.name == "renamed.txt"
+
+            assert nested.match("*.txt")
+            assert nested.match("b/*.txt")
+            assert not nested.match("*.py")
+
+            (tmp / "x").mkdir()
+            (tmp / "x" / "other.txt").write_text("x")
+            (tmp / "x" / "other.py").write_text("x")
+            assert {p.name for p in tmp.rglob("*.txt")} == {"file.txt", "other.txt"}
+
+            linked = tmp / "hardlink.txt"
+            linked.hardlink_to(nested)
+            assert linked.samefile(nested)
+
+            empty = tmp / "empty"
+            empty.mkdir()
+            empty.rmdir()
+            assert not empty.exists()
+
     def test_copy_override(self):
         """Edit this when override behavior is added"""
         with local.tempdir() as tmp:
