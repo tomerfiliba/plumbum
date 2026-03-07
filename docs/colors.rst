@@ -283,7 +283,7 @@ is customized to handle closing tags correctly. For example::
 
     html = htmlcolors.sequence_to_string(htmlcolors.from_ansi_string(help_output))
 
-.. versionadded:: 1.11
+.. versionadded:: 2.0
 
 
 See Also

@@ -523,7 +523,7 @@ class AsyncRemoteMachine:
             ls = rem["ls"]
             result = await ls("-la")
 
-    .. versionadded:: 1.11
+    .. versionadded:: 2.0
     """
 
     __slots__ = ("_sync_machine",)
