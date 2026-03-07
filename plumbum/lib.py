@@ -4,8 +4,8 @@ import inspect
 import os
 import sys
 from contextlib import contextmanager
-from io import IOBase, StringIO
-from typing import TYPE_CHECKING, Any, TextIO
+from io import StringIO
+from typing import IO, TYPE_CHECKING, Any, TextIO
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
@@ -70,7 +70,7 @@ def getdoc(obj: object) -> str | None:
     return inspect.cleandoc(doc)
 
 
-def read_fd_decode_safely(fd: IOBase, size: int = 4096) -> tuple[bytes, str]:
+def read_fd_decode_safely(fd: IO[str], size: int = 4096) -> tuple[bytes, str]:
     """
     This reads a utf-8 file descriptor and returns a chunk, growing up to
     three bytes if needed to decode the character at the end.
