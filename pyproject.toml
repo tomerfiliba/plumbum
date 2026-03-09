@@ -107,7 +107,7 @@ addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config", "--cov-
 norecursedirs = ["examples", "experiments"]
 filterwarnings = [
   "error",
-  "default:may lead to deadlocks in the child:DeprecationWarning",
+  "ignore:may lead to deadlocks in the child:DeprecationWarning",
 ]
 log_level = "INFO"
 xfail_strict = true
