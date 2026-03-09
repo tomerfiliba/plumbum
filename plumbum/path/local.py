@@ -54,7 +54,7 @@ class LocalPath(Path):
 
     CASE_SENSITIVE = not IS_WIN32
 
-    def __new__(cls, *parts: str) -> Self:
+    def __new__(cls, *parts: str | Path) -> Self:
         if (
             len(parts) == 1
             and isinstance(parts[0], cls)
@@ -76,7 +76,7 @@ class LocalPath(Path):
     def _get_info(self) -> str:
         return self._path
 
-    def _form(self, *parts: str) -> LocalPath:
+    def _form(self, *parts: str | Path) -> LocalPath:
         return LocalPath(*parts)
 
     @property

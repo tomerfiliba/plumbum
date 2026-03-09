@@ -234,6 +234,9 @@ class TestLocalPath:
             renamed = nested.with_stem("renamed")
             assert renamed.name == "renamed.txt"
 
+            long_name = tmp / "file.with.many.dots.txt"
+            assert long_name.with_stem("new").name == "new.with.many.dots.txt"
+
             assert nested.match("*.txt")
             assert nested.match("b/*.txt")
             assert not nested.match("*.py")

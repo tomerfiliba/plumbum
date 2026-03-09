@@ -47,13 +47,14 @@ class Path(str, ABC):
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} {self}>"
 
-    def __truediv__(self, other: str | Self) -> Self:
+    def __truediv__(self, other: str | Path) -> Self:
         """Joins two paths"""
         return self.join(other)
 
-    def __rtruediv__(self, other: str | Self) -> Self:
+    def __rtruediv__(self, other: str | Path) -> Self:
         """Joins two paths when this path appears on the right-hand side."""
-        return self._form(str(other)) / self
+        other = self._form(other)
+        return other / self
 
     @typing.overload
     def __getitem__(self, key: str | Path) -> Self: ...
@@ -118,16 +119,17 @@ class Path(str, ABC):
             return (self / item).exists()  # type: ignore[operator]
 
     @abstractmethod
-    def _form(self, *parts: typing.Any) -> Self:
+    def _form(self, *parts: str) -> Self:
         pass
 
     def up(self, count: int = 1) -> Self:
         """Go up in ``count`` directories (the default is 1)"""
         return self.join("../" * count)
 
-    def joinpath(self, *others: str | Path) -> Self:
+    # Currently, typed as just "str" to match .join, though Path should mostly work too.
+    def joinpath(self, *others: str) -> Self:
         """Pathlib-compatible alias of :meth:`join`."""
-        return self.join(*(str(other) for other in others))
+        return self.join(*others)
 
     def walk(
         self,
@@ -460,8 +462,7 @@ class Path(str, ABC):
 
         Creates a symbolic link at ``self`` that points to ``target``.
         """
-        if not isinstance(target, Path):
-            target = self._form(target)
+        target = self._form(target)
         target.symlink(self)
 
     def hardlink_to(self, target: Self | str) -> None:
@@ -469,8 +470,7 @@ class Path(str, ABC):
 
         Creates a hard link at ``self`` that points to ``target``.
         """
-        if not isinstance(target, Path):
-            target = self._form(target)
+        target = self._form(target)
         target.link(self)
 
     @abstractmethod
@@ -519,8 +519,7 @@ class Path(str, ABC):
 
     def is_relative_to(self, other: Self | str) -> bool:
         """Returns ``True`` when this path is within ``other``."""
-        if not isinstance(other, Path):
-            other = self._form(other)
+        other = self._form(other)
         if self.anchor != other.anchor:
             return False
 
@@ -534,8 +533,7 @@ class Path(str, ABC):
 
     def samefile(self, other: Self | str) -> bool:
         """Returns ``True`` if this path and ``other`` point to the same file."""
-        if not isinstance(other, Path):
-            other = self._form(other)
+        other = self._form(other)
         st = self.stat()
         other_st = other.stat()
         return (st.st_dev, st.st_ino) == (other_st.st_dev, other_st.st_ino)
@@ -576,8 +574,7 @@ class Path(str, ABC):
             /var/log/messages - /opt              = [.., var, log, messages]
             /var/log/messages - /opt/lib          = [.., .., var, log, messages]
         """
-        if not isinstance(source, Path):
-            source = self._form(source)
+        source = self._form(source)
         parts = self.split()
         baseparts = source.split()
         ancestors = len(

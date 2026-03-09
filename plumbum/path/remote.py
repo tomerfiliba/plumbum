@@ -99,7 +99,7 @@ class RemotePath(Path):
     __slots__ = ("CASE_SENSITIVE", "remote")
     remote: BaseRemoteMachine
 
-    def __new__(cls, remote: BaseRemoteMachine, *parts_str: str) -> Self:
+    def __new__(cls, remote: BaseRemoteMachine, *parts_str: str | Path) -> Self:
         if not parts_str:
             raise TypeError("At least one path part is required (none given)")
         windows = remote.uname.lower() == "windows"
@@ -143,7 +143,7 @@ class RemotePath(Path):
         self.remote = remote
         return self
 
-    def _form(self, *parts: str) -> RemotePath:
+    def _form(self, *parts: str | Path) -> RemotePath:
         return RemotePath(self.remote, *parts)
 
     @property
