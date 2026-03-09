@@ -240,6 +240,10 @@ class BaseRemoteMachine(BaseMachine):
     def __exit__(self, t: object, v: object, tb: object) -> None:
         self.close()
 
+    def __del__(self) -> None:
+        with contextlib.suppress(Exception):
+            self.close()
+
     def close(self) -> None:
         """closes the connection to the remote machine; all paths and programs will
         become defunct"""
