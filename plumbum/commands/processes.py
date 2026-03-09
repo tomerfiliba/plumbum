@@ -523,12 +523,16 @@ def iter_lines(
         timed_out = True
         raise
     finally:
-        if proc.poll() is None and timed_out:
+        process_timed_out = timed_out or getattr(proc, "_timed_out", False)
+
+        if proc.poll() is None and process_timed_out:
             with contextlib.suppress(Exception):
                 proc.kill()
-
-        with contextlib.suppress(Exception):
-            proc.wait()
+            with contextlib.suppress(Exception):
+                proc.wait()
+        elif completed:
+            with contextlib.suppress(Exception):
+                proc.wait()
 
         for stream in (proc.stdin, proc.stdout, proc.stderr):
             if stream is not None:
