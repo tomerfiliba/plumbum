@@ -52,11 +52,20 @@ class PlumbumLocalPopen(PopenAddons):
         return self._proc.__exit__(t, v, tb)
 
     def __getattr__(self, name: str) -> Any:
-        return getattr(self._proc, name)
+        try:
+            proc = object.__getattribute__(self, "_proc")
+        except AttributeError:
+            raise AttributeError(name) from None
+        return getattr(proc, name)
 
     def __del__(self) -> None:
         with contextlib.suppress(AttributeError):
             proc = object.__getattribute__(self, "_proc")
+            with contextlib.suppress(Exception):
+                proc.poll()
+            if proc.returncode is None:
+                with contextlib.suppress(subprocess.TimeoutExpired, Exception):
+                    proc.wait(timeout=0.2)
             for stream in (proc.stdin, proc.stdout, proc.stderr):
                 if stream is not None:
                     with contextlib.suppress(Exception):
