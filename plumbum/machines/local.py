@@ -55,13 +55,12 @@ class PlumbumLocalPopen(PopenAddons):
         return getattr(self._proc, name)
 
     def __del__(self) -> None:
-        proc = getattr(self, "_proc", None)
-        if proc is None:
-            return
-        for stream in (proc.stdin, proc.stdout, proc.stderr):
-            if stream is not None:
-                with contextlib.suppress(Exception):
-                    stream.close()
+        with contextlib.suppress(AttributeError):
+            proc = object.__getattribute__(self, "_proc")
+            for stream in (proc.stdin, proc.stdout, proc.stderr):
+                if stream is not None:
+                    with contextlib.suppress(Exception):
+                        stream.close()
 
 
 if IS_WIN32:
