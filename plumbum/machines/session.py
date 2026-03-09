@@ -105,6 +105,7 @@ class SessionPopen(PopenAddons):
         self.stdout = stdout
         self.stderr = stderr
         self.custom_encoding = encoding
+        self.close_streams_after_communicate = False
         self.returncode = None
         self._done = False
 

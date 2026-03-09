@@ -364,19 +364,26 @@ def run_proc(
     _register_proc_timeout(proc, timeout)
     stdout: bytes | str
     stderr: bytes | str
-    stdout, stderr = proc.communicate()
-    proc._end_time = time.time()  # type: ignore[attr-defined]
-    if not stdout:
-        stdout = b""
-    if not stderr:
-        stderr = b""
-    if custom_encoding := getattr(proc, "custom_encoding", None):
-        assert isinstance(stdout, bytes)
-        assert isinstance(stderr, bytes)
-        stdout = stdout.decode(custom_encoding, "ignore")
-        stderr = stderr.decode(custom_encoding, "ignore")
+    try:
+        stdout, stderr = proc.communicate()
+        proc._end_time = time.time()  # type: ignore[attr-defined]
+        if not stdout:
+            stdout = b""
+        if not stderr:
+            stderr = b""
+        if custom_encoding := getattr(proc, "custom_encoding", None):
+            assert isinstance(stdout, bytes)
+            assert isinstance(stderr, bytes)
+            stdout = stdout.decode(custom_encoding, "ignore")
+            stderr = stderr.decode(custom_encoding, "ignore")
 
-    return _check_process(proc, retcode, timeout, stdout, stderr)  # type: ignore[return-value]
+        return _check_process(proc, retcode, timeout, stdout, stderr)  # type: ignore[return-value]
+    finally:
+        if getattr(proc, "close_streams_after_communicate", True):
+            for stream in (proc.stdin, proc.stdout, proc.stderr):
+                if stream is not None:
+                    with contextlib.suppress(Exception):
+                        stream.close()
 
 
 # ===================================================================================================
@@ -488,49 +495,46 @@ def iter_lines(
     _register_proc_timeout(proc, timeout)
 
     buffers: list[list[tuple[str | None, str | None] | str]] = [[], []]
-    line_timed_out = False
+    completed = False
+    timed_out = False
 
-    def _iter_lines_with_cleanup() -> Generator[tuple[int, str] | tuple[None, str] | tuple[str, None], None, None]:
-        nonlocal line_timed_out
-        try:
-            for t, line in _iter_lines(proc, decode, linesize, line_timeout):
-                # verify that the proc hasn't timed out yet
-                proc.verify(timeout=timeout, retcode=None, stdout=None, stderr=None)
+    try:
+        for t, line in _iter_lines(proc, decode, linesize, line_timeout):
+            # verify that the proc hasn't timed out yet
+            proc.verify(timeout=timeout, retcode=None, stdout=None, stderr=None)
 
-                buffer = buffers[t]
-                if buffer_size > 0:
-                    buffer.append(line)
-                    if buffer_size < sys.maxsize:
-                        del buffer[:-buffer_size]
+            buffer = buffers[t]
+            if buffer_size > 0:
+                buffer.append(line)
+                if buffer_size < sys.maxsize:
+                    del buffer[:-buffer_size]
 
-                if mode is BY_POSITION:
-                    if t == 0:
-                        yield (line, None)
-                    else:
-                        yield (None, line)
+            if mode is BY_POSITION:
+                if t == 0:
+                    yield (line, None)
+                else:
+                    yield (None, line)
 
-                elif mode is BY_TYPE:
-                    yield (t + 1), line  # 1=stdout, 2=stderr
-        except ProcessLineTimedOut:
-            line_timed_out = True
-            raise
-        finally:
-            # Ensure process is properly terminated and cleaned up on timeout or error
-            if line_timed_out and proc.poll() is None:
+            elif mode is BY_TYPE:
+                yield (t + 1), line  # 1=stdout, 2=stderr
+
+        completed = True
+    except ProcessLineTimedOut:
+        timed_out = True
+        raise
+    finally:
+        if proc.poll() is None and timed_out:
+            with contextlib.suppress(Exception):
+                proc.kill()
+
+        with contextlib.suppress(Exception):
+            proc.wait()
+
+        for stream in (proc.stdin, proc.stdout, proc.stderr):
+            if stream is not None:
                 with contextlib.suppress(Exception):
-                    proc.kill()
-                with contextlib.suppress(Exception):
-                    proc.wait()
+                    stream.close()
 
-            # Always close streams to avoid ResourceWarnings in Python 3.14+
-            for stream in (proc.stdin, proc.stdout, proc.stderr):
-                if stream is not None:
-                    with contextlib.suppress(Exception):
-                        stream.close()
-
-    # Consume the inner generator to ensure cleanup happens
-    for item in _iter_lines_with_cleanup():
-        yield item
-
-    # this will take care of checking return code and timeouts
-    _check_process(proc, retcode, timeout, *("\n".join(s) + "\n" for s in buffers))  # type: ignore[arg-type]
+    if completed:
+        # this will take care of checking return code and timeouts
+        _check_process(proc, retcode, timeout, *("\n".join(s) + "\n" for s in buffers))  # type: ignore[arg-type]

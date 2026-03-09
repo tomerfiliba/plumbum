@@ -54,6 +54,12 @@ class PlumbumLocalPopen(PopenAddons):
     def __getattr__(self, name: str) -> Any:
         return getattr(self._proc, name)
 
+    def __del__(self) -> None:
+        for stream in (self._proc.stdin, self._proc.stdout, self._proc.stderr):
+            if stream is not None:
+                with contextlib.suppress(Exception):
+                    stream.close()
+
 
 if IS_WIN32:
     from plumbum.machines._windows import IMAGE_SUBSYSTEM_WINDOWS_CUI, get_pe_subsystem
