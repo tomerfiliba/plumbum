@@ -619,10 +619,10 @@ class StdinDataRedirection(BaseCommand):
             data = data[self.CHUNK_SIZE :]
         f.seek(0)
         kwargs["stdin"] = f
-        # try:
-        return self.cmd.popen(args, **kwargs)
-        # finally:
-        #    f.close()
+        try:
+            return self.cmd.popen(args, **kwargs)
+        finally:
+            f.close()
 
 
 class ConcreteCommand(BaseCommand):
