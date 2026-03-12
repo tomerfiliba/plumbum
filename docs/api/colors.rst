@@ -3,13 +3,13 @@ Package plumbum.colors
 
 .. automodule:: plumbum.colors
    :members:
+   :no-index:
 
 plumbum.colorlib
 ----------------
 
 .. automodule:: plumbum.colorlib
-   :members:
-   :special-members:
+   :no-index:
 
 plumbum.colorlib.styles
 -----------------------
@@ -17,6 +17,7 @@ plumbum.colorlib.styles
 .. automodule:: plumbum.colorlib.styles
    :members:
    :special-members:
+   :exclude-members: number, reset
 
 plumbum.colorlib.factories
 --------------------------

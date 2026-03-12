@@ -122,6 +122,7 @@ you read it in order. A quick :ref:`reference guide is available <guide-quickref
    local_commands
    paths
    local_machine
+   async_support
    remote
    utils
    cli

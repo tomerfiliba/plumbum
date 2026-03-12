@@ -22,6 +22,9 @@ def ensure_colors_reset() -> None:
     atexit.register(_reset)
 
 
+# Keep module-like metadata on the proxy object for tools that introspect it.
+ansicolors.__name__ = __name__  # type: ignore[attr-defined]
+
 sys.modules[__name__ + ".fg"] = ansicolors.fg  # type: ignore[assignment]
 sys.modules[__name__ + ".bg"] = ansicolors.bg  # type: ignore[assignment]
 sys.modules[__name__] = ansicolors  # type: ignore[assignment]
