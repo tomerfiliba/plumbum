@@ -55,6 +55,14 @@ class ShowVersion(SwitchError):
     pass
 
 
+class ShowBashCompletion(SwitchError):
+    pass
+
+
+class ShowFishCompletion(SwitchError):
+    pass
+
+
 class SwitchParseInfo:
     __slots__ = ("__weakref__", "index", "swname", "val")
 
@@ -487,7 +495,271 @@ class Application:
 
     @classmethod
     def autocomplete(cls, argv: list[str]) -> None:
-        """This is supplied to make subclassing and testing argument completion methods easier"""
+        """Handle shell completion requests.
+
+        For bash, this uses COMP_WORDS and COMP_CWORD environment variables.
+        """
+        comp_words = os.environ.get("COMP_WORDS", "")
+        comp_cword = os.environ.get("COMP_CWORD", "")
+
+        if comp_words and comp_cword:
+            cls._handle_bash_completion(argv, comp_words, int(comp_cword))
+
+    @classmethod
+    def _handle_bash_completion(
+        cls, argv: list[str], comp_words: str, comp_cword: int
+    ) -> None:
+        """Handle bash completion request."""
+        words = comp_words.split()
+        if comp_cword >= len(words):
+            comp_cword = len(words) - 1
+        partial = words[comp_cword] if comp_cword < len(words) else ""
+        previous_words = words[1:comp_cword] if comp_cword > 0 else []
+
+        inst = cls(argv[0] if argv else words[0])
+        completions = inst.get_completions([*previous_words, partial])
+        cls._print_completions_and_exit(completions)
+
+    @classmethod
+    def _print_completions_and_exit(cls, completions: list[str]) -> None:
+        """Print completions to stdout and exit."""
+        for completion in completions:
+            print(completion)
+        sys.exit(0)
+        for completion in completions:
+            print(completion)
+        sys.exit(0)
+
+    def get_completions(self, argv: list[str]) -> list[str]:
+        """Get completion suggestions based on partial command line arguments.
+
+        :param argv: List of command line arguments (not including the program name)
+        :return: List of completion suggestions
+        """
+        if not argv:
+            return self._get_all_completions()
+
+        partial = argv[-1] if argv else ""
+        previous = argv[:-1] if len(argv) > 1 else []
+
+        if previous and previous[-1].startswith("-"):
+            last_switch = previous[-1]
+            swinfo = self._get_switch_info_for_arg(last_switch)
+            if swinfo and swinfo.argtype:
+                return self._get_switch_arg_completions(swinfo, partial)
+
+        if partial.startswith("-"):
+            swinfo = self._get_switch_info_for_arg(partial)
+            if swinfo is not None and not swinfo.argtype:
+                return self._get_all_completions()
+            return self._get_switch_completions(partial)
+
+        nested_result = self._try_nested_completion(argv)
+        if nested_result is not None:
+            return nested_result
+
+        return self._get_all_completions(partial)
+
+    def get_nested_completions(
+        self, argv: list[str]
+    ) -> tuple[Application | None, list[str]]:
+        """Get the nested application and completions for subcommand-aware completion.
+
+        :param argv: List of command line arguments
+        :return: Tuple of (nested application or None, list of completions)
+        """
+        if not argv:
+            return None, []
+
+        for i, arg in enumerate(argv):
+            if arg in self._subcommands:
+                subapp_cls = self._subcommands[arg].get()
+                subapp = subapp_cls(f"{self.PROGNAME} {arg}")
+                subapp.parent = self
+                remaining_args = argv[i + 1 :]
+                return subapp, subapp.get_completions(remaining_args)
+
+        return None, []
+
+    def _get_switch_info_for_arg(self, switch_name: str) -> SwitchInfo | None:
+        """Get switch info for a switch name (with or without dashes)."""
+        name = switch_name.lstrip("-")
+        if name in self._switches_by_name:
+            return self._switches_by_name[name]
+        if self.ALLOW_ABBREV:
+            for sw_name, sw_info in self._switches_by_name.items():
+                if sw_name.startswith(name):
+                    return sw_info
+        return None
+
+    def _get_all_completions(self, partial: str = "") -> list[str]:
+        """Get all possible completions (switches and subcommands)."""
+        completions: list[str] = []
+
+        switch_completions = self._get_switch_completions(partial)
+        completions.extend(
+            switch_completions
+            + [
+                subcmd_name
+                for subcmd_name in self._subcommands
+                if not partial or subcmd_name.startswith(partial)
+            ]
+        )
+
+        return completions
+
+    def _get_switch_completions(self, partial: str) -> list[str]:
+        """Get completions for switches matching the partial string."""
+        completions = []
+        partial_name = partial.lstrip("-")
+
+        for name in self._switches_by_name:
+            if partial_name and not name.startswith(partial_name):
+                continue
+            prefix = "-" if len(name) == 1 else "--"
+            completion = prefix + name
+            if completion not in completions:
+                completions.append(completion)
+
+        return completions
+
+    def _get_switch_arg_completions(
+        self, swinfo: SwitchInfo, partial: str
+    ) -> list[str]:
+        """Get completions for a switch argument based on its type/validator."""
+        if swinfo.argtype is None:
+            return []
+
+        argtype = swinfo.argtype
+
+        if hasattr(argtype, "choices"):
+            try:
+                choices = argtype.choices(partial)
+                if isinstance(choices, set):
+                    return sorted(choices)
+                return list(choices)
+            except (TypeError, AttributeError):
+                pass
+
+        if hasattr(argtype, "__name__"):
+            type_name = argtype.__name__
+            if type_name == "bool":
+                return ["true", "false"]
+
+        return []
+
+    def _try_nested_completion(self, argv: list[str]) -> list[str] | None:
+        """Try to get completions from nested subcommands."""
+        nested_app, nested_completions = self.get_nested_completions(argv)
+        if nested_app is not None:
+            return nested_completions
+        return None
+
+    @classmethod
+    def bash_completion_script(cls, prog_name: str) -> str:
+        """Generate a bash completion script for this application.
+
+        :param prog_name: The program name to use in the completion script
+        :return: Bash completion script as a string
+        """
+        inst = cls(prog_name)
+
+        switch_names = []
+        for name in inst._switches_by_name:
+            prefix = "-" if len(name) == 1 else "--"
+            switch_names.append(prefix + name)
+
+        subcommand_names = list(inst._subcommands.keys())
+
+        script = f'''# Bash completion for {prog_name}
+# Generated by plumbum.cli.Application
+
+_{prog_name}_completion() {{
+    local cur="${{COMP_WORDS[COMP_CWORD]}}"
+    local prev="${{COMP_WORDS[COMP_CWORD-1]}}"
+    local words="${{COMP_WORDS[@]}}"
+
+    COMPREPLY=()
+
+    # Static completions for switches and subcommands
+    local switches="{" ".join(switch_names)}"
+    local subcommands="{" ".join(subcommand_names)}"
+
+    # If previous word is a switch that takes an argument, let the app handle it
+    case "$prev" in'''
+
+        for name, swinfo in inst._switches_by_name.items():
+            if swinfo.argtype:
+                prefix = "-" if len(name) == 1 else "--"
+                script += f"""
+        {prefix}{name})
+            COMPREPLY=( $(compgen -W "$({prog_name} --complete $cur 2>/dev/null)" -- "$cur") )
+            return
+            ;;"""
+
+        script += f"""
+        *)
+            ;;
+    esac
+
+    # Complete switches and subcommands
+    if [[ "$cur" == -* ]]; then
+        COMPREPLY=( $(compgen -W "$switches" -- "$cur") )
+    else
+        COMPREPLY=( $(compgen -W "$subcommands" -- "$cur") )
+    fi
+}}
+
+complete -F _{prog_name}_completion {prog_name}
+"""
+        return script
+
+    @classmethod
+    def fish_completion_script(cls, prog_name: str) -> str:
+        """Generate a fish completion script for this application.
+
+        :param prog_name: The program name to use in the completion script
+        :return: Fish completion script as a string
+        """
+        lines = [
+            f"# Fish completion for {prog_name}",
+            "# Generated by plumbum.cli.Application",
+            "",
+        ]
+        inst = cls(prog_name)
+
+        for name, swinfo in inst._switches_by_name.items():
+            opt_flag = "-s" if len(name) == 1 else "-l"
+            args = ""
+            if swinfo.argtype:
+                if hasattr(swinfo.argtype, "choices"):
+                    try:
+                        choices = swinfo.argtype.choices("")
+                        choices_str = " ".join(
+                            sorted(choices) if isinstance(choices, set) else choices
+                        )
+                        args = " -r -a '" + choices_str + "'"
+                    except (TypeError, AttributeError):
+                        args = " -r"
+                else:
+                    args = " -r"
+            desc = ""
+            if swinfo.help:
+                escaped = swinfo.help.replace("'", "\\'")
+                desc = " -d '" + escaped + "'"
+            lines.append(f"complete -c {prog_name} {opt_flag} {name}{args}{desc}")
+
+        for subcmd_name in inst._subcommands:
+            subapp = inst._subcommands[subcmd_name].get()
+            desc = ""
+            if subapp.DESCRIPTION:
+                escaped = subapp.DESCRIPTION.replace("'", "\\'")
+                desc = " -d '" + escaped + "'"
+            lines.append(
+                f"complete -c {prog_name} -n '__fish_use_subcommand' -a '{subcmd_name}'{desc}"
+            )
+
+        return "\n".join(lines)
 
     @staticmethod
     def _handle_argument(val: str, argtype: Callable[[str], T] | None, name: str) -> T:
@@ -515,6 +787,10 @@ class Application:
             raise ShowHelpAll()
         if self.version.__func__ in swfuncs:  # type: ignore[attr-defined]
             raise ShowVersion()
+        if self.bash_completion.__func__ in swfuncs:  # type: ignore[attr-defined]
+            raise ShowBashCompletion()
+        if self.fish_completion.__func__ in swfuncs:  # type: ignore[attr-defined]
+            raise ShowFishCompletion()
 
         requirements = {}
         exclusions = {}
@@ -699,6 +975,10 @@ class Application:
             inst.helpall()
         except ShowVersion:
             inst.version()
+        except ShowBashCompletion:
+            inst._print_bash_completion()
+        except ShowFishCompletion:
+            inst._print_fish_completion()
         except SwitchError as ex:
             print(T_("Error: {0}").format(ex))
             print(T_("------"))
@@ -1110,3 +1390,47 @@ class Application:
         ver = self._get_prog_version()
         ver_name = ver if ver is not None else T_("(version not set)")
         print(f"{self.PROGNAME} {ver_name}")
+
+    def _get_prog_name_for_completion(self) -> str | None:
+        """Get program name for completion scripts, or None if not a root app."""
+        if self.parent is not None:
+            return None
+        return (
+            os.path.basename(self.executable) if self.executable else str(self.PROGNAME)
+        )
+
+    def _print_bash_completion(self) -> None:
+        """Print bash completion script."""
+        prog_name = self._get_prog_name_for_completion()
+        if prog_name is None:
+            print(T_("Shell completion must be generated from the root application"))
+            return
+        print(self.bash_completion_script(prog_name))
+
+    def _print_fish_completion(self) -> None:
+        """Print fish completion script."""
+        prog_name = self._get_prog_name_for_completion()
+        if prog_name is None:
+            print(T_("Shell completion must be generated from the root application"))
+            return
+        print(self.fish_completion_script(prog_name))
+
+    @switch(
+        ["--bash-completion"],
+        overridable=True,
+        group="Meta-switches",
+        help=T_("""Prints bash completion script and quits"""),
+    )
+    def bash_completion(self) -> None:
+        """Prints bash completion script and quits"""
+        # Handled in _validate_args via ShowCompletion
+
+    @switch(
+        ["--fish-completion"],
+        overridable=True,
+        group="Meta-switches",
+        help=T_("""Prints fish completion script and quits"""),
+    )
+    def fish_completion(self) -> None:
+        """Prints fish completion script and quits"""
+        # Handled in _validate_args via ShowCompletion
