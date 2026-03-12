@@ -106,7 +106,8 @@ minversion = "7.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config", "--cov-config=pyproject.toml" ]
 norecursedirs = ["examples", "experiments"]
 filterwarnings = [
-  "always",
+  "error",
+  "default:This process:DeprecationWarning",
 ]
 log_level = "INFO"
 xfail_strict = true

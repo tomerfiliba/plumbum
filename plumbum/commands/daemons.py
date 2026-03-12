@@ -87,7 +87,7 @@ def posix_daemonize(
     else:
         raise ProcessExecutionError(argv, rc, "", output)
     proc: subprocess.Popen[bytes] = subprocess.Popen.__new__(subprocess.Popen)  # type: ignore[arg-type]
-    proc._child_created = True  # type: ignore[attr-defined]
+    proc._child_created = False  # type: ignore[attr-defined]
     proc.returncode = None
     proc.stdout = None
     proc.stdin = None
@@ -138,10 +138,15 @@ def win32_daemonize(
     stdin_file = open(os.devnull, encoding="utf-8")
     stdout_file = open(stdout, "a" if append else "w", encoding="utf-8")
     stderr_file = open(stderr, "a" if append else "w", encoding="utf-8")
-    return command.popen(
-        cwd=cwd,
-        stdin=stdin_file.fileno(),
-        stdout=stdout_file.fileno(),
-        stderr=stderr_file.fileno(),
-        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS,  # type: ignore[attr-defined]
-    )
+    try:
+        return command.popen(
+            cwd=cwd,
+            stdin=stdin_file.fileno(),
+            stdout=stdout_file.fileno(),
+            stderr=stderr_file.fileno(),
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS,  # type: ignore[attr-defined]
+        )
+    finally:
+        for stream in (stdin_file, stdout_file, stderr_file):
+            with contextlib.suppress(Exception):
+                stream.close()

@@ -519,6 +519,7 @@ s.close()
 """
                 p = (rem.python["-u"] << get_unbound_socket_remote).popen()
                 remote_socket = p.stdout.readline().decode("ascii").strip()
+                p.wait()
             else:
                 remote_socket = 0
 
@@ -538,7 +539,8 @@ s.connect(("localhost", {tun.dport}))
 s.send("{message}".encode("ascii"))
 s.close()
 """
-                (rem.python["-u"] << remote_send_af_inet).popen()
+                sender = (rem.python["-u"] << remote_send_af_inet).popen()
+                sender.wait()
                 tunnel_server.join(timeout=1)
                 assert queue.get() == message
 
@@ -655,7 +657,8 @@ class TestParamikoMachine(BaseRemoteMachineTest):
                 with (remote_tmpdir / "bar.txt").open("wb") as f:
                     f.write(data)
                 rem.download((remote_tmpdir / "bar.txt"), (tmpdir / "bar.txt"))
-                assert (tmpdir / "bar.txt").open("rb").read() == data
+                with (tmpdir / "bar.txt").open("rb") as f:
+                    assert f.read() == data
 
             assert not remote_tmpdir.exists()
             assert not tmpdir.exists()
