@@ -36,13 +36,13 @@ to login with some user and ``keyfile``, you can simply use ``rem = SshMachine("
 Much like the :ref:`local object <guide-local-machine>`, remote machines expose ``which()``,
 ``path()``, ``python``, ``cwd`` and ``env``. You can also run remote commands, create SSH tunnels,
 upload/download files, etc. You may also refer to :class:`the full API
-<plumbum.remote_machine.SshMachine>`, as this guide will only survey the features.
+<plumbum.machines.ssh_machine.SshMachine>`, as this guide will only survey the features.
 
 .. note::
 
    `PuTTY <https://www.chiark.greenend.org.uk/~sgtatham/putty/>`_ users on Windows should use
-   the dedicated :class:`PuttyMachine <plumbum.remote_machine.PuttyMachine>` instead of
-   ``SshMachine``. See also :ref:`ParamikoMachine <guide-paramiko-machine>`.
+    the dedicated :class:`~plumbum.machines.ssh_machine.PuttyMachine` instead of
+    ``SshMachine``. See also :ref:`ParamikoMachine <guide-paramiko-machine>`.
 
    .. versionadded:: 1.0.1
 
@@ -187,7 +187,7 @@ and it works along the lines of the ``SshMachine``::
     to explicitly import it (``from plumbum.machines.paramiko_machine import ParamikoMachine``) as paramiko
     is quite heavy.
 
-    Refer to :class:`the API docs <plumbum.paramiko_machine.ParamikoMachine>` for more details.
+    Refer to :class:`the API docs <plumbum.machines.paramiko_machine.ParamikoMachine>` for more details.
 
 The main advantage of using ``ParamikoMachine`` is that only a single, persistent SSH connection
 is created, over which commands execute. Moreover, paramiko has a built-in SFTP client, which is

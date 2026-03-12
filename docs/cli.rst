@@ -13,7 +13,7 @@ translates these primitives into Pythonic constructs and relies on introspection
 
 From a bird's eye view, CLI applications are classes that extend :class:`plumbum.cli.Application`.
 They define a ``main()`` method and optionally expose methods and attributes as command-line
-:func:`switches <plumbum.cli.switch>`. Switches may take arguments, and any remaining positional
+:func:`switches <plumbum.cli.switches.switch>`. Switches may take arguments, and any remaining positional
 arguments are given to the ``main`` method, according to its signature. A simple CLI application
 might look like this::
 
@@ -54,7 +54,7 @@ So far you've only seen the very basic usage. We'll now start to explore the lib
 
 Application
 -----------
-The :class:`Application <plumbum.cli.Application>` class is the "container" of your application.
+The :class:`Application <plumbum.cli.application.Application>` class is the "container" of your application.
 It consists of the ``main()`` method, which you should implement, and any number of CLI-exposed
 switch functions or attributes. The entry-point for your application is the classmethod ``run``,
 which instantiates your class, parses the arguments, invokes all switch functions, and then
@@ -151,8 +151,8 @@ for instance, ``$ ./myapp.py --log-to-file=/tmp/log`` would translate to a call 
    Methods' docstrings and argument names will be used to render the help message, keeping your
    code as `DRY <https://en.wikipedia.org/wiki/Don't_repeat_yourself>`_ as possible.
 
-   There's also :func:`autoswitch <plumbum.cli.autoswitch>`, which infers the name of the switch
-   from the function's name, e.g.::
+     There's also :func:`autoswitch <plumbum.cli.switches.autoswitch>`, which infers the name
+     of the switch from the function's name, e.g.::
 
         @cli.autoswitch(str)
         def log_to_file(self, filename):
