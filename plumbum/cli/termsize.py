@@ -19,7 +19,7 @@ def get_terminal_size(default: tuple[int, int] = (80, 25)) -> tuple[int, int]:
     Get width and height of console; works on linux, os x, windows and cygwin
 
     Adapted from https://gist.github.com/jtriley/1108174
-    Originally from: http://stackoverflow.com/questions/566746/how-to-get-console-window-width-in-python
+    Originally from: https://stackoverflow.com/questions/566746/how-to-get-linux-console-window-width-in-python
     """
     current_os = platform.system()
     if current_os == "Windows":  # pragma: no cover

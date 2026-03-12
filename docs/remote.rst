@@ -40,7 +40,7 @@ upload/download files, etc. You may also refer to :class:`the full API
 
 .. note::
 
-   `PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/>`_ users on Windows should use
+   `PuTTY <https://www.chiark.greenend.org.uk/~sgtatham/putty/>`_ users on Windows should use
    the dedicated :class:`PuttyMachine <plumbum.remote_machine.PuttyMachine>` instead of
    ``SshMachine``. See also :ref:`ParamikoMachine <guide-paramiko-machine>`.
 

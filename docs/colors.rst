@@ -297,8 +297,8 @@ is customized to handle closing tags correctly. For example::
 See Also
 ========
 
-* `colored <https://pypi.python.org/pypi/colored>`_ Another library with 256 color support
+* `colored <https://pypi.org/project/colored/>`_ Another library with 256 color support
 * `colorful <https://github.com/timofurrer/colorful>`_ A fairly new library with a similar feature set
-* `colorama <https://pypi.python.org/pypi/colorama>`_ A library that supports colored text on Windows,
+* `colorama <https://pypi.org/project/colorama/>`_ A library that supports colored text on Windows,
     can be combined with Plumbum.colors (if you force ``use_color``, doesn't support all extended colors)
-* `rich <https://rich.readthedocs.io>`_ A very powerful modern library for all sorts of styling.
+* `rich <https://rich.readthedocs.io/en/stable/>`_ A very powerful modern library for all sorts of styling.

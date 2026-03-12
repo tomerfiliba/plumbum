@@ -322,7 +322,7 @@ Switch Attributes
 Many times it's desired to simply store a switch's argument in an attribute, or set a flag if
 a certain switch is given. For this purpose, the toolkit provides
 :class:`SwitchAttr <plumbum.cli.SwitchAttr>`, which is `data descriptor
-<https://docs.python.org/howto/descriptor.html>`_ that stores the argument in an instance attribute.
+<https://docs.python.org/3/howto/descriptor.html>`_ that stores the argument in an instance attribute.
 There are two additional "flavors" of ``SwitchAttr``: ``Flag`` (which toggles its default value
 if the switch is given) and ``CountOf`` (which counts the number of occurrences of the switch)::
 
@@ -631,7 +631,7 @@ See Also
 * `filecopy.py <https://github.com/tomerfiliba/plumbum/blob/master/examples/filecopy.py>`_ example
 * `geet.py <https://github.com/tomerfiliba/plumbum/blob/master/examples/geet.py>`_ – a runnable
   example of using sub-commands
-* `RPyC <https://rpyc.readthedocs.io/>`_ has changed its bash-based build script to Plumbum CLI.
-  Notice `how short and readable <https://github.com/tomerfiliba/rpyc/blob/c457a28d689df7605838334a437c6b35f9a94618/build.py>`_
+* `RPyC <https://rpyc.readthedocs.io/en/latest/>`_ has changed its bash-based build script to Plumbum CLI.
+  Notice `how short and readable <https://github.com/tomerfiliba-org/rpyc/blob/c457a28d689df7605838334a437c6b35f9a94618/build.py>`_
   it is.
-* A `blog post <http://tomerfiliba.com/blog/Plumbum/>`_ describing the philosophy of the CLI module
+* A `blog post <https://tomerfiliba.com/blog/Plumbum>`_ describing the philosophy of the CLI module
