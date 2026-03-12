@@ -3,7 +3,6 @@ Package plumbum.colors
 
 .. automodule:: plumbum.colors
    :members:
-   :special-members:
 
 plumbum.colorlib
 ----------------
