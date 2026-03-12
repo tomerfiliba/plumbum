@@ -9,7 +9,7 @@ import time
 import typing
 from queue import Empty as QueueEmpty
 from queue import Queue
-from threading import Thread
+from threading import Lock, Thread
 from typing import Any
 
 from plumbum.lib import IS_WIN32
@@ -277,6 +277,9 @@ class MinHeap:
 
 _timeout_queue = Queue[tuple[Any, float]]()
 _shutting_down = False
+_timeout_thread_lock = Lock()
+_shutdown_registered = False
+bgthd: Thread | None = None
 
 
 def _timeout_thread_func() -> None:
@@ -312,28 +315,36 @@ def _timeout_thread_func() -> None:
             raise
 
 
-bgthd = Thread(target=_timeout_thread_func, name="PlumbumTimeoutThread")
-bgthd.daemon = True
-bgthd.start()
+def _ensure_timeout_thread_started() -> None:
+    global bgthd, _shutdown_registered  # noqa: PLW0603
+    if bgthd is not None and bgthd.is_alive():
+        return
+
+    with _timeout_thread_lock:
+        if bgthd is not None and bgthd.is_alive():
+            return
+        bgthd = Thread(target=_timeout_thread_func, name="PlumbumTimeoutThread")
+        bgthd.daemon = True
+        bgthd.start()
+        if not _shutdown_registered:
+            atexit.register(_shutdown_bg_threads)
+            _shutdown_registered = True
 
 
 def _register_proc_timeout(proc: PopenWithAddons[Any], timeout: float | None) -> None:
     if timeout is not None:
+        _ensure_timeout_thread_started()
         _timeout_queue.put((proc, time.time() + timeout))
 
 
 def _shutdown_bg_threads() -> None:
     global _shutting_down  # noqa: PLW0603
     _shutting_down = True
-    # Make sure this still exists (don't throw error in atexit!)
-    # TODO: not sure why this would be "falsey", though
-    if _timeout_queue:  # type: ignore[truthy-bool]
+    # _timeout_queue could be deleted by this point
+    if _timeout_queue and bgthd and bgthd.is_alive():  # type: ignore[truthy-bool]
         _timeout_queue.put((SystemExit, 0))
         # grace period
         bgthd.join(0.1)
-
-
-atexit.register(_shutdown_bg_threads)
 
 
 # ===================================================================================================
