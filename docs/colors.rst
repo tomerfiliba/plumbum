@@ -257,6 +257,14 @@ Output:
     </font>Not red color or bold.<br/>
     <font color="#800080"><b>This is bold and colorful!</b></font> And this is not.</p>
 
+
+You can also call :func:`plumbum.colors.ensure_reset` to have your program emit
+a clear color code on exit. It might cause an empty line to be shown on your terminal.
+
+.. versionadded:: 2.0
+
+   This was default before 2.0, now it's an opt-in function.
+
 Style Combinations
 ^^^^^^^^^^^^^^^^^^
 

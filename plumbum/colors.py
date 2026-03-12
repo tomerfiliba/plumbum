@@ -12,11 +12,20 @@ import sys
 from plumbum.colorlib import ansicolors, main
 
 _reset = ansicolors.reset.now
-if __name__ == "__main__":
-    main()
-else:  # Don't register an exit if this is called using -m!
+
+
+def ensure_colors_reset() -> None:
+    """
+    Call this to ensure colors are reset when the program exits. Might add an
+    extra blank line.
+    """
     atexit.register(_reset)
+
 
 sys.modules[__name__ + ".fg"] = ansicolors.fg  # type: ignore[assignment]
 sys.modules[__name__ + ".bg"] = ansicolors.bg  # type: ignore[assignment]
 sys.modules[__name__] = ansicolors  # type: ignore[assignment]
+
+
+if __name__ == "__main__":
+    main()
