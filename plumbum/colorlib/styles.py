@@ -559,7 +559,8 @@ class Style(metaclass=ABCMeta):
     def now(self) -> None:
         """Immediately writes color to stdout. (Not safe)"""
         # Silently handle broken pipe (e.g., when output is piped to head)
-        with contextlib.suppress(BrokenPipeError):
+        # OSError (errno 22, EINVAL) is raised on Windows when the pipe is closed
+        with contextlib.suppress(BrokenPipeError, OSError):
             self.stdout.write(str(self))
 
     def print(self, *printables: object, **kargs: Any) -> None:
@@ -575,8 +576,9 @@ class Style(metaclass=ABCMeta):
             file.write(self.wrap(sep.join(map(str, printables))) + end)
             if flush:
                 file.flush()
-        except BrokenPipeError:
+        except (BrokenPipeError, OSError):
             # Silently handle broken pipe (e.g., when output is piped to head)
+            # OSError (errno 22, EINVAL) is raised on Windows when the pipe is closed
             pass
 
     print_ = print
@@ -591,8 +593,9 @@ class Style(metaclass=ABCMeta):
         try:
             self.stdout.write(str(self))
             self.stdout.flush()
-        except BrokenPipeError:
+        except (BrokenPipeError, OSError):
             # Silently handle broken pipe (e.g., when output is piped to head)
+            # OSError (errno 22, EINVAL) is raised on Windows when the pipe is closed
             pass
 
     def __exit__(
@@ -602,8 +605,9 @@ class Style(metaclass=ABCMeta):
         try:
             self.stdout.write(str(~self))
             self.stdout.flush()
-        except BrokenPipeError:
+        except (BrokenPipeError, OSError):
             # Silently handle broken pipe (e.g., when output is piped to head)
+            # OSError (errno 22, EINVAL) is raised on Windows when the pipe is closed
             pass
         return False
 

@@ -80,16 +80,26 @@ def _iter_lines_posix(
         for stream_type, stream in streams:
             sel.register(stream, EVENT_READ, stream_type)
         while True:
-            ready = sel.select(line_timeout)
+            poll_timeout = line_timeout if line_timeout is not None else 0.1
+            ready = sel.select(poll_timeout)
             if not ready and line_timeout:
                 raise ProcessLineTimedOut(
                     "popen line timeout expired",
                     getattr(proc, "argv", None),
                     getattr(proc, "machine", None),
                 )
+            if not ready and proc.poll() is not None:
+                return
             for key, _mask in ready:
                 # We pass the stream to the selector, so we get a stream out
-                yield key.data, decode(key.fileobj.readline(linesize))  # type: ignore[union-attr]
+                line = key.fileobj.readline(linesize)  # type: ignore[union-attr]
+                if not line:
+                    with contextlib.suppress(Exception):
+                        sel.unregister(key.fileobj)
+                    if not sel.get_map():
+                        return
+                    continue
+                yield key.data, decode(line)
 
     for ret in selector():
         yield ret
