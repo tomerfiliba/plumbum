@@ -1,7 +1,6 @@
 .. raw:: html
 
-    <div style="float:right; margin:1em; padding: 1em 2em 1em 2em; background-color: #efefef;
-        border-radius: 5px; border-width: thin; border-style: dotted; border-color: #0C3762;">
+    <blockquote class="quicklinks-box">
     <strong>Quick Links</strong><br/>
     <ul>
     <li><a href="#requirements" title="Jump to download">Download</a></li>
@@ -22,28 +21,10 @@
     <a alt="Build Status" href="https://github.com/tomerfiliba/plumbum/actions/workflows/ci.yml" target="_blank">
     <img src="https://github.com/tomerfiliba/plumbum/actions/workflows/ci.yml/badge.svg"
     style="display: block; margin-left: auto; margin-right: auto;" title="GitHub Actions CI status"></a>
-    </div>
+    </blockquote>
 
 Plumbum: Shell Combinators and More
 ===================================
-
-.. comment raw:: html
-
-   <div style="width:795px; margin: 1em 0 2em 0; display: block; padding: 1em; border: 1px dotted #DDD;
-    background-color: rgba(255, 255, 202, 0.69); border-radius: 5px;">
-
-   <strong>Sticky</strong><br/>
-
-   <a class="reference external" href="https://pypi.org/project/rpyc">Version 3.2.3</a>
-   was released on December 2nd <br/>
-
-   Please use the
-   <a class="reference external" href="https://groups.google.com/forum/?fromgroups#!forum/rpyc">mailing list</a>
-   to ask questions and use
-   <a class="reference external" href="https://github.com/tomerfiliba/rpyc/issues">github issues</a>
-   to report problems. <strong>Please do not email me directly</strong>.
-
-   </div>
 
 Ever wished the compactness of shell scripts be put into a **real** programming language?
 Say hello to *Plumbum Shell Combinators*. Plumbum (Latin for *lead*, which was used to create
@@ -62,9 +43,10 @@ News
 ====
 
 .. include:: _news.rst
+   :end-line: 10
 
-* :doc:`changelog`
-* :doc:`quickref`
+:doc:`See the full news archive. <news>`
+
 
 Cheat Sheet
 ===========
@@ -83,7 +65,7 @@ you encounter or to request features. The library is released under the permissi
 Requirements
 ------------
 
-Plumbum supports **Python 3.6-3.10** and **PyPy** and is continually tested on
+Plumbum supports **CPython** and **PyPy** and is continually tested on
 **Linux**, **Mac**, and **Windows** machines through `GitHub Actions
 <https://github.com/tomerfiliba/plumbum/actions>`_.  Any Unix-like machine
 should work fine out of the box, but on Windows, you'll probably want to
@@ -97,10 +79,6 @@ programs, then there's no need for the Unix tools.
 Note that for remote command execution, an **openSSH-compatible** client is
 required (also bundled with *Git for Windows*), and a ``bash``-compatible shell
 and a coreutils environment is also expected on the host machine.
-
-This project uses ``setuptools`` to build wheels; and ``setuptools_scm`` is
-required for building SDists. These dependencies will be handled for you by PEP
-518 compatible builders, like `build <https://github.com/pypa/build>`_ and ``pip 10+``.
 
 Download
 --------
@@ -118,6 +96,7 @@ you read it in order. A quick :ref:`reference guide is available <guide-quickref
 
 .. toctree::
    :maxdepth: 2
+   :caption: User Guide
 
    local_commands
    paths
@@ -128,6 +107,13 @@ you read it in order. A quick :ref:`reference guide is available <guide-quickref
    cli
    typed_env
    colors
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Reference
+
+   news
    changelog
    quickref
 
@@ -139,6 +125,7 @@ missing from the guide, so you might want to consult with the API reference in t
 
 .. toctree::
    :maxdepth: 2
+   :caption: API Reference
 
    api/cli
    api/commands
