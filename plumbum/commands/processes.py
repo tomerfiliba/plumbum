@@ -525,20 +525,32 @@ def iter_lines(
     finally:
         process_timed_out = timed_out or getattr(proc, "_timed_out", False)
 
-        if proc.poll() is None and process_timed_out:
+        proc_running = proc.poll() is None
+
+        if proc_running and process_timed_out:
             with contextlib.suppress(Exception):
                 proc.kill()
             with contextlib.suppress(Exception):
                 proc.wait()
         elif completed:
+            # Generator consumed all lines; ensure process is reaped
+            with contextlib.suppress(Exception):
+                proc.wait()
+        elif not proc_running:
+            # Process already finished even though generator did not complete;
+            # reap it to avoid zombies
             with contextlib.suppress(Exception):
                 proc.wait()
 
-        for stream in (proc.stdin, proc.stdout, proc.stderr):
-            if stream is not None:
-                with contextlib.suppress(Exception):
-                    stream.close()
+        # Recompute running state after possible kill/wait above
+        proc_running = proc.poll() is None
 
+        # Only close streams once the process is known to have finished
+        if not proc_running:
+            for stream in (proc.stdin, proc.stdout, proc.stderr):
+                if stream is not None:
+                    with contextlib.suppress(Exception):
+                        stream.close()
     if completed:
         # this will take care of checking return code and timeouts
         _check_process(proc, retcode, timeout, *("\n".join(s) + "\n" for s in buffers))  # type: ignore[arg-type]
