@@ -202,11 +202,11 @@ class BaseCommand:
         self, args: Sequence[Any] = (), **kwargs: Any
     ) -> Generator[PopenWithAddons[str], None, None]:
         """Runs the given command as a context manager, allowing you to create a
-        `pipeline <http://en.wikipedia.org/wiki/Pipeline_(computing)>`_ (not in the UNIX sense)
+        `pipeline <https://en.wikipedia.org/wiki/Pipeline_(computing)>`_ (not in the UNIX sense)
         of programs, parallelizing their work. In other words, instead of running programs
         one after the other, you can start all of them at the same time and wait for them to
         finish. For a more thorough review, see
-        `Lightweight Asynchronism <http://tomerfiliba.com/blog/Toying-with-Context-Managers/>`_.
+        `Lightweight Asynchronism <https://tomerfiliba.com/blog/Toying-with-Context-Managers/>`_.
 
         Example::
 
