@@ -376,3 +376,13 @@ class LocalWorkdir(LocalPath):
             yield newdir
         finally:
             self.chdir(prev)
+
+
+__all__ = [
+    "LocalPath",
+    "LocalWorkdir",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

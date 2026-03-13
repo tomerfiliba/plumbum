@@ -220,3 +220,13 @@ class BaseEnv(typing.Generic[AnyPath]):
         except ImportError:
             return None
         return pwd.getpwuid(os.getuid())[0]  # @UndefinedVariable
+
+
+__all__ = [
+    "BaseEnv",
+    "EnvPathList",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

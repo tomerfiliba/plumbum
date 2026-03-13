@@ -128,7 +128,7 @@ the output to a file named ``tmp.txt``::
 .. note::
    Parentheses are required here! ``grep["world"] < sys.stdin > "tmp.txt"`` would be evaluated
    according to the `rules for chained comparison operators
-   <https://docs.python.org/reference/expressions.html#comparisons>`_ and result an exception.
+   <https://docs.python.org/3/reference/expressions.html#comparisons>`_ and result an exception.
 
 Right after ``foo``, Ctrl+D was pressed, which caused ``grep`` to finish. The empty string
 at the end is the command's ``stdout`` (and it's empty because it actually went to a file).

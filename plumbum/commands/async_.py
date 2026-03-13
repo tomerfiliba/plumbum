@@ -549,3 +549,7 @@ __all__ = (
     "AsyncTEE",
     "AsyncTF",
 )
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

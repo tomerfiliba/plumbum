@@ -48,9 +48,9 @@ class ParamikoPopen(PopenAddons):
     def __init__(
         self,
         argv: Sequence[str],
-        stdin: paramiko.ChannelFile,
-        stdout: paramiko.ChannelFile,
-        stderr: paramiko.ChannelFile,
+        stdin: paramiko.channel.ChannelFile,
+        stdout: paramiko.channel.ChannelFile,
+        stderr: paramiko.channel.ChannelFile,
         encoding: str,
         stdin_file: IO[str] | None = None,
         stdout_file: IO[str] | None = None,
@@ -560,3 +560,15 @@ def _iter_lines(
         yield 0, line
     for line in real_proc.stderr:
         yield 1, line
+
+
+__all__ = [
+    "ParamikoMachine",
+    "ParamikoPopen",
+    "RemoteCommand",
+    "SocketCompatibleChannel",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

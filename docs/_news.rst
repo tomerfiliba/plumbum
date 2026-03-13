@@ -30,7 +30,7 @@
 
 * **2016.12.31**: Version 1.6.3 released to provide Python 3.6 compatibility. Mostly bugfixes, several smaller improvements to paths, and a provisional config parser added.
 
-* **2016.12.3**: Version 1.6.2 is now available through `conda-forge <https://conda-forge.github.io>`_, as well.
+* **2016.12.3**: Version 1.6.2 is now available through `conda-forge <https://conda-forge.org/>`_, as well.
 
 * **2016.6.25**: Version 1.6.2 released. This is mostly a bug fix release, but a few new features are included. Modifiers allow some new arguments, and ``Progress`` is improved. Better support for SunOS and other OS's.
 
@@ -39,3 +39,27 @@
 * **2015.10.16**: Version 1.6.0 released. Highlights include Python 3.5 compatibility, the ``plumbum.colors`` package, ``Path`` becoming a subclass of ``str`` and a host of bugfixes. Special thanks go to Henry for his efforts.
 
 * **2015.07.17**: Version 1.5.0 released. This release brings a host of bug fixes, code cleanups and some experimental new features (be sure to check the changelog). Also, say hi to `Henry Schreiner <https://github.com/henryiii>`_, who has joined as a member of the project.
+
+ .. note:: ``setenv`` has been renamed ``with_env``
+
+* **2014.05.10**: Version 1.4.2 released. This is a maintenance release with mostly minor bug fixes, mostly revolving around Paramiko/Python 3 integration.
+
+* **2014.02.28**: Version 1.4.1 released. This is a maintenance release with mostly minor bug fixes and some new features to the Path class.
+
+* **2013.11.09**: Version 1.4 released, containing mostly bugfixes and some additions to the ``plumbum.cli.terminal`` module
+
+ .. note:: ``plumbum.utils`` became ``plumbum.path.utils``
+
+* **2013.08.25**: Version 1.3 released with bug fixes and loads of new features. Note: the package was reorganized internally; it should work out-of-the-box, but some specific imports might have moved
+
+* **2013.06.06**: Version 1.2 released; lots of bug fixes, compatibility issues, and some small but useful new features
+
+* **2012.12.14**: Version 1.1 released; adds :ref:`Paramiko integration <guide-paramiko-machine>` and :ref:`subcommand support <guide-subcommands>`
+
+* **2012.10.20**: Version 1.0.1 released; fixes bugs and adds :ref:`PuttyMachine <guide-remote-machines>`
+
+* **2012.10.06**: Version 1.0.0 released
+
+* **2012.05.16**: Version 0.9 released*
+
+:doc:`changelog`

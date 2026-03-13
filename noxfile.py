@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import argparse
+
 import nox
 
 nox.needs_version = ">=2025.2.9"
@@ -40,27 +42,44 @@ def tests(session):
     Run the unit and regular tests.
     """
     test_deps = nox.project.dependency_groups(PYPROJECT, "test")
-    session.install("-e.", *test_deps)
-    session.run("pytest", *session.posargs, env={"PYTHONTRACEMALLOC": "5"})
+    session.install("-e.", *test_deps, "pytest-cov")
+    session.run("pytest", "--cov", *session.posargs, env={"PYTHONTRACEMALLOC": "5"})
 
 
 @nox.session(reuse_venv=True, default=False)
 def docs(session):
     """
-    Build the docs. Pass "serve" to serve.
+    Build the docs. Use "--non-interactive" to avoid serving. Pass "-b linkcheck" to check links.
     """
 
-    doc_deps = nox.project.dependency_groups(PYPROJECT, "docs")
-    session.install("-e.", *doc_deps)
-    session.chdir("docs")
-    session.run("sphinx-build", "-M", "html", ".", "_build")
+    uv_pip = ["uv", "pip"] if session.venv_backend == "uv" else ["pip"]
 
-    if session.posargs:
-        if "serve" in session.posargs:
-            session.log("Launching docs at http://localhost:8000/ - use Ctrl-C to quit")
-            session.run("python", "-m", "http.server", "8000", "-d", "_build/html")
-        else:
-            session.log("Unsupported argument to docs")
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-b", dest="builder", default="html", help="Build target (default: html)"
+    )
+    args, posargs = parser.parse_known_args(session.posargs)
+
+    serve = args.builder == "html" and session.interactive
+    extra_installs = ["sphinx-autobuild"] if serve else []
+    session.install("-e.", "--group=docs", *extra_installs)
+    session.run(*uv_pip, "list")
+
+    session.chdir("docs")
+
+    shared_args = (
+        "-n",  # nitpicky mode
+        "-T",  # full tracebacks
+        f"-b={args.builder}",
+        ".",
+        f"_build/{args.builder}",
+        *posargs,
+    )
+
+    if serve:
+        session.run("sphinx-autobuild", "--open-browser", *shared_args)
+    else:
+        session.run("sphinx-build", "--keep-going", *shared_args)
 
 
 @nox.session(default=False)

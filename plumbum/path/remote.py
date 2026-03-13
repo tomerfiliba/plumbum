@@ -16,6 +16,9 @@ if typing.TYPE_CHECKING:
 
     from plumbum._compat.typing import Self
     from plumbum.machines.remote import BaseRemoteMachine
+else:
+    BaseRemoteMachine = typing.Any
+    Self = typing.Any
 
 
 class StatRes:
@@ -434,3 +437,15 @@ class RemoteWorkdir(RemotePath):
             yield changed_dir
         finally:
             self.chdir(prev)
+
+
+__all__ = [
+    "RemotePath",
+    "RemoteStatRes",
+    "RemoteWorkdir",
+    "StatRes",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

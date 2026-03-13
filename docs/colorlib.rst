@@ -292,6 +292,6 @@ The above color table can be generated with::
 See Also
 ========
 
-* `colored <https://pypi.python.org/pypi/colored>`_ Another library with 256 color support
-* `colorama <https://pypi.python.org/pypi/colorama>`_ A library that supports colored text on Windows,
+* `colored <https://pypi.org/project/colored/>`_ Another library with 256 color support
+* `colorama <https://pypi.org/project/colorama/>`_ A library that supports colored text on Windows,
     can be combined with Plumbum.colors (if you force ``use_color``, doesn't support all extended colors)

@@ -231,3 +231,19 @@ class TypedEnv(MutableMapping[str, str]):
         members = set(self._env.keys())
         members.update(dir(self.__class__))
         return sorted(members)
+
+
+__all__ = [
+    "CSV",
+    "NO_DEFAULT",
+    "Bool",
+    "EnvironmentVariableError",
+    "Float",
+    "Int",
+    "Str",
+    "TypedEnv",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

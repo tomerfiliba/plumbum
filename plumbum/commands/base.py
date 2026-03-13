@@ -45,6 +45,10 @@ __all__ = (
 )
 
 
+def __dir__() -> list[str]:
+    return list(__all__)
+
+
 class RedirectionError(Exception):
     """Raised when an attempt is made to redirect an process' standard handle,
     which was already redirected to/from a file"""
@@ -76,7 +80,7 @@ class BaseCommand:
     env: dict[str, str] | None
 
     def __str__(self) -> str:
-        return " ".join(self.formulate())
+        return " ".join(self.formulate(1))
 
     def __or__(self, other: BaseCommand) -> Pipeline:
         """Creates a pipe with the other command"""
@@ -174,7 +178,7 @@ class BaseCommand:
         .. note::
 
            When processes run in the **background** (either via ``popen`` or
-           :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
+           :class:`& BG <plumbum.commands.modifiers.BG>`), their stdout/stderr pipes might fill up,
            causing them to hang. If you know a process produces output, be sure to consume it
            every once in a while, using a monitoring thread/reactor in the background.
            For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
@@ -202,11 +206,11 @@ class BaseCommand:
         self, args: Sequence[Any] = (), **kwargs: Any
     ) -> Generator[PopenWithAddons[str], None, None]:
         """Runs the given command as a context manager, allowing you to create a
-        `pipeline <http://en.wikipedia.org/wiki/Pipeline_(computing)>`_ (not in the UNIX sense)
+        `pipeline <https://en.wikipedia.org/wiki/Pipeline_(computing)>`_ (not in the UNIX sense)
         of programs, parallelizing their work. In other words, instead of running programs
         one after the other, you can start all of them at the same time and wait for them to
         finish. For a more thorough review, see
-        `Lightweight Asynchronism <http://tomerfiliba.com/blog/Toying-with-Context-Managers/>`_.
+        `Lightweight Asynchronism <https://tomerfiliba.com/blog/Toying-with-Context-Managers/>`_.
 
         Example::
 
@@ -219,7 +223,7 @@ class BaseCommand:
         .. note::
 
            When processes run in the **background** (either via ``popen`` or
-           :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
+           :data:`& BG <plumbum.commands.modifiers.BG>`), their stdout/stderr pipes might fill up,
            causing them to hang. If you know a process produces output, be sure to consume it
            every once in a while, using a monitoring thread/reactor in the background.
            For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
@@ -252,9 +256,9 @@ class BaseCommand:
 
     def run(self, args: Sequence[Any] = (), **kwargs: Any) -> tuple[int, str, str]:
         """Runs the given command (equivalent to popen() followed by
-        :func:`run_proc <plumbum.commands.run_proc>`). If the exit code of the process does
+        :func:`run_proc <plumbum.commands.processes.run_proc>`). If the exit code of the process does
         not match the expected one, :class:`ProcessExecutionError
-        <plumbum.commands.ProcessExecutionError>` is raised.
+        <plumbum.commands.processes.ProcessExecutionError>` is raised.
 
         :param args: Any arguments to be passed to the process (a tuple)
 
@@ -619,10 +623,10 @@ class StdinDataRedirection(BaseCommand):
             data = data[self.CHUNK_SIZE :]
         f.seek(0)
         kwargs["stdin"] = f
-        # try:
-        return self.cmd.popen(args, **kwargs)
-        # finally:
-        #    f.close()
+        try:
+            return self.cmd.popen(args, **kwargs)
+        finally:
+            f.close()
 
 
 class ConcreteCommand(BaseCommand):

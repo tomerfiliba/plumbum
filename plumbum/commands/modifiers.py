@@ -68,7 +68,7 @@ class Future:
 
     def wait(self) -> None:
         """Waits for the process to terminate; will raise a
-        :class:`plumbum.commands.ProcessExecutionError` in case of failure"""
+        :class:`plumbum.commands.processes.ProcessExecutionError` in case of failure"""
         if self._returncode is not None:
             return
         self._returncode, self._stdout, self._stderr = run_proc(
@@ -138,7 +138,7 @@ class _BG(ExecutionModifier):
     .. note::
 
        When processes run in the **background** (either via ``popen`` or
-       :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
+       :class:`& BG <plumbum.commands.modifiers.BG>`), their stdout/stderr pipes might fill up,
        causing them to hang. If you know a process produces output, be sure to consume it
        every once in a while, using a monitoring thread/reactor in the background.
        For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
@@ -195,7 +195,8 @@ class _FG(ExecutionModifier):
 
 
 class _TEE(ExecutionModifier):
-    """Run a command, dumping its stdout/stderr to the current process's stdout
+    """
+    Run a command, dumping its stdout/stderr to the current process's stdout
     and stderr, but ALSO return them.  Useful for interactive programs that
     expect a TTY but also have valuable output.
 
@@ -583,3 +584,21 @@ NOHUP = _NOHUP()
 RETCODE = _RETCODE()
 TEE = _TEE()
 TF = _TF()
+
+
+__all__ = [
+    "BG",
+    "FG",
+    "NOHUP",
+    "RETCODE",
+    "TEE",
+    "TF",
+    "ExecutionModifier",
+    "Future",
+    "LogPipe",
+    "PipeToLoggerMixin",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

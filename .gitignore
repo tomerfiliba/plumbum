@@ -165,6 +165,9 @@ cython_debug/
 /tests/nohup.out
 /plumbum/version.py
 
-# jetbrains
+# IDEs and things
 .idea
-uv.lock
+.vscode
+*.lock
+.DS_Store
+*.swp

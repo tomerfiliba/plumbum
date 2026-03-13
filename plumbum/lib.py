@@ -87,3 +87,17 @@ def read_fd_decode_safely(fd: IO[str], size: int = 4096) -> tuple[bytes, str]:
             data += os.read(fd.fileno(), 1)
 
     return data, data.decode("utf-8")
+
+
+__all__ = [
+    "IS_WIN32",
+    "ProcInfo",
+    "StaticProperty",
+    "captured_stdout",
+    "getdoc",
+    "read_fd_decode_safely",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

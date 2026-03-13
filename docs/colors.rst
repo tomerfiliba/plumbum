@@ -257,6 +257,19 @@ Output:
     </font>Not red color or bold.<br/>
     <font color="#800080"><b>This is bold and colorful!</b></font> And this is not.</p>
 
+
+.. py:function:: plumbum.colors.ensure_colors_reset()
+
+    Register an exit handler that emits a terminal color reset.
+
+
+You can also call :func:`plumbum.colors.ensure_colors_reset` to have your program emit
+a clear color code on exit. It might cause an empty line to be shown on your terminal.
+
+.. versionadded:: 2.0
+
+   This was default before 2.0, now it's an opt-in function.
+
 Style Combinations
 ^^^^^^^^^^^^^^^^^^
 
@@ -289,8 +302,8 @@ is customized to handle closing tags correctly. For example::
 See Also
 ========
 
-* `colored <https://pypi.python.org/pypi/colored>`_ Another library with 256 color support
+* `colored <https://pypi.org/project/colored/>`_ Another library with 256 color support
 * `colorful <https://github.com/timofurrer/colorful>`_ A fairly new library with a similar feature set
-* `colorama <https://pypi.python.org/pypi/colorama>`_ A library that supports colored text on Windows,
+* `colorama <https://pypi.org/project/colorama/>`_ A library that supports colored text on Windows,
     can be combined with Plumbum.colors (if you force ``use_color``, doesn't support all extended colors)
-* `rich <https://rich.readthedocs.io>`_ A very powerful modern library for all sorts of styling.
+* `rich <https://rich.readthedocs.io/en/stable/>`_ A very powerful modern library for all sorts of styling.

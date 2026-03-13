@@ -83,7 +83,9 @@ dev = [
 ]
 docs = [
     "sphinx>=6.0.0",
-    "sphinx-rtd-theme>=1.0.0",
+    "furo",
+    "sphinx-autodoc-typehints",
+    "paramiko",
 ]
 
 
@@ -106,7 +108,8 @@ minversion = "7.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config", "--cov-config=pyproject.toml" ]
 norecursedirs = ["examples", "experiments"]
 filterwarnings = [
-  "always",
+  "error",
+  "default:This process:DeprecationWarning",
 ]
 log_level = "INFO"
 xfail_strict = true

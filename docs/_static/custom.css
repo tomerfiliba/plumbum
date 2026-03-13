@@ -1,0 +1,8 @@
+    .quicklinks-box {
+        float: right;
+        clear: right;
+        margin: 0 0 1em 1em;
+        padding: 1em 2em 1em 2em;
+        border-radius: 5px;
+        border: none;
+    }

@@ -37,7 +37,7 @@ class FSUser(int):
 
 class Path(str, ABC):
     """An abstraction over file system paths. This class is abstract, and the two implementations
-    are :class:`LocalPath <plumbum.machines.local.LocalPath>` and
+    are :class:`LocalPath <plumbum.path.local.LocalPath>` and
     :class:`RemotePath <plumbum.path.remote.RemotePath>`.
     """
 
@@ -195,14 +195,14 @@ class Path(str, ABC):
     @property
     @abstractmethod
     def uid(self) -> FSUser:
-        """The user that owns this path. The returned value is a :class:`FSUser <plumbum.path.FSUser>`
+        """The user that owns this path. The returned value is a :class:`FSUser <plumbum.path.base.FSUser>`
         object which behaves like an ``int`` (as expected from ``uid``), but it also has a ``.name``
         attribute that holds the string-name of the user"""
 
     @property
     @abstractmethod
     def gid(self) -> FSUser:
-        """The group that owns this path. The returned value is a :class:`FSUser <plumbum.path.FSUser>`
+        """The group that owns this path. The returned value is a :class:`FSUser <plumbum.path.base.FSUser>`
         object which behaves like an ``int`` (as expected from ``gid``), but it also has a ``.name``
         attribute that holds the string-name of the group"""
 
@@ -684,3 +684,15 @@ class RelativePath:
 
     def __radd__(self, path: P) -> P:
         return path.join(*self.parts)
+
+
+__all__ = [
+    "FLAGS",
+    "FSUser",
+    "Path",
+    "RelativePath",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

@@ -22,7 +22,7 @@ if typing.TYPE_CHECKING:
 
 class ShellSessionError(Exception):
     """Raises when something goes wrong when calling
-    :func:`ShellSession.popen <plumbum.session.ShellSession.popen>`"""
+    :func:`ShellSession.popen <plumbum.machines.session.ShellSession.popen>`"""
 
 
 class SSHCommsError(ProcessExecutionError, EOFError):
@@ -105,6 +105,7 @@ class SessionPopen(PopenAddons):
         self.stdout = stdout
         self.stderr = stderr
         self.custom_encoding = encoding
+        self.close_streams_after_communicate = False
         self.returncode = None
         self._done = False
 
@@ -223,7 +224,7 @@ class ShellSession:
     less "robust" than executing a process on its own, and they are susseptible to all sorts
     of malformatted-strings attacks, and there is little benefit from using them locally.
     However, they can greatly speed up remote connections, and are required for the implementation
-    of :class:`SshMachine <plumbum.machines.remote.SshMachine>`, as they allow us to send multiple
+    of :class:`SshMachine <plumbum.machines.ssh_machine.SshMachine>`, as they allow us to send multiple
     commands over a single SSH connection (setting up separate SSH connections incurs a high
     overhead). Try to avoid using shell sessions, unless you know what you're doing.
 
@@ -315,9 +316,9 @@ class ShellSession:
         """Runs the given command in the shell, adding some decoration around it. Only a single
         command can be executed at any given time.
 
-        :param cmd: The command (string or :class:`Command <plumbum.commands.BaseCommand>` object)
+        :param cmd: The command (string or :class:`Command <plumbum.commands.base.BaseCommand>` object)
                     to run
-        :returns: A :class:`SessionPopen <plumbum.session.SessionPopen>` instance
+        :returns: A :class:`SessionPopen <plumbum.machines.session.SessionPopen>` instance
         """
         if self.proc is None:
             raise ShellSessionError("Shell session has already been closed")
@@ -363,7 +364,7 @@ class ShellSession:
     ) -> tuple[int | None, str, str]:
         """Runs the given command
 
-        :param cmd: The command (string or :class:`Command <plumbum.commands.BaseCommand>` object)
+        :param cmd: The command (string or :class:`Command <plumbum.commands.base.BaseCommand>` object)
                     to run
         :param retcode: The expected return code (0 by default). Set to ``None`` in order to
                         ignore erroneous return codes
@@ -371,3 +372,19 @@ class ShellSession:
         """
         with self._lock:
             return run_proc(self.popen(cmd), retcode)
+
+
+__all__ = [
+    "HostPublicKeyUnknown",
+    "IncorrectLogin",
+    "MarkedPipe",
+    "SSHCommsChannel2Error",
+    "SSHCommsError",
+    "SessionPopen",
+    "ShellSession",
+    "ShellSessionError",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

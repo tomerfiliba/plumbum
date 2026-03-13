@@ -1,6 +1,6 @@
 """
 Names for the standard and extended color set.
-Extended set is similar to `vim wiki <http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim>`_, `colored <https://pypi.python.org/pypi/colored>`_, etc. Colors based on `wikipedia <https://en.wikipedia.org/wiki/ANSI_escape_code#Colors>`_.
+Extended set is similar to `vim wiki <https://en.wikipedia.org/wiki/ANSI_escape_code#Colors>`_, `colored <https://pypi.org/project/colored/>`_, etc. Colors based on `wikipedia <https://en.wikipedia.org/wiki/ANSI_escape_code#Colors>`_.
 
 You can access the index of the colors with names.index(name). You can access the
 rgb values with ``r=int(html[n][1:3],16)``, etc.
@@ -430,3 +430,19 @@ def from_html(color: str) -> tuple[int, int, int]:
 def to_html(r: int, g: int, b: int) -> str:
     """Convert rgb to html hex code."""
     return f"#{r:02x}{g:02x}{b:02x}"
+
+
+__all__ = [
+    "FindNearest",
+    "attributes_ansi",
+    "color_codes_simple",
+    "color_html",
+    "color_names",
+    "default_styles",
+    "from_html",
+    "to_html",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

@@ -115,7 +115,7 @@ See :ref:`guide-local-commands-nesting`.
 Remote commands (over SSH)
 --------------------------
 
-Supports `openSSH <https://www.openssh.com/>`_-compatible clients,
+Supports `openSSH <https://www.openssh.org/>`_-compatible clients,
 `PuTTY <https://www.chiark.greenend.org.uk/~sgtatham/putty/>`_ (on Windows)
 and `Paramiko <https://github.com/paramiko/paramiko/>`_ (a pure-Python implementation of SSH2):
 

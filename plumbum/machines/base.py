@@ -184,3 +184,16 @@ class BaseMachine(metaclass=abc.ABCMeta):
         This cache speeds up the lookup of a program in the machines PATH, and is particularly
         effective for RemoteMachines.
         """
+
+
+__all__ = [
+    "BaseMachine",
+    "MachineCmd",
+    "PopenAddons",
+    "PopenWithAddons",
+    "StrOrBytesPath",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

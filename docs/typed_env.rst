@@ -3,8 +3,10 @@
 TypedEnv
 ========
 Plumbum provides this utility class to facilitate working with environment variables.
-Similar to how :class:`plumbum.cli.Application` parses command line arguments into pythonic data types,
+Similar to how :class:`plumbum.cli.application.Application` parses command line arguments into pythonic data types,
 :class:`plumbum.typed_env.TypedEnv` parses environment variables:
+
+.. py:class:: plumbum.typed_env.TypedEnv
 
 class MyEnv(TypedEnv):
     username = TypedEnv.Str("USER", default='anonymous')

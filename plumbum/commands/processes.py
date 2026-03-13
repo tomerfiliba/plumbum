@@ -9,7 +9,7 @@ import time
 import typing
 from queue import Empty as QueueEmpty
 from queue import Queue
-from threading import Thread
+from threading import Lock, Thread
 from typing import Any
 
 from plumbum.lib import IS_WIN32
@@ -80,16 +80,26 @@ def _iter_lines_posix(
         for stream_type, stream in streams:
             sel.register(stream, EVENT_READ, stream_type)
         while True:
-            ready = sel.select(line_timeout)
+            poll_timeout = line_timeout if line_timeout is not None else 0.1
+            ready = sel.select(poll_timeout)
             if not ready and line_timeout:
                 raise ProcessLineTimedOut(
                     "popen line timeout expired",
                     getattr(proc, "argv", None),
                     getattr(proc, "machine", None),
                 )
+            if not ready and proc.poll() is not None:
+                return
             for key, _mask in ready:
                 # We pass the stream to the selector, so we get a stream out
-                yield key.data, decode(key.fileobj.readline(linesize))  # type: ignore[union-attr]
+                line = key.fileobj.readline(linesize)  # type: ignore[union-attr]
+                if not line:
+                    with contextlib.suppress(Exception):
+                        sel.unregister(key.fileobj)
+                    if not sel.get_map():
+                        return
+                    continue
+                yield key.data, decode(line)
 
     for ret in selector():
         yield ret
@@ -169,7 +179,7 @@ _iter_lines = _iter_lines_win32 if IS_WIN32 else _iter_lines_posix
 class ProcessExecutionError(OSError):
     """Represents the failure of a process. When the exit code of a terminated process does not
     match the expected result, this exception is raised by :func:`run_proc
-    <plumbum.commands.run_proc>`. It contains the process' return code, stdout, and stderr, as
+    <plumbum.commands.processes.run_proc>`. It contains the process' return code, stdout, and stderr, as
     well as the command line used to create the process (``argv``)
     """
 
@@ -223,7 +233,7 @@ class ProcessExecutionError(OSError):
 
 
 class ProcessTimedOut(Exception):
-    """Raises by :func:`run_proc <plumbum.commands.run_proc>` when a ``timeout`` has been
+    """Raises by :func:`run_proc <plumbum.commands.processes.run_proc>` when a ``timeout`` has been
     specified and it has elapsed before the process terminated"""
 
     def __init__(self, msg: str, argv: Any):
@@ -232,7 +242,7 @@ class ProcessTimedOut(Exception):
 
 
 class ProcessLineTimedOut(Exception):
-    """Raises by :func:`iter_lines <plumbum.commands.iter_lines>` when a ``line_timeout`` has been
+    """Raises by :func:`iter_lines <plumbum.commands.processes.iter_lines>` when a ``line_timeout`` has been
     specified and it has elapsed before the process yielded another line"""
 
     def __init__(self, msg: str, argv: list[str] | None, machine: str | None):
@@ -243,7 +253,7 @@ class ProcessLineTimedOut(Exception):
 
 class CommandNotFound(AttributeError):
     """Raised by :func:`local.which <plumbum.machines.local.LocalMachine.which>` and
-    :func:`RemoteMachine.which <plumbum.machines.remote.RemoteMachine.which>` when a
+    :func:`BaseRemoteMachine.which <plumbum.machines.remote.BaseRemoteMachine.which>` when a
     command was not found in the system's ``PATH``"""
 
     def __init__(self, program: object, path: object):
@@ -277,6 +287,9 @@ class MinHeap:
 
 _timeout_queue = Queue[tuple[Any, float]]()
 _shutting_down = False
+_timeout_thread_lock = Lock()
+_shutdown_registered = False
+bgthd: Thread | None = None
 
 
 def _timeout_thread_func() -> None:
@@ -312,28 +325,36 @@ def _timeout_thread_func() -> None:
             raise
 
 
-bgthd = Thread(target=_timeout_thread_func, name="PlumbumTimeoutThread")
-bgthd.daemon = True
-bgthd.start()
+def _ensure_timeout_thread_started() -> None:
+    global bgthd, _shutdown_registered  # noqa: PLW0603
+    if bgthd is not None and bgthd.is_alive():
+        return
+
+    with _timeout_thread_lock:
+        if bgthd is not None and bgthd.is_alive():
+            return
+        bgthd = Thread(target=_timeout_thread_func, name="PlumbumTimeoutThread")
+        bgthd.daemon = True
+        bgthd.start()
+        if not _shutdown_registered:
+            atexit.register(_shutdown_bg_threads)
+            _shutdown_registered = True
 
 
 def _register_proc_timeout(proc: PopenWithAddons[Any], timeout: float | None) -> None:
     if timeout is not None:
+        _ensure_timeout_thread_started()
         _timeout_queue.put((proc, time.time() + timeout))
 
 
 def _shutdown_bg_threads() -> None:
     global _shutting_down  # noqa: PLW0603
     _shutting_down = True
-    # Make sure this still exists (don't throw error in atexit!)
-    # TODO: not sure why this would be "falsey", though
-    if _timeout_queue:  # type: ignore[truthy-bool]
+    # _timeout_queue could be deleted by this point
+    if _timeout_queue and bgthd and bgthd.is_alive():  # type: ignore[truthy-bool]
         _timeout_queue.put((SystemExit, 0))
         # grace period
         bgthd.join(0.1)
-
-
-atexit.register(_shutdown_bg_threads)
 
 
 # ===================================================================================================
@@ -356,7 +377,7 @@ def run_proc(
     :param timeout: the number of seconds (a ``float``) to allow the process to run, before
                     forcefully terminating it. If ``None``, not timeout is imposed; otherwise
                     the process is expected to terminate within that timeout value, or it will
-                    be killed and :class:`ProcessTimedOut <plumbum.cli.ProcessTimedOut>`
+                    be killed and :class:`ProcessTimedOut <plumbum.commands.processes.ProcessTimedOut>`
                     will be raised
 
     :returns: A tuple of (return code, stdout, stderr)
@@ -364,19 +385,26 @@ def run_proc(
     _register_proc_timeout(proc, timeout)
     stdout: bytes | str
     stderr: bytes | str
-    stdout, stderr = proc.communicate()
-    proc._end_time = time.time()  # type: ignore[attr-defined]
-    if not stdout:
-        stdout = b""
-    if not stderr:
-        stderr = b""
-    if custom_encoding := getattr(proc, "custom_encoding", None):
-        assert isinstance(stdout, bytes)
-        assert isinstance(stderr, bytes)
-        stdout = stdout.decode(custom_encoding, "ignore")
-        stderr = stderr.decode(custom_encoding, "ignore")
+    try:
+        stdout, stderr = proc.communicate()
+        proc._end_time = time.time()  # type: ignore[attr-defined]
+        if not stdout:
+            stdout = b""
+        if not stderr:
+            stderr = b""
+        if custom_encoding := getattr(proc, "custom_encoding", None):
+            assert isinstance(stdout, bytes)
+            assert isinstance(stderr, bytes)
+            stdout = stdout.decode(custom_encoding, "ignore")
+            stderr = stderr.decode(custom_encoding, "ignore")
 
-    return _check_process(proc, retcode, timeout, stdout, stderr)  # type: ignore[return-value]
+        return _check_process(proc, retcode, timeout, stdout, stderr)  # type: ignore[return-value]
+    finally:
+        if getattr(proc, "close_streams_after_communicate", True):
+            for stream in (proc.stdin, proc.stdout, proc.stderr):
+                if stream is not None:
+                    with contextlib.suppress(Exception):
+                        stream.close()
 
 
 # ===================================================================================================
@@ -446,7 +474,7 @@ def iter_lines(
 ) -> Generator[tuple[int, str] | tuple[None, str] | tuple[str, None], None, None]:
     """Runs the given process (equivalent to run_proc()) and yields a tuples of (out, err) line pairs.
     If the exit code of the process does not match the expected one, :class:`ProcessExecutionError
-    <plumbum.commands.ProcessExecutionError>` is raised.
+    <plumbum.commands.processes.ProcessExecutionError>` is raised.
 
     :param retcode: The expected return code of this process (defaults to 0).
                     In order to disable exit-code validation, pass ``None``. It may also
@@ -461,7 +489,7 @@ def iter_lines(
                     ``-1`` (default) reads until a b'\\n' is encountered.
 
     :param line_timeout: The maximal amount of time (in seconds) to allow between consecutive lines in either stream.
-                    Raise an :class:`ProcessLineTimedOut <plumbum.commands.ProcessLineTimedOut>` if the timeout has
+                    Raise an :class:`ProcessLineTimedOut <plumbum.commands.processes.ProcessLineTimedOut>` if the timeout has
                     been reached. ``None`` means no timeout is imposed.
 
     :param buffer_size: Maximum number of lines to keep in the stdout/stderr buffers, in case of a ProcessExecutionError.
@@ -488,24 +516,81 @@ def iter_lines(
     _register_proc_timeout(proc, timeout)
 
     buffers: list[list[tuple[str | None, str | None] | str]] = [[], []]
-    for t, line in _iter_lines(proc, decode, linesize, line_timeout):
-        # verify that the proc hasn't timed out yet
-        proc.verify(timeout=timeout, retcode=None, stdout=None, stderr=None)
+    completed = False
+    timed_out = False
 
-        buffer = buffers[t]
-        if buffer_size > 0:
-            buffer.append(line)
-            if buffer_size < sys.maxsize:
-                del buffer[:-buffer_size]
+    try:
+        for t, line in _iter_lines(proc, decode, linesize, line_timeout):
+            # verify that the proc hasn't timed out yet
+            proc.verify(timeout=timeout, retcode=None, stdout=None, stderr=None)
 
-        if mode is BY_POSITION:
-            if t == 0:
-                yield (line, None)
-            else:
-                yield (None, line)
+            buffer = buffers[t]
+            if buffer_size > 0:
+                buffer.append(line)
+                if buffer_size < sys.maxsize:
+                    del buffer[:-buffer_size]
 
-        elif mode is BY_TYPE:
-            yield (t + 1), line  # 1=stdout, 2=stderr
+            if mode is BY_POSITION:
+                if t == 0:
+                    yield (line, None)
+                else:
+                    yield (None, line)
 
-    # this will take care of checking return code and timeouts
-    _check_process(proc, retcode, timeout, *("\n".join(s) + "\n" for s in buffers))  # type: ignore[arg-type]
+            elif mode is BY_TYPE:
+                yield (t + 1), line  # 1=stdout, 2=stderr
+
+        completed = True
+    except ProcessLineTimedOut:
+        timed_out = True
+        raise
+    finally:
+        process_timed_out = timed_out or getattr(proc, "_timed_out", False)
+
+        proc_running = proc.poll() is None
+
+        if proc_running and process_timed_out:
+            with contextlib.suppress(Exception):
+                proc.kill()
+            with contextlib.suppress(Exception):
+                proc.wait()
+        elif completed:
+            # Generator consumed all lines; ensure process is reaped
+            with contextlib.suppress(Exception):
+                proc.wait()
+        elif not proc_running:
+            # Process already finished even though generator did not complete;
+            # reap it to avoid zombies
+            with contextlib.suppress(Exception):
+                proc.wait()
+
+        # Recompute running state after possible kill/wait above
+        proc_running = proc.poll() is None
+
+        # Only close streams once the process is known to have finished
+        if not proc_running:
+            for stream in (proc.stdin, proc.stdout, proc.stderr):
+                if stream is not None:
+                    with contextlib.suppress(Exception):
+                        stream.close()
+    if completed:
+        # this will take care of checking return code and timeouts
+        _check_process(proc, retcode, timeout, *("\n".join(s) + "\n" for s in buffers))  # type: ignore[arg-type]
+
+
+__all__ = [
+    "BY_POSITION",
+    "BY_TYPE",
+    "DEFAULT_BUFFER_SIZE",
+    "DEFAULT_ITER_LINES_MODE",
+    "CommandNotFound",
+    "Mode",
+    "ProcessExecutionError",
+    "ProcessLineTimedOut",
+    "ProcessTimedOut",
+    "iter_lines",
+    "run_proc",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

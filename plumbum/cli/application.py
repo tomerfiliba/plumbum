@@ -1434,3 +1434,18 @@ complete -F _{prog_name}_completion {prog_name}
     def fish_completion(self) -> None:
         """Prints fish completion script and quits"""
         # Handled in _validate_args via ShowCompletion
+
+
+__all__ = [
+    "Application",
+    "ShowHelp",
+    "ShowHelpAll",
+    "ShowVersion",
+    "Subcommand",
+    "SwitchParseInfo",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)
+

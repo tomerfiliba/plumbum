@@ -289,7 +289,7 @@ class AtomicCounterFile:
 
     def __init__(self, atomicfile: AtomicFile, initial: int = 0):
         """
-        :param atomicfile: an :class:`AtomicFile <plumbum.atomic.AtomicFile>` instance
+        :param atomicfile: an :class:`AtomicFile <plumbum.fs.atomic.AtomicFile>` instance
         :param initial: the initial value (used when the first time the file is created)
         """
         self.atomicfile = atomicfile
@@ -377,7 +377,7 @@ class PidFile:
     def acquire(self) -> None:
         """
         Attempt to acquire the PID file. If it's already locked, raises
-        :class:`PidFileTaken <plumbum.atomic.PidFileTaken>`. You should normally acquire
+        :class:`PidFileTaken <plumbum.fs.atomic.PidFileTaken>`. You should normally acquire
         the file as early as possible when the program starts
         """
         if self._ctx is not None:
@@ -409,3 +409,15 @@ class PidFile:
             self._ctx.__exit__(None, None, None)
         finally:
             self._ctx = None
+
+
+__all__ = [
+    "AtomicCounterFile",
+    "AtomicFile",
+    "PidFile",
+    "PidFileTaken",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

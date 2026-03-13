@@ -240,6 +240,10 @@ class BaseRemoteMachine(BaseMachine):
     def __exit__(self, t: object, v: object, tb: object) -> None:
         self.close()
 
+    def __del__(self) -> None:
+        with contextlib.suppress(Exception):
+            self.close()
+
     def close(self) -> None:
         """closes the connection to the remote machine; all paths and programs will
         become defunct"""
@@ -259,14 +263,14 @@ class BaseRemoteMachine(BaseMachine):
 
     def which(self, progname: str) -> RemotePath:
         """Looks up a program in the ``PATH``. If the program is not found, raises
-        :class:`CommandNotFound <plumbum.commands.CommandNotFound>`
+        :class:`CommandNotFound <plumbum.commands.processes.CommandNotFound>`
 
         :param progname: The program's name. Note that if underscores (``_``) are present
                          in the name, and the exact name is not found, they will be replaced
                          in turn by hyphens (``-``) then periods (``.``), and the name will
                          be looked up again for each alternative
 
-        :returns: A :class:`RemotePath <plumbum.path.local.RemotePath>`
+        :returns: A :class:`RemotePath <plumbum.path.remote.RemotePath>`
         """
         key = (progname, self.env.get("PATH", ""))
 
@@ -318,7 +322,7 @@ class BaseRemoteMachine(BaseMachine):
     def session(
         self, isatty: bool = False, *, new_session: bool = False
     ) -> ShellSession:
-        """Creates a new :class:`ShellSession <plumbum.session.ShellSession>` object; this invokes the user's
+        """Creates a new :class:`ShellSession <plumbum.machines.session.ShellSession>` object; this invokes the user's
         shell on the remote machine and executes commands on it over stdin/stdout/stderr
         """
         raise NotImplementedError()
@@ -327,12 +331,12 @@ class BaseRemoteMachine(BaseMachine):
         """Downloads a remote file/directory (``src``) to a local destination (``dst``).
         ``src`` must be a string or a :class:`RemotePath <plumbum.path.remote.RemotePath>`
         pointing to this remote machine, and ``dst`` must be a string or a
-        :class:`LocalPath <plumbum.machines.local.LocalPath>`"""
+        :class:`LocalPath <plumbum.path.local.LocalPath>`"""
         raise NotImplementedError()
 
     def upload(self, src: str | LocalPath, dst: str | RemotePath) -> None:
         """Uploads a local file/directory (``src``) to a remote destination (``dst``).
-        ``src`` must be a string or a :class:`LocalPath <plumbum.machines.local.LocalPath>`,
+        ``src`` must be a string or a :class:`LocalPath <plumbum.path.local.LocalPath>`,
         and ``dst`` must be a string or a :class:`RemotePath <plumbum.path.remote.RemotePath>`
         pointing to this remote machine"""
         raise NotImplementedError()
@@ -584,3 +588,17 @@ class AsyncRemoteMachine:
     async def __aexit__(self, t: object, v: object, tb: object) -> None:
         """Async context manager exit."""
         self.close()
+
+
+__all__ = [
+    "AsyncRemoteMachine",
+    "BaseRemoteMachine",
+    "ClosedRemote",
+    "ClosedRemoteMachine",
+    "RemoteCommand",
+    "RemoteEnv",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

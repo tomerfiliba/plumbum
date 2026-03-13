@@ -6,7 +6,7 @@ Paths
 
 Apart from commands, Plumbum provides an easy to use path class that represents file system paths.
 Paths are returned from several plumbum commands, and local paths can be directly created
-by :func:`local.path() <platform.local_machine.LocalMachine.path>`. Paths are always absolute and
+by :func:`local.path() <plumbum.machines.local.LocalMachine.path>`. Paths are always absolute and
 are immutable, may refer to a remote machine, and can be used like a ``str``.
 In many respects, paths provide a similar API to pathlib in the Python 3.4+ standard library,
 with a few improvements and extra features.

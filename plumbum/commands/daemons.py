@@ -3,11 +3,10 @@ from __future__ import annotations
 import contextlib
 import errno
 import os
-import signal
+import pickle
 import subprocess
 import sys
 import time
-import traceback
 import typing
 
 from plumbum.commands.processes import ProcessExecutionError
@@ -43,51 +42,54 @@ def posix_daemonize(
     if stderr is None:
         stderr = stdout
 
-    MAX_SIZE = 16384
     rfd, wfd = os.pipe()
     argv = command.formulate()
-    firstpid = os.fork()
-    if firstpid == 0:
-        # first child: become session leader
-        os.close(rfd)
-        rc = 0
-        try:
-            os.setsid()
-            os.umask(0)
-            stdin_file = open(os.devnull, encoding="utf-8")
-            stdout_file = open(stdout, "a" if append else "w", encoding="utf-8")
-            stderr_file = open(stderr, "a" if append else "w", encoding="utf-8")
-            signal.signal(signal.SIGHUP, signal.SIG_IGN)
-            proc_str = command.popen(
-                cwd=cwd,
-                close_fds=True,
-                stdin=stdin_file.fileno(),
-                stdout=stdout_file.fileno(),
-                stderr=stderr_file.fileno(),
-            )
-            os.write(wfd, str(proc_str.pid).encode("utf8"))
-        except Exception:
-            rc = 1
-            tbtext = "".join(traceback.format_exception(*sys.exc_info()))[-MAX_SIZE:]
-            os.write(wfd, tbtext.encode("utf8"))
-        finally:
-            os.close(wfd)
-            os._exit(rc)
+    payload = pickle.dumps(
+        {
+            "command": command,
+            "cwd": cwd,
+            "stdout": stdout,
+            "stderr": stderr,
+            "append": append,
+        },
+        protocol=pickle.HIGHEST_PROTOCOL,
+    )
 
-    # wait for first child to die
+    launcher = subprocess.Popen(
+        [sys.executable, "-m", "plumbum.commands.daemon_launcher", str(wfd)],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        close_fds=True,
+        pass_fds=(wfd,),
+    )
     os.close(wfd)
-    _, rc = os.waitpid(firstpid, 0)
-    output: str | bytes = os.read(rfd, MAX_SIZE)
+
+    launch_stdout, launch_stderr = launcher.communicate(payload)
+    output: str | bytes = os.read(rfd, 16384)
     assert isinstance(output, bytes)
     os.close(rfd)
     with contextlib.suppress(UnicodeError):
         output = output.decode("utf8")
-    if rc == 0 and output.isdigit():
+
+    if launcher.returncode == 0 and output.isdigit():
         secondpid = int(output)
     else:
-        raise ProcessExecutionError(argv, rc, "", output)
+        launch_stdout_text = launch_stdout.decode("utf8", "ignore")
+        launch_stderr_text = launch_stderr.decode("utf8", "ignore")
+        launcher_output = "\n".join(
+            part
+            for part in (str(output), launch_stdout_text, launch_stderr_text)
+            if part
+        )
+        raise ProcessExecutionError(
+            argv,
+            launcher.returncode,
+            "",
+            launcher_output,
+        )
     proc: subprocess.Popen[bytes] = subprocess.Popen.__new__(subprocess.Popen)  # type: ignore[arg-type]
-    proc._child_created = True  # type: ignore[attr-defined]
+    proc._child_created = False  # type: ignore[attr-defined]
     proc.returncode = None
     proc.stdout = None
     proc.stdin = None
@@ -138,10 +140,25 @@ def win32_daemonize(
     stdin_file = open(os.devnull, encoding="utf-8")
     stdout_file = open(stdout, "a" if append else "w", encoding="utf-8")
     stderr_file = open(stderr, "a" if append else "w", encoding="utf-8")
-    return command.popen(
-        cwd=cwd,
-        stdin=stdin_file.fileno(),
-        stdout=stdout_file.fileno(),
-        stderr=stderr_file.fileno(),
-        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS,  # type: ignore[attr-defined]
-    )
+    try:
+        return command.popen(
+            cwd=cwd,
+            stdin=stdin_file.fileno(),
+            stdout=stdout_file.fileno(),
+            stderr=stderr_file.fileno(),
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS,  # type: ignore[attr-defined]
+        )
+    finally:
+        for stream in (stdin_file, stdout_file, stderr_file):
+            with contextlib.suppress(Exception):
+                stream.close()
+
+
+__all__ = [
+    "posix_daemonize",
+    "win32_daemonize",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

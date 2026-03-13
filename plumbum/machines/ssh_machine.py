@@ -32,7 +32,7 @@ def _get_free_port() -> int:
 
 class SshTunnel:
     """An object representing an SSH tunnel (created by
-    :func:`SshMachine.tunnel <plumbum.machines.remote.SshMachine.tunnel>`)"""
+    :func:`SshMachine.tunnel <plumbum.machines.ssh_machine.SshMachine.tunnel>`)"""
 
     __slots__ = ["__weakref__", "_dport", "_lport", "_reverse", "_session"]
 
@@ -301,7 +301,7 @@ class SshMachine(BaseRemoteMachine):
         supports Unix sockets, in which case the local socket should be passed in as
         ``lport`` and the local bind address should be ``None``. The same can be done
         for a remote socket, by following the same pattern with ``dport`` and ``dhost``.
-        The returned :class:`SshTunnel <plumbum.machines.remote.SshTunnel>` object can
+        The returned :class:`SshTunnel <plumbum.machines.ssh_machine.SshTunnel>` object can
         be used as a *context-manager*.
 
         The more conventional use case is the following::
@@ -406,7 +406,7 @@ class PuttyMachine(SshMachine):
     PuTTY-flavored SSH connection. The programs ``plink`` and ``pscp`` are expected to
     be in the path (or you may provide your own ``ssh_command`` and ``scp_command``)
 
-    Arguments are the same as for :class:`plumbum.machines.remote.SshMachine`
+    Arguments are the same as for :class:`plumbum.machines.ssh_machine.SshMachine`
     """
 
     __slots__ = ()
@@ -576,3 +576,15 @@ class AsyncSshMachine:
     async def __aexit__(self, t: object, v: object, tb: object) -> None:
         """Async context manager exit."""
         self.close()
+
+
+__all__ = [
+    "AsyncSshMachine",
+    "PuttyMachine",
+    "SshMachine",
+    "SshTunnel",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

@@ -26,7 +26,7 @@ MOUNT_PATTERN = re.compile(r"(.+?)\s+on\s+(.+?)\s+type\s+(\S+)(?:\s+\((.+?)\))?"
 
 def mount_table() -> list[MountEntry]:
     """Returns the system's current mount table (a list of
-    :class:`MountEntry <plumbum.unixutils.MountEntry>` objects)"""
+    :class:`MountEntry <plumbum.fs.mounts.MountEntry>` objects)"""
     from plumbum.cmd import mount
 
     table = []
@@ -42,3 +42,15 @@ def mounted(fs: str) -> bool:
     Indicates if the given filesystem (device file or mount point) is currently mounted
     """
     return any(fs in {entry.dev, entry.point} for entry in mount_table())
+
+
+__all__ = [
+    "MOUNT_PATTERN",
+    "MountEntry",
+    "mount_table",
+    "mounted",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

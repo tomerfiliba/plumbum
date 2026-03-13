@@ -113,5 +113,15 @@ class ShowImageApp(cli.Application):
         Image(size, self.ratio).show(filename, self.double)  # type: ignore[arg-type]
 
 
+__all__ = [
+    "Image",
+    "ShowImageApp",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)
+
+
 if __name__ == "__main__":
     ShowImageApp.run()
