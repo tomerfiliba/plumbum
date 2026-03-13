@@ -1017,6 +1017,24 @@ for _ in range({num_of_increments}):
         c = ls["-l", ["-a", "*.py"]]
         assert c.formulate()[1:] == ["-l", "-a", "*.py"]
 
+    def test_str_quoting_consistency(self):
+        """Verify that str() quotes arguments consistently with and without pipes."""
+        from plumbum.cmd import ls, tail
+
+        cmd = ls["/tmp/file with spaces"]
+        pipeline = cmd | tail["-1"]
+
+        cmd_str = str(cmd)
+        pipeline_str = str(pipeline)
+
+        # Both should quote the argument with spaces
+        assert "'/tmp/file with spaces'" in cmd_str, (
+            f"Expected quoted arg in str(cmd), got: {cmd_str!r}"
+        )
+        assert "'/tmp/file with spaces'" in pipeline_str, (
+            f"Expected quoted arg in str(pipeline), got: {pipeline_str!r}"
+        )
+
     def test_contains_ls(self):
         assert "ls" in local
 
