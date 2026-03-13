@@ -5,7 +5,7 @@ import os
 import pickle
 import types
 
-from plumbum.commands import daemon_launcher
+from plumbum.commands import _daemon_launcher
 
 
 class _StdinWithPayload:
@@ -45,9 +45,9 @@ def _make_payload(
 
 
 def test_main_returns_2_when_missing_fd(monkeypatch) -> None:
-    monkeypatch.setattr(daemon_launcher.sys, "argv", ["daemon_launcher.py"])
+    monkeypatch.setattr(_daemon_launcher.sys, "argv", ["_daemon_launcher.py"])
 
-    assert daemon_launcher._main() == 2
+    assert _daemon_launcher._main() == 2
 
 
 def test_main_success_writes_pid_and_uses_expected_popen_kwargs(
@@ -65,12 +65,12 @@ def test_main_success_writes_pid_and_uses_expected_popen_kwargs(
     )
 
     monkeypatch.setattr(
-        daemon_launcher.sys, "argv", ["daemon_launcher.py", str(write_fd)]
+        _daemon_launcher.sys, "argv", ["_daemon_launcher.py", str(write_fd)]
     )
-    monkeypatch.setattr(daemon_launcher.sys, "stdin", _StdinWithPayload(payload))
+    monkeypatch.setattr(_daemon_launcher.sys, "stdin", _StdinWithPayload(payload))
 
     try:
-        rc = daemon_launcher._main()
+        rc = _daemon_launcher._main()
         response = os.read(read_fd, 1024)
     finally:
         os.close(read_fd)
@@ -98,12 +98,12 @@ def test_main_exception_writes_traceback(monkeypatch, tmp_path) -> None:
     )
 
     monkeypatch.setattr(
-        daemon_launcher.sys, "argv", ["daemon_launcher.py", str(write_fd)]
+        _daemon_launcher.sys, "argv", ["_daemon_launcher.py", str(write_fd)]
     )
-    monkeypatch.setattr(daemon_launcher.sys, "stdin", _StdinWithPayload(payload))
+    monkeypatch.setattr(_daemon_launcher.sys, "stdin", _StdinWithPayload(payload))
 
     try:
-        rc = daemon_launcher._main()
+        rc = _daemon_launcher._main()
         response = os.read(read_fd, 65536)
     finally:
         os.close(read_fd)

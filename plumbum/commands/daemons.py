@@ -56,7 +56,7 @@ def posix_daemonize(
     )
 
     launcher = subprocess.Popen(
-        [sys.executable, "-m", "plumbum.commands.daemon_launcher", str(wfd)],
+        [sys.executable, "-m", "plumbum.commands._daemon_launcher", str(wfd)],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
