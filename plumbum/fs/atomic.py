@@ -148,7 +148,7 @@ else:
             if not ok:
                 next_exc = ctypes.WinError(ctypes.get_last_error())
                 if exc is None:
-                    exc, next_exc = next_exc, None
+                    raise next_exc from None
                 raise exc from next_exc
 
 
