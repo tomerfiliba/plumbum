@@ -983,3 +983,7 @@ class HTMLStyle(Style):
         return super().__eq__(other)
 
     __hash__ = None
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

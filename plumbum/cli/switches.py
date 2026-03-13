@@ -635,3 +635,35 @@ def NonexistentPath(val: str) -> LocalPath:
     if p.exists():
         raise ValueError(_("{0} already exists").format(val))
     return p
+
+
+__all__ = [
+    "CSV",
+    "CountOf",
+    "ExistingDirectory",
+    "ExistingFile",
+    "Flag",
+    "MakeDirectory",
+    "MissingArgument",
+    "MissingMandatorySwitch",
+    "NonexistentPath",
+    "PositionalArgumentsError",
+    "Predicate",
+    "Range",
+    "Set",
+    "SubcommandError",
+    "SwitchAttr",
+    "SwitchCombinationError",
+    "SwitchError",
+    "SwitchInfo",
+    "UnknownSwitch",
+    "Validator",
+    "WrongArgumentType",
+    "autoswitch",
+    "positional",
+    "switch",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

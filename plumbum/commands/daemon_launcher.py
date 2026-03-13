@@ -50,5 +50,12 @@ def _main() -> int:
     return rc
 
 
+__all__: list[str] = ["_main"]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)
+
+
 if __name__ == "__main__":
     raise SystemExit(_main())

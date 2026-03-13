@@ -152,3 +152,13 @@ def win32_daemonize(
         for stream in (stdin_file, stdout_file, stderr_file):
             with contextlib.suppress(Exception):
                 stream.close()
+
+
+__all__ = [
+    "posix_daemonize",
+    "win32_daemonize",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

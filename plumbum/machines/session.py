@@ -372,3 +372,19 @@ class ShellSession:
         """
         with self._lock:
             return run_proc(self.popen(cmd), retcode)
+
+
+__all__ = [
+    "HostPublicKeyUnknown",
+    "IncorrectLogin",
+    "MarkedPipe",
+    "SSHCommsChannel2Error",
+    "SSHCommsError",
+    "SessionPopen",
+    "ShellSession",
+    "ShellSessionError",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

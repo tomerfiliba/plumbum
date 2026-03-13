@@ -8,4 +8,11 @@ from __future__ import annotations
 
 from . import main
 
+__all__ = ["main"]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)
+
+
 main()

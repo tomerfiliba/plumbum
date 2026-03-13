@@ -575,3 +575,22 @@ def iter_lines(
     if completed:
         # this will take care of checking return code and timeouts
         _check_process(proc, retcode, timeout, *("\n".join(s) + "\n" for s in buffers))  # type: ignore[arg-type]
+
+
+__all__ = [
+    "BY_POSITION",
+    "BY_TYPE",
+    "DEFAULT_BUFFER_SIZE",
+    "DEFAULT_ITER_LINES_MODE",
+    "CommandNotFound",
+    "Mode",
+    "ProcessExecutionError",
+    "ProcessLineTimedOut",
+    "ProcessTimedOut",
+    "iter_lines",
+    "run_proc",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

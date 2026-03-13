@@ -409,3 +409,15 @@ class PidFile:
             self._ctx.__exit__(None, None, None)
         finally:
             self._ctx = None
+
+
+__all__ = [
+    "AtomicCounterFile",
+    "AtomicFile",
+    "PidFile",
+    "PidFileTaken",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

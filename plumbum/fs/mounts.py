@@ -42,3 +42,15 @@ def mounted(fs: str) -> bool:
     Indicates if the given filesystem (device file or mount point) is currently mounted
     """
     return any(fs in {entry.dev, entry.point} for entry in mount_table())
+
+
+__all__ = [
+    "MOUNT_PATTERN",
+    "MountEntry",
+    "mount_table",
+    "mounted",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

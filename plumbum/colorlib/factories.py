@@ -20,6 +20,11 @@ if typing.TYPE_CHECKING:
 
 __all__ = ["ColorFactory", "StyleFactory"]
 
+
+def __dir__() -> list[str]:
+    return list(__all__)
+
+
 S = TypeVar("S", bound=Style)
 
 

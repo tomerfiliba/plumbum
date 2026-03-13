@@ -26,3 +26,7 @@ else:
 
 
 __all__ = ["Self", "TypeVar"]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

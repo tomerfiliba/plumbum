@@ -1110,3 +1110,17 @@ class Application:
         ver = self._get_prog_version()
         ver_name = ver if ver is not None else T_("(version not set)")
         print(f"{self.PROGNAME} {ver_name}")
+
+
+__all__ = [
+    "Application",
+    "ShowHelp",
+    "ShowHelpAll",
+    "ShowVersion",
+    "Subcommand",
+    "SwitchParseInfo",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

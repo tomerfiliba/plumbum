@@ -125,3 +125,15 @@ def gui_open(filename: str | Path) -> None:
         os.startfile(filename)
     else:
         local.get("xdg-open", "open")(filename)
+
+
+__all__ = [
+    "copy",
+    "delete",
+    "gui_open",
+    "move",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

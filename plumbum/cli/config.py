@@ -122,3 +122,13 @@ class ConfigINI(ConfigBase):
 
 
 Config = ConfigINI
+
+__all__ = [
+    "Config",
+    "ConfigBase",
+    "ConfigINI",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)
