@@ -42,8 +42,8 @@ def tests(session):
     Run the unit and regular tests.
     """
     test_deps = nox.project.dependency_groups(PYPROJECT, "test")
-    session.install("-e.", *test_deps)
-    session.run("pytest", *session.posargs, env={"PYTHONTRACEMALLOC": "5"})
+    session.install("-e.", *test_deps, "pytest-cov")
+    session.run("pytest", "--cov", *session.posargs, env={"PYTHONTRACEMALLOC": "5"})
 
 
 @nox.session(reuse_venv=True, default=False)
