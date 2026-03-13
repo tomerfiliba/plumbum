@@ -50,6 +50,7 @@ else:
 
 
 __all__ = [
+    "get_translation_for",
     "loc",
 ]
 
