@@ -174,7 +174,7 @@ class BaseCommand:
         .. note::
 
            When processes run in the **background** (either via ``popen`` or
-           :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
+           :class:`& BG <plumbum.commands.modifiers.BG>`), their stdout/stderr pipes might fill up,
            causing them to hang. If you know a process produces output, be sure to consume it
            every once in a while, using a monitoring thread/reactor in the background.
            For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
@@ -219,7 +219,7 @@ class BaseCommand:
         .. note::
 
            When processes run in the **background** (either via ``popen`` or
-           :class:`& BG <plumbum.commands.BG>`), their stdout/stderr pipes might fill up,
+           :data:`& BG <plumbum.commands.modifiers.BG>`), their stdout/stderr pipes might fill up,
            causing them to hang. If you know a process produces output, be sure to consume it
            every once in a while, using a monitoring thread/reactor in the background.
            For more info, see `#48 <https://github.com/tomerfiliba/plumbum/issues/48>`_
@@ -252,9 +252,9 @@ class BaseCommand:
 
     def run(self, args: Sequence[Any] = (), **kwargs: Any) -> tuple[int, str, str]:
         """Runs the given command (equivalent to popen() followed by
-        :func:`run_proc <plumbum.commands.run_proc>`). If the exit code of the process does
+        :func:`run_proc <plumbum.commands.processes.run_proc>`). If the exit code of the process does
         not match the expected one, :class:`ProcessExecutionError
-        <plumbum.commands.ProcessExecutionError>` is raised.
+        <plumbum.commands.processes.ProcessExecutionError>` is raised.
 
         :param args: Any arguments to be passed to the process (a tuple)
 

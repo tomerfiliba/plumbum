@@ -221,14 +221,14 @@ class LocalMachine(BaseMachine):
     @classmethod
     def which(cls, progname: str) -> LocalPath:
         """Looks up a program in the ``PATH``. If the program is not found, raises
-        :class:`CommandNotFound <plumbum.commands.CommandNotFound>`
+        :class:`CommandNotFound <plumbum.commands.processes.CommandNotFound>`
 
         :param progname: The program's name. Note that if underscores (``_``) are present
                          in the name, and the exact name is not found, they will be replaced
                          in turn by hyphens (``-``) then periods (``.``), and the name will
                          be looked up again for each alternative
 
-        :returns: A :class:`LocalPath <plumbum.machines.local.LocalPath>`
+        :returns: A :class:`LocalPath <plumbum.path.local.LocalPath>`
         """
 
         key = (progname, cls.env.get("PATH", ""))
@@ -433,7 +433,7 @@ class LocalMachine(BaseMachine):
                 yield procinfo
 
     def session(self, new_session: bool = False) -> ShellSession:
-        """Creates a new :class:`ShellSession <plumbum.session.ShellSession>` object; this
+        """Creates a new :class:`ShellSession <plumbum.machines.session.ShellSession>` object; this
         invokes ``/bin/sh`` and executes commands on it over stdin/stdout/stderr"""
         return ShellSession(self["sh"].popen(new_session=new_session))
 
@@ -492,8 +492,10 @@ class LocalMachine(BaseMachine):
         """A shorthand for :func:`as_user("root") <plumbum.machines.local.LocalMachine.as_user>`"""
         return self.as_user()
 
-    python = LocalCommand(sys.executable, custom_encoding)
-    """A command that represents the current python interpreter (``sys.executable``)"""
+    @property
+    def python(self) -> LocalCommand:
+        """A command that represents the current python interpreter (``sys.executable``)."""
+        return LocalCommand(sys.executable, self.custom_encoding)
 
 
 local = LocalMachine()

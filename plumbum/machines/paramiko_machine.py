@@ -48,9 +48,9 @@ class ParamikoPopen(PopenAddons):
     def __init__(
         self,
         argv: Sequence[str],
-        stdin: paramiko.ChannelFile,
-        stdout: paramiko.ChannelFile,
-        stderr: paramiko.ChannelFile,
+        stdin: paramiko.channel.ChannelFile,
+        stdout: paramiko.channel.ChannelFile,
+        stderr: paramiko.channel.ChannelFile,
         encoding: str,
         stdin_file: IO[str] | None = None,
         stdout_file: IO[str] | None = None,

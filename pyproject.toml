@@ -84,6 +84,8 @@ dev = [
 docs = [
     "sphinx>=6.0.0",
     "furo",
+    "sphinx-autodoc-typehints",
+    "paramiko",
 ]
 
 

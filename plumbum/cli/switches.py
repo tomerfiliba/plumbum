@@ -142,7 +142,7 @@ def switch(
                     is more of a "validator" than a real type; it can be any callable object
                     that raises a ``TypeError`` if the argument is invalid, or returns an
                     appropriate value on success. If the user provides an invalid value,
-                    :func:`plumbum.cli.WrongArgumentType`
+                    :class:`WrongArgumentType <plumbum.cli.switches.WrongArgumentType>`
 
     :param argname: The name of the argument; if ``None``, the name will be inferred from the
                     function's signature
@@ -155,7 +155,7 @@ def switch(
                  ``["/lib", "/usr/lib"]``.
 
     :param mandatory: Whether or not this switch is mandatory; if a mandatory switch is not
-                      given, :class:`MissingMandatorySwitch <plumbum.cli.MissingMandatorySwitch>`
+                      given, :class:`MissingMandatorySwitch <plumbum.cli.switches.MissingMandatorySwitch>`
                       is raised. The default is ``False``.
 
     :param requires: A list of switches that this switch depends on ("requires"). This means that
@@ -163,7 +163,7 @@ def switch(
                      In the example above, it's illegal to pass ``--verbose`` or ``--terse``
                      without also passing ``--log-to-file``. By default, this list is empty,
                      which means the switch has no prerequisites. If an invalid combination
-                     is given, :class:`SwitchCombinationError <plumbum.cli.SwitchCombinationError>`
+                     is given, :class:`SwitchCombinationError <plumbum.cli.switches.SwitchCombinationError>`
                      is raised.
 
                      Note that this list is made of the switch *names*; if a switch has more
@@ -180,7 +180,7 @@ def switch(
                      ``--terse``, as it will result in a contradiction. By default, this list
                      is empty, which means the switch has no prerequisites. If an invalid
                      combination is given, :class:`SwitchCombinationError
-                     <plumbum.cli.SwitchCombinationError>` is raised.
+                     <plumbum.cli.switches.SwitchCombinationError>` is raised.
 
                      Note that this list is made of the switch *names*; if a switch has more
                      than a single name, any of its names will do.
@@ -234,7 +234,7 @@ def switch(
 def autoswitch(*args: Any, **kwargs: Any) -> Callable[[F], F]:
     """A decorator that exposes a function as a switch, "inferring" the name of the switch
     from the function's name (converting to lower-case, and replacing underscores with hyphens).
-    The arguments are the same as for :func:`switch <plumbum.cli.switch>`."""
+    The arguments are the same as for :func:`switch <plumbum.cli.switches.switch>`."""
 
     def deco(func: F) -> F:
         return switch(func.__name__.replace("_", "-"), *args, **kwargs)(func)
@@ -260,7 +260,7 @@ class SwitchAttr(Generic[T]):
     :param argtype: The switch argument's (and attribute's) type
     :param default: The attribute's default value (``None``)
     :param argname: The switch argument's name (default is ``"VALUE"``)
-    :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switch>`
+    :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switches.switch>`
     """
 
     ATTR_NAME = "__plumbum_switchattr_dict__"
@@ -325,7 +325,7 @@ class SwitchAttr(Generic[T]):
 
 
 class Flag(SwitchAttr[bool]):
-    """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` for boolean flags. If the flag is not
+    """A specialized :class:`SwitchAttr <plumbum.cli.switches.SwitchAttr>` for boolean flags. If the flag is not
     given, the value of this attribute is ``default``; if it is given, the value changes
     to ``not default``. Usage::
 
@@ -334,7 +334,7 @@ class Flag(SwitchAttr[bool]):
 
     :param names: The switch names
     :param default: The attribute's initial value (``False`` by default)
-    :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switch>`,
+    :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switches.switch>`,
                    except for ``list`` and ``argtype``.
     """
 
@@ -348,7 +348,7 @@ class Flag(SwitchAttr[bool]):
 
 
 class CountOf(SwitchAttr[int]):
-    """A specialized :class:`SwitchAttr <plumbum.cli.SwitchAttr>` that counts the number of
+    """A specialized :class:`SwitchAttr <plumbum.cli.switches.SwitchAttr>` that counts the number of
     occurrences of the switch in the command line. Usage::
 
         class MyApp(Application):
@@ -358,7 +358,7 @@ class CountOf(SwitchAttr[int]):
 
     :param names: The switch names
     :param default: The default value (0)
-    :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switch>`,
+    :param kwargs: Any of the keyword arguments accepted by :func:`switch <plumbum.cli.switches.switch>`,
                    except for ``list`` and ``argtype``.
     """
 

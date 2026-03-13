@@ -179,7 +179,7 @@ _iter_lines = _iter_lines_win32 if IS_WIN32 else _iter_lines_posix
 class ProcessExecutionError(OSError):
     """Represents the failure of a process. When the exit code of a terminated process does not
     match the expected result, this exception is raised by :func:`run_proc
-    <plumbum.commands.run_proc>`. It contains the process' return code, stdout, and stderr, as
+    <plumbum.commands.processes.run_proc>`. It contains the process' return code, stdout, and stderr, as
     well as the command line used to create the process (``argv``)
     """
 
@@ -233,7 +233,7 @@ class ProcessExecutionError(OSError):
 
 
 class ProcessTimedOut(Exception):
-    """Raises by :func:`run_proc <plumbum.commands.run_proc>` when a ``timeout`` has been
+    """Raises by :func:`run_proc <plumbum.commands.processes.run_proc>` when a ``timeout`` has been
     specified and it has elapsed before the process terminated"""
 
     def __init__(self, msg: str, argv: Any):
@@ -242,7 +242,7 @@ class ProcessTimedOut(Exception):
 
 
 class ProcessLineTimedOut(Exception):
-    """Raises by :func:`iter_lines <plumbum.commands.iter_lines>` when a ``line_timeout`` has been
+    """Raises by :func:`iter_lines <plumbum.commands.processes.iter_lines>` when a ``line_timeout`` has been
     specified and it has elapsed before the process yielded another line"""
 
     def __init__(self, msg: str, argv: list[str] | None, machine: str | None):
@@ -253,7 +253,7 @@ class ProcessLineTimedOut(Exception):
 
 class CommandNotFound(AttributeError):
     """Raised by :func:`local.which <plumbum.machines.local.LocalMachine.which>` and
-    :func:`RemoteMachine.which <plumbum.machines.remote.RemoteMachine.which>` when a
+    :func:`BaseRemoteMachine.which <plumbum.machines.remote.BaseRemoteMachine.which>` when a
     command was not found in the system's ``PATH``"""
 
     def __init__(self, program: object, path: object):
@@ -377,7 +377,7 @@ def run_proc(
     :param timeout: the number of seconds (a ``float``) to allow the process to run, before
                     forcefully terminating it. If ``None``, not timeout is imposed; otherwise
                     the process is expected to terminate within that timeout value, or it will
-                    be killed and :class:`ProcessTimedOut <plumbum.cli.ProcessTimedOut>`
+                    be killed and :class:`ProcessTimedOut <plumbum.commands.processes.ProcessTimedOut>`
                     will be raised
 
     :returns: A tuple of (return code, stdout, stderr)
@@ -474,7 +474,7 @@ def iter_lines(
 ) -> Generator[tuple[int, str] | tuple[None, str] | tuple[str, None], None, None]:
     """Runs the given process (equivalent to run_proc()) and yields a tuples of (out, err) line pairs.
     If the exit code of the process does not match the expected one, :class:`ProcessExecutionError
-    <plumbum.commands.ProcessExecutionError>` is raised.
+    <plumbum.commands.processes.ProcessExecutionError>` is raised.
 
     :param retcode: The expected return code of this process (defaults to 0).
                     In order to disable exit-code validation, pass ``None``. It may also
@@ -489,7 +489,7 @@ def iter_lines(
                     ``-1`` (default) reads until a b'\\n' is encountered.
 
     :param line_timeout: The maximal amount of time (in seconds) to allow between consecutive lines in either stream.
-                    Raise an :class:`ProcessLineTimedOut <plumbum.commands.ProcessLineTimedOut>` if the timeout has
+                    Raise an :class:`ProcessLineTimedOut <plumbum.commands.processes.ProcessLineTimedOut>` if the timeout has
                     been reached. ``None`` means no timeout is imposed.
 
     :param buffer_size: Maximum number of lines to keep in the stdout/stderr buffers, in case of a ProcessExecutionError.
