@@ -101,3 +101,12 @@ def _get_terminal_size_linux() -> tuple[int, int] | None:
         except Exception:
             return None
     return cr[1], cr[0]
+
+
+__all__ = [
+    "get_terminal_size",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

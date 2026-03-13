@@ -45,6 +45,10 @@ __all__ = (
 )
 
 
+def __dir__() -> list[str]:
+    return list(__all__)
+
+
 class RedirectionError(Exception):
     """Raised when an attempt is made to redirect an process' standard handle,
     which was already redirected to/from a file"""

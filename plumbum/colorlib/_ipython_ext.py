@@ -31,3 +31,12 @@ class OutputMagics(Magics):  # pragma: no cover
                 display_fn(out.getvalue(), raw=True)
             finally:
                 sys.stdout = old_out
+
+
+__all__ = [
+    "OutputMagics",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

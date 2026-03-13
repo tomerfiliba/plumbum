@@ -25,3 +25,17 @@ def get_pe_subsystem(filename: str) -> int | None:
 # print(get_pe_subsystem("c:\\windows\\notepad.exe")) == 2
 # print(get_pe_subsystem("c:\\python32\\python.exe")) == 3
 # print(get_pe_subsystem("c:\\python32\\pythonw.exe")) == 2
+
+
+__all__ = [
+    "FILE_HEADER_SIZE",
+    "IMAGE_SUBSYSTEM_WINDOWS_CUI",
+    "IMAGE_SUBSYSTEM_WINDOWS_GUI",
+    "LFANEW_OFFSET",
+    "SUBSYSTEM_OFFSET",
+    "get_pe_subsystem",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

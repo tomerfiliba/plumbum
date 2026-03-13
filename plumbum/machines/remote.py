@@ -588,3 +588,17 @@ class AsyncRemoteMachine:
     async def __aexit__(self, t: object, v: object, tb: object) -> None:
         """Async context manager exit."""
         self.close()
+
+
+__all__ = [
+    "AsyncRemoteMachine",
+    "BaseRemoteMachine",
+    "ClosedRemote",
+    "ClosedRemoteMachine",
+    "RemoteCommand",
+    "RemoteEnv",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

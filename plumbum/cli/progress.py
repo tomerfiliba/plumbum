@@ -304,5 +304,18 @@ def main() -> None:
         time.sleep(1)
 
 
+__all__ = [
+    "Progress",
+    "ProgressAuto",
+    "ProgressBase",
+    "ProgressIPy",
+    "main",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)
+
+
 if __name__ == "__main__":
     main()

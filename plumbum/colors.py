@@ -24,6 +24,15 @@ def ensure_colors_reset() -> None:
 
 # Keep module-like metadata on the proxy object for tools that introspect it.
 ansicolors.__name__ = __name__  # type: ignore[attr-defined]
+ansicolors.__all__ = [name for name in dir(ansicolors) if not name.startswith("_")]  # type: ignore[attr-defined]
+__all__ = ansicolors.__all__
+
+
+def __dir__() -> list[str]:
+    return list(ansicolors.__all__)  # type: ignore[no-any-return, call-overload]
+
+
+ansicolors.__dir__ = __dir__  # type: ignore[method-assign]
 
 sys.modules[__name__ + ".fg"] = ansicolors.fg  # type: ignore[assignment]
 sys.modules[__name__ + ".bg"] = ansicolors.bg  # type: ignore[assignment]

@@ -437,3 +437,15 @@ class RemoteWorkdir(RemotePath):
             yield changed_dir
         finally:
             self.chdir(prev)
+
+
+__all__ = [
+    "RemotePath",
+    "RemoteStatRes",
+    "RemoteWorkdir",
+    "StatRes",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

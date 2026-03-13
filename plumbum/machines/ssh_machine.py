@@ -576,3 +576,15 @@ class AsyncSshMachine:
     async def __aexit__(self, t: object, v: object, tb: object) -> None:
         """Async context manager exit."""
         self.close()
+
+
+__all__ = [
+    "AsyncSshMachine",
+    "PuttyMachine",
+    "SshMachine",
+    "SshTunnel",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

@@ -684,3 +684,15 @@ class RelativePath:
 
     def __radd__(self, path: P) -> P:
         return path.join(*self.parts)
+
+
+__all__ = [
+    "FLAGS",
+    "FSUser",
+    "Path",
+    "RelativePath",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

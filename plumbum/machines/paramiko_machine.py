@@ -560,3 +560,15 @@ def _iter_lines(
         yield 0, line
     for line in real_proc.stderr:
         yield 1, line
+
+
+__all__ = [
+    "ParamikoMachine",
+    "ParamikoPopen",
+    "RemoteCommand",
+    "SocketCompatibleChannel",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

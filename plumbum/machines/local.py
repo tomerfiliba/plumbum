@@ -587,3 +587,17 @@ Use this to access async commands::
 
 .. versionadded:: 1.11
 """
+
+__all__ = [
+    "AsyncLocalMachine",
+    "LocalCommand",
+    "LocalEnv",
+    "LocalMachine",
+    "PlumbumLocalPopen",
+    "async_local",
+    "local",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)

@@ -47,3 +47,13 @@ else:
             return gettext.translation(
                 package_name, localedir=localedir, languages=[loc], fallback=True
             )
+
+
+__all__ = [
+    "get_translation_for",
+    "loc",
+]
+
+
+def __dir__() -> list[str]:
+    return list(__all__)
