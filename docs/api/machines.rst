@@ -3,6 +3,10 @@
 
 Package plumbum.machines
 ========================
+.. automodule:: plumbum.machines.base
+   :members:
+   :special-members:
+
 .. automodule:: plumbum.machines.env
    :members:
    :special-members:
