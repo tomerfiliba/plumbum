@@ -76,7 +76,7 @@ class BaseCommand:
     env: dict[str, str] | None
 
     def __str__(self) -> str:
-        return " ".join(self.formulate())
+        return " ".join(self.formulate(1))
 
     def __or__(self, other: BaseCommand) -> Pipeline:
         """Creates a pipe with the other command"""
