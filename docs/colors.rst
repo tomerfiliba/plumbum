@@ -258,7 +258,12 @@ Output:
     <font color="#800080"><b>This is bold and colorful!</b></font> And this is not.</p>
 
 
-You can also call :func:`plumbum.colors.ensure_reset` to have your program emit
+.. py:function:: plumbum.colors.ensure_colors_reset()
+
+    Register an exit handler that emits a terminal color reset.
+
+
+You can also call :func:`plumbum.colors.ensure_colors_reset` to have your program emit
 a clear color code on exit. It might cause an empty line to be shown on your terminal.
 
 .. versionadded:: 2.0

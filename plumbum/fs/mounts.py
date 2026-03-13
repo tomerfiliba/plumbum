@@ -26,7 +26,7 @@ MOUNT_PATTERN = re.compile(r"(.+?)\s+on\s+(.+?)\s+type\s+(\S+)(?:\s+\((.+?)\))?"
 
 def mount_table() -> list[MountEntry]:
     """Returns the system's current mount table (a list of
-    :class:`MountEntry <plumbum.unixutils.MountEntry>` objects)"""
+    :class:`MountEntry <plumbum.fs.mounts.MountEntry>` objects)"""
     from plumbum.cmd import mount
 
     table = []

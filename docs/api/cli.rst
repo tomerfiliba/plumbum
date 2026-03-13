@@ -16,3 +16,9 @@ Package plumbum.cli
 
 .. automodule:: plumbum.cli.progress
    :members:
+
+.. automodule:: plumbum.cli.config
+   :members:
+
+.. automodule:: plumbum.cli.image
+   :members:

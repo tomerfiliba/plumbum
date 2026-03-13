@@ -11,7 +11,7 @@ Plumbum's CLI toolkit offers a **programmatic approach** to building command-lin
 instead of creating a parser object and populating it with a series of "options", the CLI toolkit
 translates these primitives into Pythonic constructs and relies on introspection.
 
-From a bird's eye view, CLI applications are classes that extend :class:`plumbum.cli.Application`.
+From a bird's eye view, CLI applications are classes that extend :class:`plumbum.cli.application.Application`.
 They define a ``main()`` method and optionally expose methods and attributes as command-line
 :func:`switches <plumbum.cli.switches.switch>`. Switches may take arguments, and any remaining positional
 arguments are given to the ``main`` method, according to its signature. A simple CLI application
@@ -122,7 +122,7 @@ For instance, the following is valid::
 
 Switch Functions
 ----------------
-The decorator :func:`switch <plumbum.cli.switch>` can be seen as the "heart and soul" of the
+The decorator :func:`switch <plumbum.cli.switches.switch>` can be seen as the "heart and soul" of the
 CLI toolkit; it exposes methods of your CLI application as CLI-switches, allowing them to be
 invoked from the command line. Let's examine the following toy application::
 
@@ -321,7 +321,7 @@ Switch Attributes
 -----------------
 Many times it's desired to simply store a switch's argument in an attribute, or set a flag if
 a certain switch is given. For this purpose, the toolkit provides
-:class:`SwitchAttr <plumbum.cli.SwitchAttr>`, which is `data descriptor
+:class:`SwitchAttr <plumbum.cli.switches.SwitchAttr>`, which is `data descriptor
 <https://docs.python.org/3/howto/descriptor.html>`_ that stores the argument in an instance attribute.
 There are two additional "flavors" of ``SwitchAttr``: ``Flag`` (which toggles its default value
 if the switch is given) and ``CountOf`` (which counts the number of occurrences of the switch)::

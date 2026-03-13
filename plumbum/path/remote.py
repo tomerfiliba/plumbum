@@ -16,6 +16,9 @@ if typing.TYPE_CHECKING:
 
     from plumbum._compat.typing import Self
     from plumbum.machines.remote import BaseRemoteMachine
+else:
+    BaseRemoteMachine = typing.Any
+    Self = typing.Any
 
 
 class StatRes:
