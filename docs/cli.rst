@@ -452,6 +452,67 @@ However, the following two lines are equivalent::
     $ python3 example.py --cheese
 
 
+Shell Completion
+----------------
+.. versionadded:: 2.0
+
+Plumbum CLI applications support shell completion for bash and fish shells. The completion
+system automatically discovers switches, subcommands, and can provide suggestions for
+argument values based on validators (like ``Set``).
+
+Enabling Completion
+^^^^^^^^^^^^^^^^^^^
+
+All applications built with Plumbum CLI have built-in switches for generating completion scripts:
+
+**Bash**::
+
+    # Add to your ~/.bashrc
+    eval "$(python your_app.py --bash-completion)"
+
+**Fish**::
+
+    # Save to fish completions directory
+    python your_app.py --fish-completion > ~/.config/fish/completions/your_app.fish
+
+These switches are available on all ``Application`` classes automatically, just like ``--help``
+and ``--version``.
+
+Custom Completions
+^^^^^^^^^^^^^^^^^^
+
+You can provide custom completions for switch arguments by using validators that implement
+a ``choices()`` method. The ``Set`` validator already supports this::
+
+    class MyApp(cli.Application):
+        mode = cli.SwitchAttr("--mode", cli.Set("debug", "info", "warning", "error"))
+
+The completion system will automatically suggest ``debug``, ``info``, ``warning``, and ``error``
+when completing the ``--mode`` argument.
+
+For custom validators, implement the ``choices(partial: str)`` method::
+
+    from plumbum.cli.switches import Validator
+
+    class CustomValidator(Validator):
+        def __call__(self, value: str) -> str:
+            # Validate the value
+            return value
+
+        def choices(self, partial: str = "") -> set[str]:
+            # Return completion suggestions
+            return {"option1", "option2", "option3"}
+
+Programmatic Completions
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can also get completions programmatically::
+
+    app = MyApp("myapp")
+    completions = app.get_completions(["--"])
+    # Returns: ['--help', '--mode', '--version', ...]
+
+
 .. _guide-subcommands:
 
 
