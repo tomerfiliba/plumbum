@@ -26,16 +26,16 @@ class CompletionAppWithSubcommands(cli.Application):
 
     This module can be run directly to test shell completion interactively.
 
-    Test it with Fish:
+    Test it with Fish or Bash:
 
         # Enter Plumbum's tests folder
         cd ./tests
 
-        # Let Fish find executable files within
-        eval (fish_add_path --path .)
+        # Let the shell find executable files within
+        export PATH=".:$PATH"
 
         # Install Fish completions
-        test_autocomplete.py --fish-completion > ~/.config/fish/completions/test_autocomplete.py.fish
+        test_autocomplete.py --completions=fish > ~/.config/fish/completions/test_autocomplete.py.fish
 
         # Test completions interactively
         test_autocomplete.py <TAB>
@@ -45,15 +45,8 @@ class CompletionAppWithSubcommands(cli.Application):
         # Remove Fish completions when done
         rm ~/.config/fish/completions/test_autocomplete.py.fish
 
-    Test it with Bash:
-        # Enter Plumbum's tests folder
-        cd ./tests
-
-        # Let Bash find executable files within CWD
-        export PATH=".:$PATH"
-
-        # Load Bash completions
-        eval "$(test_autocomplete.py --bash-completion)"
+        # Install Bash completions
+        eval "$(test_autocomplete.py --completions=bash)"
 
         # Test completions interactively
         test_autocomplete.py --<TAB>
@@ -166,13 +159,13 @@ class TestCompletions:
     def test_autocomplete_env_bash(self):
         env = {
             "COMP_WORDS": "completionapp --lev",
-            "COMP_CWORD": "1",
+            "COMP_CWORD": "2",
         }
         with (
             patch.dict(os.environ, env, clear=False),
             patch.object(CompletionApp, "_print_completions_and_exit") as mock_exit,
         ):
-            CompletionApp.autocomplete(["completionapp", "--lev"])
+            CompletionApp.autocomplete(["completionapp", "--completions=bash", "--lev"])
             if mock_exit.called:
                 completions = mock_exit.call_args[0][0]
                 assert "--level" in completions

@@ -55,11 +55,7 @@ class ShowVersion(SwitchError):
     pass
 
 
-class ShowBashCompletion(SwitchError):
-    pass
-
-
-class ShowFishCompletion(SwitchError):
+class ShowCompletion(SwitchError):
     pass
 
 
@@ -498,6 +494,7 @@ class Application:
         """Handle shell completion requests.
 
         For bash, this uses COMP_WORDS and COMP_CWORD environment variables.
+        For fish, this uses the completions switch.
         """
         comp_words = os.environ.get("COMP_WORDS", "")
         comp_cword = os.environ.get("COMP_CWORD", "")
@@ -783,10 +780,8 @@ complete -F _{prog_name}_completion {prog_name}
             raise ShowHelpAll()
         if self.version.__func__ in swfuncs:  # type: ignore[attr-defined]
             raise ShowVersion()
-        if self.bash_completion.__func__ in swfuncs:  # type: ignore[attr-defined]
-            raise ShowBashCompletion()
-        if self.fish_completion.__func__ in swfuncs:  # type: ignore[attr-defined]
-            raise ShowFishCompletion()
+        if self.completions.__func__ in swfuncs:  # type: ignore[attr-defined]
+            raise ShowCompletion()
 
         requirements = {}
         exclusions = {}
@@ -971,10 +966,9 @@ complete -F _{prog_name}_completion {prog_name}
             inst.helpall()
         except ShowVersion:
             inst.version()
-        except ShowBashCompletion:
-            inst._print_bash_completion()
-        except ShowFishCompletion:
-            inst._print_fish_completion()
+        except ShowCompletion:
+            # The completions switch handler will be called separately
+            pass
         except SwitchError as ex:
             print(T_("Error: {0}").format(ex))
             print(T_("------"))
@@ -1395,52 +1389,38 @@ complete -F _{prog_name}_completion {prog_name}
             os.path.basename(self.executable) if self.executable else str(self.PROGNAME)
         )
 
-    def _print_bash_completion(self) -> None:
-        """Print bash completion script."""
+    def _print_completion(self, shell: str) -> None:
+        """Print completion script for the specified shell."""
         prog_name = self._get_prog_name_for_completion()
         if prog_name is None:
             print(T_("Shell completion must be generated from the root application"))
             return
-        print(self.bash_completion_script(prog_name))
 
-    def _print_fish_completion(self) -> None:
-        """Print fish completion script."""
-        prog_name = self._get_prog_name_for_completion()
-        if prog_name is None:
-            print(T_("Shell completion must be generated from the root application"))
-            return
-        print(self.fish_completion_script(prog_name))
-
-    @switch(
-        ["--bash-completion"],
-        overridable=True,
-        group="Meta-switches",
-        help=T_("""Prints bash completion script and quits"""),
-    )
-    def bash_completion(self) -> None:
-        """Prints bash completion script and quits"""
-        # Handled in _validate_args via ShowCompletion
+        if shell == "bash":
+            print(self.bash_completion_script(prog_name))
+        elif shell == "fish":
+            print(self.fish_completion_script(prog_name))
+        else:
+            print(T_("Unsupported shell: {shell}").format(shell=shell))
+            print(T_("Supported shells are: bash, fish"))
 
     @switch(
-        ["--fish-completion"],
+        ["--completions"],
         overridable=True,
         group="Meta-switches",
-        help=T_("""Prints fish completion script and quits"""),
+        help=T_("""Prints shell completion script and quits"""),
     )
-    def fish_completion(self) -> None:
-        """Prints fish completion script and quits"""
+    def completions(self, shell: str) -> None:
+        """Prints shell completion script and quits"""
         # Handled in _validate_args via ShowCompletion
 
 
 __all__ = [
     "Application",
-    "ShowBashCompletion",
-    "ShowFishCompletion",
+    "ShowCompletion",
     "ShowHelp",
     "ShowHelpAll",
     "ShowVersion",
-    "Subcommand",
-    "SwitchParseInfo",
 ]
 
 
