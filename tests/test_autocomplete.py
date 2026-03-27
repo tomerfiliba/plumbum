@@ -178,6 +178,15 @@ class TestCompletions:
             CompletionApp.autocomplete(["completionapp", "--verbose"])
             assert not mock_exit.called
 
+    def test_run_prints_completions_switch(self):
+        with patch.object(CompletionApp, "_print_completion") as mock_print:
+            CompletionApp.run(["completionapp", "--completions=bash"], exit=False)
+            assert mock_print.called
+            # allow either positional or keyword arg; make assertion flexible
+            pos_args, kw = mock_print.call_args
+            combined = list(pos_args) + list(kw.values())
+            assert "bash" in combined
+
 
 class TestSwitchInfoHelpers:
     def test_switch_info_completion_for_flag(self):
