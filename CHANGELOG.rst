@@ -3,57 +3,58 @@
 
 Features:
 
-* Support async mode by @yajo in https://github.com/tomerfiliba/plumbum/pull/768
-* Support color string processing by @henryiii in https://github.com/tomerfiliba/plumbum/pull/774
-* Remove pywin32 dependency and replace WinAPI calls with a custom ctypes wrapper by @karpierz in https://github.com/tomerfiliba/plumbum/pull/766
+* Support async mode by @yajo (`#768 <https://github.com/tomerfiliba/plumbum/pull/768>`_)
+* More pathlib API supported by @henryiii (`#779 <https://github.com/tomerfiliba/plumbum/pull/779>`_)
+* Support color string processing by @henryiii (`#774 <https://github.com/tomerfiliba/plumbum/pull/774>`_)
+* Remove pywin32 dependency and replace WinAPI calls with a custom ctypes wrapper by @karpierz (`#766 <https://github.com/tomerfiliba/plumbum/pull/766>`_)
 * Full static typing
-    * Add paramiko machine typing by @henryiii in https://github.com/tomerfiliba/plumbum/pull/746
-    * Add remote typing by @henryiii in https://github.com/tomerfiliba/plumbum/pull/744
-    * Add sshmachine typing by @henryiii in https://github.com/tomerfiliba/plumbum/pull/745
-    * Add typing for color by @henryiii in https://github.com/tomerfiliba/plumbum/pull/730
-    * Add typing for fs by @henryiii in https://github.com/tomerfiliba/plumbum/pull/737
-    * Add typing for local machine by @henryiii in https://github.com/tomerfiliba/plumbum/pull/743
-    * Typing paths by @henryiii in https://github.com/tomerfiliba/plumbum/pull/733
-    * Adding rest of typing by @henryiii in https://github.com/tomerfiliba/plumbum/pull/739
-    * Enable tc ruff check by @henryiii in https://github.com/tomerfiliba/plumbum/pull/752
-    * More safe types by @henryiii in https://github.com/tomerfiliba/plumbum/pull/741
-    * Should be safe types by @henryiii in https://github.com/tomerfiliba/plumbum/pull/740
-    * Type only session by @henryiii in https://github.com/tomerfiliba/plumbum/pull/742
-    * Types for Application by @henryiii in https://github.com/tomerfiliba/plumbum/pull/735
-    * Typing for commands by @henryiii in https://github.com/tomerfiliba/plumbum/pull/738
-    * Type examples too by @henryiii in https://github.com/tomerfiliba/plumbum/pull/748
-    * Typing fixes from Ruff by @henryiii in https://github.com/tomerfiliba/plumbum/pull/749
+    * Add paramiko machine typing by @henryiii (`#746 <https://github.com/tomerfiliba/plumbum/pull/746>`_)
+    * Add remote typing by @henryiii (`#744 <https://github.com/tomerfiliba/plumbum/pull/744>`_)
+    * Add sshmachine typing by @henryiii (`#745 <https://github.com/tomerfiliba/plumbum/pull/745>`_)
+    * Add typing for color by @henryiii (`#730 <https://github.com/tomerfiliba/plumbum/pull/730>`_)
+    * Add typing for fs by @henryiii (`#737 <https://github.com/tomerfiliba/plumbum/pull/737>`_)
+    * Add typing for local machine by @henryiii (`#743 <https://github.com/tomerfiliba/plumbum/pull/743>`_)
+    * Typing paths by @henryiii (`#733 <https://github.com/tomerfiliba/plumbum/pull/733>`_)
+    * Adding rest of typing by @henryiii (`#739 <https://github.com/tomerfiliba/plumbum/pull/739>`_)
+    * Enable tc ruff check by @henryiii (`#752 <https://github.com/tomerfiliba/plumbum/pull/752>`_)
+    * More safe types by @henryiii (`#741 <https://github.com/tomerfiliba/plumbum/pull/741>`_)
+    * Should be safe types by @henryiii (`#740 <https://github.com/tomerfiliba/plumbum/pull/740>`_)
+    * Type only session by @henryiii (`#742 <https://github.com/tomerfiliba/plumbum/pull/742>`_)
+    * Types for Application by @henryiii (`#735 <https://github.com/tomerfiliba/plumbum/pull/735>`_)
+    * Typing for commands by @henryiii (`#738 <https://github.com/tomerfiliba/plumbum/pull/738>`_)
+    * Type examples too by @henryiii (`#748 <https://github.com/tomerfiliba/plumbum/pull/748>`_)
+    * Typing fixes from Ruff by @henryiii (`#749 <https://github.com/tomerfiliba/plumbum/pull/749>`_)
 
 
 Fixes:
 
-* HTMLStyle should respect the color setting by @henryiii in https://github.com/tomerfiliba/plumbum/pull/776
-* Make cache clear abstract by @henryiii in https://github.com/tomerfiliba/plumbum/pull/747
-* Use ``perf_counter`` instead of datetime for Progress by @henryiii in https://github.com/tomerfiliba/plumbum/pull/754
-* ``BrokenPipeError`` when piping CLI help output to head by @Copilot in https://github.com/tomerfiliba/plumbum/pull/727
+* HTMLStyle should respect the color setting by @henryiii (`#776 <https://github.com/tomerfiliba/plumbum/pull/776>`_)
+* Make cache clear abstract by @henryiii (`#747 <https://github.com/tomerfiliba/plumbum/pull/747>`_)
+* Use ``perf_counter`` instead of datetime for Progress by @henryiii (`#754 <https://github.com/tomerfiliba/plumbum/pull/754>`_)
+* ``BrokenPipeError`` when piping CLI help output to head by @Copilot (`#727 <https://github.com/tomerfiliba/plumbum/pull/727>`_)
 
 Tests:
 
-* Need ``ImportError`` for ``plumbum.cmd`` by @henryiii in https://github.com/tomerfiliba/plumbum/pull/769
-* Set ``LANG=C`` in pytest to fix locale-dependent test failures by @yajo in https://github.com/tomerfiliba/plumbum/pull/772
-* Support pytest 9 by @henryiii in https://github.com/tomerfiliba/plumbum/pull/757
-* pytest ``log_level`` is better than ``log_cli_level`` by @henryiii in https://github.com/tomerfiliba/plumbum/pull/756
+* Need ``ImportError`` for ``plumbum.cmd`` by @henryiii (`#769 <https://github.com/tomerfiliba/plumbum/pull/769>`_)
+* Set ``LANG=C`` in pytest to fix locale-dependent test failures by @yajo (`#772 <https://github.com/tomerfiliba/plumbum/pull/772>`_)
+* Support pytest 9 by @henryiii (`#757 <https://github.com/tomerfiliba/plumbum/pull/757>`_)
+* pytest ``log_level`` is better than ``log_cli_level`` by @henryiii (`#756 <https://github.com/tomerfiliba/plumbum/pull/756>`_)
 
 
 Internal:
 
-* Adding more slots by @henryiii in https://github.com/tomerfiliba/plumbum/pull/750
-* Even more slots by @henryiii in https://github.com/tomerfiliba/plumbum/pull/751
-* tid imports by @henryiii in https://github.com/tomerfiliba/plumbum/pull/753
-* Fix badge showing wrong branch by @henryiii in https://github.com/tomerfiliba/plumbum/pull/736
-* Fix links in changelog by @henryiii in https://github.com/tomerfiliba/plumbum/pull/732
+* Adding more slots by @henryiii (`#750 <https://github.com/tomerfiliba/plumbum/pull/750>`_)
+* Even more slots by @henryiii (`#751 <https://github.com/tomerfiliba/plumbum/pull/751>`_)
+* tid imports by @henryiii (`#753 <https://github.com/tomerfiliba/plumbum/pull/753>`_)
+* Fix badge showing wrong branch by @henryiii (`#736 <https://github.com/tomerfiliba/plumbum/pull/736>`_)
+* Fix links in changelog by @henryiii (`#732 <https://github.com/tomerfiliba/plumbum/pull/732>`_)
 
 CI:
 
-* Test on prerelease of 3.15 by @henryiii in https://github.com/tomerfiliba/plumbum/pull/771
-* Update versions by @henryiii in https://github.com/tomerfiliba/plumbum/pull/763
-* Updating ssh script by @henryiii in https://github.com/tomerfiliba/plumbum/pull/764
-* Use PyPy 3.11 by @henryiii in https://github.com/tomerfiliba/plumbum/pull/770
+* Test on prerelease of 3.15 by @henryiii (`#771 <https://github.com/tomerfiliba/plumbum/pull/771>`_)
+* Update versions by @henryiii (`#763 <https://github.com/tomerfiliba/plumbum/pull/763>`_)
+* Updating ssh script by @henryiii (`#764 <https://github.com/tomerfiliba/plumbum/pull/764>`_)
+* Use PyPy 3.11 by @henryiii (`#770 <https://github.com/tomerfiliba/plumbum/pull/770>`_)
 
 
 1.10.0
