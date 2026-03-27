@@ -968,8 +968,8 @@ complete -F _{prog_name}_completion {prog_name}
         except ShowVersion:
             inst.version()
         except ShowCompletion:
-            # The completions switch handler will be called separately
-            pass
+            info = swfuncs[inst.completions.__func__]  # type: ignore[attr-defined]
+            inst._print_completion(info.val[0])
         except SwitchError as ex:
             print(T_("Error: {0}").format(ex))
             print(T_("------"))
