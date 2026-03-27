@@ -21,6 +21,7 @@ from .switches import (
     MissingArgument,
     MissingMandatorySwitch,
     PositionalArgumentsError,
+    Set,
     SubcommandError,
     SwitchCombinationError,
     SwitchError,
@@ -1406,6 +1407,7 @@ complete -F _{prog_name}_completion {prog_name}
 
     @switch(
         ["--completions"],
+        Set("bash", "fish"),
         overridable=True,
         group="Meta-switches",
         help=T_("""Prints shell completion script and quits"""),
