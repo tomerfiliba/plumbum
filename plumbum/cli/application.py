@@ -649,7 +649,7 @@ class Application:
         return None
 
     @classmethod
-    def bash_completion_script(cls, prog_name: str) -> str:
+    def completion_script_bash(cls, prog_name: str) -> str:
         """Generate a bash completion script for this application.
 
         :param prog_name: The program name to use in the completion script
@@ -708,7 +708,7 @@ complete -F _{prog_name}_completion {prog_name}
         return script
 
     @classmethod
-    def fish_completion_script(cls, prog_name: str) -> str:
+    def completion_script_fish(cls, prog_name: str) -> str:
         """Generate a fish completion script for this application.
 
         :param prog_name: The program name to use in the completion script
@@ -1397,9 +1397,9 @@ complete -F _{prog_name}_completion {prog_name}
             return
 
         if shell == "bash":
-            print(self.bash_completion_script(prog_name))
+            print(self.completion_script_bash(prog_name))
         elif shell == "fish":
-            print(self.fish_completion_script(prog_name))
+            print(self.completion_script_fish(prog_name))
         else:
             print(T_("Unsupported shell: {shell}").format(shell=shell))
             print(T_("Supported shells are: bash, fish"))
@@ -1408,6 +1408,7 @@ complete -F _{prog_name}_completion {prog_name}
         ["--completions"],
         overridable=True,
         group="Meta-switches",
+        choices=cli.Set("bash", "fish"),
         help=T_("""Prints shell completion script and quits"""),
     )
     def completions(self, shell: str) -> None:

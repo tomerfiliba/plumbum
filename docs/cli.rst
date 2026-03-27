@@ -468,12 +468,12 @@ All applications built with Plumbum CLI have built-in switches for generating co
 **Bash**::
 
     # Add to your ~/.bashrc
-    eval "$(python your_app.py --bash-completion)"
+    eval "$(python your_app.py --completions=bash)"
 
 **Fish**::
 
     # Save to fish completions directory
-    python your_app.py --fish-completion > ~/.config/fish/completions/your_app.fish
+    python your_app.py --completions=fish > ~/.config/fish/completions/your_app.fish
 
 These switches are available on all ``Application`` classes automatically, just like ``--help``
 and ``--version``.

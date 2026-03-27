@@ -131,27 +131,27 @@ class TestCompletions:
         assert "-f" in switch_names
 
     def test_bash_completion_script(self):
-        script = CompletionApp.bash_completion_script("completionapp")
+        script = CompletionApp.completion_script_bash("completionapp")
         assert "completionapp" in script
         assert "--verbose" in script
         assert "--output" in script
         assert "--level" in script
 
     def test_bash_completion_script_with_subcommands(self):
-        script = CompletionAppWithSubcommands.bash_completion_script("geet")
+        script = CompletionAppWithSubcommands.completion_script_bash("geet")
         assert "geet" in script
         assert "add" in script
         assert "commit" in script
 
     def test_fish_completion_script(self):
-        script = CompletionApp.fish_completion_script("completionapp")
+        script = CompletionApp.completion_script_fish("completionapp")
         assert "completionapp" in script
         assert "-l verbose" in script
         assert "-l output" in script
         assert "-l level" in script
 
     def test_fish_completion_script_with_subcommands(self):
-        script = CompletionAppWithSubcommands.fish_completion_script("geet")
+        script = CompletionAppWithSubcommands.completion_script_fish("geet")
         assert "geet" in script
         assert "add" in script
         assert "commit" in script
