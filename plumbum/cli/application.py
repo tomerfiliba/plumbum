@@ -1408,7 +1408,6 @@ complete -F _{prog_name}_completion {prog_name}
         ["--completions"],
         overridable=True,
         group="Meta-switches",
-        choices=cli.Set("bash", "fish"),
         help=T_("""Prints shell completion script and quits"""),
     )
     def completions(self, shell: str) -> None:
