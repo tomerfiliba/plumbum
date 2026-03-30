@@ -226,10 +226,15 @@ class AsyncCommandMixin:
         # sets up two processes and wires their stdout/stdin together. The
         # async implementation must do the same using OS pipes so that the
         # downstream process can read from the upstream process' output.
-        if hasattr(self._base_cmd, "srccmd") and hasattr(self._base_cmd, "dstcmd"):
-            src_argv = self._base_cmd.srccmd.formulate(0)
-            dst_argv = self._base_cmd.dstcmd.formulate(0, args)
+        # Unwrap common wrapper commands (e.g., with_env/with_cwd/redirection)
+        # to detect an underlying Pipeline even when self._base_cmd is wrapped.
+        unwrapped_cmd = self._base_cmd
+        while hasattr(unwrapped_cmd, "command"):
+            unwrapped_cmd = unwrapped_cmd.command
 
+        if hasattr(unwrapped_cmd, "srccmd") and hasattr(unwrapped_cmd, "dstcmd"):
+            src_argv = unwrapped_cmd.srccmd.formulate(0)
+            dst_argv = unwrapped_cmd.dstcmd.formulate(0, args)
             full_env = dict(local.env.getdict())
             base_env = getattr(self._base_cmd, "env", None)
             if base_env:
