@@ -1,4 +1,5 @@
 import sys
+
 import pytest
 
 from plumbum import async_local, local
@@ -20,7 +21,7 @@ def test_issue_795_sync():
     proc = command.popen()
     assert proc.stdout is not None
     lines = []
-    while (i := proc.stdout.readline()):
+    while i := proc.stdout.readline():
         lines.append(i.decode().strip())
 
     assert len(lines) == 2
@@ -37,7 +38,7 @@ async def test_issue_795_async():
     proc = await command.popen()
     assert proc.stdout is not None
     lines = []
-    while (i := await proc.stdout.readline()):
+    while i := await proc.stdout.readline():
         lines.append(i.decode().strip())
 
     assert len(lines) == 2
