@@ -298,7 +298,15 @@ class AsyncCommandMixin:
                 combined_rc = rc_dst or rc_src
                 # Keep returncode consistent with the combined result, matching
                 # the behavior of the synchronous Pipeline.popen.
-                dstproc.returncode = combined_rc  # type: ignore[assignment]
+                try:
+                    dstproc.returncode = combined_rc  # type: ignore[assignment]
+                except Exception:
+                    # asyncio.subprocess.Process.returncode is read-only in
+                    # some Python versions; set the private attribute as a
+                    # fallback so callers can still observe the combined
+                    # return code (matching the sync Pipeline behavior).
+                    with contextlib.suppress(Exception):
+                        setattr(dstproc, "_returncode", combined_rc)
                 return combined_rc
 
             dstproc.wait = wait2  # type: ignore[method-assign]
