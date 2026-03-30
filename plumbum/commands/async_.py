@@ -241,32 +241,46 @@ class AsyncCommandMixin:
             working_dir = cwd or base_cwd or str(local.cwd)
 
             # create an OS pipe and make fds inheritable for child procs
-            r, w = os.pipe()
-            os.set_inheritable(r, True)
-            os.set_inheritable(w, True)
+            r = w = None
+            srcproc = dstproc = None
+            try:
+                r, w = os.pipe()
+                os.set_inheritable(r, True)
+                os.set_inheritable(w, True)
 
-            srcproc = await asyncio.create_subprocess_exec(
-                *src_argv,
-                stdout=w,
-                stderr=asyncio.subprocess.PIPE,
-                stdin=asyncio.subprocess.PIPE,
-                cwd=working_dir,
-                env=full_env,
-            )
+                srcproc = await asyncio.create_subprocess_exec(
+                    *src_argv,
+                    stdout=w,
+                    stderr=asyncio.subprocess.PIPE,
+                    stdin=asyncio.subprocess.PIPE,
+                    cwd=working_dir,
+                    env=full_env,
+                )
 
-            dstproc = await asyncio.create_subprocess_exec(
-                *dst_argv,
-                stdin=r,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=working_dir,
-                env=full_env,
-            )
-
-            # close our copies of the fds
-            os.close(r)
-            os.close(w)
-
+                try:
+                    dstproc = await asyncio.create_subprocess_exec(
+                        *dst_argv,
+                        stdin=r,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
+                        cwd=working_dir,
+                        env=full_env,
+                    )
+                except Exception:
+                    # If the downstream process fails to start, ensure the
+                    # source process is not left running.
+                    if srcproc is not None:
+                        with contextlib.suppress(Exception):
+                            srcproc.terminate()
+                        with contextlib.suppress(Exception):
+                            await srcproc.wait()
+                    raise
+            finally:
+                # close our copies of the fds
+                if r is not None:
+                    os.close(r)
+                if w is not None:
+                    os.close(w)
             dstproc.srcproc = srcproc  # type: ignore[attr-defined]
             # Expose a writable stdin on the returned dstproc that feeds the
             # source process, matching the sync API where `dstproc.stdin`
