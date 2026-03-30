@@ -54,6 +54,7 @@ Example Usage
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import sys
 from typing import TYPE_CHECKING, Any
@@ -267,6 +268,12 @@ class AsyncCommandMixin:
             os.close(w)
 
             dstproc.srcproc = srcproc  # type: ignore[attr-defined]
+            # Expose a writable stdin on the returned dstproc that feeds the
+            # source process, matching the sync API where `dstproc.stdin`
+            # points to `srcproc.stdin` so callers can stream into the
+            # pipeline (e.g. `cat | upper`).
+            with contextlib.suppress(Exception):
+                dstproc.stdin = srcproc.stdin
 
             # provide a combined wait coroutine that waits for both processes
             orig_wait = dstproc.wait
