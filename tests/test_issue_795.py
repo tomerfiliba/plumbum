@@ -26,6 +26,9 @@ def test_issue_795_sync():
 
     assert len(lines) == 2
     assert lines == ["TEST PIPE1", "TEST PIPE2"]
+    # Ensure child processes are reaped and return code is checked
+    proc.wait()
+    assert proc.returncode == 0
 
 
 @pytest.mark.asyncio
@@ -43,3 +46,6 @@ async def test_issue_795_async():
 
     assert len(lines) == 2
     assert lines == ["TEST PIPE1", "TEST PIPE2"]
+    # Ensure child processes are reaped and return code is checked
+    await proc.wait()
+    assert proc.returncode == 0
