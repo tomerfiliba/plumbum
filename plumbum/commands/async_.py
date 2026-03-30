@@ -54,6 +54,8 @@ Example Usage
 from __future__ import annotations
 
 import asyncio
+import os
+import functools
 import sys
 from typing import TYPE_CHECKING, Any
 
@@ -220,6 +222,65 @@ class AsyncCommandMixin:
         Returns:
             asyncio.subprocess.Process instance
         """
+        # Handle pipelines specially: the sync Pipeline.popen implementation
+        # sets up two processes and wires their stdout/stdin together. The
+        # async implementation must do the same using OS pipes so that the
+        # downstream process can read from the upstream process' output.
+        if hasattr(self._base_cmd, "srccmd") and hasattr(self._base_cmd, "dstcmd"):
+            src_argv = self._base_cmd.srccmd.formulate(0)
+            dst_argv = self._base_cmd.dstcmd.formulate(0, args)
+
+            full_env = dict(local.env.getdict())
+            base_env = getattr(self._base_cmd, "env", None)
+            if base_env:
+                full_env.update(base_env)
+            if env:
+                full_env.update(env)
+
+            base_cwd = getattr(self._base_cmd, "cwd", None)
+            working_dir = cwd or base_cwd or str(local.cwd)
+
+            # create an OS pipe and make fds inheritable for child procs
+            r, w = os.pipe()
+            os.set_inheritable(r, True)
+            os.set_inheritable(w, True)
+
+            srcproc = await asyncio.create_subprocess_exec(
+                *src_argv,
+                stdout=w,
+                stderr=asyncio.subprocess.PIPE,
+                stdin=asyncio.subprocess.PIPE,
+                cwd=working_dir,
+                env=full_env,
+            )
+
+            dstproc = await asyncio.create_subprocess_exec(
+                *dst_argv,
+                stdin=r,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=working_dir,
+                env=full_env,
+            )
+
+            # close our copies of the fds
+            os.close(r)
+            os.close(w)
+
+            dstproc.srcproc = srcproc  # type: ignore[attr-defined]
+
+            # provide a combined wait coroutine that waits for both processes
+            orig_wait = dstproc.wait
+
+            async def wait2(*a: Any, **k: Any) -> int:
+                rc_dst = await orig_wait()
+                rc_src = await srcproc.wait()
+                dstproc.returncode = rc_dst or rc_src
+                return dstproc.returncode
+
+            dstproc.wait = wait2  # type: ignore[assignment]
+            return dstproc
+
         argv = self._base_cmd.formulate(0, args)
 
         full_env = dict(local.env.getdict())
