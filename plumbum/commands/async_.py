@@ -245,47 +245,69 @@ class AsyncCommandMixin:
             base_cwd = getattr(self._base_cmd, "cwd", None)
             working_dir = cwd or base_cwd or str(local.cwd)
 
-            # create an OS pipe and make fds inheritable for child procs
-            r, w = os.pipe()
-            os.set_inheritable(r, True)
-            os.set_inheritable(w, True)
+            r: int | None = None
+            w: int | None = None
+            srcproc: asyncio.subprocess.Process | None = None
+            try:
+                # create an OS pipe and make fds inheritable for child procs
+                r, w = os.pipe()
+                os.set_inheritable(r, True)
+                os.set_inheritable(w, True)
 
-            srcproc = await asyncio.create_subprocess_exec(
-                *src_argv,
-                stdout=w,
-                stderr=asyncio.subprocess.PIPE,
-                stdin=asyncio.subprocess.PIPE,
-                cwd=working_dir,
-                env=full_env,
-            )
+                srcproc = await asyncio.create_subprocess_exec(
+                    *src_argv,
+                    stdout=w,
+                    stderr=asyncio.subprocess.PIPE,
+                    stdin=asyncio.subprocess.PIPE,
+                    cwd=working_dir,
+                    env=full_env,
+                )
 
-            dstproc = await asyncio.create_subprocess_exec(
-                *dst_argv,
-                stdin=r,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=working_dir,
-                env=full_env,
-            )
+                dstproc = await asyncio.create_subprocess_exec(
+                    *dst_argv,
+                    stdin=r,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    cwd=working_dir,
+                    env=full_env,
+                )
 
-            # close our copies of the fds
-            os.close(r)
-            os.close(w)
+                dstproc.srcproc = srcproc  # type: ignore[attr-defined]
 
-            dstproc.srcproc = srcproc  # type: ignore[attr-defined]
+                # provide a combined wait coroutine that waits for both processes
+                orig_wait = dstproc.wait
 
-            # provide a combined wait coroutine that waits for both processes
-            orig_wait = dstproc.wait
+                async def wait2(*a: Any, **k: Any) -> int:
+                    rc_dst = await orig_wait()
+                    rc_src = await srcproc.wait()  # type: ignore[union-attr]
+                    dstproc.returncode = rc_dst or rc_src
+                    return dstproc.returncode
 
-            async def wait2(*a: Any, **k: Any) -> int:
-                rc_dst = await orig_wait()
-                rc_src = await srcproc.wait()
-                dstproc.returncode = rc_dst or rc_src
-                return dstproc.returncode
-
-            dstproc.wait = wait2  # type: ignore[assignment]
-            return dstproc
-
+                dstproc.wait = wait2  # type: ignore[assignment]
+                return dstproc
+            except Exception:
+                # If the destination process fails to spawn after the source
+                # has started, ensure the source process is terminated.
+                if srcproc is not None:
+                    try:
+                        if srcproc.returncode is None:
+                            srcproc.terminate()
+                    except ProcessLookupError:
+                        pass
+                    except OSError:
+                        pass
+                raise
+            finally:
+                if r is not None:
+                    try:
+                        os.close(r)
+                    except OSError:
+                        pass
+                if w is not None:
+                    try:
+                        os.close(w)
+                    except OSError:
+                        pass
         argv = self._base_cmd.formulate(0, args)
 
         full_env = dict(local.env.getdict())
