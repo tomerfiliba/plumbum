@@ -295,7 +295,11 @@ class AsyncCommandMixin:
             async def wait2(*a: Any, **k: Any) -> int:
                 rc_dst = await orig_wait()
                 rc_src = await srcproc.wait()
-                return rc_dst or rc_src
+                combined_rc = rc_dst or rc_src
+                # Keep returncode consistent with the combined result, matching
+                # the behavior of the synchronous Pipeline.popen.
+                dstproc.returncode = combined_rc  # type: ignore[assignment]
+                return combined_rc
 
             dstproc.wait = wait2  # type: ignore[method-assign]
             return dstproc
