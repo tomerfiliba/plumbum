@@ -54,6 +54,7 @@ Example Usage
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import sys
 from typing import TYPE_CHECKING, Any
@@ -322,7 +323,7 @@ class AsyncPipeline(AsyncCommandMixin):
     def __or__(self, other: AsyncCommandMixin) -> AsyncPipeline:
         return AsyncPipeline(self, other)
 
-    async def popen(
+    async def popen(  # type: ignore[override]
         self,
         args: Sequence[Any] = (),
         cwd: str | None = None,
@@ -337,54 +338,122 @@ class AsyncPipeline(AsyncCommandMixin):
 
         Returns:
             AsyncPipelineProcess wrapping all started subprocesses.
+
+        Raises:
+            NotImplementedError: If any stage is not a local machine command.
         """
+
+        def _resolve_cmd_env_cwd(cmd: BaseCommand) -> tuple[dict[str, Any], Any]:
+            """Unwrap command wrappers to resolve env/cwd from BoundCommand chains."""
+            wrapped_cmds = []
+            current = cmd
+            while True:
+                wrapped_cmds.append(current)
+                next_cmd = getattr(current, "cmd", None)
+                if next_cmd is None:
+                    break
+                current = next_cmd
+
+            resolved_env: dict[str, Any] = {}
+            resolved_cwd = None
+            for wrapped_cmd in reversed(wrapped_cmds):
+                wrapped_env = getattr(wrapped_cmd, "env", None)
+                if wrapped_env:
+                    resolved_env.update(wrapped_env)
+                wrapped_cwd = getattr(wrapped_cmd, "cwd", None)
+                if wrapped_cwd is not None:
+                    resolved_cwd = wrapped_cwd
+
+            return resolved_env, resolved_cwd
+
         sync_cmds = _flatten_pipeline(self._base_cmd)
         n = len(sync_cmds)
+
+        # Verify all stages are local machine commands
+        for sync_cmd in sync_cmds:
+            machine = getattr(sync_cmd, "machine", local)
+            if machine is not local:
+                msg = (
+                    f"AsyncPipeline.popen() only supports local machine commands. "
+                    f"Stage {sync_cmd} uses machine {machine.__class__.__name__}"
+                )
+                raise NotImplementedError(msg)
+
         procs: list[asyncio.subprocess.Process] = []
-        current_stdin: int | asyncio.subprocess.PIPE = asyncio.subprocess.PIPE  # type: ignore[assignment]
+        current_stdin: int = asyncio.subprocess.PIPE
+        open_fds: set[int] = set()
 
-        for i, sync_cmd in enumerate(sync_cmds):
-            is_last = i == n - 1
+        try:
+            for i, sync_cmd in enumerate(sync_cmds):
+                is_last = i == n - 1
 
-            full_env = dict(local.env.getdict())
-            base_env = getattr(sync_cmd, "env", None)
-            if base_env:
-                full_env.update(base_env)
-            if env:
-                full_env.update(env)
+                full_env = dict(local.env.getdict())
+                base_env, base_cwd = _resolve_cmd_env_cwd(sync_cmd)
+                if base_env:
+                    full_env.update(base_env)
+                if env:
+                    full_env.update(env)
 
-            base_cwd = getattr(sync_cmd, "cwd", None)
-            working_dir = cwd or base_cwd or str(local.cwd)
+                working_dir = cwd or base_cwd or str(local.cwd)
 
-            # Pass args only to the first command, matching sync Pipeline.popen
-            cmd_args = args if i == 0 else ()
-            argv = sync_cmd.formulate(0, cmd_args)
+                # Pass args only to the first command, matching sync Pipeline.popen
+                cmd_args = args if i == 0 else ()
+                argv = sync_cmd.formulate(0, cmd_args)
 
-            if is_last:
-                stdout_target: int | asyncio.subprocess.PIPE = asyncio.subprocess.PIPE  # type: ignore[assignment]
-                next_stdin = None
-            else:
-                r_fd, w_fd = os.pipe()
-                stdout_target = w_fd
-                next_stdin = r_fd
+                if is_last:
+                    stdout_target: int = asyncio.subprocess.PIPE
+                    stderr_target = asyncio.subprocess.PIPE
+                    next_stdin = None
+                else:
+                    r_fd, w_fd = os.pipe()
+                    open_fds.add(r_fd)
+                    open_fds.add(w_fd)
+                    stdout_target = w_fd
+                    stderr_target = None
+                    next_stdin = r_fd
 
-            proc = await asyncio.create_subprocess_exec(
-                *argv,
-                stdin=current_stdin,
-                stdout=stdout_target,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=working_dir,
-                env=full_env,
-            )
+                proc = await asyncio.create_subprocess_exec(
+                    *argv,
+                    stdin=current_stdin,
+                    stdout=stdout_target,
+                    stderr=stderr_target,
+                    cwd=working_dir,
+                    env=full_env,
+                )
 
-            # Close parent's copy of the file descriptors so the OS pipe works
-            if current_stdin is not asyncio.subprocess.PIPE and isinstance(current_stdin, int):
-                os.close(current_stdin)
-            if not is_last:
-                os.close(w_fd)  # type: ignore[possibly-undefined]
-                current_stdin = next_stdin  # type: ignore[assignment]
+                # Close parent's copy of the file descriptors so the OS pipe works
+                if current_stdin != asyncio.subprocess.PIPE and isinstance(
+                    current_stdin, int
+                ):
+                    os.close(current_stdin)
+                    open_fds.discard(current_stdin)
+                if not is_last:
+                    os.close(w_fd)
+                    open_fds.discard(w_fd)
+                    current_stdin = next_stdin  # type: ignore[assignment]
 
-            procs.append(proc)
+                procs.append(proc)
+        except Exception:
+            for fd in open_fds:
+                with contextlib.suppress(OSError):
+                    os.close(fd)
+
+            for proc in procs:
+                if proc.returncode is None:
+                    with contextlib.suppress(ProcessLookupError):
+                        proc.terminate()
+
+            for proc in procs:
+                try:
+                    await asyncio.wait_for(proc.wait(), timeout=1)
+                except (ProcessLookupError, asyncio.TimeoutError):  # noqa: PERF203
+                    if proc.returncode is None:
+                        with contextlib.suppress(ProcessLookupError):
+                            proc.kill()
+                        with contextlib.suppress(ProcessLookupError):
+                            await proc.wait()
+
+            raise
 
         return AsyncPipelineProcess(procs)
 
