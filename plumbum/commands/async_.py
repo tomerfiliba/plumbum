@@ -54,6 +54,8 @@ Example Usage
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import os
 import sys
 from typing import TYPE_CHECKING, Any
 
@@ -220,6 +222,96 @@ class AsyncCommandMixin:
         Returns:
             asyncio.subprocess.Process instance
         """
+        # Handle pipelines specially: the sync Pipeline.popen implementation
+        # sets up two processes and wires their stdout/stdin together. The
+        # async implementation must do the same using OS pipes so that the
+        # downstream process can read from the upstream process' output.
+        if hasattr(self._base_cmd, "srccmd") and hasattr(self._base_cmd, "dstcmd"):
+            src_argv = self._base_cmd.srccmd.formulate(0)
+            dst_argv = self._base_cmd.dstcmd.formulate(0, args)
+
+            full_env = dict(local.env.getdict())
+            base_env = getattr(self._base_cmd, "env", None)
+            if base_env:
+                full_env.update(base_env)
+            if env:
+                full_env.update(env)
+
+            base_cwd = getattr(self._base_cmd, "cwd", None)
+            working_dir = cwd or base_cwd or str(local.cwd)
+
+            # create an OS pipe and make fds inheritable for child procs
+            r = w = None
+            srcproc = dstproc = None
+            try:
+                r, w = os.pipe()
+                os.set_inheritable(r, True)
+                os.set_inheritable(w, True)
+
+                srcproc = await asyncio.create_subprocess_exec(
+                    *src_argv,
+                    stdout=w,
+                    stderr=asyncio.subprocess.PIPE,
+                    stdin=asyncio.subprocess.PIPE,
+                    cwd=working_dir,
+                    env=full_env,
+                )
+
+                try:
+                    dstproc = await asyncio.create_subprocess_exec(
+                        *dst_argv,
+                        stdin=r,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
+                        cwd=working_dir,
+                        env=full_env,
+                    )
+                except Exception:
+                    # If the downstream process fails to start, ensure the
+                    # source process is not left running.
+                    if srcproc is not None:
+                        with contextlib.suppress(Exception):
+                            srcproc.terminate()
+                        with contextlib.suppress(Exception):
+                            await srcproc.wait()
+                    raise
+            finally:
+                # close our copies of the fds
+                if r is not None:
+                    os.close(r)
+                if w is not None:
+                    os.close(w)
+            dstproc.srcproc = srcproc  # type: ignore[attr-defined]
+            # Expose a writable stdin on the returned dstproc that feeds the
+            # source process, matching the sync API where `dstproc.stdin`
+            # points to `srcproc.stdin` so callers can stream into the
+            # pipeline (e.g. `cat | upper`).
+            with contextlib.suppress(Exception):
+                dstproc.stdin = srcproc.stdin
+
+            # provide a combined wait coroutine that waits for both processes
+            orig_wait = dstproc.wait
+
+            async def wait2(*a: Any, **k: Any) -> int:
+                rc_dst = await orig_wait()
+                rc_src = await srcproc.wait()
+                combined_rc = rc_dst or rc_src
+                # Keep returncode consistent with the combined result, matching
+                # the behavior of the synchronous Pipeline.popen.
+                try:
+                    dstproc.returncode = combined_rc  # type: ignore[assignment]
+                except Exception:
+                    # asyncio.subprocess.Process.returncode is read-only in
+                    # some Python versions; set the private attribute as a
+                    # fallback so callers can still observe the combined
+                    # return code (matching the sync Pipeline behavior).
+                    with contextlib.suppress(Exception):
+                        setattr(dstproc, "_returncode", combined_rc)
+                return combined_rc
+
+            dstproc.wait = wait2  # type: ignore[method-assign]
+            return dstproc
+
         argv = self._base_cmd.formulate(0, args)
 
         full_env = dict(local.env.getdict())
