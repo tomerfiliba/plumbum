@@ -232,6 +232,21 @@ class AsyncCommandMixin:
         base_cwd = getattr(self._base_cmd, "cwd", None)
         working_dir = cwd or base_cwd or str(local.cwd)
 
+        # If the formulated command contains a "|" shell operator, it represents
+        # a pipeline. We must use a shell to properly connect the processes.
+        is_pipeline = "|" in argv
+
+        if is_pipeline:
+            shell_cmd = " ".join(argv)
+            return await asyncio.create_subprocess_shell(
+                shell_cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                stdin=asyncio.subprocess.PIPE,
+                cwd=working_dir,
+                env=full_env,
+            )
+
         return await asyncio.create_subprocess_exec(
             *argv,
             stdout=asyncio.subprocess.PIPE,
