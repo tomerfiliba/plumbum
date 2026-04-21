@@ -156,7 +156,8 @@ class AsyncPipelineProcess:
             proc.send_signal(signal)
 
     def kill(self) -> None:
-        self.send_signal(__import__("signal").SIGKILL)
+        s = __import__("signal")
+        self.send_signal(getattr(s, "SIGKILL", s.SIGTERM))
 
     def terminate(self) -> None:
         self.send_signal(__import__("signal").SIGTERM)

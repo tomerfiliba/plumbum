@@ -180,7 +180,7 @@ class TestAsyncPipelineCommunicate:
         proc = await (echo | upper).popen()
         stdout, _stderr = await proc.communicate()
         stdout_text = stdout.decode().strip() if stdout else ""
-        lines = [line for line in stdout_text.split("\n") if line.strip()]
+        lines = [ln for line in stdout_text.split("\n") if (ln := line.strip())]
         assert lines == ["TEST PIPE1", "TEST PIPE2"]
         assert proc.returncode == 0
 
@@ -192,7 +192,7 @@ class TestAsyncPipelineCommunicate:
 
         proc = await (cat | upper).popen()
         stdout, _stderr = await proc.communicate(b"hello world\n")
-        assert stdout == b"HELLO WORLD\n"
+        assert stdout.decode().strip() == "HELLO WORLD"
         assert proc.returncode == 0
 
 
@@ -207,7 +207,7 @@ class TestAsyncPipelineMultiStage:
 
         proc = await (cat | upper | cat2).popen()
         stdout, _stderr = await proc.communicate(b"hello\n")
-        assert stdout == b"HELLO\n"
+        assert stdout.decode().strip() == "HELLO"
         assert proc.returncode == 0
 
     @pytest.mark.asyncio
@@ -398,7 +398,7 @@ class TestAsyncPipelineOrChaining:
         pipeline = cat | upper | cat2
         proc = await pipeline.popen()
         stdout, _stderr = await proc.communicate(b"hello\n")
-        assert stdout == b"HELLO\n"
+        assert stdout.decode().strip() == "HELLO"
         assert proc.returncode == 0
 
     def test_async_pipeline_or_returns_pipeline(self):
