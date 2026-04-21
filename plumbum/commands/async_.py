@@ -119,7 +119,35 @@ class AsyncPipelineProcess:
     async def communicate(
         self, input: bytes | None = None
     ) -> tuple[bytes | None, bytes | None]:
-        stdout, stderr = await self._procs[-1].communicate(input)
+        """Send data to stdin and return stdout/stderr for the pipeline.
+
+        Input is written to the first process's stdin, and output is read
+        from the last process's stdout/stderr.
+        """
+        if input is not None and self.stdin is None:
+            msg = "Cannot provide input when stdin is not a pipe"
+            raise ValueError(msg)
+
+        async def _read_stream(
+            stream: asyncio.StreamReader | None,
+        ) -> bytes | None:
+            if stream is None:
+                return None
+            return await stream.read()
+
+        # Launch read tasks for the last process's stdout/stderr
+        stdout_task = asyncio.create_task(_read_stream(self.stdout))
+        stderr_task = asyncio.create_task(_read_stream(self.stderr))
+
+        # Write input to the first process's stdin
+        if input is not None:
+            self.stdin.write(input)  # type: ignore[union-attr]
+            await self.stdin.drain()  # type: ignore[union-attr]
+            self.stdin.close()  # type: ignore[union-attr]
+
+        stdout = await stdout_task
+        stderr = await stderr_task
+
         await self.wait()
         return stdout, stderr
 
@@ -348,8 +376,12 @@ class AsyncPipeline(AsyncCommandMixin):
         Binding arguments to a pipeline must return another AsyncPipeline so
         execution continues to use AsyncPipeline.popen() instead of the generic
         AsyncCommandMixin.popen() path.
+
+        The arguments are bound to the destination (right) command, matching
+        the sync Pipeline semantics where ``formulate()`` passes args to
+        ``dstcmd``.
         """
-        return AsyncPipeline(self._src_cmd[args], self._dst_cmd)
+        return AsyncPipeline(self._src_cmd, self._dst_cmd[args])
 
     def bound_command(self, *args: Any) -> AsyncPipeline:
         """Return a bound pipeline while preserving the pipeline type."""
@@ -454,6 +486,7 @@ class AsyncPipeline(AsyncCommandMixin):
                     stderr=stderr_target,
                     cwd=working_dir,
                     env=full_env,
+                    close_fds=True,
                 )
 
                 # Close parent's copy of the file descriptors so the OS pipe works
