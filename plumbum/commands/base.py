@@ -586,7 +586,6 @@ ERROUT = _ERROUT(subprocess.STDOUT)
 
 class StdinDataRedirection(BaseCommand):
     __slots__ = ("cmd", "data")
-    CHUNK_SIZE = 16000
 
     cmd: BaseCommand
     data: bytes | str
@@ -617,10 +616,7 @@ class StdinDataRedirection(BaseCommand):
         if isinstance(data, str) and encoding is not None:
             data = data.encode(encoding)
         f = TemporaryFile()
-        while data:
-            chunk = data[: self.CHUNK_SIZE]
-            f.write(chunk)  # type: ignore[arg-type]
-            data = data[self.CHUNK_SIZE :]
+        f.write(data)  # type: ignore[arg-type]
         f.seek(0)
         kwargs["stdin"] = f
         try:
