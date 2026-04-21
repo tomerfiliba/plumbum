@@ -586,7 +586,6 @@ ERROUT = _ERROUT(subprocess.STDOUT)
 
 class StdinDataRedirection(BaseCommand):
     __slots__ = ("cmd", "data")
-    CHUNK_SIZE = 16000
 
     cmd: BaseCommand
     data: bytes | str
