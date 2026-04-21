@@ -1,7 +1,7 @@
 Async Support
 =============
 
-.. versionadded:: 1.11
+.. versionadded:: 2.0
 
 Plumbum includes full support for asyncio, allowing you to run commands
 asynchronously using Python's ``async``/``await`` syntax.
