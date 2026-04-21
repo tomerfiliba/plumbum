@@ -116,7 +116,9 @@ class AsyncPipelineProcess:
         self._pipeline_returncode = returncode
         return returncode
 
-    async def communicate(self, input: bytes | None = None) -> tuple[bytes | None, bytes | None]:
+    async def communicate(
+        self, input: bytes | None = None
+    ) -> tuple[bytes | None, bytes | None]:
         stdout, stderr = await self._procs[-1].communicate(input)
         await self.wait()
         return stdout, stderr
@@ -126,13 +128,15 @@ class AsyncPipelineProcess:
             proc.send_signal(signal)
 
     def kill(self) -> None:
-        self.send_signal(getattr(__import__("signal"), "SIGKILL"))
+        self.send_signal(__import__("signal").SIGKILL)
 
     def terminate(self) -> None:
-        self.send_signal(getattr(__import__("signal"), "SIGTERM"))
+        self.send_signal(__import__("signal").SIGTERM)
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._procs[-1], name)
+
+
 class AsyncResult:
     """Result of an async command execution.
 
@@ -182,7 +186,7 @@ class AsyncCommandMixin:
         """
         self._base_cmd = base_cmd
 
-    def __getitem__(self, args: Any) -> AsyncCommand:
+    def __getitem__(self, args: Any) -> AsyncCommandMixin:
         """Bind arguments using the base command's logic.
 
         This delegates to the sync command's __getitem__ method, which handles
@@ -350,6 +354,7 @@ class AsyncPipeline(AsyncCommandMixin):
     def bound_command(self, *args: Any) -> AsyncPipeline:
         """Return a bound pipeline while preserving the pipeline type."""
         return self[args]
+
     def __or__(self, other: AsyncCommandMixin) -> AsyncPipeline:
         return AsyncPipeline(self, other)
 
