@@ -54,9 +54,12 @@ Example Usage
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import os
 import sys
 from typing import TYPE_CHECKING, Any
 
+from plumbum.commands.base import Pipeline
 from plumbum.commands.processes import ProcessExecutionError, ProcessTimedOut
 from plumbum.machines.local import local
 
@@ -69,6 +72,98 @@ if TYPE_CHECKING:
     from collections.abc import Container, Coroutine, Sequence
 
     from plumbum.commands.base import BaseCommand
+
+
+def _flatten_pipeline(cmd: BaseCommand) -> list[BaseCommand]:
+    """Recursively flatten a (possibly nested) sync Pipeline into a list of leaf commands."""
+    if isinstance(cmd, Pipeline):
+        return [*_flatten_pipeline(cmd.srccmd), *_flatten_pipeline(cmd.dstcmd)]
+    return [cmd]
+
+
+class AsyncPipelineProcess:
+    """Wraps multiple connected async subprocesses as a single pipeline handle.
+
+    Exposes the first process's stdin and the last process's stdout/stderr,
+    and ensures all processes are reaped on wait().
+    """
+
+    __slots__ = ("_pipeline_returncode", "_procs", "stderr", "stdin", "stdout")
+
+    def __init__(self, procs: list[asyncio.subprocess.Process]) -> None:
+        self._procs = procs
+        self.stdin = procs[0].stdin
+        self.stdout = procs[-1].stdout
+        self.stderr = procs[-1].stderr
+        self._pipeline_returncode: int | None = None
+
+    @property
+    def pid(self) -> int:
+        return self._procs[-1].pid
+
+    @property
+    def returncode(self) -> int | None:
+        if self._pipeline_returncode is not None:
+            return self._pipeline_returncode
+        return self._procs[-1].returncode
+
+    async def wait(self) -> int:
+        """Wait for all pipeline stages. Prefers exit codes from later stages."""
+        returncode = 0
+        for proc in reversed(self._procs):
+            rc = await proc.wait()
+            returncode = returncode or rc
+        self._pipeline_returncode = returncode
+        return returncode
+
+    async def communicate(
+        self, input: bytes | None = None
+    ) -> tuple[bytes | None, bytes | None]:
+        """Send data to stdin and return stdout/stderr for the pipeline.
+
+        Input is written to the first process's stdin, and output is read
+        from the last process's stdout/stderr.
+        """
+        if input is not None and self.stdin is None:
+            msg = "Cannot provide input when stdin is not a pipe"
+            raise ValueError(msg)
+
+        async def _read_stream(
+            stream: asyncio.StreamReader | None,
+        ) -> bytes | None:
+            if stream is None:
+                return None
+            return await stream.read()
+
+        # Launch read tasks for the last process's stdout/stderr
+        stdout_task = asyncio.create_task(_read_stream(self.stdout))
+        stderr_task = asyncio.create_task(_read_stream(self.stderr))
+
+        # Write input to the first process's stdin
+        if input is not None:
+            self.stdin.write(input)  # type: ignore[union-attr]
+            await self.stdin.drain()  # type: ignore[union-attr]
+            self.stdin.close()  # type: ignore[union-attr]
+
+        stdout = await stdout_task
+        stderr = await stderr_task
+
+        await self.wait()
+        return stdout, stderr
+
+    def send_signal(self, signal: int) -> None:
+        for proc in self._procs:
+            proc.send_signal(signal)
+
+    def kill(self) -> None:
+        s = __import__("signal")
+        self.send_signal(getattr(s, "SIGKILL", s.SIGTERM))
+
+    def terminate(self) -> None:
+        self.send_signal(__import__("signal").SIGTERM)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._procs[-1], name)
 
 
 class AsyncResult:
@@ -120,7 +215,7 @@ class AsyncCommandMixin:
         """
         self._base_cmd = base_cmd
 
-    def __getitem__(self, args: Any) -> AsyncCommand:
+    def __getitem__(self, args: Any) -> AsyncCommandMixin:
         """Bind arguments using the base command's logic.
 
         This delegates to the sync command's __getitem__ method, which handles
@@ -142,14 +237,13 @@ class AsyncCommandMixin:
 
         return _run()
 
-    def __or__(self, other: AsyncCommandMixin) -> Self:
+    def __or__(self, other: AsyncCommandMixin) -> AsyncPipeline:
         """Create a pipeline using the base command's logic.
 
-        This delegates to the sync command's __or__ method to create a sync
-        Pipeline, then wraps it with the same type as self.
+        Returns an AsyncPipeline that properly connects the two commands
+        via an OS pipe when popen() is called.
         """
-        sync_pipeline = self._base_cmd | other._base_cmd
-        return self.__class__(sync_pipeline)
+        return AsyncPipeline(self, other)
 
     def formulate(self, level: int = 0, args: Sequence[Any] = ()) -> list[str]:
         """Delegate formulation to the base command.
@@ -261,6 +355,176 @@ class AsyncCommand(AsyncCommandMixin):
     """
 
     __slots__ = ()
+
+
+class AsyncPipeline(AsyncCommandMixin):
+    """Async pipeline that properly connects two async commands via an OS pipe.
+
+    When popen() is called, each stage is started as a separate subprocess
+    connected via OS-level pipes, mirroring the sync Pipeline.popen() approach.
+    """
+
+    __slots__ = ("_dst_cmd", "_src_cmd")
+
+    def __init__(self, src: AsyncCommandMixin, dst: AsyncCommandMixin) -> None:
+        super().__init__(src._base_cmd | dst._base_cmd)
+        self._src_cmd = src
+        self._dst_cmd = dst
+
+    def __getitem__(self, args: Any) -> AsyncPipeline:
+        """Bind arguments while preserving pipeline semantics.
+
+        Binding arguments to a pipeline must return another AsyncPipeline so
+        execution continues to use AsyncPipeline.popen() instead of the generic
+        AsyncCommandMixin.popen() path.
+
+        The arguments are bound to the destination (right) command, matching
+        the sync Pipeline semantics where ``formulate()`` passes args to
+        ``dstcmd``.
+        """
+        return AsyncPipeline(self._src_cmd, self._dst_cmd[args])
+
+    def bound_command(self, *args: Any) -> AsyncPipeline:
+        """Return a bound pipeline while preserving the pipeline type."""
+        return self[args]
+
+    def __or__(self, other: AsyncCommandMixin) -> AsyncPipeline:
+        return AsyncPipeline(self, other)
+
+    async def popen(  # type: ignore[override]
+        self,
+        args: Sequence[Any] = (),
+        cwd: str | None = None,
+        env: dict[str, str] | None = None,
+    ) -> AsyncPipelineProcess:
+        """Start all pipeline stages connected by OS pipes.
+
+        Args:
+            args: Additional arguments passed to the first command.
+            cwd: Working directory override for all stages.
+            env: Additional environment variables for all stages.
+
+        Returns:
+            AsyncPipelineProcess wrapping all started subprocesses.
+
+        Raises:
+            NotImplementedError: If any stage is not a local machine command.
+        """
+
+        def _resolve_cmd_env_cwd(cmd: BaseCommand) -> tuple[dict[str, Any], Any]:
+            """Unwrap command wrappers to resolve env/cwd from BoundCommand chains."""
+            wrapped_cmds = []
+            current = cmd
+            while True:
+                wrapped_cmds.append(current)
+                next_cmd = getattr(current, "cmd", None)
+                if next_cmd is None:
+                    break
+                current = next_cmd
+
+            resolved_env: dict[str, Any] = {}
+            resolved_cwd = None
+            for wrapped_cmd in reversed(wrapped_cmds):
+                wrapped_env = getattr(wrapped_cmd, "env", None)
+                if wrapped_env:
+                    resolved_env.update(wrapped_env)
+                wrapped_cwd = getattr(wrapped_cmd, "cwd", None)
+                if wrapped_cwd is not None:
+                    resolved_cwd = wrapped_cwd
+
+            return resolved_env, resolved_cwd
+
+        sync_cmds = _flatten_pipeline(self._base_cmd)
+        n = len(sync_cmds)
+
+        # Verify all stages are local machine commands
+        for sync_cmd in sync_cmds:
+            machine = getattr(sync_cmd, "machine", local)
+            if machine is not local:
+                msg = (
+                    f"AsyncPipeline.popen() only supports local machine commands. "
+                    f"Stage {sync_cmd} uses machine {machine.__class__.__name__}"
+                )
+                raise NotImplementedError(msg)
+
+        procs: list[asyncio.subprocess.Process] = []
+        current_stdin: int = asyncio.subprocess.PIPE
+        open_fds: set[int] = set()
+
+        try:
+            for i, sync_cmd in enumerate(sync_cmds):
+                is_last = i == n - 1
+
+                full_env = dict(local.env.getdict())
+                base_env, base_cwd = _resolve_cmd_env_cwd(sync_cmd)
+                if base_env:
+                    full_env.update(base_env)
+                if env:
+                    full_env.update(env)
+
+                working_dir = cwd or base_cwd or str(local.cwd)
+
+                # Pass args only to the first command, matching sync Pipeline.popen
+                cmd_args = args if i == 0 else ()
+                argv = sync_cmd.formulate(0, cmd_args)
+
+                if is_last:
+                    stdout_target: int = asyncio.subprocess.PIPE
+                    stderr_target = asyncio.subprocess.PIPE
+                    next_stdin = None
+                else:
+                    r_fd, w_fd = os.pipe()
+                    open_fds.add(r_fd)
+                    open_fds.add(w_fd)
+                    stdout_target = w_fd
+                    stderr_target = None
+                    next_stdin = r_fd
+
+                proc = await asyncio.create_subprocess_exec(
+                    *argv,
+                    stdin=current_stdin,
+                    stdout=stdout_target,
+                    stderr=stderr_target,
+                    cwd=working_dir,
+                    env=full_env,
+                    close_fds=True,
+                )
+
+                # Close parent's copy of the file descriptors so the OS pipe works
+                if current_stdin != asyncio.subprocess.PIPE and isinstance(
+                    current_stdin, int
+                ):
+                    os.close(current_stdin)
+                    open_fds.discard(current_stdin)
+                if not is_last:
+                    os.close(w_fd)
+                    open_fds.discard(w_fd)
+                    current_stdin = next_stdin  # type: ignore[assignment]
+
+                procs.append(proc)
+        except Exception:
+            for fd in open_fds:
+                with contextlib.suppress(OSError):
+                    os.close(fd)
+
+            for proc in procs:
+                if proc.returncode is None:
+                    with contextlib.suppress(ProcessLookupError):
+                        proc.terminate()
+
+            for proc in procs:
+                try:
+                    await asyncio.wait_for(proc.wait(), timeout=1)
+                except (ProcessLookupError, asyncio.TimeoutError):  # noqa: PERF203
+                    if proc.returncode is None:
+                        with contextlib.suppress(ProcessLookupError):
+                            proc.kill()
+                        with contextlib.suppress(ProcessLookupError):
+                            await proc.wait()
+
+            raise
+
+        return AsyncPipelineProcess(procs)
 
 
 class AsyncLocalCommand(AsyncCommand):
@@ -543,6 +807,8 @@ AsyncTEE = _AsyncTEE()
 __all__ = (
     "AsyncCommand",
     "AsyncLocalCommand",
+    "AsyncPipeline",
+    "AsyncPipelineProcess",
     "AsyncRETCODE",
     "AsyncRemoteCommand",
     "AsyncResult",
