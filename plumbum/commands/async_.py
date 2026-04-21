@@ -88,14 +88,24 @@ class AsyncPipelineProcess:
     and ensures all processes are reaped on wait().
     """
 
-    __slots__ = ("_procs", "returncode", "stderr", "stdin", "stdout")
+    __slots__ = ("_pipeline_returncode", "_procs", "stderr", "stdin", "stdout")
 
     def __init__(self, procs: list[asyncio.subprocess.Process]) -> None:
         self._procs = procs
         self.stdin = procs[0].stdin
         self.stdout = procs[-1].stdout
         self.stderr = procs[-1].stderr
-        self.returncode: int | None = None
+        self._pipeline_returncode: int | None = None
+
+    @property
+    def pid(self) -> int:
+        return self._procs[-1].pid
+
+    @property
+    def returncode(self) -> int | None:
+        if self._pipeline_returncode is not None:
+            return self._pipeline_returncode
+        return self._procs[-1].returncode
 
     async def wait(self) -> int:
         """Wait for all pipeline stages. Prefers exit codes from later stages."""
@@ -103,18 +113,26 @@ class AsyncPipelineProcess:
         for proc in reversed(self._procs):
             rc = await proc.wait()
             returncode = returncode or rc
-        self.returncode = returncode
+        self._pipeline_returncode = returncode
         return returncode
 
-    def kill(self) -> None:
+    async def communicate(self, input: bytes | None = None) -> tuple[bytes | None, bytes | None]:
+        stdout, stderr = await self._procs[-1].communicate(input)
+        await self.wait()
+        return stdout, stderr
+
+    def send_signal(self, signal: int) -> None:
         for proc in self._procs:
-            proc.kill()
+            proc.send_signal(signal)
+
+    def kill(self) -> None:
+        self.send_signal(getattr(__import__("signal"), "SIGKILL"))
 
     def terminate(self) -> None:
-        for proc in self._procs:
-            proc.terminate()
+        self.send_signal(getattr(__import__("signal"), "SIGTERM"))
 
-
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._procs[-1], name)
 class AsyncResult:
     """Result of an async command execution.
 
@@ -320,6 +338,18 @@ class AsyncPipeline(AsyncCommandMixin):
         self._src_cmd = src
         self._dst_cmd = dst
 
+    def __getitem__(self, args: Any) -> AsyncPipeline:
+        """Bind arguments while preserving pipeline semantics.
+
+        Binding arguments to a pipeline must return another AsyncPipeline so
+        execution continues to use AsyncPipeline.popen() instead of the generic
+        AsyncCommandMixin.popen() path.
+        """
+        return AsyncPipeline(self._src_cmd[args], self._dst_cmd)
+
+    def bound_command(self, *args: Any) -> AsyncPipeline:
+        """Return a bound pipeline while preserving the pipeline type."""
+        return self[args]
     def __or__(self, other: AsyncCommandMixin) -> AsyncPipeline:
         return AsyncPipeline(self, other)
 
