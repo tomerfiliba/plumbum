@@ -204,6 +204,19 @@ class TestSwitchInfoHelpers:
             assert "debug" in completions
 
 
+class TestSetChoices:
+    def test_case_insensitive_uppercase_partial(self):
+        # case-insensitive sets should complete uppercase partials too
+        s = cli.Set("TCP", "UDP", case_sensitive=False)
+        assert s.choices("TC") == {"TCP"}
+        assert s.choices("tc") == {"TCP"}
+
+    def test_case_sensitive_partial(self):
+        s = cli.Set("TCP", "UDP", case_sensitive=True)
+        assert s.choices("TC") == {"TCP"}
+        assert s.choices("tc") == set()
+
+
 class TestPositionalArgCompletions:
     def test_positional_args_not_implemented_by_default(self):
         inst = CompletionApp("completionapp")

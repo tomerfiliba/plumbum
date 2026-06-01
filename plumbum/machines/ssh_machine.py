@@ -291,7 +291,7 @@ class SshMachine(BaseRemoteMachine):
         dport: int | str,
         lhost: str | None = "localhost",
         dhost: str | None = "localhost",
-        connect_timeout: float = 5,
+        connect_timeout: float | None = 5,
         reverse: bool = False,
     ) -> SshTunnel:
         r"""Creates an SSH tunnel from the TCP port (``lport``) of the local machine

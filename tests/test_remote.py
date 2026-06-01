@@ -114,6 +114,9 @@ class TestRemotePath:
         # only the final suffix is removed (like pathlib)
         p = RemotePath(self._connect(), "/some/archive.tar.gz")
         assert p.stem == "archive.tar"
+        # leading-dot names have no suffix to remove
+        p = RemotePath(self._connect(), "/home/user/.bashrc")
+        assert p.stem == ".bashrc"
 
     def test_suffix(self):
         p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
