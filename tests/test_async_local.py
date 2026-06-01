@@ -558,9 +558,18 @@ class TestAsyncPipeline:
 
         assert exc_info.value.retcode != 0
 
+
+class TestAsyncPipelinePopen:
+    """popen() on async pipelines (issue #795).
+
+    Every stage uses ``sys.executable`` so these run on all platforms, including
+    Windows, where the original bug was reported -- unlike the Unix-utility based
+    tests in :class:`TestAsyncPipeline`.
+    """
+
     @pytest.mark.asyncio
     async def test_pipeline_popen(self):
-        """Test popen on a pipeline streams data between stages (issue #795)."""
+        """popen on a pipeline streams data between stages."""
         echo = async_local[sys.executable]["-c", "print('test pipe1\\ntest pipe2')"]
         upper = async_local[sys.executable][
             "-c", "import sys\nfor line in sys.stdin:\n    print(line.strip().upper())"
@@ -579,15 +588,17 @@ class TestAsyncPipeline:
         assert proc.srcproc.returncode == 0
 
     @pytest.mark.asyncio
-    @skip_on_windows
     async def test_pipeline_popen_communicate(self):
         """popen().communicate() feeds the pipeline stdin and reaps both stages."""
-        cat = async_local["cat"]
+        # A binary stdin->stdout passthrough (a portable "cat").
+        passthrough = async_local[sys.executable][
+            "-c", "import sys; sys.stdout.buffer.write(sys.stdin.buffer.read())"
+        ]
         upper = async_local[sys.executable][
-            "-c", "import sys\nsys.stdout.write(sys.stdin.read().upper())"
+            "-c", "import sys; sys.stdout.buffer.write(sys.stdin.buffer.read().upper())"
         ]
 
-        proc = await (cat | upper).popen()
+        proc = await (passthrough | upper).popen()
         # stdin must be the head stage's stdin, not the (None) downstream one.
         assert proc.stdin is not None
         stdout, _ = await proc.communicate(b"hello pipe\n")
@@ -598,17 +609,16 @@ class TestAsyncPipeline:
         assert proc.srcproc.returncode == 0
 
     @pytest.mark.asyncio
-    @skip_on_windows
     async def test_pipeline_popen_combined_returncode(self):
         """A non-zero upstream rc is surfaced even when the last stage succeeds."""
-        false_cmd = async_local["false"]
-        cat = async_local["cat"]
+        fail = async_local[sys.executable]["-c", "import sys; sys.exit(3)"]
+        drain = async_local[sys.executable]["-c", "import sys; sys.stdin.buffer.read()"]
 
-        proc = await (false_cmd | cat).popen()
+        proc = await (fail | drain).popen()
         await proc.wait()
-        # cat exits 0, but the pipeline reports the upstream failure (as in sync).
-        assert proc.srcproc.returncode != 0
-        assert proc.returncode == proc.srcproc.returncode
+        # The last stage exits 0, but the pipeline reports the upstream failure.
+        assert proc.srcproc.returncode == 3
+        assert proc.returncode == 3
 
 
 class TestAsyncLocalMachine:

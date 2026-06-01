@@ -100,13 +100,15 @@ class AsyncResult:
 class _AsyncPipelineProcess:
     """Proxy around the downstream process of an async pipeline.
 
-    Output attributes (``stdout``, ``stderr``, ``pid``, ``kill``, ...) are
-    delegated to the downstream :class:`asyncio.subprocess.Process`, while
-    ``stdin`` is taken from the *upstream* process so writes feed the head of
-    the pipeline (mirroring :meth:`plumbum.commands.base.Pipeline.popen`, which
-    sets ``dstproc.stdin = srcproc.stdin``). :meth:`wait` and :meth:`communicate`
-    also reap the upstream process and report a combined return code -- the
-    downstream code, or the upstream code if the downstream stage succeeded.
+    Output attributes (``stdout``, ``stderr``, ``pid``, ...) are delegated to the
+    downstream :class:`asyncio.subprocess.Process`, while ``stdin`` is taken from
+    the *upstream* process so writes feed the head of the pipeline (mirroring
+    :meth:`plumbum.commands.base.Pipeline.popen`, which sets
+    ``dstproc.stdin = srcproc.stdin``). :meth:`wait` and :meth:`communicate` reap
+    both stages and report a combined return code -- the downstream code, or the
+    upstream code if the downstream stage succeeded. :meth:`kill`,
+    :meth:`terminate` and :meth:`send_signal` are propagated to every stage
+    (recursing through a nested upstream pipeline) rather than only the last one.
 
     A separate proxy is needed (rather than patching ``wait`` on the downstream
     process) because :attr:`asyncio.subprocess.Process.returncode` is a read-only
@@ -143,6 +145,25 @@ class _AsyncPipelineProcess:
         self._returncode = (rc_dst or rc_src) or 0
         return self._returncode
 
+    def _signal_both(self, method: str) -> None:
+        # Signal both ends; for a nested upstream pipeline ``srcproc`` is itself
+        # an ``_AsyncPipelineProcess``, so this recurses through every stage.
+        # Each stage may already have exited, so ignore "no such process".
+        for proc in (self._dstproc, self.srcproc):
+            with contextlib.suppress(ProcessLookupError):
+                getattr(proc, method)()
+
+    def kill(self) -> None:
+        self._signal_both("kill")
+
+    def terminate(self) -> None:
+        self._signal_both("terminate")
+
+    def send_signal(self, signal: int) -> None:
+        for proc in (self._dstproc, self.srcproc):
+            with contextlib.suppress(ProcessLookupError):
+                proc.send_signal(signal)
+
     async def wait(self) -> int:
         rc_dst = await self._dstproc.wait()
         rc_src = await self.srcproc.wait()
@@ -155,12 +176,16 @@ class _AsyncPipelineProcess:
             writer = self.stdin
             if writer is None:
                 return
-            try:
-                if input:
-                    writer.write(input)
-                    await writer.drain()
-            finally:
-                writer.close()
+            # As in asyncio's own Process.communicate(), a stage that exits
+            # early closes the pipe, so ignore the resulting write errors.
+            with contextlib.suppress(BrokenPipeError, ConnectionResetError):
+                try:
+                    if input:
+                        writer.write(input)
+                        await writer.drain()
+                finally:
+                    writer.close()
+                    await writer.wait_closed()
 
         (stdout, stderr), _, _ = await asyncio.gather(
             self._dstproc.communicate(), feed(), self.srcproc.wait()
