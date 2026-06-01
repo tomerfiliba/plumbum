@@ -54,9 +54,11 @@ Example Usage
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 from typing import TYPE_CHECKING, Any
 
+from plumbum.commands.base import Pipeline
 from plumbum.commands.processes import ProcessExecutionError, ProcessTimedOut
 from plumbum.machines.local import local
 
@@ -220,23 +222,69 @@ class AsyncCommandMixin:
         Returns:
             asyncio.subprocess.Process instance
         """
-        argv = self._base_cmd.formulate(0, args)
+        return await self._popen(args, cwd=cwd, env=env)
+
+    async def _popen(
+        self,
+        args: Sequence[Any] = (),
+        *,
+        cwd: str | None = None,
+        env: dict[str, str] | None = None,
+        stdin: int = asyncio.subprocess.PIPE,
+        stdout: int = asyncio.subprocess.PIPE,
+        stderr: int = asyncio.subprocess.PIPE,
+    ) -> asyncio.subprocess.Process:
+        """Spawn the subprocess, threading stdin/stdout through pipeline stages.
+
+        The public ``popen`` always uses pipes for all three streams, but
+        pipelines need to connect one stage's stdout to the next stage's stdin,
+        so this internal helper exposes those handles.
+        """
+        base = self._base_cmd
+
+        # A pipeline has no single argv; connect the two stages with an OS pipe,
+        # mirroring the synchronous Pipeline.popen.
+        if isinstance(base, Pipeline):
+            read_fd, write_fd = os.pipe()
+            srcproc = await self.__class__(base.srccmd)._popen(
+                args, cwd=cwd, env=env, stdin=stdin, stdout=write_fd
+            )
+            os.close(write_fd)
+            dstproc = await self.__class__(base.dstcmd)._popen(
+                cwd=cwd, env=env, stdin=read_fd, stdout=stdout, stderr=stderr
+            )
+            os.close(read_fd)
+
+            # Reap the upstream process when the pipeline is waited on; as in a
+            # shell, the pipeline's return code is that of its last stage.
+            dstproc.srcproc = srcproc  # type: ignore[attr-defined]
+            dstproc_wait = dstproc.wait
+
+            async def wait(*wait_args: Any, **wait_kwargs: Any) -> int:
+                returncode = await dstproc_wait(*wait_args, **wait_kwargs)
+                await srcproc.wait()
+                return returncode
+
+            dstproc.wait = wait  # type: ignore[method-assign]
+            return dstproc
+
+        argv = base.formulate(0, args)
 
         full_env = dict(local.env.getdict())
-        base_env = getattr(self._base_cmd, "env", None)
+        base_env = getattr(base, "env", None)
         if base_env:
             full_env.update(base_env)
         if env:
             full_env.update(env)
 
-        base_cwd = getattr(self._base_cmd, "cwd", None)
+        base_cwd = getattr(base, "cwd", None)
         working_dir = cwd or base_cwd or str(local.cwd)
 
         return await asyncio.create_subprocess_exec(
             *argv,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            stdin=asyncio.subprocess.PIPE,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
             cwd=working_dir,
             env=full_env,
         )

@@ -558,6 +558,25 @@ class TestAsyncPipeline:
 
         assert exc_info.value.retcode != 0
 
+    @pytest.mark.asyncio
+    async def test_pipeline_popen(self):
+        """Test popen on a pipeline streams data between stages (issue #795)."""
+        echo = async_local[sys.executable]["-c", "print('test pipe1\\ntest pipe2')"]
+        upper = async_local[sys.executable][
+            "-c", "import sys\nfor line in sys.stdin:\n    print(line.strip().upper())"
+        ]
+
+        proc = await (echo | upper).popen()
+        assert proc.stdout is not None
+        lines = []
+        while i := await proc.stdout.readline():
+            lines.append(i.decode().strip())
+
+        assert lines == ["TEST PIPE1", "TEST PIPE2"]
+        # Ensure child processes are reaped and the return code is checked
+        await proc.wait()
+        assert proc.returncode == 0
+
 
 class TestAsyncLocalMachine:
     """Tests for AsyncLocalMachine."""
