@@ -7,6 +7,7 @@ import platform
 import re
 import subprocess
 import sys
+import threading
 import time
 import typing
 from contextlib import AbstractContextManager, contextmanager
@@ -77,6 +78,13 @@ if IS_WIN32:
 
 logger = logging.getLogger("plumbum.local")
 
+# ``expand``/``expanduser`` below temporarily swap out the global ``os.environ``
+# while expanding. Without serialization, two threads interleaving their
+# save/restore can permanently leave ``os.environ`` pointing at a throwaway
+# dict. This matters now that the async layer runs sync commands in executor
+# threads. The lock keeps the swap/restore atomic with respect to each other.
+_environ_lock = threading.RLock()
+
 
 # ===================================================================================================
 # Environment
@@ -101,12 +109,13 @@ class LocalEnv(BaseEnv[LocalPath]):
                      home shortcuts (as ``~/.bashrc``)
 
         :returns: The expanded string"""
-        prev = os.environ
-        os.environ = self.getdict()  # type: ignore[assignment] # noqa: B003
-        try:
-            output = os.path.expanduser(os.path.expandvars(expr))
-        finally:
-            os.environ = prev  # noqa: B003
+        with _environ_lock:
+            prev = os.environ
+            os.environ = self.getdict()  # type: ignore[assignment] # noqa: B003
+            try:
+                output = os.path.expanduser(os.path.expandvars(expr))
+            finally:
+                os.environ = prev  # noqa: B003
         return output
 
     def expanduser(self, expr: str) -> str:
@@ -115,12 +124,13 @@ class LocalEnv(BaseEnv[LocalPath]):
         :param expr: An expression containing home shortcuts
 
         :returns: The expanded string"""
-        prev = os.environ
-        os.environ = self.getdict()  # type: ignore[assignment] # noqa: B003
-        try:
-            output = os.path.expanduser(expr)
-        finally:
-            os.environ = prev  # noqa: B003
+        with _environ_lock:
+            prev = os.environ
+            os.environ = self.getdict()  # type: ignore[assignment] # noqa: B003
+            try:
+                output = os.path.expanduser(expr)
+            finally:
+                os.environ = prev  # noqa: B003
         return output
 
 

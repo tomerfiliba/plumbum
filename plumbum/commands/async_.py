@@ -243,14 +243,44 @@ class AsyncCommandMixin:
         """
         self._base_cmd = base_cmd
 
-    def __getitem__(self, args: Any) -> AsyncCommand:
+    @property
+    def _concrete(self) -> BaseCommand:
+        """The innermost command, unwrapping any ``Bound``/``BoundEnv`` layers.
+
+        Binding arguments or an environment wraps the base command, so the
+        concrete command (the one carrying ``executable``/``remote``) lives
+        underneath. This is used by the subclass ``executable``/``remote``
+        properties so they keep working after ``[...]``/``with_env``/``with_cwd``.
+        """
+        cmd = self._base_cmd
+        while isinstance(cmd, (BoundCommand, BoundEnvCommand)):
+            cmd = cmd.cmd
+        return cmd
+
+    def __getitem__(self, args: Any) -> Self:
         """Bind arguments using the base command's logic.
 
         This delegates to the sync command's __getitem__ method, which handles
-        all the argument binding logic, then wraps the result in an AsyncCommand.
+        all the argument binding logic, then re-wraps the result in the same
+        async type as ``self`` (preserving e.g. ``AsyncLocalCommand``).
         """
         bound = self._base_cmd[args]
-        return AsyncCommand(bound)
+        return self.__class__(bound)
+
+    def with_env(self, **env: str) -> Self:
+        """Return a new async command with the given environment variables.
+
+        Delegates to the sync command's ``with_env`` (which produces a
+        ``BoundEnvCommand``) and re-wraps it in the same async type.
+        """
+        return self.__class__(self._base_cmd.with_env(**env))
+
+    def with_cwd(self, path: Any) -> Self:
+        """Return a new async command with the given working directory.
+
+        Delegates to the sync command's ``with_cwd`` and re-wraps the result.
+        """
+        return self.__class__(self._base_cmd.with_cwd(path))
 
     def __call__(self, *args: Any, **kwargs: Any) -> Coroutine[Any, Any, str]:
         """Execute the command asynchronously and return stdout.
@@ -309,7 +339,7 @@ class AsyncCommandMixin:
             ProcessExecutionError: If return code doesn't match expected
             asyncio.TimeoutError: If timeout is exceeded
         """
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         def _run_sync() -> tuple[int, str, str]:
             retcode_val, stdout, stderr = self._base_cmd.run(
@@ -335,6 +365,12 @@ class AsyncCommandMixin:
         This is useful for long-running processes or when you need to
         interact with stdin/stdout/stderr.
 
+        .. note::
+            Streaming is only supported for **local** commands. Remote commands
+            raise :class:`NotImplementedError` here -- run them with ``.run()``
+            or by calling the command directly (those execute the underlying
+            sync command in a thread).
+
         Args:
             args: Additional arguments to pass to the command
             cwd: Working directory for the command
@@ -354,9 +390,9 @@ class AsyncCommandMixin:
         *,
         cwd: str | None = None,
         env: dict[str, str] | None = None,
-        stdin: int = asyncio.subprocess.PIPE,
-        stdout: int = asyncio.subprocess.PIPE,
-        stderr: int = asyncio.subprocess.PIPE,
+        stdin: int | None = asyncio.subprocess.PIPE,
+        stdout: int | None = asyncio.subprocess.PIPE,
+        stderr: int | None = asyncio.subprocess.PIPE,
     ) -> asyncio.subprocess.Process | AsyncPipelineProcess:
         """Spawn the subprocess, threading stdin/stdout through pipeline stages.
 
@@ -364,32 +400,38 @@ class AsyncCommandMixin:
         pipelines need to connect one stage's stdout to the next stage's stdin,
         so this internal helper exposes those handles.
         """
-        base = self._base_cmd
+        # Streaming via ``asyncio.create_subprocess_exec`` only works for local
+        # commands -- a RemoteCommand would be formulated without its ssh wrapper
+        # and silently run on *this* machine. Remote commands are still supported
+        # through ``run()``/``__call__`` (which delegate to the sync command in a
+        # thread); fail loudly here rather than executing the wrong thing.
+        if self._base_cmd.machine is not local:
+            raise NotImplementedError(
+                "Async popen/streaming (popen, AsyncTEE) is only supported for "
+                "local commands. Use .run() or call the command directly for "
+                "remote commands -- those execute the sync command in a thread."
+            )
 
-        # A bound pipeline -- e.g. (a | b)["--flag"] or (a | b).with_env(...) --
-        # wraps the Pipeline in BoundCommand/BoundEnvCommand. Unwrap those to find
-        # the pipeline and thread the bound args/env/cwd into its stages. The
-        # plain ``formulate`` path below keeps using the original command, so its
-        # shell-quoting level (which differs for remote commands) is unchanged.
-        pipe_base: BaseCommand = base
-        pipe_args = list(args)
-        pipe_env = env
-        pipe_cwd = cwd
-        while isinstance(pipe_base, (BoundCommand, BoundEnvCommand)):
-            if isinstance(pipe_base, BoundCommand):
-                pipe_args = [*pipe_base.args, *pipe_args]
+        # Binding args/env/cwd wraps the command in BoundCommand/BoundEnvCommand
+        # (possibly around a Pipeline -- e.g. (a | b)["--flag"]). Unwrap those to
+        # reach the concrete command (or Pipeline) and thread the bound
+        # args/env/cwd inward, so they take effect for plain commands too.
+        base: BaseCommand = self._base_cmd
+        cmd_args = list(args)
+        cmd_env = env
+        cmd_cwd = cwd
+        while isinstance(base, (BoundCommand, BoundEnvCommand)):
+            if isinstance(base, BoundCommand):
+                cmd_args = [*base.args, *cmd_args]
             else:
-                pipe_env = {**pipe_base.env, **(pipe_env or {})}
-                pipe_cwd = pipe_base.cwd if pipe_cwd is None else pipe_cwd
-            pipe_base = pipe_base.cmd
+                cmd_env = {**base.env, **(cmd_env or {})}
+                cmd_cwd = base.cwd if cmd_cwd is None else cmd_cwd
+            base = base.cmd
 
         # A pipeline has no single argv; connect the two stages with an OS pipe,
-        # mirroring the synchronous Pipeline.popen.
-        if isinstance(pipe_base, Pipeline):
-            base = pipe_base
-            args = pipe_args
-            env = pipe_env
-            cwd = pipe_cwd
+        # mirroring the synchronous Pipeline.popen (extra args go to the head
+        # stage, as in that implementation).
+        if isinstance(base, Pipeline):
             read_fd, write_fd = os.pipe()
             # The parent closes each fd once the child has inherited it. The
             # nested try ensures both fds are closed even if either spawn raises
@@ -397,9 +439,9 @@ class AsyncCommandMixin:
             try:
                 try:
                     srcproc = await self.__class__(base.srccmd)._popen(
-                        args,
-                        cwd=cwd,
-                        env=env,
+                        cmd_args,
+                        cwd=cmd_cwd,
+                        env=cmd_env,
                         stdin=stdin,
                         stdout=write_fd,
                         stderr=stderr,
@@ -409,8 +451,8 @@ class AsyncCommandMixin:
 
                 try:
                     dstproc = await self.__class__(base.dstcmd)._popen(
-                        cwd=cwd,
-                        env=env,
+                        cwd=cmd_cwd,
+                        env=cmd_env,
                         stdin=read_fd,
                         stdout=stdout,
                         stderr=stderr,
@@ -431,17 +473,15 @@ class AsyncCommandMixin:
             # the synchronous Pipeline.popen).
             return AsyncPipelineProcess(dstproc, srcproc)
 
-        argv = base.formulate(0, args)
+        # Formulate at level 0 (no shell-quoting -- we exec the argv directly),
+        # matching the synchronous LocalCommand.popen.
+        argv = base.formulate(0, cmd_args)
 
         full_env = dict(local.env.getdict())
-        base_env = getattr(base, "env", None)
-        if base_env:
-            full_env.update(base_env)
-        if env:
-            full_env.update(env)
+        if cmd_env:
+            full_env.update(cmd_env)
 
-        base_cwd = getattr(base, "cwd", None)
-        working_dir = cwd or base_cwd or str(local.cwd)
+        working_dir = cmd_cwd or str(local.cwd)
 
         return await asyncio.create_subprocess_exec(
             *argv,
@@ -486,9 +526,8 @@ class AsyncLocalCommand(AsyncCommand):
     @property
     def executable(self) -> Any:
         """The path to the executable."""
-        # Access the executable attribute from the base command
-        # This is safe because LocalCommand has this attribute
-        return self._base_cmd.executable  # type: ignore[attr-defined]
+        # Unwrap any bound layers; the concrete LocalCommand carries `executable`.
+        return self._concrete.executable  # type: ignore[attr-defined]
 
 
 class AsyncRemoteCommand(AsyncCommand):
@@ -511,7 +550,8 @@ class AsyncRemoteCommand(AsyncCommand):
     @property
     def remote(self) -> Any:
         """The remote machine this command belongs to."""
-        return self._base_cmd.remote  # type: ignore[attr-defined]
+        # Unwrap any bound layers; the concrete RemoteCommand carries `remote`.
+        return self._concrete.remote  # type: ignore[attr-defined]
 
 
 # ===================================================================================================
@@ -661,30 +701,12 @@ class _AsyncTEE(AsyncExecutionModifier):
 
     async def __rand__(self, cmd: AsyncCommandMixin) -> tuple[int, str, str]:
         """Execute command, display output, and return (retcode, stdout, stderr)."""
-        # Get encoding from base command
         encoding = cmd._base_cmd._get_encoding() or local.custom_encoding
 
-        # Merge environment
-        full_env = dict(local.env.getdict())
-        base_env = getattr(cmd._base_cmd, "env", None)
-        if base_env:
-            full_env.update(base_env)
-
-        # Use base command's cwd if set
-        base_cwd = getattr(cmd._base_cmd, "cwd", None)
-        working_dir = base_cwd or str(local.cwd)
-
-        # Formulate command
-        argv = cmd._base_cmd.formulate(0, ())
-
-        # Create subprocess
-        proc = await asyncio.create_subprocess_exec(
-            *argv,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            cwd=working_dir,
-            env=full_env,
-        )
+        # Reuse ``_popen`` so this works for pipelines too (its own
+        # create_subprocess_exec path only handled single commands), and so the
+        # local-only guard applies. stdin is inherited from the parent process.
+        proc = await cmd._popen((), stdin=None)
 
         # Collect output while displaying it
         stdout_lines: list[str] = []
@@ -721,12 +743,13 @@ class _AsyncTEE(AsyncExecutionModifier):
             await proc.wait()
             raise
 
-        # Wait for process to complete
+        # Wait for process to complete (reaps every pipeline stage)
         await proc.wait()
 
         # Combine output
         stdout = "".join(stdout_lines)
         stderr = "".join(stderr_lines)
+        retcode = proc.returncode
 
         # Check return code
         if self.retcode is not None:
@@ -734,15 +757,15 @@ class _AsyncTEE(AsyncExecutionModifier):
                 {self.retcode} if isinstance(self.retcode, int) else set(self.retcode)  # type: ignore[call-overload]
             )
 
-            if proc.returncode not in expected_codes:
+            if retcode not in expected_codes:
                 raise ProcessExecutionError(
-                    argv=argv,
-                    retcode=proc.returncode,
+                    argv=cmd.formulate(0, ()),
+                    retcode=retcode,
                     stdout=stdout,
                     stderr=stderr,
                 )
 
-        return proc.returncode or 0, stdout, stderr
+        return (retcode or 0), stdout, stderr
 
 
 # Singleton instances
