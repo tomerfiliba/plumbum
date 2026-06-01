@@ -434,7 +434,7 @@ class ParamikoMachine(BaseRemoteMachine):
         assert trans is not None
         trans.set_keepalive(self._keep_alive)
         # TODO: I think the two args need to match, so ipv6 might be broken here
-        chan = trans.open_channel("direct-tcpip", (dhost, dport), srcaddr)  # type: ignore[arg-type]
+        chan = trans.open_channel("direct-tcpip", (dhost, dport), srcaddr)
         return SocketCompatibleChannel(chan)
 
     #
