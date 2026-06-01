@@ -96,6 +96,47 @@ class AsyncResult:
         return f"AsyncResult(returncode={self.returncode}, stdout={self.stdout!r}, stderr={self.stderr!r})"
 
 
+class _AsyncPipelineProcess:
+    """Proxy around the downstream process of an async pipeline.
+
+    Attribute access (``stdout``, ``stdin``, ``pid``, ``kill``, ...) is delegated
+    to the downstream :class:`asyncio.subprocess.Process`. :meth:`wait` also reaps
+    the upstream process and reports a combined return code -- the downstream
+    code, or the upstream code if the downstream stage succeeded. This mirrors the
+    synchronous :meth:`plumbum.commands.base.Pipeline.popen`.
+
+    A separate proxy is needed (rather than patching ``wait`` on the downstream
+    process) because :attr:`asyncio.subprocess.Process.returncode` is a read-only
+    property and cannot be reassigned to the combined value.
+    """
+
+    def __init__(
+        self,
+        dstproc: asyncio.subprocess.Process,
+        srcproc: asyncio.subprocess.Process,
+    ) -> None:
+        self._dstproc = dstproc
+        self.srcproc = srcproc
+        self._returncode: int | None = None
+
+    def __getattr__(self, name: str) -> Any:
+        # Only called when `name` isn't a real attribute on the proxy, so this
+        # delegates the rest of the Process interface to the downstream process.
+        return getattr(self._dstproc, name)
+
+    @property
+    def returncode(self) -> int | None:
+        if self._returncode is not None:
+            return self._returncode
+        return self._dstproc.returncode
+
+    async def wait(self) -> int:
+        rc_dst = await self._dstproc.wait()
+        rc_src = await self.srcproc.wait()
+        self._returncode = rc_dst or rc_src
+        return self._returncode
+
+
 class AsyncCommandMixin:
     """Mixin that adds async execution capabilities to BaseCommand.
 
@@ -269,18 +310,10 @@ class AsyncCommandMixin:
             finally:
                 os.close(read_fd)
 
-            # Reap the upstream process when the pipeline is waited on.
-            dstproc.srcproc = srcproc  # type: ignore[attr-defined]
-            dstproc_wait = dstproc.wait
-
-            async def wait(*wait_args: Any, **wait_kwargs: Any) -> int:
-                rc_dst = await dstproc_wait(*wait_args, **wait_kwargs)
-                rc_src = await srcproc.wait()
-                dstproc.returncode = rc_dst or rc_src
-                return dstproc.returncode
-
-            dstproc.wait = wait  # type: ignore[method-assign]
-            return dstproc
+            # Waiting on the pipeline reaps the upstream process too, and the
+            # combined return code is reported (the last stage's code, or the
+            # upstream code if the last stage succeeded), as in Pipeline.popen.
+            return _AsyncPipelineProcess(dstproc, srcproc)  # type: ignore[return-value]
 
         argv = base.formulate(0, args)
 

@@ -576,7 +576,7 @@ class TestAsyncPipeline:
         # Ensure child processes are reaped and the return code is checked
         await proc.wait()
         assert proc.returncode == 0
-        assert getattr(proc, "srcproc").returncode == 0
+        assert proc.srcproc.returncode == 0
 
 
 class TestAsyncLocalMachine:
