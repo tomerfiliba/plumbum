@@ -171,3 +171,7 @@ cython_debug/
 *.lock
 .DS_Store
 *.swp
+
+# Symlink to AGENTS.md
+CLAUDE.md
+.claude/

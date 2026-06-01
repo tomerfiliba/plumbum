@@ -164,6 +164,7 @@ messages_control.disable = [
   "unused-argument", # Covered by ruff
   "global-statement", # Covered by ruff
   "pointless-statement", # Covered by ruff
+  "redefined-builtin", # Easy to hit
 ]
 
 [tool.ruff]
