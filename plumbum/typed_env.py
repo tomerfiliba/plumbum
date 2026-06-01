@@ -203,6 +203,10 @@ class TypedEnv(MutableMapping[str, str]):
         raise EnvironmentVariableError(key_names[0])
 
     def __contains__(self, key: object) -> bool:
+        # Stay consistent with __iter__/__len__: when descriptors are defined,
+        # membership is over the declared keys; otherwise the raw environment.
+        if self._defined_keys:
+            return key in self._defined_keys
         return key in self._env
 
     def __getattr__(self, name: str) -> str:
