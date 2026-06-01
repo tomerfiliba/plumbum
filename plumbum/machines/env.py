@@ -122,7 +122,7 @@ class BaseEnv(typing.Generic[AnyPath]):
         """Returns the keys of the current environment (like dict.keys)"""
         return self._curr.keys()
 
-    def items(self) -> ItemsView[tuple[str, str]]:  # type: ignore[type-arg]
+    def items(self) -> ItemsView[str, str]:
         """Returns the items of the current environment (like dict.items)"""
         return self._curr.items()
 
