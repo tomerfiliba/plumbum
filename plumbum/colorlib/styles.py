@@ -695,7 +695,10 @@ class Style(metaclass=ABCMeta):
 
     @classmethod
     def from_ansi_string(cls, ansi_string: str) -> Iterator[str | Self]:
-        """This will read in a string with interleaved codes"""
+        """This will read in a string with interleaved codes
+
+        .. versionadded:: 2.0
+        """
         last_end = 0
         for res in cls.ANSI_REG.finditer(ansi_string):
             if res.start() > last_end:
@@ -711,7 +714,10 @@ class Style(metaclass=ABCMeta):
 
     @classmethod
     def sequence_to_string(cls, sequence: Iterable[Style | str]) -> str:
-        """This is the opposite of from_ansi_string, it takes a list of styles and strings and concatenates them."""
+        """This is the opposite of from_ansi_string, it takes a list of styles and strings and concatenates them.
+
+        .. versionadded:: 2.0
+        """
         return "".join(str(s) for s in sequence)
 
     def add_ansi(self, sequence: Iterable[int], filter_resets: bool = False) -> None:

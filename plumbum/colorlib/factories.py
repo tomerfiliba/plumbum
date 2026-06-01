@@ -181,11 +181,17 @@ class StyleFactory(ColorFactory[S]):
         return self._style.from_ansi(ansi_sequence)
 
     def from_ansi_string(self, ansi_string: str) -> Iterator[S | str]:
-        """Calling this is a shortcut for creating a style from an ANSI string."""
+        """Calling this is a shortcut for creating a style from an ANSI string.
+
+        .. versionadded:: 2.0
+        """
         return self._style.from_ansi_string(ansi_string)
 
     def sequence_to_string(self, sequence: Iterable[S | str]) -> str:
-        """Converts a sequence of styles and strings into a single string with ANSI codes."""
+        """Converts a sequence of styles and strings into a single string with ANSI codes.
+
+        .. versionadded:: 2.0
+        """
         return self._style.sequence_to_string(sequence)
 
     @property
