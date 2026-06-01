@@ -267,13 +267,6 @@ class LocalMachine(BaseMachine):
             parts2.append(self.env.expanduser(str(p)))
         return LocalPath(os.path.join(*parts2))
 
-    def __contains__(self, cmd: str) -> bool:
-        try:
-            self[cmd]
-        except CommandNotFound:
-            return False
-        return True
-
     def __getitem__(self, cmd: str | LocalPath) -> LocalCommand:
         """Returns a `Command` object representing the given program. ``cmd`` can be a string or
         a :class:`LocalPath <plumbum.path.local.LocalPath>`; if it is a path, a command

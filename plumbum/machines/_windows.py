@@ -14,12 +14,14 @@ def get_pe_subsystem(filename: str) -> int | None:
         if f.read(2) != b"MZ":
             return None
         f.seek(LFANEW_OFFSET)
-        lfanew = struct.unpack("L", f.read(4))[0]
+        # Explicit little-endian widths: the PE fields are fixed 32-/16-bit
+        # values, whereas native "L"/"H" sizes are platform-dependent.
+        lfanew = struct.unpack("<I", f.read(4))[0]
         f.seek(lfanew)
         if f.read(4) != b"PE\x00\x00":
             return None
         f.seek(FILE_HEADER_SIZE + SUBSYSTEM_OFFSET, 1)
-        return struct.unpack("H", f.read(2))[0]  # type: ignore[no-any-return]
+        return int(struct.unpack("<H", f.read(2))[0])
 
 
 # print(get_pe_subsystem("c:\\windows\\notepad.exe")) == 2

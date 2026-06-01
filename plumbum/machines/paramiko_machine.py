@@ -134,8 +134,8 @@ class ParamikoPopen(PopenAddons):
                 coll.append(line)
         self.wait()
         assert self.custom_encoding is not None
-        stdout_bytes = "".join(s for s in stdout).encode(self.custom_encoding)
-        stderr_bytes = "".join(s for s in stderr).encode(self.custom_encoding)
+        stdout_bytes = "".join(stdout).encode(self.custom_encoding)
+        stderr_bytes = "".join(stderr).encode(self.custom_encoding)
         return stdout_bytes, stderr_bytes
 
     def iter_lines(

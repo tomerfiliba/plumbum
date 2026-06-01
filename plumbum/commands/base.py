@@ -664,8 +664,6 @@ class ConcreteCommand(BaseCommand):
                 )
             else:
                 argv.append(shquote(a) if level >= self.QUOTE_LEVEL else str(a))
-        # if self.custom_encoding:
-        #    argv = [a.encode(self.custom_encoding) for a in argv if isinstance(a, str)]
         return argv
 
     @property
