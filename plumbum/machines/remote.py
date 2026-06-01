@@ -398,9 +398,11 @@ class BaseRemoteMachine(BaseMachine):
         # shquote does not work here due to the way bash loops use space as a separator
         pattern = pattern.replace(" ", r"\ ")
         fn = fn.replace(" ", r"\ ")
-        matches = self._session.run(rf"for fn in {fn}/{pattern}; do echo $fn; done")[
-            1
-        ].splitlines()
+        # ``shopt -s globstar`` makes ``**`` recurse like pathlib/glob(recursive=True);
+        # it is silently ignored by shells that do not support it.
+        matches = self._session.run(
+            rf"shopt -s globstar 2>/dev/null; for fn in {fn}/{pattern}; do echo $fn; done"
+        )[1].splitlines()
         if len(matches) == 1 and not self._path_stat(matches[0]):
             return []  # pattern expansion failed
         return matches

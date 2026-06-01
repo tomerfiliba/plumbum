@@ -77,6 +77,12 @@ Globing can be easily performed using ``//`` (floor division)::
     >>> local.cwd / "docs" // "*.rst"
     [<LocalPath d:\workspace\plumbum\docs\cli.rst>, ...]
 
+As in :mod:`pathlib`, the ``**`` pattern matches this directory and all
+subdirectories recursively::
+
+    >>> local.cwd // "**/*.rst"
+    [<LocalPath d:\workspace\plumbum\docs\cli.rst>, ...]
+
 
 .. versionadded:: 1.6
 

@@ -164,7 +164,9 @@ class LocalPath(Path):
             pattern,
             lambda pat: [
                 LocalPath(m)
-                for m in glob.glob(os.path.join(glob.escape(str(self)), pat))
+                for m in glob.glob(
+                    os.path.join(glob.escape(str(self)), pat), recursive=True
+                )
             ],
         )
 

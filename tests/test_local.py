@@ -1164,3 +1164,18 @@ def test_local_glob_path(tmpdir):
 
     pp = LocalPath(str(p))
     assert len(pp // "*.txt") == 2
+
+
+def test_local_glob_recursive(tmpdir):
+    base = LocalPath(str(tmpdir))
+    (base / "top.zip").touch()
+    nested = base / "foo" / "bar"
+    nested.mkdir()
+    (nested / "sample.zip").touch()
+
+    # ``**`` should recurse like pathlib, not behave like a single ``*``
+    found = {p.name for p in base // "**/*.zip"}
+    assert found == {"top.zip", "sample.zip"}
+
+    # a plain ``*`` is still non-recursive
+    assert {p.name for p in base // "*.zip"} == {"top.zip"}
