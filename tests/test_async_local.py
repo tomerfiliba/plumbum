@@ -10,7 +10,7 @@ import pytest
 from plumbum import async_local, local
 from plumbum._testtools import skip_on_windows
 from plumbum.commands import ProcessExecutionError
-from plumbum.commands.async_ import AsyncLocalCommand
+from plumbum.commands.async_ import AsyncLocalCommand, AsyncPipelineProcess
 from plumbum.machines.local import AsyncLocalMachine
 
 
@@ -576,6 +576,7 @@ class TestAsyncPipelinePopen:
         ]
 
         proc = await (echo | upper).popen()
+        assert isinstance(proc, AsyncPipelineProcess)
         assert proc.stdout is not None
         lines = []
         while i := await proc.stdout.readline():

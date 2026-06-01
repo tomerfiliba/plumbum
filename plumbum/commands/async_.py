@@ -97,7 +97,7 @@ class AsyncResult:
         return f"AsyncResult(returncode={self.returncode}, stdout={self.stdout!r}, stderr={self.stderr!r})"
 
 
-class _AsyncPipelineProcess:
+class AsyncPipelineProcess:
     """Proxy around the downstream process of an async pipeline.
 
     Output attributes (``stdout``, ``stderr``, ``pid``, ...) are delegated to the
@@ -113,12 +113,17 @@ class _AsyncPipelineProcess:
     A separate proxy is needed (rather than patching ``wait`` on the downstream
     process) because :attr:`asyncio.subprocess.Process.returncode` is a read-only
     property and cannot be reassigned to the combined value.
+
+    Instances are returned by :meth:`AsyncCommandMixin.popen` for pipelines; you
+    don't normally construct them directly.
+
+    .. versionadded:: 1.11
     """
 
     def __init__(
         self,
-        dstproc: asyncio.subprocess.Process | _AsyncPipelineProcess,
-        srcproc: asyncio.subprocess.Process | _AsyncPipelineProcess,
+        dstproc: asyncio.subprocess.Process | AsyncPipelineProcess,
+        srcproc: asyncio.subprocess.Process | AsyncPipelineProcess,
     ) -> None:
         # ``dstproc`` is always a real Process (a pipeline's last stage is a
         # single command); ``srcproc`` may be another proxy for nested pipelines.
@@ -149,7 +154,7 @@ class _AsyncPipelineProcess:
 
     def _signal_both(self, method: str) -> None:
         # Signal both ends; for a nested upstream pipeline ``srcproc`` is itself
-        # an ``_AsyncPipelineProcess``, so this recurses through every stage.
+        # an ``AsyncPipelineProcess``, so this recurses through every stage.
         # Each stage may already have exited, so ignore "no such process".
         for proc in (self._dstproc, self.srcproc):
             with contextlib.suppress(ProcessLookupError):
@@ -310,7 +315,7 @@ class AsyncCommandMixin:
         args: Sequence[Any] = (),
         cwd: str | None = None,
         env: dict[str, str] | None = None,
-    ) -> asyncio.subprocess.Process | _AsyncPipelineProcess:
+    ) -> asyncio.subprocess.Process | AsyncPipelineProcess:
         """Create an async subprocess without waiting for it to complete.
 
         This is useful for long-running processes or when you need to
@@ -323,7 +328,7 @@ class AsyncCommandMixin:
 
         Returns:
             An :class:`asyncio.subprocess.Process` for a plain command. For a
-            pipeline, an ``_AsyncPipelineProcess`` proxy that exposes the same
+            pipeline, an :class:`AsyncPipelineProcess` proxy that exposes the same
             interface (``stdout``/``stderr`` from the last stage, ``stdin`` to
             the first) while reaping every stage on ``wait``/``communicate``.
         """
@@ -338,7 +343,7 @@ class AsyncCommandMixin:
         stdin: int = asyncio.subprocess.PIPE,
         stdout: int = asyncio.subprocess.PIPE,
         stderr: int = asyncio.subprocess.PIPE,
-    ) -> asyncio.subprocess.Process | _AsyncPipelineProcess:
+    ) -> asyncio.subprocess.Process | AsyncPipelineProcess:
         """Spawn the subprocess, threading stdin/stdout through pipeline stages.
 
         The public ``popen`` always uses pipes for all three streams, but
@@ -389,7 +394,7 @@ class AsyncCommandMixin:
             # return code is the downstream stage's, or the upstream stage's if
             # the downstream one succeeded (a pipefail-like combination, as in
             # the synchronous Pipeline.popen).
-            return _AsyncPipelineProcess(dstproc, srcproc)
+            return AsyncPipelineProcess(dstproc, srcproc)
 
         argv = base.formulate(0, args)
 
@@ -714,6 +719,7 @@ AsyncTEE = _AsyncTEE()
 __all__ = (
     "AsyncCommand",
     "AsyncLocalCommand",
+    "AsyncPipelineProcess",
     "AsyncRETCODE",
     "AsyncRemoteCommand",
     "AsyncResult",
