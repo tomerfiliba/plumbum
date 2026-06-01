@@ -117,9 +117,11 @@ class _AsyncPipelineProcess:
 
     def __init__(
         self,
-        dstproc: asyncio.subprocess.Process,
-        srcproc: asyncio.subprocess.Process,
+        dstproc: asyncio.subprocess.Process | _AsyncPipelineProcess,
+        srcproc: asyncio.subprocess.Process | _AsyncPipelineProcess,
     ) -> None:
+        # ``dstproc`` is always a real Process (a pipeline's last stage is a
+        # single command); ``srcproc`` may be another proxy for nested pipelines.
         self._dstproc = dstproc
         self.srcproc = srcproc
         self._returncode: int | None = None
@@ -169,7 +171,9 @@ class _AsyncPipelineProcess:
         rc_src = await self.srcproc.wait()
         return self._combine(rc_dst, rc_src)
 
-    async def communicate(self, input: bytes | None = None) -> tuple[bytes, bytes]:
+    async def communicate(
+        self, input: bytes | None = None
+    ) -> tuple[bytes | None, bytes | None]:
         # Feed the pipeline's stdin (the upstream stage) concurrently with
         # draining the downstream output, then reap both ends of the pipeline.
         async def feed() -> None:
@@ -306,7 +310,7 @@ class AsyncCommandMixin:
         args: Sequence[Any] = (),
         cwd: str | None = None,
         env: dict[str, str] | None = None,
-    ) -> asyncio.subprocess.Process:
+    ) -> asyncio.subprocess.Process | _AsyncPipelineProcess:
         """Create an async subprocess without waiting for it to complete.
 
         This is useful for long-running processes or when you need to
@@ -318,7 +322,10 @@ class AsyncCommandMixin:
             env: Environment variables for the command
 
         Returns:
-            asyncio.subprocess.Process instance
+            An :class:`asyncio.subprocess.Process` for a plain command. For a
+            pipeline, an ``_AsyncPipelineProcess`` proxy that exposes the same
+            interface (``stdout``/``stderr`` from the last stage, ``stdin`` to
+            the first) while reaping every stage on ``wait``/``communicate``.
         """
         return await self._popen(args, cwd=cwd, env=env)
 
@@ -331,7 +338,7 @@ class AsyncCommandMixin:
         stdin: int = asyncio.subprocess.PIPE,
         stdout: int = asyncio.subprocess.PIPE,
         stderr: int = asyncio.subprocess.PIPE,
-    ) -> asyncio.subprocess.Process:
+    ) -> asyncio.subprocess.Process | _AsyncPipelineProcess:
         """Spawn the subprocess, threading stdin/stdout through pipeline stages.
 
         The public ``popen`` always uses pipes for all three streams, but
@@ -382,7 +389,7 @@ class AsyncCommandMixin:
             # return code is the downstream stage's, or the upstream stage's if
             # the downstream one succeeded (a pipefail-like combination, as in
             # the synchronous Pipeline.popen).
-            return _AsyncPipelineProcess(dstproc, srcproc)  # type: ignore[return-value]
+            return _AsyncPipelineProcess(dstproc, srcproc)
 
         argv = base.formulate(0, args)
 
