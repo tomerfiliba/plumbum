@@ -54,6 +54,7 @@ Example Usage
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import sys
 from typing import TYPE_CHECKING, Any
@@ -334,19 +335,28 @@ class AsyncCommandMixin:
                 finally:
                     os.close(write_fd)
 
-                dstproc = await self.__class__(base.dstcmd)._popen(
-                    cwd=cwd,
-                    env=env,
-                    stdin=read_fd,
-                    stdout=stdout,
-                    stderr=stderr,
-                )
+                try:
+                    dstproc = await self.__class__(base.dstcmd)._popen(
+                        cwd=cwd,
+                        env=env,
+                        stdin=read_fd,
+                        stdout=stdout,
+                        stderr=stderr,
+                    )
+                except BaseException:
+                    # The upstream stage is already running; reap it rather than
+                    # leaking a child process and its open pipe ends.
+                    with contextlib.suppress(ProcessLookupError):
+                        srcproc.kill()
+                    await srcproc.wait()
+                    raise
             finally:
                 os.close(read_fd)
 
             # Waiting on the pipeline reaps the upstream process too, and the
-            # combined return code is reported (the last stage's code, or the
-            # upstream code if the last stage succeeded), as in Pipeline.popen.
+            # return code is the downstream stage's, or the upstream stage's if
+            # the downstream one succeeded (a pipefail-like combination, as in
+            # the synchronous Pipeline.popen).
             return _AsyncPipelineProcess(dstproc, srcproc)  # type: ignore[return-value]
 
         argv = base.formulate(0, args)
