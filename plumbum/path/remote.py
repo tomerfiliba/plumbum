@@ -392,7 +392,7 @@ class RemotePath(Path):
 
     @property
     def stem(self) -> str:
-        return self.name.rsplit(".")[0]
+        return os.path.splitext(self.name)[0]
 
     @property
     def root(self) -> str:

@@ -573,6 +573,9 @@ class Set(Validator[str]):
         choices = {opt if isinstance(opt, str) else f"({opt})" for opt in self.values}
         choices |= self.all_markers
         if partial:
+            if self.case_sensitive:
+                return {opt for opt in choices if opt.startswith(partial)}
+            partial = partial.lower()
             return {opt for opt in choices if opt.lower().startswith(partial)}
         return choices
 

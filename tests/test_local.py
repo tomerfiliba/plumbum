@@ -164,6 +164,10 @@ class TestLocalPath:
         assert self.longpath.stem == "file"
         p = local.path("/some/directory")
         assert p.stem == "directory"
+        # only the final suffix is removed (like pathlib)
+        assert local.path("/some/archive.tar.gz").stem == "archive.tar"
+        # leading-dot names have no suffix to remove
+        assert local.path("/home/user/.bashrc").stem == ".bashrc"
 
     def test_root_drive(self):
         pathlib = pytest.importorskip("pathlib")

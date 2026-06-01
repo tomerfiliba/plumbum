@@ -146,7 +146,7 @@ class LocalPath(Path):
 
     @property
     def stem(self) -> str:
-        return self.name.rsplit(os.path.extsep)[0]
+        return os.path.splitext(self.name)[0]
 
     def with_suffix(self, suffix: str, depth: int | None = 1) -> LocalPath:
         if (
