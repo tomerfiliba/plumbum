@@ -99,11 +99,13 @@ class AsyncResult:
 class _AsyncPipelineProcess:
     """Proxy around the downstream process of an async pipeline.
 
-    Attribute access (``stdout``, ``stdin``, ``pid``, ``kill``, ...) is delegated
-    to the downstream :class:`asyncio.subprocess.Process`. :meth:`wait` also reaps
-    the upstream process and reports a combined return code -- the downstream
-    code, or the upstream code if the downstream stage succeeded. This mirrors the
-    synchronous :meth:`plumbum.commands.base.Pipeline.popen`.
+    Output attributes (``stdout``, ``stderr``, ``pid``, ``kill``, ...) are
+    delegated to the downstream :class:`asyncio.subprocess.Process`, while
+    ``stdin`` is taken from the *upstream* process so writes feed the head of
+    the pipeline (mirroring :meth:`plumbum.commands.base.Pipeline.popen`, which
+    sets ``dstproc.stdin = srcproc.stdin``). :meth:`wait` and :meth:`communicate`
+    also reap the upstream process and report a combined return code -- the
+    downstream code, or the upstream code if the downstream stage succeeded.
 
     A separate proxy is needed (rather than patching ``wait`` on the downstream
     process) because :attr:`asyncio.subprocess.Process.returncode` is a read-only
@@ -125,16 +127,45 @@ class _AsyncPipelineProcess:
         return getattr(self._dstproc, name)
 
     @property
+    def stdin(self) -> asyncio.StreamWriter | None:
+        # The downstream stage reads from the OS pipe, so its own stdin is None;
+        # the pipeline's stdin is the head (upstream) process's stdin.
+        return self.srcproc.stdin
+
+    @property
     def returncode(self) -> int | None:
         if self._returncode is not None:
             return self._returncode
         return self._dstproc.returncode
 
+    def _combine(self, rc_dst: int | None, rc_src: int | None) -> int:
+        self._returncode = (rc_dst or rc_src) or 0
+        return self._returncode
+
     async def wait(self) -> int:
         rc_dst = await self._dstproc.wait()
         rc_src = await self.srcproc.wait()
-        self._returncode = rc_dst or rc_src
-        return self._returncode
+        return self._combine(rc_dst, rc_src)
+
+    async def communicate(self, input: bytes | None = None) -> tuple[bytes, bytes]:
+        # Feed the pipeline's stdin (the upstream stage) concurrently with
+        # draining the downstream output, then reap both ends of the pipeline.
+        async def feed() -> None:
+            writer = self.stdin
+            if writer is None:
+                return
+            try:
+                if input:
+                    writer.write(input)
+                    await writer.drain()
+            finally:
+                writer.close()
+
+        (stdout, stderr), _, _ = await asyncio.gather(
+            self._dstproc.communicate(), feed(), self.srcproc.wait()
+        )
+        self._combine(self._dstproc.returncode, self.srcproc.returncode)
+        return stdout, stderr
 
 
 class AsyncCommandMixin:
@@ -287,19 +318,22 @@ class AsyncCommandMixin:
         # mirroring the synchronous Pipeline.popen.
         if isinstance(base, Pipeline):
             read_fd, write_fd = os.pipe()
+            # The parent closes each fd once the child has inherited it. The
+            # nested try ensures both fds are closed even if either spawn raises
+            # (write_fd by the inner finally, read_fd by the outer one).
             try:
-                srcproc = await self.__class__(base.srccmd)._popen(
-                    args,
-                    cwd=cwd,
-                    env=env,
-                    stdin=stdin,
-                    stdout=write_fd,
-                    stderr=stderr,
-                )
-            finally:
-                os.close(write_fd)
+                try:
+                    srcproc = await self.__class__(base.srccmd)._popen(
+                        args,
+                        cwd=cwd,
+                        env=env,
+                        stdin=stdin,
+                        stdout=write_fd,
+                        stderr=stderr,
+                    )
+                finally:
+                    os.close(write_fd)
 
-            try:
                 dstproc = await self.__class__(base.dstcmd)._popen(
                     cwd=cwd,
                     env=env,

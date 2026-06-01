@@ -578,6 +578,38 @@ class TestAsyncPipeline:
         assert proc.returncode == 0
         assert proc.srcproc.returncode == 0
 
+    @pytest.mark.asyncio
+    @skip_on_windows
+    async def test_pipeline_popen_communicate(self):
+        """popen().communicate() feeds the pipeline stdin and reaps both stages."""
+        cat = async_local["cat"]
+        upper = async_local[sys.executable][
+            "-c", "import sys\nsys.stdout.write(sys.stdin.read().upper())"
+        ]
+
+        proc = await (cat | upper).popen()
+        # stdin must be the head stage's stdin, not the (None) downstream one.
+        assert proc.stdin is not None
+        stdout, _ = await proc.communicate(b"hello pipe\n")
+
+        assert stdout == b"HELLO PIPE\n"
+        # Both stages reaped, combined return code reported.
+        assert proc.returncode == 0
+        assert proc.srcproc.returncode == 0
+
+    @pytest.mark.asyncio
+    @skip_on_windows
+    async def test_pipeline_popen_combined_returncode(self):
+        """A non-zero upstream rc is surfaced even when the last stage succeeds."""
+        false_cmd = async_local["false"]
+        cat = async_local["cat"]
+
+        proc = await (false_cmd | cat).popen()
+        await proc.wait()
+        # cat exits 0, but the pipeline reports the upstream failure (as in sync).
+        assert proc.srcproc.returncode != 0
+        assert proc.returncode == proc.srcproc.returncode
+
 
 class TestAsyncLocalMachine:
     """Tests for AsyncLocalMachine."""
