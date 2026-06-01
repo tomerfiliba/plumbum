@@ -291,7 +291,7 @@ class SshMachine(BaseRemoteMachine):
         dport: int | str,
         lhost: str | None = "localhost",
         dhost: str | None = "localhost",
-        connect_timeout: float | None = 5,
+        connect_timeout: float | None = None,
         reverse: bool = False,
     ) -> SshTunnel:
         r"""Creates an SSH tunnel from the TCP port (``lport``) of the local machine
@@ -342,6 +342,9 @@ class SshMachine(BaseRemoteMachine):
                 sock = socket.socket()
                 sock.connect(("localhost", 1234))
                 # sock is now tunneled to the MySQL socket on megazord
+
+        The ``connect_timeout`` is the time to wait for the tunnel's shell prompt;
+        if not given, the machine-level ``connect_timeout`` is used.
         """
         formatted_lhost = "" if lhost is None else f"[{lhost}]:"
         formatted_dhost = "" if dhost is None else f"[{dhost}]:"
@@ -359,6 +362,8 @@ class SshMachine(BaseRemoteMachine):
             ]
         )
         proc = self.popen((), ssh_opts=ssh_opts, new_session=True)
+        if connect_timeout is None:
+            connect_timeout = self.connect_timeout
         return SshTunnel(
             ShellSession(proc, self.custom_encoding, connect_timeout=connect_timeout),
             lport,
