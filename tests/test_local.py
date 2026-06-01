@@ -1196,6 +1196,18 @@ def test_local_glob_recursive(tmpdir):
         ("src/**/*.py", "other/a.py", False),
         ("a?c/*.txt", "abc/x.txt", True),
         ("a?c/*.txt", "ac/x.txt", False),  # ``?`` requires exactly one char
+        # dotfiles: a leading wildcard does not match a leading dot, but an
+        # explicit ``.`` does -- matching glob.glob (the local backend)
+        ("**/*.zip", ".secret.zip", False),
+        ("**/*.zip", ".hidden/h.zip", False),  # ``**`` skips hidden dirs
+        ("**/*.zip", "sub/.b.zip", False),
+        (".*", ".secret", True),
+        ("**/.*", "sub/.b", True),
+        # character classes
+        ("**/[ts]*.zip", "top.zip", True),
+        ("**/[ts]*.zip", "sub/a.zip", False),
+        ("**/[!t]*.zip", "top.zip", False),
+        ("**/[!t]*.zip", "sub/a.zip", True),
     ],
 )
 def test_glob_to_regex(pattern, path, expected):
@@ -1204,3 +1216,20 @@ def test_glob_to_regex(pattern, path, expected):
     from plumbum.machines.remote import _glob_to_regex
 
     assert bool(re.match(_glob_to_regex(pattern), path)) is expected
+
+
+@pytest.mark.parametrize(
+    ("pattern", "expected"),
+    [
+        ("**/*.zip", True),
+        ("a/**/b", True),
+        ("**", True),
+        ("*.zip", False),
+        ("a**b", False),  # ``**`` is only special as a whole path segment
+        ("a**b/**/*", True),
+    ],
+)
+def test_is_recursive_glob(pattern, expected):
+    from plumbum.machines.remote import _is_recursive_glob
+
+    assert _is_recursive_glob(pattern) is expected

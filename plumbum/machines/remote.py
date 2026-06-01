@@ -164,35 +164,91 @@ class ClosedRemote:
         raise ClosedRemoteMachine(f"{self._obj!r} has been closed")
 
 
+def _is_recursive_glob(pattern: str) -> bool:
+    """Whether ``pattern`` uses ``**`` as a recursive wildcard.
+
+    As in :mod:`glob`/:mod:`pathlib`, ``**`` is only special when it is a whole
+    path segment; ``a**b`` is just two ``*`` wildcards within one segment.
+    """
+    return "**" in pattern.split("/")
+
+
+def _segment_to_regex(segment: str) -> str:
+    """Translate a single (slash-free) glob segment into a regex fragment.
+
+    Supports ``*``, ``?`` and ``[...]`` character classes, all confined to a
+    single path component (they never cross ``/``). A leading wildcard does not
+    match a leading dot, mirroring :func:`glob.glob` (which skips dotfiles
+    unless the pattern segment starts with a literal ``.``).
+    """
+    out = []
+    # A wildcard at the start of a segment must not match a leading dot.
+    if segment[:1] in ("*", "?", "["):
+        out.append(r"(?!\.)")
+    i, n = 0, len(segment)
+    while i < n:
+        c = segment[i]
+        if c == "*":
+            out.append("[^/]*")
+            i += 1
+        elif c == "?":
+            out.append("[^/]")
+            i += 1
+        elif c == "[":
+            j = i + 1
+            if j < n and segment[j] == "!":
+                j += 1
+            if j < n and segment[j] == "]":
+                j += 1
+            while j < n and segment[j] != "]":
+                j += 1
+            if j >= n:  # no closing bracket -- treat "[" as a literal
+                out.append(re.escape("["))
+                i += 1
+            else:
+                stuff = segment[i + 1 : j].replace("\\", r"\\")
+                if stuff[0] == "!":
+                    stuff = "^" + stuff[1:]
+                elif stuff[0] in ("^", "["):
+                    stuff = "\\" + stuff
+                out.append(f"[{stuff}]")
+                i = j + 1
+        else:
+            out.append(re.escape(c))
+            i += 1
+    return "".join(out)
+
+
 def _glob_to_regex(pattern: str) -> str:
     """Translate a glob pattern into an anchored regex with pathlib-like ``**``.
 
-    ``**`` (optionally followed by ``/``) matches any number of directories,
-    while ``*`` and ``?`` match within a single path segment (i.e. they do not
-    cross ``/``). Used to match recursive globs in Python instead of relying on
+    ``**`` as a whole path segment matches any number of (non-hidden)
+    directories; ``*``, ``?`` and ``[...]`` match within a single path segment.
+    Dotfiles are not matched unless the relevant pattern segment starts with a
+    literal ``.`` -- matching :func:`glob.glob`, which is the local backend.
+    Used to match recursive globs in Python instead of relying on
     shell-specific recursion support.
     """
+    segments = pattern.split("/")
     out = []
-    i, n = 0, len(pattern)
-    while i < n:
-        c = pattern[i]
-        if c == "*":
-            if pattern[i : i + 2] == "**":
-                i += 2
-                if pattern[i : i + 1] == "/":
-                    i += 1
-                    out.append("(?:.*/)?")  # ``**/`` -- zero or more directories
-                else:
-                    out.append(".*")
-                continue
-            out.append("[^/]*")
-        elif c == "?":
-            out.append("[^/]")
-        elif c == "/":
+    need_sep = False  # whether a "/" must precede the next fragment
+    for i, segment in enumerate(segments):
+        if segment == "**":
+            if need_sep:
+                out.append("/")
+            if i == len(segments) - 1:
+                # trailing ``**``: one or more non-hidden path components
+                out.append(r"(?!\.)[^/]+(?:/(?!\.)[^/]+)*")
+                need_sep = False
+            else:
+                # ``**/``: zero or more non-hidden directories (slash included)
+                out.append(r"(?:(?!\.)[^/]+/)*")
+                need_sep = False
+            continue
+        if need_sep:
             out.append("/")
-        else:
-            out.append(re.escape(c))
-        i += 1
+        out.append(_segment_to_regex(segment))
+        need_sep = True
     return "(?s:" + "".join(out) + r")\Z"
 
 
@@ -427,7 +483,7 @@ class BaseRemoteMachine(BaseMachine):
         return files
 
     def _path_glob(self, fn: str, pattern: str) -> list[str]:
-        if "**" in pattern:
+        if _is_recursive_glob(pattern):
             # Recursive glob (``**``). The shell loop below cannot do this
             # portably: ``/bin/sh`` is often dash, and ``**`` only recurses in
             # bash with ``globstar`` enabled. Instead, enumerate the tree with
@@ -439,11 +495,11 @@ class BaseRemoteMachine(BaseMachine):
             if rc != 0:
                 return []
             prefix = fn.rstrip("/") + "/"
-            return [
+            return sorted(
                 line
                 for line in out.splitlines()
                 if line.startswith(prefix) and regex.match(line[len(prefix) :])
-            ]
+            )
         # shquote does not work here due to the way bash loops use space as a separator
         pattern = pattern.replace(" ", r"\ ")
         fn = fn.replace(" ", r"\ ")
