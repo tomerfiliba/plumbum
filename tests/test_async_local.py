@@ -610,6 +610,25 @@ class TestAsyncPipelinePopen:
         assert proc.srcproc.returncode == 0
 
     @pytest.mark.asyncio
+    async def test_pipeline_popen_communicate_drains_upstream_stderr(self):
+        """communicate() drains a chatty upstream stderr without deadlocking."""
+        # The upstream writes far more to stderr than a pipe buffer holds (and a
+        # little to stdout). If communicate() didn't drain the upstream stderr,
+        # the upstream would block on the full stderr pipe and never exit.
+        noisy = async_local[sys.executable][
+            "-c", "import sys; sys.stderr.write('e' * 500000); sys.stdout.write('ok')"
+        ]
+        upper = async_local[sys.executable][
+            "-c", "import sys; sys.stdout.buffer.write(sys.stdin.buffer.read().upper())"
+        ]
+
+        proc = await (noisy | upper).popen()
+        stdout, _ = await proc.communicate()
+
+        assert stdout == b"OK"
+        assert proc.returncode == 0
+
+    @pytest.mark.asyncio
     async def test_bound_pipeline_popen(self):
         """popen works on a pipeline wrapped by argument binding (BoundCommand)."""
         printer = async_local[sys.executable]["-c", "import sys; print(sys.argv[1])"]

@@ -176,11 +176,28 @@ class AsyncPipelineProcess:
         rc_src = await self.srcproc.wait()
         return self._combine(rc_dst, rc_src)
 
+    async def _reap(self) -> tuple[bytes | None, bytes | None]:
+        # Reap the whole pipeline, draining every stage via communicate() so a
+        # full stderr pipe can't deadlock the wait. The last stage's stdout is
+        # its captured output; an upstream stage's stdout is an OS pipe (no
+        # StreamReader), so communicate() there just drains its stderr. Does not
+        # feed stdin -- the head's stdin is fed by communicate() below.
+        src = self.srcproc
+        reap_src = (
+            src._reap() if isinstance(src, AsyncPipelineProcess) else src.communicate()
+        )
+        (stdout, stderr), _ = await asyncio.gather(
+            self._dstproc.communicate(), reap_src
+        )
+        self._combine(self._dstproc.returncode, src.returncode)
+        return stdout, stderr
+
     async def communicate(
         self, input: bytes | None = None
     ) -> tuple[bytes | None, bytes | None]:
-        # Feed the pipeline's stdin (the upstream stage) concurrently with
-        # draining the downstream output, then reap both ends of the pipeline.
+        # Feed the pipeline's stdin (the head stage) concurrently with reaping
+        # every stage -- draining each one's stderr, and the last stage's
+        # stdout/stderr, so a full pipe on any stage can't deadlock the wait.
         async def feed() -> None:
             writer = self.stdin
             if writer is None:
@@ -196,10 +213,7 @@ class AsyncPipelineProcess:
                     writer.close()
                     await writer.wait_closed()
 
-        (stdout, stderr), _, _ = await asyncio.gather(
-            self._dstproc.communicate(), feed(), self.srcproc.wait()
-        )
-        self._combine(self._dstproc.returncode, self.srcproc.returncode)
+        _, (stdout, stderr) = await asyncio.gather(feed(), self._reap())
         return stdout, stderr
 
 
