@@ -126,7 +126,7 @@ def choose(
             choice: str | int = readline(msg).strip()
         except EOFError:
             choice = ""
-        if not choice and default:
+        if not choice and default is not None:
             return default
         try:
             choice = int(choice)

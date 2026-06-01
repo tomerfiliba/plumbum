@@ -167,7 +167,7 @@ class RemotePath(Path):
 
     @property
     def suffix(self) -> str:
-        return "." + self.name.rsplit(".", 1)[1]
+        return os.path.splitext(self.name)[1]
 
     @property
     def suffixes(self) -> list[str]:
@@ -359,7 +359,7 @@ class RemotePath(Path):
                 raise TypeError("dst points to a different remote machine")
         elif not isinstance(dst, str):
             raise TypeError(
-                "dst must be a string or a RemotePath (to the same remote machine), got {dst!r}"
+                f"dst must be a string or a RemotePath (to the same remote machine), got {dst!r}"
             )
         self.remote._path_link(self, dst, True)
 
