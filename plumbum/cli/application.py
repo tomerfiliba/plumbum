@@ -1017,6 +1017,7 @@ complete -F _{prog_name}_completion {prog_name}
             f(inst, *a)
 
         cleanup = None
+        retcode = 0
         if not inst.nested_command or inst.CALL_MAIN_IF_NESTED_COMMAND:
             retcode = inst.main(*tailargs)
             cleanup = functools.partial(inst.cleanup, retcode)

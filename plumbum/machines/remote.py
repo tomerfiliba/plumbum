@@ -462,7 +462,7 @@ class BaseRemoteMachine(BaseMachine):
         self._session.run(f"chmod {mode:o} {shquote(fn)}")
 
     def _path_touch(self, path: str) -> None:
-        self._session.run(f"touch {path}")
+        self._session.run(f"touch {shquote(path)}")
 
     def _path_chown(
         self,

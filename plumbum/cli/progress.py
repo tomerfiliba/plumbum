@@ -141,7 +141,7 @@ class ProgressBase(Generic[T], metaclass=abc.ABCMeta):
             return "Starting..."
 
         completed, remaining = self.time_remaining()
-        return f"{completed:.0} completed, {remaining:.0} remaining"
+        return f"{completed:.0f} completed, {remaining:.0f} remaining"
 
     @abc.abstractmethod
     def done(self) -> None:

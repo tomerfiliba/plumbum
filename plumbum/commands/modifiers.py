@@ -277,8 +277,9 @@ class _TEE(ExecutionModifier):
                         buf.append(data)
 
             p.wait()  # To get return code in p
-            stdout = "".join([x.decode("utf-8") for x in outbuf])
-            stderr = "".join([x.decode("utf-8") for x in errbuf])
+            encoding = cmd._get_encoding() or "utf-8"
+            stdout = b"".join(outbuf).decode(encoding)
+            stderr = b"".join(errbuf).decode(encoding)
             assert p.returncode is not None
             return p.returncode, stdout, stderr
 

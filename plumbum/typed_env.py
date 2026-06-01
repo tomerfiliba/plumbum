@@ -178,10 +178,16 @@ class TypedEnv(MutableMapping[str, str]):
         }
 
     def __iter__(self) -> Iterator[str]:
-        return iter(dir(self))
+        # Iterate the declared keys if any are defined (so that dict(env),
+        # keys(), etc. go through the typed descriptors); otherwise fall back
+        # to the raw environment keys. Unlike __dir__, this deliberately does
+        # not include class members.
+        if self._defined_keys:
+            return iter(sorted(self._defined_keys))
+        return iter(self._env)
 
     def __len__(self) -> int:
-        return len(self._env)
+        return len(self._defined_keys) if self._defined_keys else len(self._env)
 
     def __delitem__(self, name: str) -> None:
         del self._env[name]
@@ -197,6 +203,10 @@ class TypedEnv(MutableMapping[str, str]):
         raise EnvironmentVariableError(key_names[0])
 
     def __contains__(self, key: object) -> bool:
+        # Stay consistent with __iter__/__len__: when descriptors are defined,
+        # membership is over the declared keys; otherwise the raw environment.
+        if self._defined_keys:
+            return key in self._defined_keys
         return key in self._env
 
     def __getattr__(self, name: str) -> str:

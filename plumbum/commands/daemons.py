@@ -42,7 +42,6 @@ def posix_daemonize(
     if stderr is None:
         stderr = stdout
 
-    rfd, wfd = os.pipe()
     argv = command.formulate()
     payload = pickle.dumps(
         {
@@ -55,20 +54,25 @@ def posix_daemonize(
         protocol=pickle.HIGHEST_PROTOCOL,
     )
 
-    launcher = subprocess.Popen(
-        [sys.executable, "-m", "plumbum.commands._daemon_launcher", str(wfd)],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        close_fds=True,
-        pass_fds=(wfd,),
-    )
-    os.close(wfd)
+    rfd, wfd = os.pipe()
+    try:
+        try:
+            launcher = subprocess.Popen(
+                [sys.executable, "-m", "plumbum.commands._daemon_launcher", str(wfd)],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                close_fds=True,
+                pass_fds=(wfd,),
+            )
+        finally:
+            os.close(wfd)
 
-    launch_stdout, launch_stderr = launcher.communicate(payload)
-    output: str | bytes = os.read(rfd, 16384)
-    assert isinstance(output, bytes)
-    os.close(rfd)
+        launch_stdout, launch_stderr = launcher.communicate(payload)
+        output: str | bytes = os.read(rfd, 16384)
+        assert isinstance(output, bytes)
+    finally:
+        os.close(rfd)
     with contextlib.suppress(UnicodeError):
         output = output.decode("utf8")
 
