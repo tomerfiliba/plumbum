@@ -59,7 +59,7 @@ import os
 import sys
 from typing import TYPE_CHECKING, Any
 
-from plumbum.commands.base import Pipeline
+from plumbum.commands.base import BoundCommand, BoundEnvCommand, Pipeline
 from plumbum.commands.processes import ProcessExecutionError, ProcessTimedOut
 from plumbum.machines.local import local
 
@@ -352,9 +352,30 @@ class AsyncCommandMixin:
         """
         base = self._base_cmd
 
+        # A bound pipeline -- e.g. (a | b)["--flag"] or (a | b).with_env(...) --
+        # wraps the Pipeline in BoundCommand/BoundEnvCommand. Unwrap those to find
+        # the pipeline and thread the bound args/env/cwd into its stages. The
+        # plain ``formulate`` path below keeps using the original command, so its
+        # shell-quoting level (which differs for remote commands) is unchanged.
+        pipe_base: BaseCommand = base
+        pipe_args = list(args)
+        pipe_env = env
+        pipe_cwd = cwd
+        while isinstance(pipe_base, (BoundCommand, BoundEnvCommand)):
+            if isinstance(pipe_base, BoundCommand):
+                pipe_args = [*pipe_base.args, *pipe_args]
+            else:
+                pipe_env = {**pipe_base.env, **(pipe_env or {})}
+                pipe_cwd = pipe_base.cwd if pipe_cwd is None else pipe_cwd
+            pipe_base = pipe_base.cmd
+
         # A pipeline has no single argv; connect the two stages with an OS pipe,
         # mirroring the synchronous Pipeline.popen.
-        if isinstance(base, Pipeline):
+        if isinstance(pipe_base, Pipeline):
+            base = pipe_base
+            args = pipe_args
+            env = pipe_env
+            cwd = pipe_cwd
             read_fd, write_fd = os.pipe()
             # The parent closes each fd once the child has inherited it. The
             # nested try ensures both fds are closed even if either spawn raises

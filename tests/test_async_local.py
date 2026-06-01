@@ -610,6 +610,25 @@ class TestAsyncPipelinePopen:
         assert proc.srcproc.returncode == 0
 
     @pytest.mark.asyncio
+    async def test_bound_pipeline_popen(self):
+        """popen works on a pipeline wrapped by argument binding (BoundCommand)."""
+        printer = async_local[sys.executable]["-c", "import sys; print(sys.argv[1])"]
+        upper = async_local[sys.executable][
+            "-c", "import sys\nfor line in sys.stdin:\n    print(line.strip().upper())"
+        ]
+
+        # (printer | upper)["hello"] is a BoundCommand around a Pipeline; the
+        # bound arg must reach the first stage instead of yielding a literal "|".
+        proc = await (printer | upper)["hello"].popen()
+        assert isinstance(proc, AsyncPipelineProcess)
+        assert proc.stdout is not None
+        out = (await proc.stdout.read()).decode().strip()
+        await proc.wait()
+
+        assert out == "HELLO"
+        assert proc.returncode == 0
+
+    @pytest.mark.asyncio
     async def test_pipeline_popen_combined_returncode(self):
         """A non-zero upstream rc is surfaced even when the last stage succeeds."""
         fail = async_local[sys.executable]["-c", "import sys; sys.exit(3)"]
