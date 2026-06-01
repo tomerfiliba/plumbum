@@ -171,12 +171,14 @@ class RemotePath(Path):
 
     @property
     def suffixes(self) -> list[str]:
-        name = self.name
         exts = []
-        while "." in name:
-            name, ext = name.rsplit(".", 1)
-            exts.append("." + ext)
-        return list(reversed(exts))
+        name = self.name
+        while True:
+            name, ext = os.path.splitext(name)
+            if ext:
+                exts.append(ext)
+            else:
+                return list(reversed(exts))
 
     @property
     def uid(self) -> FSUser:
