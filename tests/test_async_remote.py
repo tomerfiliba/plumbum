@@ -173,14 +173,17 @@ class TestAsyncRemoteModifiers:
             assert retcode == 0
 
     @pytest.mark.asyncio
-    async def test_async_tee_remote(self):
-        """Test AsyncTEE with remote command."""
+    async def test_async_tee_remote_not_supported(self):
+        """AsyncTEE (like popen) streams locally, so it rejects remote commands.
+
+        Remote commands are supported through ``.run()``/``__call__`` instead;
+        streaming a remote command locally would silently run it on this machine.
+        """
 
         async with AsyncSshMachine(TEST_HOST) as rem:
             echo = rem["echo"]
-            retcode, stdout, _stderr = await (echo["hello"] & AsyncTEE)
-            assert retcode == 0
-            assert "hello" in stdout
+            with pytest.raises(NotImplementedError):
+                await (echo["hello"] & AsyncTEE)
 
 
 class TestAsyncRemotePipelineSemantics:

@@ -1017,3 +1017,83 @@ class TestAsyncIntegration:
 
         assert "sync" in sync_result
         assert "async" in async_result
+
+
+class TestAsyncCommandReview:
+    """Regression tests for issues found in the pre-2.0 review (#805)."""
+
+    @pytest.mark.asyncio
+    async def test_getitem_preserves_subtype(self):
+        """Binding args keeps the concrete async type and its properties (#4)."""
+        ls = async_local["ls"]
+        bound = ls["-la"]
+        assert isinstance(bound, AsyncLocalCommand)
+        # `.executable` must keep working after binding (unwraps BoundCommand).
+        assert str(bound.executable) == str(ls.executable)
+
+    @pytest.mark.asyncio
+    @skip_on_windows
+    async def test_with_env(self):
+        """with_env is exposed on async commands and takes effect (#3, #5)."""
+        printenv = async_local["printenv"]
+        cmd = printenv.with_env(TEST_VAR="from_with_env")
+        assert isinstance(cmd, AsyncLocalCommand)
+        result = await cmd("TEST_VAR", retcode=None)
+        assert "from_with_env" in result
+
+    @pytest.mark.asyncio
+    @skip_on_windows
+    async def test_with_cwd(self):
+        """with_cwd is exposed on async commands and takes effect (#3, #5)."""
+        pwd = async_local["pwd"]
+        result = await pwd.with_cwd("/tmp")()
+        assert "/tmp" in result
+
+    @pytest.mark.asyncio
+    async def test_with_env_via_popen(self):
+        """with_env reaches the subprocess through the popen path too (#5)."""
+        printer = async_local[sys.executable][
+            "-c", "import os; print(os.environ.get('TEST_VAR', 'unset'))"
+        ]
+        proc = await printer.with_env(TEST_VAR="from_popen").popen()
+        out = (await proc.stdout.read()).decode().strip()
+        await proc.wait()
+        assert out == "from_popen"
+
+    @pytest.mark.asyncio
+    async def test_tee_on_pipeline(self):
+        """AsyncTEE works on a pipeline, not just a single command (#2)."""
+        from plumbum.commands.async_ import AsyncTEE
+
+        printer = async_local[sys.executable]["-c", "print('hello tee')"]
+        upper = async_local[sys.executable][
+            "-c", "import sys\nfor line in sys.stdin:\n    print(line.strip().upper())"
+        ]
+
+        retcode, stdout, _stderr = await ((printer | upper) & AsyncTEE)
+        assert retcode == 0
+        assert "HELLO TEE" in stdout
+
+    @pytest.mark.asyncio
+    async def test_tee_on_pipeline_drains_upstream_stderr(self):
+        """AsyncTEE drains a chatty upstream stderr without deadlocking (#806 review).
+
+        The upstream stage writes far more to stderr than a pipe buffer holds; if
+        AsyncTEE only drained the final stage's streams, the upstream would block
+        on its full stderr pipe and ``wait()`` would hang.
+        """
+        from plumbum.commands.async_ import AsyncTEE
+
+        noisy = async_local[sys.executable][
+            "-c",
+            "import sys; sys.stderr.write('e' * 500000); sys.stdout.write('ok\\n')",
+        ]
+        upper = async_local[sys.executable][
+            "-c", "import sys\nfor line in sys.stdin:\n    print(line.strip().upper())"
+        ]
+
+        retcode, stdout, _stderr = await asyncio.wait_for(
+            (noisy | upper) & AsyncTEE, timeout=30
+        )
+        assert retcode == 0
+        assert "OK" in stdout
