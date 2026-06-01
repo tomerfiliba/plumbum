@@ -42,6 +42,9 @@ Fixes:
 * Only register shutdown if a timeout was requested to avoid spurious handlers (`#784 <https://github.com/tomerfiliba/plumbum/pull/784>`_)
 * Reduce various warnings reported by linters and at runtime (`#781 <https://github.com/tomerfiliba/plumbum/pull/781>`_)
 * Fix O(n^2) performance in ``StdinDataRedirection.popen`` by @ustunb (`#798 <https://github.com/tomerfiliba/plumbum/pull/798>`_)
+* Correct async remote streaming, pipeline TEE, and command binding (`#806 <https://github.com/tomerfiliba/plumbum/pull/806>`_)
+* Fix a sweep of pre-2.0 bugs across cli, paths, and commands (`#808 <https://github.com/tomerfiliba/plumbum/pull/808>`_)
+* Fix assorted pre-2.0 correctness issues, including ``stem``, the SSH tunnel timeout, and ``Set`` completion (`#809 <https://github.com/tomerfiliba/plumbum/pull/809>`_)
 
 Tests:
 
@@ -59,6 +62,8 @@ Internal:
 * Fix badge showing wrong branch by @henryiii (`#736 <https://github.com/tomerfiliba/plumbum/pull/736>`_)
 * Fix links in changelog by @henryiii (`#732 <https://github.com/tomerfiliba/plumbum/pull/732>`_)
 * Add ``AGENTS.md`` and avoid extra files by @henryiii (`#803 <https://github.com/tomerfiliba/plumbum/pull/803>`_)
+* Remove dead code and simplify a few spots (`#811 <https://github.com/tomerfiliba/plumbum/pull/811>`_)
+* Tighten loose type annotations across the public API (`#810 <https://github.com/tomerfiliba/plumbum/pull/810>`_)
 
 Docs:
 
