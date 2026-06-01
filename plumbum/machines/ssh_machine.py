@@ -291,7 +291,7 @@ class SshMachine(BaseRemoteMachine):
         dport: int | str,
         lhost: str | None = "localhost",
         dhost: str | None = "localhost",
-        connect_timeout: float = 5,  # noqa: ARG002
+        connect_timeout: float = 5,
         reverse: bool = False,
     ) -> SshTunnel:
         r"""Creates an SSH tunnel from the TCP port (``lport``) of the local machine
@@ -360,9 +360,7 @@ class SshMachine(BaseRemoteMachine):
         )
         proc = self.popen((), ssh_opts=ssh_opts, new_session=True)
         return SshTunnel(
-            ShellSession(
-                proc, self.custom_encoding, connect_timeout=self.connect_timeout
-            ),
+            ShellSession(proc, self.custom_encoding, connect_timeout=connect_timeout),
             lport,
             dport,
             reverse,

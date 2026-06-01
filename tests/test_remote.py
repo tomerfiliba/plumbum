@@ -111,6 +111,9 @@ class TestRemotePath:
         assert p.stem == "file"
         p = RemotePath(self._connect(), "/some/long/path/")
         assert p.stem == "path"
+        # only the final suffix is removed (like pathlib)
+        p = RemotePath(self._connect(), "/some/archive.tar.gz")
+        assert p.stem == "archive.tar"
 
     def test_suffix(self):
         p1 = RemotePath(self._connect(), "/some/long/path/to/file.txt")
