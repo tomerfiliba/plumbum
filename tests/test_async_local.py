@@ -10,7 +10,7 @@ import pytest
 from plumbum import async_local, local
 from plumbum._testtools import skip_on_windows
 from plumbum.commands import ProcessExecutionError
-from plumbum.commands.async_ import AsyncLocalCommand
+from plumbum.commands.async_ import AsyncLocalCommand, AsyncPipelineProcess
 from plumbum.machines.local import AsyncLocalMachine
 
 
@@ -557,6 +557,107 @@ class TestAsyncPipeline:
             await pipeline()
 
         assert exc_info.value.retcode != 0
+
+
+class TestAsyncPipelinePopen:
+    """popen() on async pipelines (issue #795).
+
+    Every stage uses ``sys.executable`` so these run on all platforms, including
+    Windows, where the original bug was reported -- unlike the Unix-utility based
+    tests in :class:`TestAsyncPipeline`.
+    """
+
+    @pytest.mark.asyncio
+    async def test_pipeline_popen(self):
+        """popen on a pipeline streams data between stages."""
+        echo = async_local[sys.executable]["-c", "print('test pipe1\\ntest pipe2')"]
+        upper = async_local[sys.executable][
+            "-c", "import sys\nfor line in sys.stdin:\n    print(line.strip().upper())"
+        ]
+
+        proc = await (echo | upper).popen()
+        assert isinstance(proc, AsyncPipelineProcess)
+        assert proc.stdout is not None
+        lines = []
+        while i := await proc.stdout.readline():
+            lines.append(i.decode().strip())
+
+        assert lines == ["TEST PIPE1", "TEST PIPE2"]
+        # Ensure child processes are reaped and the return code is checked
+        await proc.wait()
+        assert proc.returncode == 0
+        assert proc.srcproc.returncode == 0
+
+    @pytest.mark.asyncio
+    async def test_pipeline_popen_communicate(self):
+        """popen().communicate() feeds the pipeline stdin and reaps both stages."""
+        # A binary stdin->stdout passthrough (a portable "cat").
+        passthrough = async_local[sys.executable][
+            "-c", "import sys; sys.stdout.buffer.write(sys.stdin.buffer.read())"
+        ]
+        upper = async_local[sys.executable][
+            "-c", "import sys; sys.stdout.buffer.write(sys.stdin.buffer.read().upper())"
+        ]
+
+        proc = await (passthrough | upper).popen()
+        # stdin must be the head stage's stdin, not the (None) downstream one.
+        assert proc.stdin is not None
+        stdout, _ = await proc.communicate(b"hello pipe\n")
+
+        assert stdout == b"HELLO PIPE\n"
+        # Both stages reaped, combined return code reported.
+        assert proc.returncode == 0
+        assert proc.srcproc.returncode == 0
+
+    @pytest.mark.asyncio
+    async def test_pipeline_popen_communicate_drains_upstream_stderr(self):
+        """communicate() drains a chatty upstream stderr without deadlocking."""
+        # The upstream writes far more to stderr than a pipe buffer holds (and a
+        # little to stdout). If communicate() didn't drain the upstream stderr,
+        # the upstream would block on the full stderr pipe and never exit.
+        noisy = async_local[sys.executable][
+            "-c", "import sys; sys.stderr.write('e' * 500000); sys.stdout.write('ok')"
+        ]
+        upper = async_local[sys.executable][
+            "-c", "import sys; sys.stdout.buffer.write(sys.stdin.buffer.read().upper())"
+        ]
+
+        proc = await (noisy | upper).popen()
+        stdout, _ = await proc.communicate()
+
+        assert stdout == b"OK"
+        assert proc.returncode == 0
+
+    @pytest.mark.asyncio
+    async def test_bound_pipeline_popen(self):
+        """popen works on a pipeline wrapped by argument binding (BoundCommand)."""
+        printer = async_local[sys.executable]["-c", "import sys; print(sys.argv[1])"]
+        upper = async_local[sys.executable][
+            "-c", "import sys\nfor line in sys.stdin:\n    print(line.strip().upper())"
+        ]
+
+        # (printer | upper)["hello"] is a BoundCommand around a Pipeline; the
+        # bound arg must reach the first stage instead of yielding a literal "|".
+        proc = await (printer | upper)["hello"].popen()
+        assert isinstance(proc, AsyncPipelineProcess)
+        assert proc.stdout is not None
+        out = (await proc.stdout.read()).decode().strip()
+        await proc.wait()
+
+        assert out == "HELLO"
+        assert proc.returncode == 0
+
+    @pytest.mark.asyncio
+    async def test_pipeline_popen_combined_returncode(self):
+        """A non-zero upstream rc is surfaced even when the last stage succeeds."""
+        fail = async_local[sys.executable]["-c", "import sys; sys.exit(3)"]
+        drain = async_local[sys.executable]["-c", "import sys; sys.stdin.buffer.read()"]
+
+        proc = await (fail | drain).popen()
+        await proc.wait()
+        # The last stage exits 0, but the pipeline reports the upstream failure.
+        assert proc.srcproc.returncode == 3
+        assert proc.returncode == 3
 
 
 class TestAsyncLocalMachine:

@@ -338,7 +338,27 @@ AsyncCommand
 
       Create an async subprocess without waiting for completion.
 
-      :return: asyncio.subprocess.Process instance
+      :return: an :class:`asyncio.subprocess.Process` for a plain command, or an
+         :class:`AsyncPipelineProcess` proxy for a pipeline.
+
+AsyncPipelineProcess
+~~~~~~~~~~~~~~~~~~~~~
+
+.. class:: AsyncPipelineProcess
+
+   Returned by :meth:`AsyncCommand.popen` when called on a pipeline. It behaves
+   like an :class:`asyncio.subprocess.Process`: ``stdout``/``stderr`` come from
+   the last stage and ``stdin`` writes to the first stage. ``wait()`` and
+   ``communicate()`` reap every stage and report a combined return code (the
+   last stage's, or an earlier stage's if the last one succeeded), and
+   ``kill()``/``terminate()``/``send_signal()`` are sent to every stage.
+
+   .. attribute:: srcproc
+
+      The upstream process (itself an :class:`AsyncPipelineProcess` for a nested
+      pipeline).
+
+   .. versionadded:: 1.11
 
 AsyncResult
 ~~~~~~~~~~~

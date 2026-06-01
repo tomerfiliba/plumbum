@@ -54,9 +54,12 @@ Example Usage
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import os
 import sys
 from typing import TYPE_CHECKING, Any
 
+from plumbum.commands.base import BoundCommand, BoundEnvCommand, Pipeline
 from plumbum.commands.processes import ProcessExecutionError, ProcessTimedOut
 from plumbum.machines.local import local
 
@@ -92,6 +95,126 @@ class AsyncResult:
 
     def __repr__(self) -> str:
         return f"AsyncResult(returncode={self.returncode}, stdout={self.stdout!r}, stderr={self.stderr!r})"
+
+
+class AsyncPipelineProcess:
+    """Proxy around the downstream process of an async pipeline.
+
+    Output attributes (``stdout``, ``stderr``, ``pid``, ...) are delegated to the
+    downstream :class:`asyncio.subprocess.Process`, while ``stdin`` is taken from
+    the *upstream* process so writes feed the head of the pipeline (mirroring
+    :meth:`plumbum.commands.base.Pipeline.popen`, which sets
+    ``dstproc.stdin = srcproc.stdin``). :meth:`wait` and :meth:`communicate` reap
+    both stages and report a combined return code -- the downstream code, or the
+    upstream code if the downstream stage succeeded. :meth:`kill`,
+    :meth:`terminate` and :meth:`send_signal` are propagated to every stage
+    (recursing through a nested upstream pipeline) rather than only the last one.
+
+    A separate proxy is needed (rather than patching ``wait`` on the downstream
+    process) because :attr:`asyncio.subprocess.Process.returncode` is a read-only
+    property and cannot be reassigned to the combined value.
+
+    Instances are returned by :meth:`AsyncCommandMixin.popen` for pipelines; you
+    don't normally construct them directly.
+
+    .. versionadded:: 1.11
+    """
+
+    def __init__(
+        self,
+        dstproc: asyncio.subprocess.Process | AsyncPipelineProcess,
+        srcproc: asyncio.subprocess.Process | AsyncPipelineProcess,
+    ) -> None:
+        # ``dstproc`` is always a real Process (a pipeline's last stage is a
+        # single command); ``srcproc`` may be another proxy for nested pipelines.
+        self._dstproc = dstproc
+        self.srcproc = srcproc
+        self._returncode: int | None = None
+
+    def __getattr__(self, name: str) -> Any:
+        # Only called when `name` isn't a real attribute on the proxy, so this
+        # delegates the rest of the Process interface to the downstream process.
+        return getattr(self._dstproc, name)
+
+    @property
+    def stdin(self) -> asyncio.StreamWriter | None:
+        # The downstream stage reads from the OS pipe, so its own stdin is None;
+        # the pipeline's stdin is the head (upstream) process's stdin.
+        return self.srcproc.stdin
+
+    @property
+    def returncode(self) -> int | None:
+        if self._returncode is not None:
+            return self._returncode
+        return self._dstproc.returncode
+
+    def _combine(self, rc_dst: int | None, rc_src: int | None) -> int:
+        self._returncode = (rc_dst or rc_src) or 0
+        return self._returncode
+
+    def _signal_both(self, method: str) -> None:
+        # Signal both ends; for a nested upstream pipeline ``srcproc`` is itself
+        # an ``AsyncPipelineProcess``, so this recurses through every stage.
+        # Each stage may already have exited, so ignore "no such process".
+        for proc in (self._dstproc, self.srcproc):
+            with contextlib.suppress(ProcessLookupError):
+                getattr(proc, method)()
+
+    def kill(self) -> None:
+        self._signal_both("kill")
+
+    def terminate(self) -> None:
+        self._signal_both("terminate")
+
+    def send_signal(self, signal: int) -> None:
+        for proc in (self._dstproc, self.srcproc):
+            with contextlib.suppress(ProcessLookupError):
+                proc.send_signal(signal)
+
+    async def wait(self) -> int:
+        rc_dst = await self._dstproc.wait()
+        rc_src = await self.srcproc.wait()
+        return self._combine(rc_dst, rc_src)
+
+    async def _reap(self) -> tuple[bytes | None, bytes | None]:
+        # Reap the whole pipeline, draining every stage via communicate() so a
+        # full stderr pipe can't deadlock the wait. The last stage's stdout is
+        # its captured output; an upstream stage's stdout is an OS pipe (no
+        # StreamReader), so communicate() there just drains its stderr. Does not
+        # feed stdin -- the head's stdin is fed by communicate() below.
+        src = self.srcproc
+        reap_src = (
+            src._reap() if isinstance(src, AsyncPipelineProcess) else src.communicate()
+        )
+        (stdout, stderr), _ = await asyncio.gather(
+            self._dstproc.communicate(), reap_src
+        )
+        self._combine(self._dstproc.returncode, src.returncode)
+        return stdout, stderr
+
+    async def communicate(
+        self, input: bytes | None = None
+    ) -> tuple[bytes | None, bytes | None]:
+        # Feed the pipeline's stdin (the head stage) concurrently with reaping
+        # every stage -- draining each one's stderr, and the last stage's
+        # stdout/stderr, so a full pipe on any stage can't deadlock the wait.
+        async def feed() -> None:
+            writer = self.stdin
+            if writer is None:
+                return
+            # As in asyncio's own Process.communicate(), a stage that exits
+            # early closes the pipe, so ignore the resulting write errors.
+            with contextlib.suppress(BrokenPipeError, ConnectionResetError):
+                try:
+                    if input:
+                        writer.write(input)
+                        await writer.drain()
+                finally:
+                    writer.close()
+                    await writer.wait_closed()
+
+        _, (stdout, stderr) = await asyncio.gather(feed(), self._reap())
+        return stdout, stderr
 
 
 class AsyncCommandMixin:
@@ -206,7 +329,7 @@ class AsyncCommandMixin:
         args: Sequence[Any] = (),
         cwd: str | None = None,
         env: dict[str, str] | None = None,
-    ) -> asyncio.subprocess.Process:
+    ) -> asyncio.subprocess.Process | AsyncPipelineProcess:
         """Create an async subprocess without waiting for it to complete.
 
         This is useful for long-running processes or when you need to
@@ -218,25 +341,113 @@ class AsyncCommandMixin:
             env: Environment variables for the command
 
         Returns:
-            asyncio.subprocess.Process instance
+            An :class:`asyncio.subprocess.Process` for a plain command. For a
+            pipeline, an :class:`AsyncPipelineProcess` proxy that exposes the same
+            interface (``stdout``/``stderr`` from the last stage, ``stdin`` to
+            the first) while reaping every stage on ``wait``/``communicate``.
         """
-        argv = self._base_cmd.formulate(0, args)
+        return await self._popen(args, cwd=cwd, env=env)
+
+    async def _popen(
+        self,
+        args: Sequence[Any] = (),
+        *,
+        cwd: str | None = None,
+        env: dict[str, str] | None = None,
+        stdin: int = asyncio.subprocess.PIPE,
+        stdout: int = asyncio.subprocess.PIPE,
+        stderr: int = asyncio.subprocess.PIPE,
+    ) -> asyncio.subprocess.Process | AsyncPipelineProcess:
+        """Spawn the subprocess, threading stdin/stdout through pipeline stages.
+
+        The public ``popen`` always uses pipes for all three streams, but
+        pipelines need to connect one stage's stdout to the next stage's stdin,
+        so this internal helper exposes those handles.
+        """
+        base = self._base_cmd
+
+        # A bound pipeline -- e.g. (a | b)["--flag"] or (a | b).with_env(...) --
+        # wraps the Pipeline in BoundCommand/BoundEnvCommand. Unwrap those to find
+        # the pipeline and thread the bound args/env/cwd into its stages. The
+        # plain ``formulate`` path below keeps using the original command, so its
+        # shell-quoting level (which differs for remote commands) is unchanged.
+        pipe_base: BaseCommand = base
+        pipe_args = list(args)
+        pipe_env = env
+        pipe_cwd = cwd
+        while isinstance(pipe_base, (BoundCommand, BoundEnvCommand)):
+            if isinstance(pipe_base, BoundCommand):
+                pipe_args = [*pipe_base.args, *pipe_args]
+            else:
+                pipe_env = {**pipe_base.env, **(pipe_env or {})}
+                pipe_cwd = pipe_base.cwd if pipe_cwd is None else pipe_cwd
+            pipe_base = pipe_base.cmd
+
+        # A pipeline has no single argv; connect the two stages with an OS pipe,
+        # mirroring the synchronous Pipeline.popen.
+        if isinstance(pipe_base, Pipeline):
+            base = pipe_base
+            args = pipe_args
+            env = pipe_env
+            cwd = pipe_cwd
+            read_fd, write_fd = os.pipe()
+            # The parent closes each fd once the child has inherited it. The
+            # nested try ensures both fds are closed even if either spawn raises
+            # (write_fd by the inner finally, read_fd by the outer one).
+            try:
+                try:
+                    srcproc = await self.__class__(base.srccmd)._popen(
+                        args,
+                        cwd=cwd,
+                        env=env,
+                        stdin=stdin,
+                        stdout=write_fd,
+                        stderr=stderr,
+                    )
+                finally:
+                    os.close(write_fd)
+
+                try:
+                    dstproc = await self.__class__(base.dstcmd)._popen(
+                        cwd=cwd,
+                        env=env,
+                        stdin=read_fd,
+                        stdout=stdout,
+                        stderr=stderr,
+                    )
+                except BaseException:
+                    # The upstream stage is already running; reap it rather than
+                    # leaking a child process and its open pipe ends.
+                    with contextlib.suppress(ProcessLookupError):
+                        srcproc.kill()
+                    await srcproc.wait()
+                    raise
+            finally:
+                os.close(read_fd)
+
+            # Waiting on the pipeline reaps the upstream process too, and the
+            # return code is the downstream stage's, or the upstream stage's if
+            # the downstream one succeeded (a pipefail-like combination, as in
+            # the synchronous Pipeline.popen).
+            return AsyncPipelineProcess(dstproc, srcproc)
+
+        argv = base.formulate(0, args)
 
         full_env = dict(local.env.getdict())
-        base_env = getattr(self._base_cmd, "env", None)
+        base_env = getattr(base, "env", None)
         if base_env:
             full_env.update(base_env)
         if env:
             full_env.update(env)
 
-        base_cwd = getattr(self._base_cmd, "cwd", None)
+        base_cwd = getattr(base, "cwd", None)
         working_dir = cwd or base_cwd or str(local.cwd)
 
         return await asyncio.create_subprocess_exec(
             *argv,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            stdin=asyncio.subprocess.PIPE,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
             cwd=working_dir,
             env=full_env,
         )
@@ -543,6 +754,7 @@ AsyncTEE = _AsyncTEE()
 __all__ = (
     "AsyncCommand",
     "AsyncLocalCommand",
+    "AsyncPipelineProcess",
     "AsyncRETCODE",
     "AsyncRemoteCommand",
     "AsyncResult",
