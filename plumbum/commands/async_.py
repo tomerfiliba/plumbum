@@ -715,7 +715,7 @@ class _AsyncTEE(AsyncExecutionModifier):
         async def read_stream(
             stream: asyncio.StreamReader | None, output_list: list[str], target: Any
         ) -> None:
-            """Read from stream, display, and collect output."""
+            """Read from stream line by line, display, and collect output."""
             if stream is None:
                 return
 
@@ -729,13 +729,46 @@ class _AsyncTEE(AsyncExecutionModifier):
                 target.write(text)
                 target.flush()
 
-        # Read stdout and stderr concurrently
+        async def drain_stream(
+            stream: asyncio.StreamReader | None, target: Any
+        ) -> None:
+            """Display a stream in fixed-size chunks (no line buffering).
+
+            Used for upstream pipeline stderr, where output may be large and
+            without newlines -- ``readline`` would raise once a line exceeds the
+            stream's buffer limit, so read by chunk instead.
+            """
+            if stream is None:
+                return
+
+            while True:
+                chunk = await stream.read(4096)
+                if not chunk:
+                    break
+
+                target.write(chunk.decode(encoding, errors="ignore"))
+                target.flush()
+
+        # ``proc.stdout``/``proc.stderr`` are the pipeline's *final* stage. Each
+        # upstream stage of a pipeline has its own stderr pipe that must also be
+        # drained -- otherwise a chatty upstream stderr fills its buffer and
+        # deadlocks the wait() below (only communicate() drains every stage). We
+        # display these too, like a shell pipeline; the returned stderr stays the
+        # final stage's, matching ``popen().communicate()``. The loop adds nothing
+        # for a plain command (no upstream stages).
+        readers = [
+            read_stream(proc.stdout, stdout_lines, sys.stdout),
+            read_stream(proc.stderr, stderr_lines, sys.stderr),
+        ]
+        node: Any = proc
+        while isinstance(node, AsyncPipelineProcess):
+            node = node.srcproc
+            readers.append(drain_stream(node.stderr, sys.stderr))
+
+        # Read every stage's streams concurrently
         try:
             await asyncio.wait_for(
-                asyncio.gather(
-                    read_stream(proc.stdout, stdout_lines, sys.stdout),
-                    read_stream(proc.stderr, stderr_lines, sys.stderr),
-                ),
+                asyncio.gather(*readers),
                 timeout=self.timeout,
             )
         except asyncio.TimeoutError:

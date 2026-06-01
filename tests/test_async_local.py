@@ -1073,3 +1073,27 @@ class TestAsyncCommandReview:
         retcode, stdout, _stderr = await ((printer | upper) & AsyncTEE)
         assert retcode == 0
         assert "HELLO TEE" in stdout
+
+    @pytest.mark.asyncio
+    async def test_tee_on_pipeline_drains_upstream_stderr(self):
+        """AsyncTEE drains a chatty upstream stderr without deadlocking (#806 review).
+
+        The upstream stage writes far more to stderr than a pipe buffer holds; if
+        AsyncTEE only drained the final stage's streams, the upstream would block
+        on its full stderr pipe and ``wait()`` would hang.
+        """
+        from plumbum.commands.async_ import AsyncTEE
+
+        noisy = async_local[sys.executable][
+            "-c",
+            "import sys; sys.stderr.write('e' * 500000); sys.stdout.write('ok\\n')",
+        ]
+        upper = async_local[sys.executable][
+            "-c", "import sys\nfor line in sys.stdin:\n    print(line.strip().upper())"
+        ]
+
+        retcode, stdout, _stderr = await asyncio.wait_for(
+            (noisy | upper) & AsyncTEE, timeout=30
+        )
+        assert retcode == 0
+        assert "OK" in stdout
