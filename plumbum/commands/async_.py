@@ -246,24 +246,38 @@ class AsyncCommandMixin:
         # mirroring the synchronous Pipeline.popen.
         if isinstance(base, Pipeline):
             read_fd, write_fd = os.pipe()
-            srcproc = await self.__class__(base.srccmd)._popen(
-                args, cwd=cwd, env=env, stdin=stdin, stdout=write_fd
-            )
-            os.close(write_fd)
-            dstproc = await self.__class__(base.dstcmd)._popen(
-                cwd=cwd, env=env, stdin=read_fd, stdout=stdout, stderr=stderr
-            )
-            os.close(read_fd)
+            try:
+                srcproc = await self.__class__(base.srccmd)._popen(
+                    args,
+                    cwd=cwd,
+                    env=env,
+                    stdin=stdin,
+                    stdout=write_fd,
+                    stderr=stderr,
+                )
+            finally:
+                os.close(write_fd)
 
-            # Reap the upstream process when the pipeline is waited on; as in a
-            # shell, the pipeline's return code is that of its last stage.
+            try:
+                dstproc = await self.__class__(base.dstcmd)._popen(
+                    cwd=cwd,
+                    env=env,
+                    stdin=read_fd,
+                    stdout=stdout,
+                    stderr=stderr,
+                )
+            finally:
+                os.close(read_fd)
+
+            # Reap the upstream process when the pipeline is waited on.
             dstproc.srcproc = srcproc  # type: ignore[attr-defined]
             dstproc_wait = dstproc.wait
 
             async def wait(*wait_args: Any, **wait_kwargs: Any) -> int:
-                returncode = await dstproc_wait(*wait_args, **wait_kwargs)
-                await srcproc.wait()
-                return returncode
+                rc_dst = await dstproc_wait(*wait_args, **wait_kwargs)
+                rc_src = await srcproc.wait()
+                dstproc.returncode = rc_dst or rc_src
+                return dstproc.returncode
 
             dstproc.wait = wait  # type: ignore[method-assign]
             return dstproc
