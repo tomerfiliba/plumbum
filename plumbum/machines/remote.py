@@ -164,6 +164,38 @@ class ClosedRemote:
         raise ClosedRemoteMachine(f"{self._obj!r} has been closed")
 
 
+def _glob_to_regex(pattern: str) -> str:
+    """Translate a glob pattern into an anchored regex with pathlib-like ``**``.
+
+    ``**`` (optionally followed by ``/``) matches any number of directories,
+    while ``*`` and ``?`` match within a single path segment (i.e. they do not
+    cross ``/``). Used to match recursive globs in Python instead of relying on
+    shell-specific recursion support.
+    """
+    out = []
+    i, n = 0, len(pattern)
+    while i < n:
+        c = pattern[i]
+        if c == "*":
+            if pattern[i : i + 2] == "**":
+                i += 2
+                if pattern[i : i + 1] == "/":
+                    i += 1
+                    out.append("(?:.*/)?")  # ``**/`` -- zero or more directories
+                else:
+                    out.append(".*")
+                continue
+            out.append("[^/]*")
+        elif c == "?":
+            out.append("[^/]")
+        elif c == "/":
+            out.append("/")
+        else:
+            out.append(re.escape(c))
+        i += 1
+    return "(?s:" + "".join(out) + r")\Z"
+
+
 class BaseRemoteMachine(BaseMachine):
     """Represents a *remote machine*; serves as an entry point to everything related to that
     remote machine, such as working directory and environment manipulation, command creation,
@@ -395,14 +427,29 @@ class BaseRemoteMachine(BaseMachine):
         return files
 
     def _path_glob(self, fn: str, pattern: str) -> list[str]:
+        if "**" in pattern:
+            # Recursive glob (``**``). The shell loop below cannot do this
+            # portably: ``/bin/sh`` is often dash, and ``**`` only recurses in
+            # bash with ``globstar`` enabled. Instead, enumerate the tree with
+            # POSIX ``find`` and match in Python, so the result is identical
+            # regardless of the remote shell -- and free of the shell-glob
+            # quirks that bite paths containing glob metacharacters.
+            regex = re.compile(_glob_to_regex(pattern))
+            rc, out, _ = self._session.run(f"find {shquote(fn)}", retcode=None)
+            if rc != 0:
+                return []
+            prefix = fn.rstrip("/") + "/"
+            return [
+                line
+                for line in out.splitlines()
+                if line.startswith(prefix) and regex.match(line[len(prefix) :])
+            ]
         # shquote does not work here due to the way bash loops use space as a separator
         pattern = pattern.replace(" ", r"\ ")
         fn = fn.replace(" ", r"\ ")
-        # ``shopt -s globstar`` makes ``**`` recurse like pathlib/glob(recursive=True);
-        # it is silently ignored by shells that do not support it.
-        matches = self._session.run(
-            rf"shopt -s globstar 2>/dev/null; for fn in {fn}/{pattern}; do echo $fn; done"
-        )[1].splitlines()
+        matches = self._session.run(rf"for fn in {fn}/{pattern}; do echo $fn; done")[
+            1
+        ].splitlines()
         if len(matches) == 1 and not self._path_stat(matches[0]):
             return []  # pattern expansion failed
         return matches

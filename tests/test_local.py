@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import pickle
+import re
 import signal
 import sys
 import time
@@ -1179,3 +1180,27 @@ def test_local_glob_recursive(tmpdir):
 
     # a plain ``*`` is still non-recursive
     assert {p.name for p in base // "*.zip"} == {"top.zip"}
+
+
+@pytest.mark.parametrize(
+    ("pattern", "path", "expected"),
+    [
+        ("**/*.zip", "top.zip", True),
+        ("**/*.zip", "foo/bar/sample.zip", True),
+        ("**/*.zip", "foo/bar", False),
+        ("*.zip", "top.zip", True),
+        ("*.zip", "foo/sample.zip", False),  # ``*`` does not cross ``/``
+        ("**", "a/b/c", True),
+        ("src/**/*.py", "src/a.py", True),  # ``**/`` matches zero directories
+        ("src/**/*.py", "src/a/b.py", True),
+        ("src/**/*.py", "other/a.py", False),
+        ("a?c/*.txt", "abc/x.txt", True),
+        ("a?c/*.txt", "ac/x.txt", False),  # ``?`` requires exactly one char
+    ],
+)
+def test_glob_to_regex(pattern, path, expected):
+    # Pure-function coverage for the matcher used by remote recursive globbing,
+    # which does not require an SSH connection (see test_remote for integration).
+    from plumbum.machines.remote import _glob_to_regex
+
+    assert bool(re.match(_glob_to_regex(pattern), path)) is expected

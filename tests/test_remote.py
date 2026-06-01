@@ -347,6 +347,20 @@ s.close()
             filenames = [f.name for f in rem.cwd // ("*with space.txt")]
             assert "file with space.txt" in filenames
 
+    def test_glob_recursive(self):
+        with self._connect() as rem, rem.tempdir() as tmp:
+            (tmp / "top.zip").touch()
+            nested = tmp / "foo" / "bar"
+            nested.mkdir()
+            (nested / "sample.zip").touch()
+
+            # ``**`` should recurse like pathlib, not behave like a single ``*``
+            found = {p.name for p in tmp // "**/*.zip"}
+            assert found == {"top.zip", "sample.zip"}
+
+            # a plain ``*`` is still non-recursive
+            assert {p.name for p in tmp // "*.zip"} == {"top.zip"}
+
     def test_cmd(self):
         with self._connect() as rem:
             rem.cmd.ls("/tmp")
