@@ -345,13 +345,11 @@ class Application:
         return wrapper(subapp)
 
     def _get_partial_matches(self, partialname: str) -> list[str]:
-        matches = []
-        for switch_ in self._switches_by_name:
-            if switch_.startswith(partialname):
-                matches += [
-                    switch_,
-                ]
-        return matches
+        return [
+            switch_
+            for switch_ in self._switches_by_name
+            if switch_.startswith(partialname)
+        ]
 
     def _parse_args(
         self, argv: list[str]
@@ -534,8 +532,8 @@ class Application:
         if not argv:
             return self._get_all_completions()
 
-        partial = argv[-1] if argv else ""
-        previous = argv[:-1] if len(argv) > 1 else []
+        partial = argv[-1]
+        previous = argv[:-1]
 
         if previous and previous[-1].startswith("-"):
             last_switch = previous[-1]
