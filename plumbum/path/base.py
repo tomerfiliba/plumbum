@@ -605,16 +605,21 @@ class Path(str, ABC):
         return self
 
     @property
-    def parents(self) -> tuple[str, ...]:
+    def parents(self) -> tuple[Self, ...]:
         """Pathlib like sequence of ancestors"""
+        # reduce() infers ``str`` here because Path subclasses str, but each
+        # element is really a freshly-formed Self (from ``_form`` / ``/``).
         as_list = (
-            reduce(lambda x, y: self._form(x) / y, self.parts[:i], self.parts[0])
+            typing.cast(
+                "Self",
+                reduce(lambda x, y: self._form(x) / y, self.parts[:i], self.parts[0]),
+            )
             for i in range(len(self.parts) - 1, 0, -1)
         )
         return tuple(as_list)
 
     @property
-    def parent(self) -> str:
+    def parent(self) -> Self:
         """Pathlib like parent of the path."""
         return self.parents[0]
 

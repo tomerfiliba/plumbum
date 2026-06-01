@@ -9,15 +9,16 @@ from typing import TYPE_CHECKING, Any
 from plumbum.commands import BaseCommand, ProcessExecutionError, shquote
 from plumbum.lib import IS_WIN32
 from plumbum.machines.local import local
-from plumbum.machines.remote import BaseRemoteMachine
+from plumbum.machines.remote import BaseRemoteMachine, RemoteEnv
 from plumbum.machines.session import ShellSession
 from plumbum.path.local import LocalPath
-from plumbum.path.remote import RemotePath
+from plumbum.path.remote import RemotePath, RemoteWorkdir
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from plumbum._compat.typing import Self
+    from plumbum.commands.async_ import AsyncRemoteCommand
     from plumbum.machines.base import PopenWithAddons
 
 
@@ -540,7 +541,7 @@ class AsyncSshMachine:
         )
         self._sync_machine = sync_machine
 
-    def __getitem__(self, cmd: str | RemotePath | LocalPath) -> Any:
+    def __getitem__(self, cmd: str | RemotePath | LocalPath) -> AsyncRemoteCommand:
         """Get an async remote command by name or path."""
         from plumbum.commands.async_ import AsyncRemoteCommand
 
@@ -552,12 +553,12 @@ class AsyncSshMachine:
         return cmd in self._sync_machine
 
     @property
-    def cwd(self) -> Any:
+    def cwd(self) -> RemoteWorkdir:
         """Current working directory on remote machine."""
         return self._sync_machine.cwd
 
     @property
-    def env(self) -> Any:
+    def env(self) -> RemoteEnv:
         """Environment variables on remote machine."""
         return self._sync_machine.env
 

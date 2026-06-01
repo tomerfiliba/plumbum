@@ -18,8 +18,6 @@ to allow direct imports of commands as async versions.
 
 from __future__ import annotations
 
-from typing import cast
-
 import plumbum
 
 
@@ -46,8 +44,6 @@ def __getattr__(name: str) -> plumbum.commands.async_.AsyncLocalCommand:
             output = await (ls | grep["test"])()
     """
     try:
-        return cast(
-            "plumbum.commands.async_.AsyncLocalCommand", plumbum.async_local[name]
-        )
+        return plumbum.async_local[name]
     except plumbum.commands.CommandNotFound:
         raise AttributeError(name) from None

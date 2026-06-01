@@ -57,7 +57,7 @@ import asyncio
 import contextlib
 import os
 import sys
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TextIO
 
 from plumbum.commands.base import BoundCommand, BoundEnvCommand, Pipeline
 from plumbum.commands.processes import ProcessExecutionError, ProcessTimedOut
@@ -713,7 +713,7 @@ class _AsyncTEE(AsyncExecutionModifier):
         stderr_lines: list[str] = []
 
         async def read_stream(
-            stream: asyncio.StreamReader | None, output_list: list[str], target: Any
+            stream: asyncio.StreamReader | None, output_list: list[str], target: TextIO
         ) -> None:
             """Read from stream line by line, display, and collect output."""
             if stream is None:
@@ -730,7 +730,7 @@ class _AsyncTEE(AsyncExecutionModifier):
                 target.flush()
 
         async def drain_stream(
-            stream: asyncio.StreamReader | None, target: Any
+            stream: asyncio.StreamReader | None, target: TextIO
         ) -> None:
             """Display a stream in fixed-size chunks (no line buffering).
 

@@ -4,7 +4,7 @@ import contextlib
 import re
 import typing
 from tempfile import NamedTemporaryFile
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from plumbum.commands import CommandNotFound, ConcreteCommand, shquote
 from plumbum.lib import ProcInfo
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
 
     from plumbum._compat.typing import Self
+    from plumbum.commands.async_ import AsyncRemoteCommand
     from plumbum.machines.session import ShellSession
 
 
@@ -540,7 +541,7 @@ class AsyncRemoteMachine:
         """
         self._sync_machine = sync_machine
 
-    def __getitem__(self, cmd: str | RemotePath | LocalPath) -> Any:
+    def __getitem__(self, cmd: str | RemotePath | LocalPath) -> AsyncRemoteCommand:
         """Get an async remote command by name or path.
 
         This delegates to the sync machine for command lookup, then wraps it.
@@ -564,12 +565,12 @@ class AsyncRemoteMachine:
         return cmd in self._sync_machine
 
     @property
-    def cwd(self) -> Any:
+    def cwd(self) -> RemoteWorkdir:
         """Current working directory on remote machine."""
         return self._sync_machine.cwd
 
     @property
-    def env(self) -> Any:
+    def env(self) -> RemoteEnv:
         """Environment variables on remote machine."""
         return self._sync_machine.env
 

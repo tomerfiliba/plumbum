@@ -29,6 +29,7 @@ if typing.TYPE_CHECKING:
     from collections.abc import Generator, Iterator, Sequence
     from types import TracebackType
 
+    from plumbum.commands.async_ import AsyncLocalCommand
     from plumbum.commands.base import BaseCommand
 
 
@@ -541,7 +542,7 @@ class AsyncLocalMachine:
     .. versionadded:: 1.11
     """
 
-    def __getitem__(self, cmd: str | LocalPath) -> Any:
+    def __getitem__(self, cmd: str | LocalPath) -> AsyncLocalCommand:
         """Get an async command by name or path.
 
         This delegates to local[cmd] to get the sync command, then wraps it.
@@ -577,7 +578,7 @@ class AsyncLocalMachine:
         return local.env
 
     @staticmethod
-    def path(*parts: str) -> Any:
+    def path(*parts: str) -> LocalPath:
         """Create a LocalPath from parts."""
         return local.path(*parts)
 

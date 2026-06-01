@@ -25,7 +25,6 @@ __all__ = [
     "ask",
     "choose",
     "get_terminal_size",
-    "get_terminal_size",
     "prompt",
     "readline",
 ]

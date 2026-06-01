@@ -26,8 +26,8 @@ async def main() -> None:
     print(f"Concurrent: {len(results)} tasks completed")
 
     # Error handling
-    result = await async_local["false"].run(retcode=None)
-    print(f"Error handling: exit code = {result.returncode}")
+    run_result = await async_local["false"].run(retcode=None)
+    print(f"Error handling: exit code = {run_result.returncode}")
 
     print("\nAll examples completed!")
 
