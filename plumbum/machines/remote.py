@@ -491,9 +491,11 @@ class BaseRemoteMachine(BaseMachine):
             # regardless of the remote shell -- and free of the shell-glob
             # quirks that bite paths containing glob metacharacters.
             regex = re.compile(_glob_to_regex(pattern))
-            rc, out, _ = self._session.run(f"find {shquote(fn)}", retcode=None)
-            if rc != 0:
-                return []
+            # ``find`` exits non-zero on partial errors (e.g. an unreadable
+            # subdirectory) while still printing the matches it did find, so
+            # match whatever was printed rather than discarding it -- this
+            # mirrors ``glob.glob``, which does not error on unreadable subdirs.
+            _, out, _ = self._session.run(f"find {shquote(fn)}", retcode=None)
             prefix = fn.rstrip("/") + "/"
             return sorted(
                 line
