@@ -45,6 +45,7 @@ Fixes:
 * Correct async remote streaming, pipeline TEE, and command binding (`#806 <https://github.com/tomerfiliba/plumbum/pull/806>`_)
 * Fix a sweep of pre-2.0 bugs across cli, paths, and commands (`#808 <https://github.com/tomerfiliba/plumbum/pull/808>`_)
 * Fix assorted pre-2.0 correctness issues, including ``stem``, the SSH tunnel timeout, and ``Set`` completion (`#809 <https://github.com/tomerfiliba/plumbum/pull/809>`_)
+* Make ``**`` glob recursively like pathlib (`#628 <https://github.com/tomerfiliba/plumbum/pull/628>`_, `#812 <https://github.com/tomerfiliba/plumbum/pull/812>`_)
 
 Tests:
 
