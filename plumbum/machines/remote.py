@@ -164,6 +164,94 @@ class ClosedRemote:
         raise ClosedRemoteMachine(f"{self._obj!r} has been closed")
 
 
+def _is_recursive_glob(pattern: str) -> bool:
+    """Whether ``pattern`` uses ``**`` as a recursive wildcard.
+
+    As in :mod:`glob`/:mod:`pathlib`, ``**`` is only special when it is a whole
+    path segment; ``a**b`` is just two ``*`` wildcards within one segment.
+    """
+    return "**" in pattern.split("/")
+
+
+def _segment_to_regex(segment: str) -> str:
+    """Translate a single (slash-free) glob segment into a regex fragment.
+
+    Supports ``*``, ``?`` and ``[...]`` character classes, all confined to a
+    single path component (they never cross ``/``). A leading wildcard does not
+    match a leading dot, mirroring :func:`glob.glob` (which skips dotfiles
+    unless the pattern segment starts with a literal ``.``).
+    """
+    out = []
+    # A wildcard at the start of a segment must not match a leading dot.
+    if segment[:1] in ("*", "?", "["):
+        out.append(r"(?!\.)")
+    i, n = 0, len(segment)
+    while i < n:
+        c = segment[i]
+        if c == "*":
+            out.append("[^/]*")
+            i += 1
+        elif c == "?":
+            out.append("[^/]")
+            i += 1
+        elif c == "[":
+            j = i + 1
+            if j < n and segment[j] == "!":
+                j += 1
+            if j < n and segment[j] == "]":
+                j += 1
+            while j < n and segment[j] != "]":
+                j += 1
+            if j >= n:  # no closing bracket -- treat "[" as a literal
+                out.append(re.escape("["))
+                i += 1
+            else:
+                stuff = segment[i + 1 : j].replace("\\", r"\\")
+                if stuff[0] == "!":
+                    stuff = "^" + stuff[1:]
+                elif stuff[0] in ("^", "["):
+                    stuff = "\\" + stuff
+                out.append(f"[{stuff}]")
+                i = j + 1
+        else:
+            out.append(re.escape(c))
+            i += 1
+    return "".join(out)
+
+
+def _glob_to_regex(pattern: str) -> str:
+    """Translate a glob pattern into an anchored regex with pathlib-like ``**``.
+
+    ``**`` as a whole path segment matches any number of (non-hidden)
+    directories; ``*``, ``?`` and ``[...]`` match within a single path segment.
+    Dotfiles are not matched unless the relevant pattern segment starts with a
+    literal ``.`` -- matching :func:`glob.glob`, which is the local backend.
+    Used to match recursive globs in Python instead of relying on
+    shell-specific recursion support.
+    """
+    segments = pattern.split("/")
+    out = []
+    need_sep = False  # whether a "/" must precede the next fragment
+    for i, segment in enumerate(segments):
+        if segment == "**":
+            if need_sep:
+                out.append("/")
+            if i == len(segments) - 1:
+                # trailing ``**``: one or more non-hidden path components
+                out.append(r"(?!\.)[^/]+(?:/(?!\.)[^/]+)*")
+                need_sep = False
+            else:
+                # ``**/``: zero or more non-hidden directories (slash included)
+                out.append(r"(?:(?!\.)[^/]+/)*")
+                need_sep = False
+            continue
+        if need_sep:
+            out.append("/")
+        out.append(_segment_to_regex(segment))
+        need_sep = True
+    return "(?s:" + "".join(out) + r")\Z"
+
+
 class BaseRemoteMachine(BaseMachine):
     """Represents a *remote machine*; serves as an entry point to everything related to that
     remote machine, such as working directory and environment manipulation, command creation,
@@ -395,6 +483,25 @@ class BaseRemoteMachine(BaseMachine):
         return files
 
     def _path_glob(self, fn: str, pattern: str) -> list[str]:
+        if _is_recursive_glob(pattern):
+            # Recursive glob (``**``). The shell loop below cannot do this
+            # portably: ``/bin/sh`` is often dash, and ``**`` only recurses in
+            # bash with ``globstar`` enabled. Instead, enumerate the tree with
+            # POSIX ``find`` and match in Python, so the result is identical
+            # regardless of the remote shell -- and free of the shell-glob
+            # quirks that bite paths containing glob metacharacters.
+            regex = re.compile(_glob_to_regex(pattern))
+            # ``find`` exits non-zero on partial errors (e.g. an unreadable
+            # subdirectory) while still printing the matches it did find, so
+            # match whatever was printed rather than discarding it -- this
+            # mirrors ``glob.glob``, which does not error on unreadable subdirs.
+            _, out, _ = self._session.run(f"find {shquote(fn)}", retcode=None)
+            prefix = fn.rstrip("/") + "/"
+            return sorted(
+                line
+                for line in out.splitlines()
+                if line.startswith(prefix) and regex.match(line[len(prefix) :])
+            )
         # shquote does not work here due to the way bash loops use space as a separator
         pattern = pattern.replace(" ", r"\ ")
         fn = fn.replace(" ", r"\ ")
