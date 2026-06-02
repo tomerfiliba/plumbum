@@ -190,6 +190,7 @@ class Application:
         "see '{parent} {sub} --help' for more info"
     )
     ALLOW_ABBREV: bool = False
+    CONFIG_FILES: ClassVar[tuple[str, ...]] = ()
 
     parent: Self | None = None
     nested_command: tuple[type[Application], list[str]] | None = None
@@ -291,6 +292,49 @@ class Application:
         cls._unbound_switches += tuple(
             name.lstrip("-") for name in switch_names if name
         )
+
+    @classmethod
+    def configs(cls, *paths: str) -> Callable[[type[Application]], type[Application]]:
+        """Decorator that registers config files for this application.
+
+        Config files contain CLI arguments (one per line or space-separated).
+        Lines starting with ``#`` are treated as comments.
+        Arguments from config files are processed first; CLI arguments override them.
+
+        Usage::
+
+            @MyApp.configs("~/.config/myapp/config.cfg", "/etc/myapp.conf")
+            class MyApp(cli.Application):
+                pass"""
+
+        def wrapper(app_cls: type[Application]) -> type[Application]:
+            app_cls.CONFIG_FILES = app_cls.CONFIG_FILES + paths
+            return app_cls
+
+        return wrapper
+
+    @staticmethod
+    def _read_config_files(config_files: tuple[str, ...]) -> list[str]:
+        """Read config files and return CLI-style argument list."""
+        import shlex
+        args: list[str] = []
+        for path in config_files:
+            expanded = os.path.expanduser(path)
+            if not os.path.isfile(expanded):
+                continue
+            try:
+                with open(expanded, encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith("#"):
+                            continue
+                        try:
+                            args.extend(shlex.split(line))
+                        except ValueError:
+                            args.append(line)
+            except OSError:
+                pass
+        return args
 
     @typing.overload
     @classmethod
@@ -954,6 +998,11 @@ complete -F _{prog_name}_completion {prog_name}
             argv = sys.argv
         cls.autocomplete(argv)
         argv = list(argv)
+        # Read config files and prepend their arguments (CLI args take precedence)
+        if cls.CONFIG_FILES:
+            config_args = cls._read_config_files(cls.CONFIG_FILES)
+            if config_args:
+                argv = argv[:1] + config_args + argv[1:]
         inst = cls(argv.pop(0))
         retcode = 0
         try:
@@ -1358,6 +1407,12 @@ complete -F _{prog_name}_completion {prog_name}
                             subcls.name, padding, bodycolor | colors.filter(msg)
                         )
                     )
+
+        if self.CONFIG_FILES:
+            print()
+            print(T_("Argument config files:"))
+            for path in self.CONFIG_FILES:
+                print(f"    {path}")
 
     def _get_prog_version(self) -> str | None:
         ver: str | None = None
