@@ -46,6 +46,7 @@ Fixes:
 * Fix a sweep of pre-2.0 bugs across cli, paths, and commands (`#808 <https://github.com/tomerfiliba/plumbum/pull/808>`_)
 * Fix assorted pre-2.0 correctness issues, including ``stem``, the SSH tunnel timeout, and ``Set`` completion (`#809 <https://github.com/tomerfiliba/plumbum/pull/809>`_)
 * Make ``**`` glob recursively like pathlib (`#628 <https://github.com/tomerfiliba/plumbum/pull/628>`_, `#812 <https://github.com/tomerfiliba/plumbum/pull/812>`_)
+* Fix SSH drive-letter path handling on Windows by @SuvarnaNarayanan (`#762 <https://github.com/tomerfiliba/plumbum/pull/762>`_)
 
 Tests:
 
@@ -65,6 +66,7 @@ Internal:
 * Add ``AGENTS.md`` and avoid extra files by @henryiii (`#803 <https://github.com/tomerfiliba/plumbum/pull/803>`_)
 * Remove dead code and simplify a few spots (`#811 <https://github.com/tomerfiliba/plumbum/pull/811>`_)
 * Tighten loose type annotations across the public API (`#810 <https://github.com/tomerfiliba/plumbum/pull/810>`_)
+* Make module import lazy by @henryiii (`#814 <https://github.com/tomerfiliba/plumbum/pull/814>`_)
 
 Docs:
 
