@@ -413,7 +413,7 @@ class SshMachine(BaseRemoteMachine):
         if isinstance(dst, RemotePath):
             raise TypeError(f"dst of download cannot be {dst!r}")
         if self._scp_translate:
-            src = self._translate_drive_letter(src)
+            # only the local path (dst) is parsed by the local scp binary
             dst = self._translate_drive_letter(dst)
         self._scp_command(f"{self._fqhost}:{shquote(src)}", dst)
 
@@ -425,8 +425,8 @@ class SshMachine(BaseRemoteMachine):
         if isinstance(dst, RemotePath) and dst.remote != self:
             raise TypeError(f"dst {dst!r} points to a different remote machine")
         if self._scp_translate:
+            # only the local path (src) is parsed by the local scp binary
             src = self._translate_drive_letter(src)
-            dst = self._translate_drive_letter(dst)
         self._scp_command(src, f"{self._fqhost}:{shquote(dst)}")
 
 
