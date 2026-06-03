@@ -6,6 +6,8 @@ all the standard syntax for colors.
 
 from __future__ import annotations
 
+__lazy_modules__ = {"atexit"}
+
 import atexit
 import sys
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"contextlib", "pickle", "plumbum.commands.processes", "subprocess"}
+
 import contextlib
 import errno
 import os

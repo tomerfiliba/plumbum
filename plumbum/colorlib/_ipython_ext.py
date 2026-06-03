@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"io", "typing"}
+
 import sys
 from io import StringIO
 from typing import Any

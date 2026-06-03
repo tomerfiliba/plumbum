@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "plumbum.machines.local",
+    "plumbum.path.base",
+    "plumbum.path.local",
+    "plumbum.path.remote",
+}
+
 import os
 
 from plumbum.machines.local import local

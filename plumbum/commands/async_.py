@@ -53,6 +53,14 @@ Example Usage
 
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "asyncio",
+    "contextlib",
+    "plumbum.commands.processes",
+    "plumbum.machines.local",
+    "typing_extensions",
+}
+
 import asyncio
 import contextlib
 import os

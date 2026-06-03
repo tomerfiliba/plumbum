@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "contextlib",
+    "plumbum.commands",
+    "plumbum.commands.processes",
+    "plumbum.machines.session",
+    "plumbum.path",
+    "plumbum.path.local",
+    "plumbum.path.remote",
+}
+
 import contextlib
 import errno
 import logging

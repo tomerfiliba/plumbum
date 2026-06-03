@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"tempfile"}
+
 import os
 import platform
 import sys

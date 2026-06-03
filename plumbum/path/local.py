@@ -1,5 +1,18 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "contextlib",
+    "glob",
+    "grp",
+    "plumbum.lib",
+    "plumbum.path.remote",
+    "pwd",
+    "shutil",
+    "urllib",
+    "urllib.parse",
+    "urllib.request",
+}
+
 import errno
 import glob
 import logging

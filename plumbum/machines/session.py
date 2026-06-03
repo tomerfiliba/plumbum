@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"contextlib", "plumbum.commands", "random", "threading"}
+
 import contextlib
 import logging
 import random

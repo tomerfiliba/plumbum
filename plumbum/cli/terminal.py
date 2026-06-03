@@ -5,6 +5,12 @@ Terminal-related utilities
 
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "contextlib",
+    f"{__spec__.parent}.progress",
+    f"{__spec__.parent}.termsize",
+}
+
 import contextlib
 import os
 import sys

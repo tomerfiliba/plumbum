@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"gettext", "importlib", "importlib.resources"}
+
 import locale
 
 # High performance method for English (no translation needed)

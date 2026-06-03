@@ -1,5 +1,19 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "contextlib",
+    "platform",
+    "plumbum.commands.daemons",
+    "plumbum.commands.processes",
+    "plumbum.machines._windows",
+    "plumbum.machines.session",
+    "plumbum.path",
+    "plumbum.path.remote",
+    "re",
+    "subprocess",
+    "tempfile",
+}
+
 import contextlib
 import logging
 import os

@@ -1,5 +1,19 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "contextlib",
+    "plumbum.commands",
+    "plumbum.lib",
+    "plumbum.machines.local",
+    "plumbum.machines.session",
+    "plumbum.path",
+    "plumbum.path.local",
+    "plumbum.path.remote",
+    "re",
+    "socket",
+    "warnings",
+}
+
 import re
 import socket
 import warnings

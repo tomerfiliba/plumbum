@@ -9,6 +9,8 @@ With the ``Style`` class, any color can be directly called or given to a with st
 
 from __future__ import annotations
 
+__lazy_modules__ = {"contextlib", "copy", "platform", "re"}
+
 import contextlib
 import dataclasses
 import os

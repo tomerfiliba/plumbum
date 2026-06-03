@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"plumbum.commands", "plumbum.commands.processes"}
+
 import abc
 import os
 import typing

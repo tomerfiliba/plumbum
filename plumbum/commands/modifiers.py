@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "logging",
+    "plumbum.commands.base",
+    "plumbum.commands.processes",
+    "plumbum.lib",
+    "select",
+    "subprocess",
+}
+
 import sys
 import typing
 from logging import DEBUG, INFO

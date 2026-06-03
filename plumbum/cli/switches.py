@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"contextlib", "inspect", "plumbum.lib"}
+
 import builtins
 import contextlib
 import dataclasses

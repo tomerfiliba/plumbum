@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"configparser", "contextlib"}
+
 import contextlib
 from abc import ABC, abstractmethod
 from configparser import ConfigParser, NoOptionError, NoSectionError

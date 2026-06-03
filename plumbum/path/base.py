@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"fnmatch", "functools", "itertools", "operator", "warnings"}
+
 import fnmatch
 import itertools
 import operator

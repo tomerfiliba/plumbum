@@ -241,3 +241,7 @@ exclude_also = [
     "raise NotImplementedError",
     "if __name__ == .__main__.:",
 ]
+
+# Fixed in CPython 3.15.0b2
+[tool.flake8-lazy.standalone]
+lazy-exclude-modules = ["plumbum.machines"]

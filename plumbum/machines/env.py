@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"contextlib", "copy"}
+
 import copy
 import os
 import typing

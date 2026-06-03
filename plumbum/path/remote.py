@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "contextlib",
+    "copy",
+    "plumbum.commands",
+    "urllib",
+    "urllib.request",
+}
+
 import copy
 import errno
 import os

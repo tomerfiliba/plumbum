@@ -4,6 +4,8 @@ Color-related factories. They produce Styles.
 
 from __future__ import annotations
 
+__lazy_modules__ = {f"{__spec__.parent}.names", "functools", "operator"}
+
 import functools
 import operator
 import sys
