@@ -392,13 +392,18 @@ class SshMachine(BaseRemoteMachine):
         executable. The native Windows OpenSSH ``scp`` accepts drive-letter
         paths directly, so for it (and on POSIX hosts) no translation is needed.
         """
-        cmd: Any = scp_command
-        while not hasattr(cmd, "executable"):
-            cmd = getattr(cmd, "cmd", None)
-            if cmd is None:
-                return False
-        folder = local.path(cmd.executable).dirname
-        return any((folder / dll).exists() for dll in ("cygwin1.dll", "msys-2.0.dll"))
+        try:
+            cmd: Any = scp_command
+            while not hasattr(cmd, "executable"):
+                cmd = getattr(cmd, "cmd", None)
+                if cmd is None:
+                    return False
+            folder = local.path(cmd.executable).dirname
+            return any(
+                (folder / dll).exists() for dll in ("cygwin1.dll", "msys-2.0.dll")
+            )
+        except (AttributeError, OSError):
+            return False
 
     def download(self, src: str | RemotePath, dst: str | LocalPath) -> None:
         if isinstance(src, LocalPath):
