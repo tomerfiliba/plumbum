@@ -5,6 +5,8 @@ Terminal size utility
 
 from __future__ import annotations
 
+__lazy_modules__ = {"contextlib", "platform", "struct", "warnings"}
+
 import contextlib
 import os
 import platform

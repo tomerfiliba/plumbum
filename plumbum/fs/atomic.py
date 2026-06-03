@@ -4,6 +4,8 @@ Atomic file operations
 
 from __future__ import annotations
 
+__lazy_modules__ = {"atexit", "msvcrt", "plumbum.machines.local", "threading"}
+
 import atexit
 import contextlib
 import os

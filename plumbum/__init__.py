@@ -37,6 +37,8 @@ See https://plumbum.readthedocs.io for full details
 
 from __future__ import annotations
 
+__lazy_modules__ = {"plumbum.colorlib", "plumbum.commands", "plumbum.machines.local"}
+
 import typing
 
 # Avoids a circular import error later
@@ -54,7 +56,12 @@ from plumbum.commands import (
     ProcessLineTimedOut,
     ProcessTimedOut,
 )
-from plumbum.machines import BaseRemoteMachine, PuttyMachine, SshMachine, local
+from plumbum.machines import (
+    BaseRemoteMachine,
+    PuttyMachine,
+    SshMachine,
+    local,
+)
 from plumbum.machines.local import async_local
 from plumbum.path import LocalPath, Path, RemotePath
 from plumbum.version import version

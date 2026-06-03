@@ -58,3 +58,10 @@ repos:
   - id: rst-backticks
   - id: rst-directive-colons
   - id: rst-inline-touching-normal
+
+- repo: https://github.com/henryiii/flake8-lazy
+  rev: v0.8.1
+  hooks:
+    - id: flake8-lazy
+      args: [--apply=set]
+      files: "^plumbum"

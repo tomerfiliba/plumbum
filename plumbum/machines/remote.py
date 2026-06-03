@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "contextlib",
+    "plumbum.lib",
+    "plumbum.path",
+    "plumbum.path.local",
+    "re",
+    "tempfile",
+}
+
 import contextlib
 import re
 import typing

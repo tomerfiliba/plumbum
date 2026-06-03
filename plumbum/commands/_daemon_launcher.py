@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"pickle", "traceback"}
+
 import os
 import pickle
 import sys

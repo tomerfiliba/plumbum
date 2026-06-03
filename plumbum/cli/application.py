@@ -1,5 +1,17 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "collections",
+    "contextlib",
+    f"{__spec__.parent}.terminal",
+    "functools",
+    "inspect",
+    "plumbum.colorlib",
+    "plumbum.colorlib.styles",
+    "plumbum.lib",
+    "textwrap",
+}
+
 import contextlib
 import functools
 import inspect

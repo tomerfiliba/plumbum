@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "contextlib",
+    "functools",
+    "plumbum.commands.modifiers",
+    "plumbum.commands.processes",
+    "shlex",
+    "tempfile",
+    "types",
+}
+
 import contextlib
 import functools
 import shlex

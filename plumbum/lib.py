@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__lazy_modules__ = {"inspect", "io"}
+
 import inspect
 import os
 import sys

@@ -5,6 +5,8 @@ Progress bar
 
 from __future__ import annotations
 
+__lazy_modules__ = {"plumbum.cli.termsize", "warnings"}
+
 import abc
 import sys
 import time
