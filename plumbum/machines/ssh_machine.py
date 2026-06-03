@@ -143,7 +143,7 @@ class SshMachine(BaseRemoteMachine):
                         Ctrl+C (SIGINT)
     """
 
-    __slots__ = ("_fqhost", "_scp_command", "_ssh_command", "host")
+    __slots__ = ("_fqhost", "_scp_command", "_scp_translate", "_ssh_command", "host")
 
     def __init__(
         self,
@@ -189,6 +189,7 @@ class SshMachine(BaseRemoteMachine):
         scp_args.extend(scp_opts)
         self._ssh_command = ssh_command[tuple(ssh_args)]
         self._scp_command = scp_command[tuple(scp_args)]
+        self._scp_translate = IS_WIN32 and self._scp_uses_posix_paths(self._scp_command)
         BaseRemoteMachine.__init__(
             self,
             encoding=encoding,
@@ -394,6 +395,30 @@ class SshMachine(BaseRemoteMachine):
             return "/" + path.replace(":", "").replace("\\", "/")
         return path
 
+    @staticmethod
+    def _scp_uses_posix_paths(scp_command: BaseCommand) -> bool:
+        """Whether ``scp_command`` expects POSIX-style ``/c/...`` local paths.
+
+        Cygwin- and MSYS2-based builds of ``scp`` (such as the one bundled with
+        Git for Windows) cannot make sense of native ``c:\\...`` paths and need
+        drive letters rewritten as ``/c/...``. They are recognisable by the
+        ``cygwin1.dll`` / ``msys-2.0.dll`` runtime that sits next to the
+        executable. The native Windows OpenSSH ``scp`` accepts drive-letter
+        paths directly, so for it (and on POSIX hosts) no translation is needed.
+        """
+        try:
+            cmd: Any = scp_command
+            while not hasattr(cmd, "executable"):
+                cmd = getattr(cmd, "cmd", None)
+                if cmd is None:
+                    return False
+            folder = local.path(cmd.executable).dirname
+            return any(
+                (folder / dll).exists() for dll in ("cygwin1.dll", "msys-2.0.dll")
+            )
+        except (AttributeError, OSError):
+            return False
+
     def download(self, src: str | RemotePath, dst: str | LocalPath) -> None:
         if isinstance(src, LocalPath):
             raise TypeError(f"src of download cannot be {src!r}")
@@ -401,8 +426,8 @@ class SshMachine(BaseRemoteMachine):
             raise TypeError(f"src {src!r} points to a different remote machine")
         if isinstance(dst, RemotePath):
             raise TypeError(f"dst of download cannot be {dst!r}")
-        if IS_WIN32:
-            src = self._translate_drive_letter(src)
+        if self._scp_translate:
+            # only the local path (dst) is parsed by the local scp binary
             dst = self._translate_drive_letter(dst)
         self._scp_command(f"{self._fqhost}:{shquote(src)}", dst)
 
@@ -413,9 +438,9 @@ class SshMachine(BaseRemoteMachine):
             raise TypeError(f"dst of upload cannot be {dst!r}")
         if isinstance(dst, RemotePath) and dst.remote != self:
             raise TypeError(f"dst {dst!r} points to a different remote machine")
-        if IS_WIN32:
+        if self._scp_translate:
+            # only the local path (src) is parsed by the local scp binary
             src = self._translate_drive_letter(src)
-            dst = self._translate_drive_letter(dst)
         self._scp_command(src, f"{self._fqhost}:{shquote(dst)}")
 
 
