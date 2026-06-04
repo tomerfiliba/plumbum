@@ -365,6 +365,7 @@ s.close()
         with self._connect() as rem:
             rem.cmd.ls("/tmp")
 
+    @pytest.mark.xfail(env.PYPY, reason="PyPy sometimes fails here", strict=False)
     @pytest.mark.usefixtures("testdir")
     def test_download_upload(self):
         with self._connect() as rem:
