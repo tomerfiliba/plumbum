@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"fnmatch", "functools", "itertools", "operator", "warnings"}
+__lazy_modules__ = {"fnmatch", "functools", "itertools", "operator"}
 
 import fnmatch
 import itertools
 import operator
 import os
 import typing
-import warnings
 from abc import ABC, abstractmethod
 from functools import reduce
 from typing import IO, SupportsIndex, TypeVar
@@ -162,12 +161,6 @@ class Path(str, ABC):
         """The basename component of this path"""
 
     @property
-    def basename(self) -> str:
-        """Included for compatibility with older Plumbum code"""
-        warnings.warn("Use .name instead", FutureWarning, stacklevel=2)
-        return self.name
-
-    @property
     @abstractmethod
     def stem(self) -> str:
         """The name without an extension, or the last component of the path"""
@@ -235,24 +228,9 @@ class Path(str, ABC):
     def is_dir(self) -> bool:
         """Returns ``True`` if this path is a directory, ``False`` otherwise"""
 
-    def isdir(self) -> bool:
-        """Included for compatibility with older Plumbum code"""
-        warnings.warn("Use .is_dir() instead", FutureWarning, stacklevel=2)
-        return self.is_dir()
-
     @abstractmethod
     def is_file(self) -> bool:
         """Returns ``True`` if this path is a regular file, ``False`` otherwise"""
-
-    def isfile(self) -> bool:
-        """Included for compatibility with older Plumbum code"""
-        warnings.warn("Use .is_file() instead", FutureWarning, stacklevel=2)
-        return self.is_file()
-
-    def islink(self) -> bool:
-        """Included for compatibility with older Plumbum code"""
-        warnings.warn("Use is_symlink instead", FutureWarning, stacklevel=2)
-        return self.is_symlink()
 
     @abstractmethod
     def is_symlink(self) -> bool:

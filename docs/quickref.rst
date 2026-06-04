@@ -98,7 +98,6 @@ Subtraction       Relative path
 Property                                            Description                 Compare to Pathlib
 =================================================== =========================== ==================
 ``.name``                                           The file name               ✓
-``.basename``                                       DEPRECATED
 ``.stem``                                           Name without extension      ✓
 ``.dirname``                                        Directory name              ✗
 ``.root``                                           The file tree root          ✓
@@ -128,11 +127,8 @@ Method                                              Description                 
 ``.list()``                                         Files in directory          ✗ (shortcut)
 ``.iterdir()``                                      Fast iterator over dir      ✓
 ``.is_dir()``                                       If path is dir              ✓
-``.isdir()``                                        DEPRECATED
 ``.is_file()``                                      If is file                  ✓
-``.isfile()``                                       DEPRECATED
 ``.is_symlink()``                                   If is symlink               ✓
-``.islink()``                                       DEPRECATED
 ``.exists()``                                       If file exists              ✓
 ``.stat()``                                         Return OS stats             ✓
 ``.with_name(name)``                                Replace filename            ✓

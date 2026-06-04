@@ -31,6 +31,15 @@ Features:
   * Application instances now provide bash and fish completions out of the box (`#782 <https://github.com/tomerfiliba/plumbum/pull/782>`_)
   * Drop use of ``atexit`` for color handling to avoid teardown issues (`#785 <https://github.com/tomerfiliba/plumbum/pull/785>`_)
 
+Removed:
+
+* Removed the long-deprecated path aliases ``.basename``, ``.isdir()``, ``.isfile()``, and ``.islink()``; use ``.name``, ``.is_dir()``, ``.is_file()``, and ``.is_symlink()`` instead.
+* Removed the deprecated ``SshMachine.nohup()`` method; use the command ``.nohup`` modifier or ``daemonic_popen()`` instead.
+
+Deprecated:
+
+* ``Style.print_`` (a Python 2 era shortcut) now emits a ``FutureWarning``; use ``.print`` instead.
+
 Fixes:
 
 * HTMLStyle should respect the color setting by @henryiii (`#776 <https://github.com/tomerfiliba/plumbum/pull/776>`_)

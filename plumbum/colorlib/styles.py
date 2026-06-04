@@ -9,7 +9,7 @@ With the ``Style`` class, any color can be directly called or given to a with st
 
 from __future__ import annotations
 
-__lazy_modules__ = {"contextlib", "copy", "platform", "re"}
+__lazy_modules__ = {"contextlib", "copy", "platform", "re", "warnings"}
 
 import contextlib
 import dataclasses
@@ -18,6 +18,7 @@ import platform
 import re
 import sys
 import typing
+import warnings
 from abc import ABCMeta, abstractmethod
 from copy import copy
 from typing import Any, ClassVar, Literal, TextIO, TypeVar
@@ -583,8 +584,10 @@ class Style(metaclass=ABCMeta):
             # OSError (errno 22, EINVAL) is raised on Windows when the pipe is closed
             pass
 
-    print_ = print
-    """DEPRECATED: Shortcut from classic Python 2"""
+    def print_(self, *printables: object, **kargs: Any) -> None:
+        """DEPRECATED: Shortcut from classic Python 2; use ``.print`` instead."""
+        warnings.warn("Use .print instead", FutureWarning, stacklevel=2)
+        self.print(*printables, **kargs)
 
     def __getitem__(self, wrapped: str) -> str:
         """The [] syntax is supported for wrapping"""
