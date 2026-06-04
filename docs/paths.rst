@@ -15,6 +15,18 @@ with a few improvements and extra features.
 
     Paths now support more pathlib like syntax, several old names have been depreciated, like ``.basename``
 
+.. versionadded:: 2.0
+
+    Many more pathlib-compatible members are now available, including ``joinpath``, ``with_stem``,
+    ``anchor``, ``as_posix``, ``absolute``, ``is_absolute``, ``is_relative_to``, ``samefile``,
+    ``match``, ``rglob``, ``rmdir``, ``lstat``, ``symlink_to``, ``hardlink_to``, and the
+    ``read_text``/``read_bytes``/``write_text``/``write_bytes`` helpers.
+
+.. versionchanged:: 2.0
+
+    The long-deprecated ``.basename``, ``.isdir()``, ``.isfile()``, and ``.islink()`` aliases
+    have been removed; use ``.name``, ``.is_dir()``, ``.is_file()``, and ``.is_symlink()`` instead.
+
 The primary ways to create paths are from ``.cwd``, ``.env.home``, or ``.path(...)`` on a local
 or remote machine, with ``/``, ``//`` or ``[]`` for composition.
 

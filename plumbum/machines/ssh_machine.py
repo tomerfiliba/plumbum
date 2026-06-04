@@ -11,12 +11,10 @@ __lazy_modules__ = {
     "plumbum.path.remote",
     "re",
     "socket",
-    "warnings",
 }
 
 import re
 import socket
-import warnings
 from contextlib import closing
 from typing import TYPE_CHECKING, Any
 
@@ -229,19 +227,6 @@ class SshMachine(BaseRemoteMachine):
             else:
                 cmdline.append(args)  # type: ignore[arg-type]
         return self._ssh_command[tuple(cmdline)].popen(**kwargs)
-
-    def nohup(self, command: BaseCommand) -> None:
-        """
-        Runs the given command using ``nohup`` and redirects std handles,
-        allowing the command to run "detached" from its controlling TTY or parent.
-        Does not return anything. Depreciated (use command.nohup or daemonic_popen).
-        """
-        warnings.warn(
-            "Use .nohup on the command or use daemonic_popen)",
-            FutureWarning,
-            stacklevel=2,
-        )
-        self.daemonic_popen(command, cwd=".", stdout=None, stderr=None, append=False)
 
     def daemonic_popen(
         self,
@@ -531,7 +516,7 @@ class AsyncSshMachine:
                 rem["echo"]("task2"),
             )
 
-    .. versionadded:: 1.11
+    .. versionadded:: 2.0
     """
 
     __slots__ = ("_sync_machine",)

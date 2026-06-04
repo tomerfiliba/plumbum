@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"fnmatch", "functools", "itertools", "operator", "warnings"}
+__lazy_modules__ = {"fnmatch", "functools", "itertools", "operator"}
 
 import fnmatch
 import itertools
 import operator
 import os
 import typing
-import warnings
 from abc import ABC, abstractmethod
 from functools import reduce
 from typing import IO, SupportsIndex, TypeVar
@@ -130,7 +129,10 @@ class Path(str, ABC):
 
     # Currently, typed as just "str" to match .join, though Path should mostly work too.
     def joinpath(self, *others: str) -> Self:
-        """Pathlib-compatible alias of :meth:`join`."""
+        """Pathlib-compatible alias of :meth:`join`.
+
+        .. versionadded:: 2.0
+        """
         return self.join(*others)
 
     def walk(
@@ -157,12 +159,6 @@ class Path(str, ABC):
     @abstractmethod
     def name(self) -> str:
         """The basename component of this path"""
-
-    @property
-    def basename(self) -> str:
-        """Included for compatibility with older Plumbum code"""
-        warnings.warn("Use .name instead", FutureWarning, stacklevel=2)
-        return self.name
 
     @property
     @abstractmethod
@@ -232,24 +228,9 @@ class Path(str, ABC):
     def is_dir(self) -> bool:
         """Returns ``True`` if this path is a directory, ``False`` otherwise"""
 
-    def isdir(self) -> bool:
-        """Included for compatibility with older Plumbum code"""
-        warnings.warn("Use .is_dir() instead", FutureWarning, stacklevel=2)
-        return self.is_dir()
-
     @abstractmethod
     def is_file(self) -> bool:
         """Returns ``True`` if this path is a regular file, ``False`` otherwise"""
-
-    def isfile(self) -> bool:
-        """Included for compatibility with older Plumbum code"""
-        warnings.warn("Use .is_file() instead", FutureWarning, stacklevel=2)
-        return self.is_file()
-
-    def islink(self) -> bool:
-        """Included for compatibility with older Plumbum code"""
-        warnings.warn("Use is_symlink instead", FutureWarning, stacklevel=2)
-        return self.is_symlink()
 
     @abstractmethod
     def is_symlink(self) -> bool:
@@ -280,7 +261,10 @@ class Path(str, ABC):
         return self if len(self.suffixes) > 0 else self.with_suffix(suffix)
 
     def with_stem(self, stem: str) -> Self:
-        """Returns a path with the stem replaced."""
+        """Returns a path with the stem replaced.
+
+        .. versionadded:: 2.0
+        """
         return self.with_name(stem + "".join(self.suffixes))
 
     @abstractmethod
@@ -300,7 +284,10 @@ class Path(str, ABC):
         return self.move(self.up() / newname)
 
     def rmdir(self) -> None:
-        """Removes this directory if it is empty."""
+        """Removes this directory if it is empty.
+
+        .. versionadded:: 2.0
+        """
         if not self.is_dir():
             raise NotADirectoryError(str(self))
         if any(True for _ in self.iterdir()):
@@ -343,7 +330,10 @@ class Path(str, ABC):
         """opens this path as a file"""
 
     def read_bytes(self) -> bytes:
-        """Returns the contents of this file as ``bytes``."""
+        """Returns the contents of this file as ``bytes``.
+
+        .. versionadded:: 2.0
+        """
         try:
             with self.open("rb") as f:
                 data = f.read()
@@ -357,7 +347,10 @@ class Path(str, ABC):
         return data
 
     def read_text(self, encoding: str | None = None, errors: str | None = None) -> str:
-        """Returns the contents of this file as ``str``."""
+        """Returns the contents of this file as ``str``.
+
+        .. versionadded:: 2.0
+        """
         if errors not in {None, "strict"}:
             raise NotImplementedError("Only errors='strict' is currently supported")
         data = self.read(encoding=encoding or "utf-8")
@@ -376,7 +369,10 @@ class Path(str, ABC):
         or ``'utf8'``"""
 
     def write_bytes(self, data: bytes) -> int:
-        """Writes bytes to this file and returns the number of bytes written."""
+        """Writes bytes to this file and returns the number of bytes written.
+
+        .. versionadded:: 2.0
+        """
         if not isinstance(data, bytes):
             raise TypeError("data must be bytes")
         self.write(data)
@@ -389,7 +385,10 @@ class Path(str, ABC):
         errors: str | None = None,
         newline: str | None = None,
     ) -> int:
-        """Writes text to this file and returns the number of characters written."""
+        """Writes text to this file and returns the number of characters written.
+
+        .. versionadded:: 2.0
+        """
         if errors not in {None, "strict"}:
             raise NotImplementedError("Only errors='strict' is currently supported")
         if newline is not None:
@@ -463,6 +462,8 @@ class Path(str, ABC):
         """Pathlib-compatible symbolic-link creation.
 
         Creates a symbolic link at ``self`` that points to ``target``.
+
+        .. versionadded:: 2.0
         """
         target = self._form(target)
         target.symlink(self)
@@ -471,6 +472,8 @@ class Path(str, ABC):
         """Pathlib-compatible hard-link creation.
 
         Creates a hard link at ``self`` that points to ``target``.
+
+        .. versionadded:: 2.0
         """
         target = self._form(target)
         target.link(self)
@@ -480,7 +483,10 @@ class Path(str, ABC):
         """Deletes a symbolic link"""
 
     def lstat(self) -> os.stat_result:
-        """Like :meth:`stat`. Backends may override for symlink-specific behavior."""
+        """Like :meth:`stat`. Backends may override for symlink-specific behavior.
+
+        .. versionadded:: 2.0
+        """
         return self.stat()
 
     def split(self, *_args: object, **_kargs: object) -> builtins.list[str]:
@@ -501,26 +507,41 @@ class Path(str, ABC):
 
     @property
     def anchor(self) -> str:
-        """Pathlib-compatible anchor (drive + root)."""
+        """Pathlib-compatible anchor (drive + root).
+
+        .. versionadded:: 2.0
+        """
         return self.drive + self.root
 
     def as_posix(self) -> str:
-        """Returns the path string with POSIX separators."""
+        """Returns the path string with POSIX separators.
+
+        .. versionadded:: 2.0
+        """
         return str(self).replace("\\", "/")
 
     def absolute(self) -> Self:
-        """Returns an absolute version of this path."""
+        """Returns an absolute version of this path.
+
+        .. versionadded:: 2.0
+        """
         return self.resolve()
 
     def is_absolute(self) -> bool:
-        """Returns ``True`` if this path is absolute."""
+        """Returns ``True`` if this path is absolute.
+
+        .. versionadded:: 2.0
+        """
         path = str(self)
         return path.startswith(("/", "\\")) or (
             len(path) >= 3 and path[1] == ":" and path[2] in ("/", "\\")
         )
 
     def is_relative_to(self, other: Self | str) -> bool:
-        """Returns ``True`` when this path is within ``other``."""
+        """Returns ``True`` when this path is within ``other``.
+
+        .. versionadded:: 2.0
+        """
         other = self._form(other)
         if self.anchor != other.anchor:
             return False
@@ -534,14 +555,20 @@ class Path(str, ABC):
         return len(parts) >= len(base_parts) and parts[: len(base_parts)] == base_parts
 
     def samefile(self, other: Self | str) -> bool:
-        """Returns ``True`` if this path and ``other`` point to the same file."""
+        """Returns ``True`` if this path and ``other`` point to the same file.
+
+        .. versionadded:: 2.0
+        """
         other = self._form(other)
         st = self.stat()
         other_st = other.stat()
         return (st.st_dev, st.st_ino) == (other_st.st_dev, other_st.st_ino)
 
     def match(self, pattern: str) -> bool:
-        """Tests if this path matches a glob-style pattern."""
+        """Tests if this path matches a glob-style pattern.
+
+        .. versionadded:: 2.0
+        """
         path = self.as_posix()
         pat = pattern.replace("\\", "/")
         if not self.CASE_SENSITIVE:
@@ -562,7 +589,10 @@ class Path(str, ABC):
         return fnmatch.fnmatchcase(right_side, "/".join(pat_parts))
 
     def rglob(self, pattern: str) -> builtins.list[Self]:
-        """Recursively glob under this path."""
+        """Recursively glob under this path.
+
+        .. versionadded:: 2.0
+        """
         return [path for path in self.walk() if path.match(pattern)]
 
     def relative_to(self, source: Self | str) -> RelativePath:
