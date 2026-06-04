@@ -1,3 +1,5 @@
+* **2026.06.03**: Version 2.0.0 released with async, static typing, more pathlib API, no pywin32 dep, and much more!
+
 * **2025.10.31**: Version 1.10.0 released with Python 3.9-3.14 support, and some small fixes.
 
 * **2024.10.05**: Version 1.9.0 released with Python 3.8-3.13 support, and some small fixes.
