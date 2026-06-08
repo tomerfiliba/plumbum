@@ -12,7 +12,6 @@ repos:
   - id: check-merge-conflict
   - id: check-symlinks
   - id: check-yaml
-    exclude: ^conda.recipe/meta.yaml$
   - id: debug-statements
   - id: end-of-file-fixer
   - id: mixed-line-ending
