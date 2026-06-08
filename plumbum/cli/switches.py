@@ -67,7 +67,7 @@ T = TypeVar("T", default=str)
 # ===================================================================================================
 # The switch decorator
 # ===================================================================================================
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class SwitchInfo:
     # Python 3.10+ can use slots=True
     __slots__ = (
