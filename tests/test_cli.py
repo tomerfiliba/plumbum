@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from plumbum import cli, local
+from plumbum.cli.switches import SwitchInfo
 from plumbum.cli.terminal import get_terminal_size
 
 
@@ -491,3 +492,65 @@ if __name__ == '__main__':
         )
         # No traceback should be in stderr
         assert "Traceback" not in result.stderr, f"Traceback in stderr: {result.stderr}"
+
+
+class ExcludesApp(cli.Application):
+    alpha = cli.Flag("--alpha")
+    beta = cli.Flag("--beta", excludes=["--alpha"])
+
+    def main(self):
+        pass
+
+
+class RequiresApp(cli.Application):
+    alpha = cli.Flag("--alpha")
+    beta = cli.Flag("--beta", requires=["--alpha"])
+
+    def main(self):
+        pass
+
+
+class TestSwitchCombinations:
+    """``requires=``/``excludes=`` switch combinations.
+
+    Regression test for #816: validating these put ``SwitchInfo`` objects into a
+    set, which crashed with ``TypeError: unhashable type: 'SwitchInfo'`` after
+    ``SwitchInfo`` became a (value-comparing, therefore unhashable) dataclass.
+    """
+
+    def test_excludes_runs_when_not_conflicting(self):
+        _, rc = ExcludesApp.run(["app", "--beta"], exit=False)
+        assert rc == 0
+
+    def test_excludes_rejects_conflicting_switches(self, capsys):
+        _, rc = ExcludesApp.run(["app", "--alpha", "--beta"], exit=False)
+        assert rc == 2
+        assert "invalid" in capsys.readouterr()[0]
+
+    def test_requires_runs_when_satisfied(self):
+        _, rc = RequiresApp.run(["app", "--alpha", "--beta"], exit=False)
+        assert rc == 0
+
+    def test_requires_rejects_when_dependency_missing(self, capsys):
+        _, rc = RequiresApp.run(["app", "--beta"], exit=False)
+        assert rc == 2
+        assert "missing" in capsys.readouterr()[0]
+
+    def test_switchinfo_is_hashable(self):
+        # The set membership above only works if SwitchInfo is hashable; the
+        # list fields mean it can only be hashed by identity, not by value.
+        info = SwitchInfo(
+            names=["--x"],
+            envname=None,
+            argtype=None,
+            list=False,
+            func=lambda: None,
+            mandatory=False,
+            overridable=False,
+            group="Switches",
+            requires=[],
+            excludes=[],
+            argname="VALUE",
+            help=None,
+        )
+        assert isinstance(hash(info), int)

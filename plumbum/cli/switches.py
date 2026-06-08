@@ -67,7 +67,13 @@ T = TypeVar("T", default=str)
 # ===================================================================================================
 # The switch decorator
 # ===================================================================================================
-@dataclasses.dataclass
+# ``eq=False`` keeps the default identity-based ``__hash__`` (and ``__eq__``).
+# The dataclass has mutable ``list`` fields, so it cannot be value-hashed, yet
+# ``Application`` puts ``SwitchInfo`` objects into sets when validating
+# ``requires``/``excludes``. Identity semantics are correct here: each switch is
+# a unique descriptor. (A value-based ``__eq__`` sets ``__hash__ = None``, which
+# is what broke ``requires=``/``excludes=`` when this became a dataclass.)
+@dataclasses.dataclass(eq=False)
 class SwitchInfo:
     # Python 3.10+ can use slots=True
     __slots__ = (
