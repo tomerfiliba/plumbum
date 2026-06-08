@@ -1,3 +1,15 @@
+2.0.1
+-----
+
+Fixes:
+
+* Make ``SwitchInfo`` hashable again so ``requires=``/``excludes=`` work (`#818 <https://github.com/tomerfiliba/plumbum/pull/818>`_)
+
+Internal:
+
+* Drop unused ``conda.recipe`` (`#819 <https://github.com/tomerfiliba/plumbum/pull/819>`_)
+
+
 2.0.0
 -----
 

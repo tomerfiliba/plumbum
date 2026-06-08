@@ -1,3 +1,5 @@
+* **2026.06.03**: Version 2.0.1 released with a quick fix for ``SwitchInfo`` regression.
+
 * **2026.06.03**: Version 2.0.0 released with async, static typing, more pathlib API, no pywin32 dep, and much more!
 
 * **2025.10.31**: Version 1.10.0 released with Python 3.9-3.14 support, and some small fixes.
