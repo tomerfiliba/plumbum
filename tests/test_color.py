@@ -106,6 +106,10 @@ class TestColorlibCorrectness:
         """get_color_repr() must not raise when sys.stdout is None (fix 1)."""
         import plumbum.colorlib.styles as styles_mod
 
+        # FORCE_COLOR/NO_COLOR short-circuit before the stdout check (and CI
+        # sets FORCE_COLOR), so clear them to exercise the isatty path.
+        monkeypatch.delenv("FORCE_COLOR", raising=False)
+        monkeypatch.delenv("NO_COLOR", raising=False)
         monkeypatch.setattr(sys, "stdout", None)
         # Should return 0 instead of raising AttributeError
         result = styles_mod.get_color_repr()
@@ -118,6 +122,8 @@ class TestColorlibCorrectness:
         class NoIsatty:
             pass
 
+        monkeypatch.delenv("FORCE_COLOR", raising=False)
+        monkeypatch.delenv("NO_COLOR", raising=False)
         monkeypatch.setattr(sys, "stdout", NoIsatty())
         result = styles_mod.get_color_repr()
         assert result == 0
