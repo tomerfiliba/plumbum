@@ -54,23 +54,26 @@ class TestPipelineArgsPlacement:
         pipe = a | b
         formulated = pipe.formulate(0, ["hello"])
         text = " ".join(formulated)
-        # args belong to the source, matching popen behavior: ``echo hello | cat``
-        assert "echo hello" in text
+        # args belong to the source, matching popen behavior: ``echo hello | cat``.
+        # Split on the pipe so the check is robust to absolute exe paths (Windows).
+        src, sep, dst = text.partition("|")
+        assert sep, "pipeline should formulate with a '|'"
+        assert "hello" in src
+        assert "hello" not in dst
         # the bound-command path goes through the same logic
-        bound = pipe.bound_command("hello")
-        assert "echo hello" in str(bound)
-        # arg must not be attached to the destination
-        assert "cat hello" not in str(bound)
+        bsrc, bsep, bdst = str(pipe.bound_command("hello")).partition("|")
+        assert bsep
+        assert "hello" in bsrc
+        assert "hello" not in bdst
 
 
 class TestBgrunCleanupOnException:
     @skip_on_windows
     def test_runner_invoked_on_exception(self):
         sentinel = RuntimeError("boom")
-        with pytest.raises(RuntimeError, match="boom"):
-            with local["true"].bgrun() as p:
-                # the process started but the body raises before p.run()
-                raise sentinel
+        with pytest.raises(RuntimeError, match="boom"), local["true"].bgrun() as p:
+            # the process started but the body raises before p.run()
+            raise sentinel
         # finally-block ran runner(): the process was reaped
         assert p.poll() is not None
         assert p.returncode is not None
@@ -78,7 +81,7 @@ class TestBgrunCleanupOnException:
     @skip_on_windows
     def test_normal_run_reaps_exactly_once(self):
         with local["echo"]["hi"].bgrun() as p:
-            rc, out, err = p.run()
+            rc, out, _err = p.run()
         assert rc == 0
         assert out.strip() == "hi"
         # the implicit finally runner() must be a no-op (already run)
