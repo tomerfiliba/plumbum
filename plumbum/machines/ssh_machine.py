@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any
 from plumbum.commands import BaseCommand, ProcessExecutionError, shquote
 from plumbum.lib import IS_WIN32
 from plumbum.machines.local import local
-from plumbum.machines.remote import BaseRemoteMachine, RemoteEnv
+from plumbum.machines.remote import BaseRemoteMachine, RemoteEnv, _check_env_name
 from plumbum.machines.session import ShellSession
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath, RemoteWorkdir
@@ -218,10 +218,12 @@ class SshMachine(BaseRemoteMachine):
             if cwd is None:
                 cwd = getattr(self, "cwd", None)
             if cwd:
-                cmdline.extend(["cd", str(cwd), "&&"])
+                cmdline.extend(["cd", shquote(str(cwd)), "&&"])
             if envdelta:
                 cmdline.append("env")
-                cmdline.extend(f"{k}={shquote(v)}" for k, v in envdelta.items())
+                cmdline.extend(
+                    f"{_check_env_name(k)}={shquote(v)}" for k, v in envdelta.items()
+                )
             if isinstance(args, (tuple, list)):
                 cmdline.extend(args)
             else:
@@ -249,13 +251,16 @@ class SshMachine(BaseRemoteMachine):
         if stderr is None:
             stderr = "&1"
 
-        args = [] if str(cwd) == "." else ["cd", str(cwd), "&&"]
+        args = [] if str(cwd) == "." else ["cd", shquote(str(cwd)), "&&"]
         args.append("nohup")
         args.extend(command.formulate())
+        # ``&1`` (i.e. ``2>&1``) is a shell redirection operand, not a path, so
+        # it must stay unquoted; everything else is a filename and is quoted.
+        stderr_target = "&1" if stderr == "&1" else shquote(str(stderr))
         args.extend(
             [
-                (">>" if append else ">") + str(stdout),
-                "2" + (">>" if (append and stderr != "&1") else ">") + str(stderr),
+                (">>" if append else ">") + shquote(str(stdout)),
+                "2" + (">>" if (append and stderr != "&1") else ">") + stderr_target,
                 "</dev/null",
             ]
         )
