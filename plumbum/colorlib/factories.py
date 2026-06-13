@@ -105,7 +105,8 @@ class ColorFactory(Generic[S]):
         try:
             return self.full(val)
         except ColorNotFound:
-            assert not isinstance(val, int)
+            if isinstance(val, int):
+                raise ColorNotFound(f"Color number {val!r} is out of range") from None
             return self.hex(val)
 
     def __call__(
