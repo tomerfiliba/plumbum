@@ -1,7 +1,12 @@
 # Just check to see if this file is importable
 from __future__ import annotations
 
+import sys
+
+import pytest
+
 from plumbum.cli.image import Image  # noqa: F401
+from plumbum.colorlib.factories import ColorFactory
 from plumbum.colorlib.names import FindNearest, color_html
 from plumbum.colorlib.styles import (  # noqa: F401
     ANSIStyle,
@@ -92,3 +97,78 @@ class TestNearestColorAgain:
                 for b in myrange:
                     near = FindNearest(r, g, b)
                     assert near.all_slow() == near.all_fast(), f"Tested: {r}, {g}, {b}"
+
+
+class TestColorlibCorrectness:
+    """Regression tests for colorlib correctness fixes (issue #820)."""
+
+    def test_stdout_none_import(self, monkeypatch):
+        """get_color_repr() must not raise when sys.stdout is None (fix 1)."""
+        import plumbum.colorlib.styles as styles_mod
+
+        monkeypatch.setattr(sys, "stdout", None)
+        # Should return 0 instead of raising AttributeError
+        result = styles_mod.get_color_repr()
+        assert result == 0
+
+    def test_stdout_no_isatty(self, monkeypatch):
+        """get_color_repr() must not raise when sys.stdout lacks isatty (fix 1)."""
+        import plumbum.colorlib.styles as styles_mod
+
+        class NoIsatty:
+            pass
+
+        monkeypatch.setattr(sys, "stdout", NoIsatty())
+        result = styles_mod.get_color_repr()
+        assert result == 0
+
+    def test_color_zero_is_black(self):
+        """Color(0) must produce black, not the reset color (fix 2)."""
+        black = Color(0)
+        assert not black.isreset, "Color(0) should be black, not reset"
+        assert black.number == 0
+
+    def test_color_none_is_reset(self):
+        """Color() and Color(None) must produce the reset color (fix 2)."""
+        assert Color().isreset
+        assert Color(None).isreset
+
+    def test_color_empty_string_is_reset(self):
+        """Color('') must produce the reset color (fix 2)."""
+        assert Color("").isreset
+
+    def test_color_missing_b_raises(self):
+        """Color(r, g) with only two ints must raise ColorNotFound (fix 2)."""
+        with pytest.raises(ColorNotFound):
+            Color(255, 128)
+
+    def test_color_out_of_range_raises(self):
+        """Color(300) must raise ColorNotFound, not AssertionError (fix 3)."""
+        with pytest.raises(ColorNotFound):
+            Color(300)
+
+    def test_colorfactory_out_of_range_raises(self):
+        """ColorFactory[300] must raise ColorNotFound, not AssertionError (fix 3)."""
+        factory = ColorFactory(True, ANSIStyle)
+        with pytest.raises(ColorNotFound):
+            factory[300]
+
+    def test_from_ansi_multiple_sequences(self):
+        """from_ansi must parse all escape sequences, not just the first (fix 4)."""
+        ANSIStyle.use_color = 4
+        style = ANSIStyle.from_ansi("\033[1m\033[31m")
+        # Both bold and red fg must be present
+        assert style.attributes.get("bold") is True, "bold must be set"
+        assert style.fg is not None, "fg must be present"
+        assert not style.fg.isreset, "fg must be red (not reset)"
+
+    def test_bold_off_roundtrip(self):
+        """ANSIStyle(attributes={'bold': False}) must round-trip through ANSI (fix 5)."""
+        ANSIStyle.use_color = 4
+        original = ANSIStyle(attributes={"bold": False})
+        ansi_str = str(original)
+        assert ansi_str, "Expected non-empty ANSI sequence for bold=False"
+        recovered = ANSIStyle.from_ansi(ansi_str)
+        assert recovered.attributes.get("bold") is False, (
+            f"bold must be False after round-trip, got attributes={recovered.attributes!r}"
+        )

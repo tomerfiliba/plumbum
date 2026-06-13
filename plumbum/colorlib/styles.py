@@ -55,7 +55,11 @@ def get_color_repr() -> int:
         return 0
     if os.environ.get("FORCE_COLOR", "") in {"0", "1", "2", "3", "4"}:
         return int(os.environ["FORCE_COLOR"])
-    if not sys.stdout.isatty():
+    if (
+        sys.stdout is None
+        or not hasattr(sys.stdout, "isatty")
+        or not sys.stdout.isatty()
+    ):
         return 0
 
     term = os.environ.get("TERM", "")
@@ -164,8 +168,13 @@ class Color:
         self.exact = True
         "This is false if the named color does not match the real color"
 
-        if None in (g, b):
-            if not r_or_color:
+        if (g is None) != (b is None):
+            raise ColorNotFound(
+                "Color requires either no g/b arguments or both g and b together"
+            )
+
+        if g is None and b is None:
+            if r_or_color is None or r_or_color == "":
                 return
             try:
                 self._from_simple(r_or_color)
@@ -173,7 +182,10 @@ class Color:
                 try:
                     self._from_full(r_or_color)
                 except ColorNotFound:
-                    assert isinstance(r_or_color, str)
+                    if not isinstance(r_or_color, str):
+                        raise ColorNotFound(
+                            "Did not find color: " + repr(r_or_color)
+                        ) from None
                     self._from_hex(r_or_color)
 
         elif isinstance(r_or_color, int) and g is not None and b is not None:
@@ -639,8 +651,9 @@ class Style(metaclass=ABCMeta):
             codes.extend(self.fg.ansi_codes)
 
         if self.bg:
-            self.bg.fg = False
-            codes.extend(self.bg.ansi_codes)
+            bg = copy(self.bg)
+            bg.fg = False
+            codes.extend(bg.ansi_codes)
 
         return codes
 
@@ -689,8 +702,7 @@ class Style(metaclass=ABCMeta):
     def from_ansi(cls, ansi_string: str, filter_resets: bool = False) -> Self:
         """This generated a style from an ansi string. Will ignore resets if filter_resets is True."""
         result = cls()
-        res = cls.ANSI_REG.search(ansi_string)
-        if res is not None:
+        for res in cls.ANSI_REG.finditer(ansi_string):
             for group in res.groups():
                 sequence = map(int, group.split(";"))
                 result.add_ansi(sequence, filter_resets)
@@ -756,6 +768,15 @@ class Style(metaclass=ABCMeta):
                     for name, att_value in attributes_ansi.items():
                         if value == att_value:
                             self.attributes[name] = True
+                elif value == 22:
+                    # ANSI 22 = "normal intensity": clears both bold (1) and dim (2).
+                    # ansi_codes emits 22 for bold=False (not 21) to match terminal
+                    # behaviour, so we must parse 22 as bold=False here to round-trip.
+                    if filter_resets is False:
+                        if "bold" in self.attribute_names:
+                            self.attributes["bold"] = False
+                        if "dim" in self.attribute_names:
+                            self.attributes["dim"] = False
                 elif value in (20 + n for n in attributes_ansi.values()):
                     if filter_resets is False:
                         for name, att_value in attributes_ansi.items():
