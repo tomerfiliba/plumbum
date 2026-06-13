@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"atexit", "contextlib", "heapq"}
+__lazy_modules__ = {"atexit", "contextlib", "heapq", "itertools"}
 
 import atexit
 import contextlib
 import enum
 import heapq
+import itertools
 import sys
 import time
 import typing
@@ -259,7 +260,7 @@ class CommandNotFound(AttributeError):
     command was not found in the system's ``PATH``"""
 
     def __init__(self, program: object, path: object):
-        super().__init__(self, program, path)
+        super().__init__(program, path)
         self.program = program
         self.path = path
 
@@ -270,20 +271,20 @@ class CommandNotFound(AttributeError):
 class MinHeap:
     __slots__ = ("_items",)
 
-    def __init__(self, items: Sequence[tuple[float, subprocess.Popen[str]]] = ()):
+    def __init__(self, items: Sequence[tuple[float, int, subprocess.Popen[str]]] = ()):
         self._items = list(items)
         heapq.heapify(self._items)
 
     def __len__(self) -> int:
         return len(self._items)
 
-    def push(self, item: tuple[float, subprocess.Popen[str]]) -> None:
+    def push(self, item: tuple[float, int, subprocess.Popen[str]]) -> None:
         heapq.heappush(self._items, item)
 
     def pop(self) -> None:
         heapq.heappop(self._items)
 
-    def peek(self) -> tuple[float, subprocess.Popen[str]]:
+    def peek(self) -> tuple[float, int, subprocess.Popen[str]]:
         return self._items[0]
 
 
@@ -296,10 +297,14 @@ bgthd: Thread | None = None
 
 def _timeout_thread_func() -> None:
     waiting = MinHeap()
+    # Monotonic tiebreaker so that two procs with an equal deadline never make
+    # heapq fall back to comparing the (uncomparable) Popen objects, which would
+    # raise TypeError and kill this singleton thread, dropping all pending kills.
+    counter = itertools.count()
     try:
         while not _shutting_down:
             if waiting:
-                ttk, _ = waiting.peek()
+                ttk, _, _ = waiting.peek()
                 timeout = max(0, ttk - time.time())
             else:
                 timeout = None
@@ -308,10 +313,10 @@ def _timeout_thread_func() -> None:
                 if proc is SystemExit:
                     # terminate
                     return
-                waiting.push((time_to_kill, proc))
+                waiting.push((time_to_kill, next(counter), proc))
             now = time.time()
             while waiting:
-                ttk, proc = waiting.peek()
+                ttk, _, proc = waiting.peek()
                 if ttk > now:
                     break
                 waiting.pop()

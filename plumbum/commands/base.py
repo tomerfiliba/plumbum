@@ -261,8 +261,13 @@ class BaseCommand:
                         f.close()  # type: ignore[union-attr]
 
         p.run = runner  # type: ignore[attr-defined]
-        yield p
-        runner()
+        try:
+            yield p
+        finally:
+            # Always reap/cleanup, even if the ``with`` body raised (including
+            # KeyboardInterrupt). ``runner`` is guarded by ``was_run`` so an
+            # explicit ``p.run()`` in the body won't run it a second time.
+            runner()
 
     def run(self, args: Sequence[Any] = (), **kwargs: Any) -> tuple[int, str, str]:
         """Runs the given command (equivalent to popen() followed by
@@ -431,10 +436,13 @@ class Pipeline(BaseCommand):
         return self.srccmd._get_encoding() or self.dstcmd._get_encoding()
 
     def formulate(self, level: int = 0, args: Sequence[Any] = ()) -> list[str]:
+        # Call-time args are bound to the *source* command, matching ``popen``
+        # (which passes them to ``self.srccmd.popen``); e.g. ``(a | b)("x")``
+        # runs ``a x | b``.
         return [
-            *self.srccmd.formulate(level + 1),
+            *self.srccmd.formulate(level + 1, args),
             "|",
-            *self.dstcmd.formulate(level + 1, args),
+            *self.dstcmd.formulate(level + 1),
         ]
 
     @property
@@ -464,6 +472,13 @@ class Pipeline(BaseCommand):
             rc_dst = dstproc_wait(*args, **kwargs)
             rc_src = srcproc.wait(*args, **kwargs)
             dstproc.returncode = rc_dst or rc_src
+            # The source's stdout was already closed (redirected into dstproc's
+            # stdin) above; its stderr/stdin pipes, however, are left open and
+            # would leak. Now that both stages have been reaped, close them.
+            for stream in (srcproc.stderr, srcproc.stdin):
+                if stream is not None:
+                    with contextlib.suppress(Exception):
+                        stream.close()
             return dstproc.returncode
 
         dstproc._proc.wait = wait2  # type: ignore[attr-defined]
