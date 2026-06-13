@@ -275,13 +275,16 @@ class LocalPath(Path):
     ) -> None:
         if not hasattr(os, "chown"):
             raise OSError("os.chown() not supported")
+        # -1 tells os.chown to leave that side unchanged, so an unspecified
+        # owner/group is preserved per-file rather than being forced to the
+        # value read off this path (which would re-own children differently).
         uid = (
-            self.uid
+            -1
             if owner is None
             else (owner if isinstance(owner, int) else getpwnam(owner)[2])
         )
         gid = (
-            self.gid
+            -1
             if group is None
             else (group if isinstance(group, int) else getgrnam(group)[2])
         )

@@ -266,7 +266,21 @@ class RemotePath(Path):
             return
         self.remote._path_delete(self)
 
-    unlink = delete
+    def unlink(self) -> None:
+        """Removes this file or symbolic link.
+
+        Unlike :meth:`delete`, this refuses to recursively remove a directory
+        (matching :func:`os.unlink` / :meth:`LocalPath.unlink
+        <plumbum.path.local.LocalPath.unlink>`); call :meth:`delete` for that.
+        """
+        res = self.remote._path_stat(self)
+        if res is None:
+            return
+        # A symlink to a directory is still unlinkable; only a real directory
+        # must be refused.
+        if res.text_mode == "directory":
+            raise OSError(errno.EISDIR, os.strerror(errno.EISDIR), str(self))
+        self.remote._path_unlink(self)
 
     def move(self, dst: RemotePath | str) -> RemotePath:
         if isinstance(dst, RemotePath):
@@ -346,12 +360,22 @@ class RemotePath(Path):
         self.remote._path_chmod(mode, self)
 
     def access(self, mode: int | str = 0) -> bool:
+        """Test file existence or permission bits.
+
+        This is a best-effort check: it inspects the file's permission bits but
+        does not compare the caller's uid/gid against the file's owner/group, so
+        the owner, group and other bits are all considered. A bare existence
+        check (``mode=0`` / ``os.F_OK`` / ``"f"``) simply reports whether the
+        path exists.
+        """
         mode = self._access_mode_to_flags(mode)
         res = self.remote._path_stat(self)
         if res is None:
             return False
+        if mode == 0:  # os.F_OK: existence check only
+            return True
         mask = res.st_mode & 0x1FF
-        return bool((mask >> 6) & mode) or bool((mask >> 3) & mode)
+        return bool((mask >> 6) & mode) or bool((mask >> 3) & mode) or bool(mask & mode)
 
     def link(self, dst: RemotePath | str) -> None:
         if isinstance(dst, RemotePath):

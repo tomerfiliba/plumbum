@@ -88,6 +88,41 @@ class TestLocalPath:
             p.chown(p.uid.name)
             assert p.uid == os.getuid()
 
+    @skip_on_windows
+    def test_chown_leaves_unspecified_side_unchanged(self, monkeypatch):
+        # When only owner (or only group) is given, the other side must be
+        # passed as -1 ("leave unchanged") rather than the path's current value.
+        calls = []
+        monkeypatch.setattr(
+            os, "chown", lambda _path, uid, gid: calls.append((uid, gid))
+        )
+        with local.tempdir() as dir:
+            p = dir / "foo.txt"
+            p.write(b"hello")
+            calls.clear()
+            p.chown(owner=os.getuid())
+            assert calls == [(os.getuid(), -1)]
+            calls.clear()
+            p.chown(group=os.getgid())
+            assert calls == [(-1, os.getgid())]
+
+    @skip_on_windows
+    def test_chown_recursive_applies_to_children(self, monkeypatch):
+        calls = []
+        monkeypatch.setattr(
+            os, "chown", lambda path, uid, gid: calls.append((str(path), uid, gid))
+        )
+        with local.tempdir() as dir:
+            sub = dir / "sub"
+            sub.mkdir()
+            child = sub / "child.txt"
+            child.write(b"x")
+            calls.clear()
+            sub.chown(owner=os.getuid(), recursive=True)
+            # The dir itself and its child both get the change, gid untouched
+            assert (str(sub), os.getuid(), -1) in calls
+            assert (str(child), os.getuid(), -1) in calls
+
     def test_split(self):
         p = local.path("/var/log/messages")
         assert p.split() == ["var", "log", "messages"]
@@ -108,6 +143,16 @@ class TestLocalPath:
 
         with pytest.raises(ValueError):
             p1.with_suffix("nodot")
+
+    def test_with_stem(self):
+        p1 = local.path("/some/long/path/to/file.txt")
+        p2 = local.path("file.tar.gz")
+        # Only the last suffix is preserved (pathlib semantics)
+        assert p2.with_stem("x") == local.path("x.gz")
+        assert p1.with_stem("other") == local.path("/some/long/path/to/other.txt")
+        # Round-trip invariant: replacing the stem with itself is a no-op
+        assert p1.with_stem(p1.stem) == p1
+        assert p2.with_stem(p2.stem) == p2
 
     def test_newname(self):
         # This picks up the drive letter differently if not constructed here
@@ -240,7 +285,8 @@ class TestLocalPath:
             assert renamed.name == "renamed.txt"
 
             long_name = tmp / "file.with.many.dots.txt"
-            assert long_name.with_stem("new").name == "new.with.many.dots.txt"
+            # with_stem replaces only the last suffix (pathlib semantics)
+            assert long_name.with_stem("new").name == "new.txt"
 
             assert nested.match("*.txt")
             assert nested.match("b/*.txt")
