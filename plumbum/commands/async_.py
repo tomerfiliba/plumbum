@@ -62,6 +62,7 @@ __lazy_modules__ = {
 }
 
 import asyncio
+import codecs
 import contextlib
 import os
 import sys
@@ -723,16 +724,31 @@ class _AsyncTEE(AsyncExecutionModifier):
         async def read_stream(
             stream: asyncio.StreamReader | None, output_list: list[str], target: TextIO
         ) -> None:
-            """Read from stream line by line, display, and collect output."""
+            """Read from stream in fixed-size chunks, display, and collect output.
+
+            Reads by chunk rather than ``readline``: ``StreamReader.readline``
+            raises ``LimitOverrunError``/``ValueError`` once a line exceeds the
+            stream's buffer limit (64KiB by default). A single incremental
+            decoder per stream keeps multibyte characters that straddle a chunk
+            boundary intact.
+            """
             if stream is None:
                 return
 
+            decoder = codecs.getincrementaldecoder(encoding)(errors="ignore")
             while True:
-                line = await stream.readline()
-                if not line:
+                chunk = await stream.read(4096)
+                if not chunk:
                     break
 
-                text = line.decode(encoding, errors="ignore")
+                text = decoder.decode(chunk)
+                if text:
+                    output_list.append(text)
+                    target.write(text)
+                    target.flush()
+
+            text = decoder.decode(b"", final=True)
+            if text:
                 output_list.append(text)
                 target.write(text)
                 target.flush()
@@ -744,17 +760,27 @@ class _AsyncTEE(AsyncExecutionModifier):
 
             Used for upstream pipeline stderr, where output may be large and
             without newlines -- ``readline`` would raise once a line exceeds the
-            stream's buffer limit, so read by chunk instead.
+            stream's buffer limit, so read by chunk instead. A single incremental
+            decoder keeps multibyte characters that straddle a chunk boundary
+            intact.
             """
             if stream is None:
                 return
 
+            decoder = codecs.getincrementaldecoder(encoding)(errors="ignore")
             while True:
                 chunk = await stream.read(4096)
                 if not chunk:
                     break
 
-                target.write(chunk.decode(encoding, errors="ignore"))
+                text = decoder.decode(chunk)
+                if text:
+                    target.write(text)
+                    target.flush()
+
+            text = decoder.decode(b"", final=True)
+            if text:
+                target.write(text)
                 target.flush()
 
         # ``proc.stdout``/``proc.stderr`` are the pipeline's *final* stage. Each
@@ -779,9 +805,14 @@ class _AsyncTEE(AsyncExecutionModifier):
                 asyncio.gather(*readers),
                 timeout=self.timeout,
             )
-        except asyncio.TimeoutError:
-            proc.kill()
-            await proc.wait()
+        except BaseException:
+            # On timeout or any other failure (e.g. a decode/read error or
+            # cancellation), make sure the subprocess is killed and reaped
+            # instead of being left running with open pipes.
+            with contextlib.suppress(Exception):
+                proc.kill()
+            with contextlib.suppress(Exception):
+                await proc.wait()
             raise
 
         # Wait for process to complete (reaps every pipeline stage)

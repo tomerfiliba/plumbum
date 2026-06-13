@@ -3,7 +3,6 @@ from __future__ import annotations
 __lazy_modules__ = {"contextlib", "pickle", "plumbum.commands.processes", "subprocess"}
 
 import contextlib
-import errno
 import os
 import pickle
 import subprocess
@@ -112,15 +111,18 @@ def posix_daemonize(
         if self.returncode is None:
             try:
                 os.kill(self.pid, 0)
-            except OSError as ex:
-                if ex.errno == errno.ESRCH:
-                    # process does not exist
-                    self.returncode = 0
-                else:
-                    raise
+            except ProcessLookupError:
+                # process does not exist (ESRCH)
+                self.returncode = 0
+            except PermissionError:
+                # the process exists but we may not signal it (EPERM); treat it
+                # as still running
+                pass
         return self.returncode
 
-    def wait(self: subprocess.Popen[bytes] = proc) -> int:
+    def wait(self: subprocess.Popen[bytes] = proc, timeout: float | None = None) -> int:  # noqa: ARG001
+        # ``timeout`` is accepted (and ignored) for API compatibility with
+        # ``subprocess.Popen.wait``, so ``proc.wait(timeout=...)`` does not raise.
         while self.returncode is None:
             if self.poll() is None:
                 time.sleep(0.5)
@@ -142,7 +144,6 @@ def win32_daemonize(
         stdout = os.devnull
     if stderr is None:
         stderr = stdout
-    DETACHED_PROCESS = 0x00000008
     stdin_file = open(os.devnull, encoding="utf-8")
     stdout_file = open(stdout, "a" if append else "w", encoding="utf-8")
     stderr_file = open(stderr, "a" if append else "w", encoding="utf-8")
@@ -152,7 +153,8 @@ def win32_daemonize(
             stdin=stdin_file.fileno(),
             stdout=stdout_file.fileno(),
             stderr=stderr_file.fileno(),
-            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS,  # type: ignore[attr-defined]
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP  # type: ignore[attr-defined]
+            | subprocess.DETACHED_PROCESS,  # type: ignore[attr-defined]
         )
     finally:
         for stream in (stdin_file, stdout_file, stderr_file):
