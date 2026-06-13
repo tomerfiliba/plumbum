@@ -21,7 +21,7 @@ from typing import IO, Any
 from plumbum.commands.base import shquote
 from plumbum.commands.processes import ProcessLineTimedOut, iter_lines
 from plumbum.machines.base import PopenAddons
-from plumbum.machines.remote import BaseRemoteMachine
+from plumbum.machines.remote import BaseRemoteMachine, _check_env_name
 from plumbum.machines.session import ShellSession
 from plumbum.path.local import LocalPath
 from plumbum.path.remote import RemotePath, RemoteStatRes
@@ -359,10 +359,12 @@ class ParamikoMachine(BaseRemoteMachine):
         envdelta = self.env.getdelta()
         if env:
             envdelta.update(env)
-        argv.extend(["cd", str(cwd or self.cwd), "&&"])
+        argv.extend(["cd", shquote(str(cwd or self.cwd)), "&&"])
         if envdelta:
             argv.append("env")
-            argv.extend(f"{k}={shquote(v)}" for k, v in envdelta.items())
+            argv.extend(
+                f"{_check_env_name(k)}={shquote(v)}" for k, v in envdelta.items()
+            )
         argv.extend(args.formulate())
         cmdline = " ".join(argv)
         logger.debug(cmdline)
