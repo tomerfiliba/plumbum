@@ -8,6 +8,7 @@ __lazy_modules__ = {"atexit", "msvcrt", "plumbum.machines.local", "threading"}
 
 import atexit
 import contextlib
+import errno
 import os
 import sys
 import threading
@@ -221,14 +222,23 @@ class AtomicFile:
             return
 
         assert self._fileobj is not None
-        with self._thdlock, locked_file(self._fileobj.fileno(), blocking):
-            if not self.path.exists() and not self._ignore_deletion:
-                raise ValueError("Atomic file removed from filesystem")
-            self._owned_by = threading.get_ident()
-            try:
-                yield
-            finally:
-                self._owned_by = None
+        # Honor ``blocking`` for the in-process thread lock too: a plain
+        # ``with self._thdlock`` would block a non-blocking caller when another
+        # thread of this process holds the lock. Mirror the filesystem-lock
+        # failure path by raising an ``OSError`` that "would block".
+        if not self._thdlock.acquire(blocking=blocking):
+            raise OSError(errno.EAGAIN, "Atomic file lock is held by another thread")
+        try:
+            with locked_file(self._fileobj.fileno(), blocking):
+                if not self.path.exists() and not self._ignore_deletion:
+                    raise ValueError("Atomic file removed from filesystem")
+                self._owned_by = threading.get_ident()
+                try:
+                    yield
+                finally:
+                    self._owned_by = None
+        finally:
+            self._thdlock.release()
 
     def delete(self) -> None:
         """
