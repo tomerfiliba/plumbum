@@ -575,6 +575,10 @@ class BaseRemoteMachine(BaseMachine):
     def _path_delete(self, fn: str) -> None:
         self._session.run(f"rm -rf {shquote(fn)}")
 
+    def _path_unlink(self, fn: str) -> None:
+        # Non-recursive removal: refuses to descend into directories.
+        self._session.run(f"rm -f {shquote(fn)}")
+
     def _path_move(self, src: str, dst: str) -> RemotePath:
         self._session.run(f"mv {shquote(src)} {shquote(dst)}")
         return RemotePath(self, dst)

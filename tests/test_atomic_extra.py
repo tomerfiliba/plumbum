@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from typing import Any
 
 import pytest
@@ -32,6 +33,33 @@ def test_atomicfile_locked_raises_when_deleted() -> None:
 
         with pytest.raises(ValueError, match="removed from filesystem"), af.locked():
             pass
+
+
+@skip_on_windows
+def test_atomicfile_locked_nonblocking_thread_does_not_hang() -> None:
+    # When another thread of this process holds the lock, a blocking=False
+    # caller must fail fast (OSError) rather than block on the thread lock.
+    with local.tempdir() as tmp:
+        af = AtomicFile(str(tmp / "atomic.bin"))
+        held = threading.Event()
+        release = threading.Event()
+        errors: list[BaseException] = []
+
+        def holder() -> None:
+            with af.locked():
+                held.set()
+                release.wait(5)
+
+        t = threading.Thread(target=holder)
+        t.start()
+        try:
+            assert held.wait(5)
+            with pytest.raises(OSError), af.locked(blocking=False):
+                pass
+        finally:
+            release.set()
+            t.join(5)
+        assert not errors
 
 
 @skip_on_windows
