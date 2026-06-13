@@ -44,10 +44,18 @@ T = TypeVar("T")
 
 
 def readline(message: str = "") -> str:
-    """Gets a line of input from the user (stdin)"""
+    """Gets a line of input from the user (stdin).
+
+    Raises ``EOFError`` when stdin is exhausted/closed. ``sys.stdin.readline()``
+    returns an empty string (no trailing newline) at end-of-file, which would
+    otherwise cause the interactive helpers to loop forever.
+    """
     sys.stdout.write(message)
     sys.stdout.flush()
-    return sys.stdin.readline()
+    line = sys.stdin.readline()
+    if not line:
+        raise EOFError
+    return line
 
 
 def ask(question: str, default: bool | None = None) -> bool:
@@ -70,9 +78,11 @@ def ask(question: str, default: bool | None = None) -> bool:
 
     while True:
         try:
-            answer = readline(question).strip().lower()
+            answer: str | None = readline(question).strip().lower()
         except EOFError:
-            answer = None
+            if default is not None:
+                return default
+            raise
         if answer in {"y", "yes"}:
             return True
         if answer in {"n", "no"}:
@@ -130,7 +140,9 @@ def choose(
         try:
             choice: str | int = readline(msg).strip()
         except EOFError:
-            choice = ""
+            if default is not None:
+                return default
+            raise
         if not choice and default is not None:
             return default
         try:
@@ -169,7 +181,9 @@ def prompt(
         try:
             ans_str = readline(question).strip()
         except EOFError:
-            ans_str = ""
+            if default is not NotImplemented:
+                return default
+            raise
 
         if not ans_str:
             if default is not NotImplemented:

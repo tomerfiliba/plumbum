@@ -1,6 +1,30 @@
 from __future__ import annotations
 
+import pytest
+
 from plumbum import cli
+from plumbum.cli.switches import CSV, Set
+
+
+class TestSet:
+    def test_csv_no_duplicate_unsplit(self):
+        # Regression: the per-item csv loop must `return` and not also validate
+        # the whole unsplit string (which produced ['a', 'b', 'a,b']).
+        assert CSV("a,b") == ["a", "b"]
+        assert CSV("a") == ["a"]
+
+    def test_case_insensitive_returns_canonical(self):
+        # Regression: case-insensitive matching must yield the configured
+        # (canonical) spelling, not the lowercased user input.
+        s = Set("TCP", "UDP")
+        assert s("tcp") == "TCP"
+        assert s("UDP") == "UDP"
+
+    def test_case_sensitive_match(self):
+        s = Set("TCP", "UDP", case_sensitive=True)
+        assert s("TCP") == "TCP"
+        with pytest.raises(ValueError):
+            s("tcp")
 
 
 class TestValidator:

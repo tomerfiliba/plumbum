@@ -5,7 +5,7 @@ import sys
 
 import pytest
 
-from plumbum.cli.image import Image  # noqa: F401
+from plumbum.cli.image import Image
 from plumbum.colorlib.factories import ColorFactory
 from plumbum.colorlib.names import FindNearest, color_html
 from plumbum.colorlib.styles import (  # noqa: F401
@@ -178,3 +178,27 @@ class TestColorlibCorrectness:
         assert recovered.attributes.get("bold") is False, (
             f"bold must be False after round-trip, got attributes={recovered.attributes!r}"
         )
+
+
+class TestImageAspect:
+    def test_wide_image_stays_wide(self):
+        # Regression: a wide image (200x100) on an 80x25 terminal must render
+        # wide (fill the width), not tall.
+        img = Image()
+        width, height = img.best_aspect((200, 100), (80, 25))
+        assert width > height
+        assert width <= 80
+        assert height <= 25
+        # fills the available width for this case
+        assert width == 80
+
+    def test_tall_image_stays_tall(self):
+        img = Image()
+        width, height = img.best_aspect((100, 400), (80, 25))
+        assert height >= width
+        assert width <= 80
+        assert height <= 25
+
+    def test_char_ratio_zero_returns_term(self):
+        img = Image(char_ratio=0)
+        assert img.best_aspect((200, 100), (80, 25)) == (80, 25)

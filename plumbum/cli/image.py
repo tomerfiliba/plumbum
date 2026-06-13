@@ -31,12 +31,19 @@ class Image:
         if not self.char_ratio:  # Don't use if char ratio is 0
             return term
 
-        orig_ratio = orig[0] / orig[1] / self.char_ratio
+        # Cells are char_ratio times taller than they are wide, so a row count
+        # spans char_ratio "width-units" of height. To preserve the image's
+        # width/height aspect, the width in cells should equal
+        # height_in_cells * char_ratio * (orig_width / orig_height).
+        cell_ratio = orig[0] / orig[1] * self.char_ratio
 
-        if int(term[1] / orig_ratio) <= term[0]:
-            return int(term[1] / orig_ratio), term[1]
+        # First try filling the full terminal height; if that overflows the
+        # available width, fall back to filling the full width instead.
+        width = int(term[1] * cell_ratio)
+        if width <= term[0]:
+            return width, term[1]
 
-        return term[0], int(term[0] * orig_ratio)
+        return term[0], int(term[0] / cell_ratio)
 
     def show(self, filename: str, double: bool = False) -> None:
         """Display an image on the command line. Can select a size or show in double resolution."""
