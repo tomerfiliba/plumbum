@@ -408,13 +408,12 @@ class Application:
                 # [--name], [--name=XXX], [--name, XXX], [--name, ==, XXX],
                 # [--name=, XXX], [--name, =XXX]
                 eqsign = a.find("=")
-                if eqsign >= 0:
+                has_eq = eqsign >= 0
+                if has_eq:
                     name = a[2:eqsign]
                     argv.insert(0, a[eqsign:])
-                    has_eq = True
                 else:
                     name = a[2:]
-                    has_eq = False
 
                 # An exact match always wins over abbreviation (argparse-style).
                 if self.ALLOW_ABBREV and name not in self._switches_by_name:
