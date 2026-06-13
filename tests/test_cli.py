@@ -205,8 +205,9 @@ class TestCLI:
         _, rc = SimpleApp.run(["foo", "--bacon=81", "--csv=all,100"], exit=False)
         assert rc == 0
         output = capsys.readouterr()
-        assert "min" in output.out
-        assert "max" in output.out
+        # case-insensitive Set yields the canonical (configured) spelling
+        assert "MIN" in output.out
+        assert "MAX" in output.out
         assert "100" in output.out
 
         _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=MAX"], exit=False)
@@ -554,3 +555,84 @@ class TestSwitchCombinations:
             help=None,
         )
         assert isinstance(hash(info), int)
+
+
+class AbbrevApp(cli.Application):
+    ALLOW_ABBREV = True
+
+    foo = cli.Flag("--foo")
+    foobar = cli.Flag("--foobar")
+    verbose = cli.Flag("--verbose")
+
+    def main(self, *args):
+        self.tailargs = args
+
+
+class TestAbbrev:
+    def test_exact_match_wins_over_abbreviation(self):
+        # --foo is an exact switch name; it must not be rejected as an
+        # ambiguous prefix of --foobar.
+        inst, rc = AbbrevApp.run(["app", "--foo"], exit=False)
+        assert rc == 0
+        assert inst.foo is True
+        assert inst.foobar is False
+
+    def test_ambiguous_partial_still_errors(self, capsys):
+        _, rc = AbbrevApp.run(["app", "--foob"], exit=False)
+        # --foob is unambiguous (only --foobar), should succeed
+        assert rc == 0
+        _, rc = AbbrevApp.run(["app", "--fo"], exit=False)
+        assert rc == 2
+        assert "Ambiguous partial switch" in capsys.readouterr()[0]
+
+
+class TestFlagEquals:
+    def test_flag_with_value_errors(self, capsys):
+        # A no-argument flag given --verbose=yes must not leak '=yes' into the
+        # positional args; it should raise a clear error.
+        _inst, rc = AbbrevApp.run(["app", "--verbose=yes"], exit=False)
+        assert rc == 2
+        assert "does not take an argument" in capsys.readouterr()[0]
+
+
+class BadRequiresApp(cli.Application):
+    alpha = cli.Flag("--alpha", requires=["--nope"])
+
+    def main(self):
+        pass
+
+
+class BadExcludesApp(cli.Application):
+    alpha = cli.Flag("--alpha", excludes=["--nope"])
+
+    def main(self):
+        pass
+
+
+class TestBadRequiresExcludes:
+    def test_unknown_requires_raises_switch_error(self, capsys):
+        _, rc = BadRequiresApp.run(["app", "--alpha"], exit=False)
+        assert rc == 2
+        out = capsys.readouterr()[0]
+        assert "nope" in out
+        assert "unknown switch" in out.lower()
+
+    def test_unknown_excludes_raises_switch_error(self, capsys):
+        _, rc = BadExcludesApp.run(["app", "--alpha"], exit=False)
+        assert rc == 2
+        out = capsys.readouterr()[0]
+        assert "nope" in out
+        assert "unknown switch" in out.lower()
+
+
+class TestHelpAllDoesNotCorruptSharedSwitchInfo:
+    def test_helpall_leaves_shared_switchinfo_group_unchanged(self, capsys):
+        # Regression: helpall used to mutate the shared SwitchInfo objects that
+        # live on the function objects, permanently corrupting every later
+        # --help render in the process.
+        before = cli.Application.help._switch_info.group
+        _, rc = Geet.run(["geet", "--help-all"], exit=False)
+        assert rc == 0
+        capsys.readouterr()
+        after = cli.Application.help._switch_info.group
+        assert before == after == "Meta-switches"
