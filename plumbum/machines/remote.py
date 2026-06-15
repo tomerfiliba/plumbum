@@ -5,7 +5,6 @@ __lazy_modules__ = {
     "plumbum.lib",
     "plumbum.path",
     "plumbum.path.local",
-    "re",
     "tempfile",
 }
 
@@ -28,6 +27,23 @@ if TYPE_CHECKING:
     from plumbum._compat.typing import Self
     from plumbum.commands.async_ import AsyncRemoteCommand
     from plumbum.machines.session import ShellSession
+
+
+_ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _check_env_name(name: str) -> str:
+    """Validate a shell environment variable *name*.
+
+    Variable names are interpolated unquoted into remote shell command lines,
+    so a name containing shell metacharacters would allow command injection.
+    Only POSIX identifiers (``[A-Za-z_][A-Za-z0-9_]*``) are permitted.
+
+    :returns: the validated name (so it can be used inline)
+    """
+    if not _ENV_NAME_RE.match(name):
+        raise ValueError(f"Invalid environment variable name: {name!r}")
+    return name
 
 
 class RemoteEnv(BaseEnv[RemotePath]):
@@ -61,14 +77,17 @@ class RemoteEnv(BaseEnv[RemotePath]):
         self._orig = dict(self._curr)
 
     def __delitem__(self, name: str) -> None:
+        _check_env_name(name)
         BaseEnv.__delitem__(self, name)
         self.remote._session.run(f"unset {name}")
 
     def __setitem__(self, name: str, value: str) -> None:
+        _check_env_name(name)
         BaseEnv.__setitem__(self, name, value)
         self.remote._session.run(f"export {name}={shquote(value)}")
 
     def pop(self, name: str, *default: str) -> str | None:
+        _check_env_name(name)
         value = BaseEnv.pop(self, name, *default)
         self.remote._session.run(f"unset {name}")
         return value
@@ -76,7 +95,10 @@ class RemoteEnv(BaseEnv[RemotePath]):
     def update(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         BaseEnv.update(self, *args, **kwargs)
         self.remote._session.run(
-            "export " + " ".join(f"{k}={shquote(v)}" for k, v in self.getdict().items())
+            "export "
+            + " ".join(
+                f"{_check_env_name(k)}={shquote(v)}" for k, v in self.getdict().items()
+            )
         )
 
     def expand(self, expr: str) -> str:
@@ -492,34 +514,31 @@ class BaseRemoteMachine(BaseMachine):
         return files
 
     def _path_glob(self, fn: str, pattern: str) -> list[str]:
+        # Both branches enumerate the tree with POSIX ``find`` and match in
+        # Python rather than relying on the remote shell's globbing. This is
+        # portable across shells (``**`` only recurses in bash with
+        # ``globstar``) and avoids the shell-glob quirks -- injection and
+        # whitespace-mangling -- that bite directory names containing spaces or
+        # glob/shell metacharacters.
+        regex = re.compile(_glob_to_regex(pattern))
+        # ``find`` exits non-zero on partial errors (e.g. an unreadable
+        # subdirectory) while still printing the matches it did find, so match
+        # whatever was printed rather than discarding it -- this mirrors
+        # ``glob.glob``, which does not error on unreadable subdirs.
         if _is_recursive_glob(pattern):
-            # Recursive glob (``**``). The shell loop below cannot do this
-            # portably: ``/bin/sh`` is often dash, and ``**`` only recurses in
-            # bash with ``globstar`` enabled. Instead, enumerate the tree with
-            # POSIX ``find`` and match in Python, so the result is identical
-            # regardless of the remote shell -- and free of the shell-glob
-            # quirks that bite paths containing glob metacharacters.
-            regex = re.compile(_glob_to_regex(pattern))
-            # ``find`` exits non-zero on partial errors (e.g. an unreadable
-            # subdirectory) while still printing the matches it did find, so
-            # match whatever was printed rather than discarding it -- this
-            # mirrors ``glob.glob``, which does not error on unreadable subdirs.
-            _, out, _ = self._session.run(f"find {shquote(fn)}", retcode=None)
-            prefix = fn.rstrip("/") + "/"
-            return sorted(
-                line
-                for line in out.splitlines()
-                if line.startswith(prefix) and regex.match(line[len(prefix) :])
-            )
-        # shquote does not work here due to the way bash loops use space as a separator
-        pattern = pattern.replace(" ", r"\ ")
-        fn = fn.replace(" ", r"\ ")
-        matches = self._session.run(rf"for fn in {fn}/{pattern}; do echo $fn; done")[
-            1
-        ].splitlines()
-        if len(matches) == 1 and not self._path_stat(matches[0]):
-            return []  # pattern expansion failed
-        return matches
+            find_cmd = f"find {shquote(fn)}"
+        else:
+            # A non-recursive pattern spans a fixed number of path components,
+            # so cap ``find``'s depth to avoid descending the whole tree.
+            depth = pattern.count("/") + 1
+            find_cmd = f"find {shquote(fn)} -maxdepth {depth}"
+        _, out, _ = self._session.run(find_cmd, retcode=None)
+        prefix = fn.rstrip("/") + "/"
+        return sorted(
+            line
+            for line in out.splitlines()
+            if line.startswith(prefix) and regex.match(line[len(prefix) :])
+        )
 
     def _path_getuid(self, fn: str) -> list[str]:
         stat_cmd = (
@@ -623,11 +642,22 @@ class BaseRemoteMachine(BaseMachine):
         return self._session.run(f"echo {expr}")[1].strip()
 
     def expanduser(self, expr: str) -> str:
-        if not any(part.startswith("~") for part in expr.split("/")):
+        # Only a leading ``~`` (i.e. ``~`` or ``~user`` as the first path
+        # component) is meaningful, exactly like os.path.expanduser.
+        if not expr.startswith("~"):
             return expr
-        # we escape all $ signs to avoid expanding env-vars
-        expr_repl = expr.replace("$", "\\$")
-        return self._session.run(f"echo {expr_repl}")[1].strip()
+        head, sep, tail = expr.partition("/")
+        # Tilde expansion happens only on an *unquoted* leading ``~``/``~user``;
+        # shquote would suppress it. A tilde-prefix can only name a login, so we
+        # accept ``~`` or ``~user`` for a safe username and otherwise leave the
+        # path untouched (matching os.path.expanduser, which returns the input
+        # unchanged when the user is unknown/unexpandable).
+        if head != "~" and not re.fullmatch(r"~[A-Za-z0-9_][A-Za-z0-9_.-]*", head):
+            return expr
+        expanded = self._session.run(f"echo {head}")[1].strip()
+        # The remainder of the path is treated as a literal string; it is never
+        # passed through the shell, so metacharacters cannot inject or expand.
+        return expanded + sep + tail
 
 
 class AsyncRemoteMachine:
