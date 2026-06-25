@@ -205,14 +205,20 @@ class TestLocalPath:
 
     def test_parent_of_root(self):
         """Path.parent on the filesystem root must return itself (not raise IndexError)."""
+        import pathlib
         import sys
 
-        root = local.path("/")
-        assert str(root.parent) == "/", "root.parent should be /"
-        # Must match pathlib behaviour
-        import pathlib
-
-        assert str(root.parent) == str(pathlib.Path("/").parent)
+        # Use the real platform root: on Windows local.path("/") resolves to the
+        # current drive's root (e.g. "D:\"), not the literal string "/".
+        if sys.platform == "win32":
+            root = local.path(pathlib.Path.cwd().anchor)
+        else:
+            root = local.path("/")
+        # Core invariant: parent of root must be root itself (no IndexError).
+        assert root.parent == root, "root.parent should be root itself"
+        # Must match pathlib behaviour for the same root path.
+        pl_root = pathlib.Path(str(root))
+        assert str(root.parent) == str(pl_root.parent)
 
     def test_suffix_expected(self):
         assert self.longpath.preferred_suffix(".tar") == self.longpath
