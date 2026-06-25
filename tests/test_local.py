@@ -203,6 +203,17 @@ class TestLocalPath:
         filename_compare("/some/long/path")
         filename_compare(__file__)
 
+    def test_parent_of_root(self):
+        """Path.parent on the filesystem root must return itself (not raise IndexError)."""
+        import sys
+
+        root = local.path("/")
+        assert str(root.parent) == "/", "root.parent should be /"
+        # Must match pathlib behaviour
+        import pathlib
+
+        assert str(root.parent) == str(pathlib.Path("/").parent)
+
     def test_suffix_expected(self):
         assert self.longpath.preferred_suffix(".tar") == self.longpath
         assert (local.cwd / "this").preferred_suffix(".txt") == local.cwd / "this.txt"

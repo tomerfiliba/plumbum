@@ -652,8 +652,13 @@ class Path(str, ABC):
 
     @property
     def parent(self) -> Self:
-        """Pathlib like parent of the path."""
-        return self.parents[0]
+        """Pathlib like parent of the path.
+
+        When called on the root path (e.g. ``/``), returns itself, matching
+        the behaviour of :class:`pathlib.Path`.
+        """
+        parents = self.parents
+        return parents[0] if parents else self
 
 
 class RelativePath:
