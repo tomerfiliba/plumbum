@@ -193,7 +193,7 @@ Sample output
     <code>
     <pre><font color="#800000">This library provides safe color access.
     Color <b>(and styles in general)</b> are easy!
-    </font>The simple 16 colors, <font color="#D75FD7"><span style="text-decoration: underline;">256 named colors,</span></font> <font color="#129240">or full hex colors</font> can be used.
+    </font>The simple 16 colors, <font color="#D75FD7"><span style="text-decoration: underline;">256 named colors,</span></font> <font color="#129240">or full rgb colors</font> can be used.
     Unsafe <span style="background-color: #AFAF5F">color access</span> is available too.</pre>
     </code>
     </div>
