@@ -143,7 +143,7 @@ are remembered, so this is a non-destructive operation.
 
 .. note::
 
-    Some terminals only support a subset of colors, so keep this in mind when using a larger color set. The standard Ubuntu terminal handles 24 bit color, the Mac terminal only handles 256 colors, and Colorama on Windows only handles 8. See `this gist <https://gist.github.com/XVilka/8346728>`_ for information about support in terminals.
+    Some terminals only support a subset of colors, so keep this in mind when using a larger color set. The standard Ubuntu terminal handles 24 bit color, the Mac terminal only handles 256 colors, and Colorama on Windows only handles 8. See `this repository <https://github.com/termstandard/colors>`_ for information about support in terminals.
     If you need to limit the output color, you can set ``colors.use_color`` to
     0 (no colors), 1 (8 colors), 2 (16 colors), or 3 (256 colors), or 4 (24-bit colors). This option will be
     automatically guessed for you on initialization.
