@@ -215,13 +215,14 @@ class SessionPopen(PopenAddons):
             self.returncode = "Unknown"  # type: ignore[assignment]
         self._done = True
         stdout_bytes = b"".join(stdout)
-        # the command trailer prints the return code on its own line, so it always
-        # appends a newline to the real output; strip it to return the output verbatim
-        # (e.g. `printf abc` yields b"abc", not b"abc\n"). Under a tty the injected
-        # newline is translated to CRLF, so strip that instead of eating a real "\r".
+        # the command trailer prints the return code (stdout) and the marker
+        # (stderr) on their own lines, so it always appends a newline to the real
+        # output; strip it to return the output verbatim (e.g. `printf abc` yields
+        # b"abc", not b"abc\n"). Under a tty the injected newline is translated to
+        # CRLF, so strip that instead of eating a real "\r".
         newline = b"\r\n" if self.isatty else b"\n"
         stdout_bytes = stdout_bytes.removesuffix(newline)
-        stderr_bytes = b"".join(stderr)
+        stderr_bytes = b"".join(stderr).removesuffix(b"\n")
         return stdout_bytes, stderr_bytes
 
 
@@ -341,7 +342,10 @@ class ShellSession:
             full_cmd = "true ; "
         full_cmd += f"printf '\\n%s\\n' \"$?\" ; echo '{marker}'"
         if not self.isatty:
-            full_cmd += f" ; echo '{marker}' 1>&2"
+            # the leading newline keeps the marker off the last line of stderr
+            # output, just like the return code on stdout; otherwise unterminated
+            # stderr output would hide the marker and hang communicate()
+            full_cmd += f" ; printf '\\n%s\\n' '{marker}' 1>&2"
         if self.custom_encoding:
             full_cmd_bytes = full_cmd.encode(self.custom_encoding)
         else:

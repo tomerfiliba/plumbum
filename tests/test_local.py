@@ -784,6 +784,8 @@ class TestLocalMachine:
         assert out.splitlines() == ["17"]
 
     @skip_on_windows
+    # without the fix the stderr case hangs instead of failing an assert
+    @pytest.mark.timeout(20)
     def test_session_no_trailing_newline(self):
         # regression for #494 / #275: output without a trailing newline used to
         # get the return code glued onto it, so parsing failed and returncode
@@ -802,6 +804,21 @@ class TestLocalMachine:
         rc, out, _ = sh.run("sh -c 'printf abc ; exit 3'", retcode=None)
         assert rc == 3
         assert out == "abc"
+
+        # stderr had the same gluing, but there it hid the end-marker and made
+        # communicate() block forever
+        rc, _, err = sh.run("printf err 1>&2")
+        assert rc == 0
+        assert err == "err"
+
+        rc, _, err = sh.run("printf 'FOO\nBAR' 1>&2")
+        assert rc == 0
+        assert err == "FOO\nBAR"
+
+        # newline-terminated stderr must stay verbatim
+        rc, _, err = sh.run("echo err 1>&2")
+        assert rc == 0
+        assert err == "err\n"
 
     def test_quoting(self):
         ssh = local["ssh"]
