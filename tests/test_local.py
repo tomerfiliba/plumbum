@@ -783,6 +783,26 @@ class TestLocalMachine:
         out = sh.run("echo $FOO")[1]
         assert out.splitlines() == ["17"]
 
+    @skip_on_windows
+    def test_session_no_trailing_newline(self):
+        # regression for #494 / #275: output without a trailing newline used to
+        # get the return code glued onto it, so parsing failed and returncode
+        # became the string "Unknown" while the output was corrupted or lost
+        sh = local.session()
+
+        rc, out, _ = sh.run("printf abc")
+        assert rc == 0
+        assert out == "abc"
+
+        rc, out, _ = sh.run("printf 'FOO\nBAR'")
+        assert rc == 0
+        assert out == "FOO\nBAR"
+
+        # a non-zero code must still be reported (not swallowed) for such output
+        rc, out, _ = sh.run("sh -c 'printf abc ; exit 3'", retcode=None)
+        assert rc == 3
+        assert out == "abc"
+
     def test_quoting(self):
         ssh = local["ssh"]
         pwd = local["pwd"]
