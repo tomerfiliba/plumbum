@@ -4,15 +4,13 @@ TypedEnv
 ========
 Plumbum provides this utility class to facilitate working with environment variables.
 Similar to how :class:`plumbum.cli.application.Application` parses command line arguments into pythonic data types,
-:class:`plumbum.typed_env.TypedEnv` parses environment variables:
+:class:`plumbum.typed_env.TypedEnv` parses environment variables::
 
-.. py:class:: plumbum.typed_env.TypedEnv
-
-class MyEnv(TypedEnv):
-    username = TypedEnv.Str("USER", default='anonymous')
-    path = TypedEnv.CSV("PATH", separator=":", type=local.path)
-    tmp = TypedEnv.Str(["TMP", "TEMP"])  # support 'fallback' var-names
-    is_travis = TypedEnv.Bool("TRAVIS", default=False)  # True is 'yes/true/1' (case-insensitive)
+    class MyEnv(TypedEnv):
+        username = TypedEnv.Str("USER", default='anonymous')
+        path = TypedEnv.CSV("PATH", separator=":", type=local.path)
+        tmp = TypedEnv.Str(["TMP", "TEMP"])  # support 'fallback' var-names
+        is_travis = TypedEnv.Bool("TRAVIS", default=False)  # True is 'yes/true/1' (case-insensitive)
 
 We can now instantiate this class to access its attributes::
 
