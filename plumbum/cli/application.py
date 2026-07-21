@@ -1002,6 +1002,9 @@ complete -F _{prog_name}_completion {prog_name}
         inst = cls(argv.pop(0))
         try:
             inst, retcode = inst._parse_and_dispatch(argv)  # type: ignore[assignment]
+            if exit:
+                # surface an EPIPE now, while we can still handle it below
+                sys.stdout.flush()
         except BrokenPipeError:
             # The reader closed the pipe (e.g. output piped to ``head``).
             # Never change the SIGPIPE disposition instead: that would make a
@@ -1009,7 +1012,7 @@ complete -F _{prog_name}_completion {prog_name}
             retcode = 1
             if exit:
                 # Point stdout at devnull so the interpreter's final flush
-                # doesn't raise a second BrokenPipeError.
+                # doesn't raise on whatever is still buffered.
                 with contextlib.suppress(OSError, ValueError):
                     devnull = os.open(os.devnull, os.O_WRONLY)
                     os.dup2(devnull, sys.stdout.fileno())
