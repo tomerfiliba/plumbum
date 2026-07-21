@@ -109,6 +109,16 @@ class TestLocalPath:
         with pytest.raises(ValueError):
             p1.with_suffix("nodot")
 
+    def test_with_stem(self):
+        p1 = local.path("/some/long/path/to/file.txt")
+        p2 = local.path("file.tar.gz")
+        # Only the last suffix is preserved (pathlib semantics)
+        assert p2.with_stem("x") == local.path("x.gz")
+        assert p1.with_stem("other") == local.path("/some/long/path/to/other.txt")
+        # Round-trip invariant: replacing the stem with itself is a no-op
+        assert p1.with_stem(p1.stem) == p1
+        assert p2.with_stem(p2.stem) == p2
+
     def test_newname(self):
         # This picks up the drive letter differently if not constructed here
         p1 = local.path("/some/long/path/to/file.txt")
@@ -257,7 +267,8 @@ class TestLocalPath:
             assert renamed.name == "renamed.txt"
 
             long_name = tmp / "file.with.many.dots.txt"
-            assert long_name.with_stem("new").name == "new.with.many.dots.txt"
+            # with_stem replaces only the last suffix (pathlib semantics)
+            assert long_name.with_stem("new").name == "new.txt"
 
             assert nested.match("*.txt")
             assert nested.match("b/*.txt")
