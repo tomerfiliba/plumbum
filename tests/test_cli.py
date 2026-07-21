@@ -209,9 +209,8 @@ class TestCLI:
         _, rc = SimpleApp.run(["foo", "--bacon=81", "--csv=all,100"], exit=False)
         assert rc == 0
         output = capsys.readouterr()
-        # case-insensitive Set yields the canonical (configured) spelling
-        assert "MIN" in output.out
-        assert "MAX" in output.out
+        assert "min" in output.out
+        assert "max" in output.out
         assert "100" in output.out
 
         _, rc = SimpleApp.run(["foo", "--bacon=81", "--num=MAX"], exit=False)

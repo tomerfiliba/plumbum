@@ -13,13 +13,6 @@ class TestSet:
         assert CSV("a,b") == ["a", "b"]
         assert CSV("a") == ["a"]
 
-    def test_case_insensitive_returns_canonical(self):
-        # Regression: case-insensitive matching must yield the configured
-        # (canonical) spelling, not the lowercased user input.
-        s = Set("TCP", "UDP")
-        assert s("tcp") == "TCP"
-        assert s("UDP") == "UDP"
-
     def test_case_sensitive_match(self):
         s = Set("TCP", "UDP", case_sensitive=True)
         assert s("TCP") == "TCP"

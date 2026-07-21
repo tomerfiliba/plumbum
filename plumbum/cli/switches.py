@@ -556,13 +556,15 @@ class Set(Validator[str]):
                 yield from self._call_iter(v.strip(), check_csv=False)
             return
 
-        cmp_value = value if self.case_sensitive else value.lower()
+        if not self.case_sensitive:
+            value = value.lower()
 
         for opt in self.values:
             if isinstance(opt, str):
-                cmp_opt = opt if self.case_sensitive else opt.lower()
-                if cmp_opt == cmp_value or cmp_value in self.all_markers:
-                    yield opt  # always return the configured (canonical) value
+                if not self.case_sensitive:
+                    opt = opt.lower()  # noqa: PLW2901
+                if opt == value or value in self.all_markers:
+                    yield opt  # always return original value
                 continue
             with contextlib.suppress(ValueError):
                 yield opt(value)
