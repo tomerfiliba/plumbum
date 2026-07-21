@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import signal
+
+import pytest
+
 from plumbum import cli, local
 from plumbum.cli.switches import SwitchInfo
 from plumbum.cli.terminal import get_terminal_size
@@ -492,6 +496,60 @@ if __name__ == '__main__':
         )
         # No traceback should be in stderr
         assert "Traceback" not in result.stderr, f"Traceback in stderr: {result.stderr}"
+
+    @pytest.mark.skipif(not hasattr(signal, "SIGPIPE"), reason="requires SIGPIPE")
+    def test_broken_pipe_at_shutdown_flush(self, tmp_path):
+        """Output still buffered when the reader is gone must not print
+        'Exception ignored ... BrokenPipeError' at interpreter shutdown."""
+        import subprocess
+        import sys
+
+        script = tmp_path / "straggler.py"
+        script.write_text(
+            f"""
+import sys, time
+sys.path.insert(0, {str(local.cwd)!r})
+from plumbum.cli import Application
+
+class App(Application):
+    def main(self):
+        print("1\\n2\\n3\\n4\\n5", flush=True)
+        time.sleep(0.5)  # let head exit
+        print("straggler")  # stays in the buffer until shutdown
+
+if __name__ == '__main__':
+    App.run()
+"""
+        )
+        result = subprocess.run(
+            f"{sys.executable} {script} | head -5",
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.stderr == ""
+
+    @pytest.mark.skipif(not hasattr(signal, "SIGPIPE"), reason="requires SIGPIPE")
+    def test_run_keeps_sigpipe_disposition(self):
+        # SIG_DFL would make a socket send() to a closed peer kill the whole
+        # process (e.g. an rpyc server) instead of raising BrokenPipeError.
+        before = signal.getsignal(signal.SIGPIPE)
+        try:
+            _, rc = SimpleApp.run(["foo", "--bacon=2"], exit=False)
+        finally:
+            after = signal.getsignal(signal.SIGPIPE)
+            signal.signal(signal.SIGPIPE, before)
+        assert rc == 0
+        assert after == before
+
+    def test_run_handles_broken_pipe(self):
+        class BrokenApp(cli.Application):
+            def main(self):
+                raise BrokenPipeError
+
+        _, rc = BrokenApp.run(["app"], exit=False)
+        assert rc == 1
 
 
 class ExcludesApp(cli.Application):
