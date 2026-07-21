@@ -290,11 +290,9 @@ class BaseCommand:
                         with contextlib.suppress(Exception):
                             f.close()  # type: ignore[union-attr]
             raise
-        else:
-            # Reap/cleanup on normal exit. ``runner`` is guarded by
-            # ``was_run`` so an explicit ``p.run()`` in the body won't run it
-            # a second time.
-            runner()
+        # Reap/cleanup on normal exit. ``runner`` is guarded by ``was_run`` so
+        # an explicit ``p.run()`` in the body won't run it a second time.
+        runner()
 
     def run(self, args: Sequence[Any] = (), **kwargs: Any) -> tuple[int, str, str]:
         """Runs the given command (equivalent to popen() followed by
