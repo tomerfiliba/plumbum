@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import signal
+
+import pytest
+
 from plumbum import cli, local
 from plumbum.cli.switches import SwitchInfo
 from plumbum.cli.terminal import get_terminal_size
@@ -492,6 +496,27 @@ if __name__ == '__main__':
         )
         # No traceback should be in stderr
         assert "Traceback" not in result.stderr, f"Traceback in stderr: {result.stderr}"
+
+    @pytest.mark.skipif(not hasattr(signal, "SIGPIPE"), reason="requires SIGPIPE")
+    def test_run_keeps_sigpipe_disposition(self):
+        # SIG_DFL would make a socket send() to a closed peer kill the whole
+        # process (e.g. an rpyc server) instead of raising BrokenPipeError.
+        before = signal.getsignal(signal.SIGPIPE)
+        try:
+            _, rc = SimpleApp.run(["foo", "--bacon=2"], exit=False)
+        finally:
+            after = signal.getsignal(signal.SIGPIPE)
+            signal.signal(signal.SIGPIPE, before)
+        assert rc == 0
+        assert after == before
+
+    def test_run_handles_broken_pipe(self):
+        class BrokenApp(cli.Application):
+            def main(self):
+                raise BrokenPipeError
+
+        _, rc = BrokenApp.run(["app"], exit=False)
+        assert rc == 1
 
 
 class ExcludesApp(cli.Application):

@@ -955,13 +955,6 @@ complete -F _{prog_name}_completion {prog_name}
            Setting ``exit`` to ``False`` is intended for testing/debugging purposes only -- do
            not override it in other situations.
         """
-        # Handle SIGPIPE to avoid BrokenPipeError when output is piped (e.g., to head)
-        # This is only available on Unix systems
-        with contextlib.suppress(ImportError, AttributeError):
-            import signal
-
-            signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-
         if argv is None:
             argv = sys.argv
         cls.autocomplete(argv)
@@ -969,41 +962,53 @@ complete -F _{prog_name}_completion {prog_name}
         inst = cls(argv.pop(0))
         retcode = 0
         try:
-            swfuncs, tailargs = inst._parse_args(argv)
-            ordered, tailargs = inst._validate_args(swfuncs, tailargs)
-        except ShowHelp:
-            inst.help()
-        except ShowHelpAll:
-            inst.helpall()
-        except ShowVersion:
-            inst.version()
-        except ShowCompletion:
-            info = swfuncs[inst.completions.__func__]  # type: ignore[attr-defined]
-            inst._print_completion(info.val[0])
-        except SwitchError as ex:
-            print(T_("Error: {0}").format(ex))
-            print(T_("------"))
-            inst.help()
-            retcode = 2
-        else:
-            for f, a in ordered:
-                f(inst, *a)
+            try:
+                swfuncs, tailargs = inst._parse_args(argv)
+                ordered, tailargs = inst._validate_args(swfuncs, tailargs)
+            except ShowHelp:
+                inst.help()
+            except ShowHelpAll:
+                inst.helpall()
+            except ShowVersion:
+                inst.version()
+            except ShowCompletion:
+                info = swfuncs[inst.completions.__func__]  # type: ignore[attr-defined]
+                inst._print_completion(info.val[0])
+            except SwitchError as ex:
+                print(T_("Error: {0}").format(ex))
+                print(T_("------"))
+                inst.help()
+                retcode = 2
+            else:
+                for f, a in ordered:
+                    f(inst, *a)
 
-            cleanup = None
-            if not inst.nested_command or inst.CALL_MAIN_IF_NESTED_COMMAND:
-                retcode = inst.main(*tailargs)
-                cleanup = functools.partial(inst.cleanup, retcode)
-            if not retcode and inst.nested_command:
-                subapp, argv = inst.nested_command
-                subapp.parent = inst
-                inst_app, retcode = subapp.run(argv, exit=False)
-                inst = inst_app  # type: ignore[assignment]
+                cleanup = None
+                if not inst.nested_command or inst.CALL_MAIN_IF_NESTED_COMMAND:
+                    retcode = inst.main(*tailargs)
+                    cleanup = functools.partial(inst.cleanup, retcode)
+                if not retcode and inst.nested_command:
+                    subapp, argv = inst.nested_command
+                    subapp.parent = inst
+                    inst_app, retcode = subapp.run(argv, exit=False)
+                    inst = inst_app  # type: ignore[assignment]
 
-            if cleanup:
-                cleanup()
+                if cleanup:
+                    cleanup()
 
-            if retcode is None:
-                retcode = 0
+                if retcode is None:
+                    retcode = 0
+        except BrokenPipeError:
+            # The reader closed the pipe (e.g. output piped to ``head``).
+            # Never change the SIGPIPE disposition instead: that would make a
+            # socket send() to a closed peer kill the whole process.
+            retcode = 1
+            if exit:
+                # Point stdout at devnull so the interpreter's final flush
+                # doesn't raise a second BrokenPipeError.
+                with contextlib.suppress(OSError, ValueError):
+                    devnull = os.open(os.devnull, os.O_WRONLY)
+                    os.dup2(devnull, sys.stdout.fileno())
 
         if exit:
             sys.exit(retcode)
