@@ -1,6 +1,16 @@
 from __future__ import annotations
 
 from plumbum import cli
+from plumbum.cli.switches import Set
+
+
+class TestSet:
+    def test_case_insensitive_returns_canonical(self):
+        # Regression: case-insensitive matching must yield the configured
+        # (canonical) spelling, not the lowercased user input.
+        s = Set("TCP", "UDP")
+        assert s("tcp") == "TCP"
+        assert s("UDP") == "UDP"
 
 
 class TestValidator:
