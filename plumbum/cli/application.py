@@ -918,6 +918,46 @@ complete -F _{prog_name}_completion {prog_name}
 
         return out_args
 
+    def _parse_and_dispatch(self, argv: list[str]) -> tuple[Application, int]:
+        """Parses ``argv``, runs switches and ``main()``; returns the final
+        instance (the nested subcommand's, if one ran) and the return code."""
+        inst: Application = self
+        retcode: int | None = 0
+        try:
+            swfuncs, tailargs = self._parse_args(argv)
+            ordered, tailargs = self._validate_args(swfuncs, tailargs)
+        except ShowHelp:
+            self.help()
+        except ShowHelpAll:
+            self.helpall()
+        except ShowVersion:
+            self.version()
+        except ShowCompletion:
+            info = swfuncs[self.completions.__func__]  # type: ignore[attr-defined]
+            self._print_completion(info.val[0])
+        except SwitchError as ex:
+            print(T_("Error: {0}").format(ex))
+            print(T_("------"))
+            self.help()
+            retcode = 2
+        else:
+            for f, a in ordered:
+                f(self, *a)
+
+            cleanup = None
+            if not self.nested_command or self.CALL_MAIN_IF_NESTED_COMMAND:
+                retcode = self.main(*tailargs)
+                cleanup = functools.partial(self.cleanup, retcode)
+            if not retcode and self.nested_command:
+                subapp, argv = self.nested_command
+                subapp.parent = self
+                inst, retcode = subapp.run(argv, exit=False)
+
+            if cleanup:
+                cleanup()
+
+        return inst, retcode or 0
+
     @typing.overload
     @classmethod
     def run(
@@ -960,44 +1000,8 @@ complete -F _{prog_name}_completion {prog_name}
         cls.autocomplete(argv)
         argv = list(argv)
         inst = cls(argv.pop(0))
-        retcode = 0
         try:
-            try:
-                swfuncs, tailargs = inst._parse_args(argv)
-                ordered, tailargs = inst._validate_args(swfuncs, tailargs)
-            except ShowHelp:
-                inst.help()
-            except ShowHelpAll:
-                inst.helpall()
-            except ShowVersion:
-                inst.version()
-            except ShowCompletion:
-                info = swfuncs[inst.completions.__func__]  # type: ignore[attr-defined]
-                inst._print_completion(info.val[0])
-            except SwitchError as ex:
-                print(T_("Error: {0}").format(ex))
-                print(T_("------"))
-                inst.help()
-                retcode = 2
-            else:
-                for f, a in ordered:
-                    f(inst, *a)
-
-                cleanup = None
-                if not inst.nested_command or inst.CALL_MAIN_IF_NESTED_COMMAND:
-                    retcode = inst.main(*tailargs)
-                    cleanup = functools.partial(inst.cleanup, retcode)
-                if not retcode and inst.nested_command:
-                    subapp, argv = inst.nested_command
-                    subapp.parent = inst
-                    inst_app, retcode = subapp.run(argv, exit=False)
-                    inst = inst_app  # type: ignore[assignment]
-
-                if cleanup:
-                    cleanup()
-
-                if retcode is None:
-                    retcode = 0
+            inst, retcode = inst._parse_and_dispatch(argv)  # type: ignore[assignment]
         except BrokenPipeError:
             # The reader closed the pipe (e.g. output piped to ``head``).
             # Never change the SIGPIPE disposition instead: that would make a
