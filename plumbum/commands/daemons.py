@@ -120,12 +120,16 @@ def posix_daemonize(
                 pass
         return self.returncode
 
-    def wait(self: subprocess.Popen[bytes] = proc, timeout: float | None = None) -> int:  # noqa: ARG001
-        # ``timeout`` is accepted (and ignored) for API compatibility with
-        # ``subprocess.Popen.wait``, so ``proc.wait(timeout=...)`` does not raise.
-        while self.returncode is None:
-            if self.poll() is None:
+    def wait(self: subprocess.Popen[bytes] = proc, timeout: float | None = None) -> int:
+        deadline = None if timeout is None else time.monotonic() + timeout
+        while self.poll() is None:
+            if deadline is None:
                 time.sleep(0.5)
+            else:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise subprocess.TimeoutExpired(self.args, timeout)  # type: ignore[arg-type]
+                time.sleep(min(0.5, remaining))
         return self.returncode
 
     proc.poll = poll  # type: ignore[method-assign]

@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+import contextlib
+import os
 import pickle
+import signal
+import subprocess
+import time
 
 import pytest
 
@@ -79,6 +84,33 @@ class TestBgrunCleanupOnException:
         assert p.returncode is not None
 
     @skip_on_windows
+    def test_exception_not_masked_by_nonzero_exit(self):
+        """A body exception must not be replaced by ProcessExecutionError."""
+        procs = []
+
+        def body():
+            with local["false"].bgrun() as p:
+                procs.append(p)
+                p.wait()  # let the process exit (nonzero) before the body raises
+                raise RuntimeError("boom")
+
+        with pytest.raises(RuntimeError, match="boom"):
+            body()
+        assert procs[0].poll() is not None
+
+    @skip_on_windows
+    def test_exception_kills_long_running_process(self):
+        """A body exception must not wait for the process to finish naturally."""
+        start = time.monotonic()
+        with (
+            pytest.raises(RuntimeError, match="boom"),
+            local["sleep"]["30"].bgrun() as p,
+        ):
+            raise RuntimeError("boom")
+        assert time.monotonic() - start < 10
+        assert p.poll() is not None
+
+    @skip_on_windows
     def test_normal_run_reaps_exactly_once(self):
         with local["echo"]["hi"].bgrun() as p:
             rc, out, _err = p.run()
@@ -86,3 +118,17 @@ class TestBgrunCleanupOnException:
         assert out.strip() == "hi"
         # the implicit finally runner() must be a no-op (already run)
         assert p.poll() is not None
+
+
+class TestDaemonWaitTimeout:
+    @skip_on_windows
+    @pytest.mark.timeout(30)
+    def test_wait_timeout_raises(self):
+        """wait(timeout=...) on a live daemon must raise TimeoutExpired."""
+        proc = local.daemonic_popen(local["sleep"][10])
+        try:
+            with pytest.raises(subprocess.TimeoutExpired):
+                proc.wait(timeout=0.5)
+        finally:
+            with contextlib.suppress(OSError):
+                os.kill(proc.pid, signal.SIGTERM)

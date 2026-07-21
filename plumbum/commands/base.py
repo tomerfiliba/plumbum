@@ -14,6 +14,7 @@ import contextlib
 import functools
 import shlex
 import subprocess
+import time
 import typing
 from subprocess import PIPE, Popen
 from tempfile import TemporaryFile
@@ -263,10 +264,36 @@ class BaseCommand:
         p.run = runner  # type: ignore[attr-defined]
         try:
             yield p
-        finally:
-            # Always reap/cleanup, even if the ``with`` body raised (including
-            # KeyboardInterrupt). ``runner`` is guarded by ``was_run`` so an
-            # explicit ``p.run()`` in the body won't run it a second time.
+        except BaseException:
+            # The body raised (including KeyboardInterrupt): waiting for the
+            # process to finish could delay the exception indefinitely, and
+            # exit-code validation could replace it. Terminate and reap
+            # without validation instead.
+            if not was_run[0]:
+                was_run[0] = True
+                del p.run  # type: ignore[attr-defined]
+                try:
+                    if p.poll() is None:
+                        with contextlib.suppress(Exception):
+                            p.terminate()
+                        for _ in range(20):  # ~1s grace before killing
+                            if p.poll() is not None:
+                                break
+                            time.sleep(0.05)
+                        else:
+                            with contextlib.suppress(Exception):
+                                p.kill()
+                            with contextlib.suppress(Exception):
+                                p.wait()
+                finally:
+                    for f in (p.stdin, p.stdout, p.stderr):
+                        with contextlib.suppress(Exception):
+                            f.close()  # type: ignore[union-attr]
+            raise
+        else:
+            # Reap/cleanup on normal exit. ``runner`` is guarded by
+            # ``was_run`` so an explicit ``p.run()`` in the body won't run it
+            # a second time.
             runner()
 
     def run(self, args: Sequence[Any] = (), **kwargs: Any) -> tuple[int, str, str]:
