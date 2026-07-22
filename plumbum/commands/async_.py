@@ -62,6 +62,7 @@ __lazy_modules__ = {
 }
 
 import asyncio
+import codecs
 import contextlib
 import os
 import sys
@@ -721,41 +722,32 @@ class _AsyncTEE(AsyncExecutionModifier):
         stderr_lines: list[str] = []
 
         async def read_stream(
-            stream: asyncio.StreamReader | None, output_list: list[str], target: TextIO
+            stream: asyncio.StreamReader | None,
+            target: TextIO,
+            output_list: list[str] | None = None,
         ) -> None:
-            """Read from stream line by line, display, and collect output."""
-            if stream is None:
-                return
+            """Read a stream in fixed-size chunks, display, and optionally collect.
 
-            while True:
-                line = await stream.readline()
-                if not line:
-                    break
-
-                text = line.decode(encoding, errors="ignore")
-                output_list.append(text)
-                target.write(text)
-                target.flush()
-
-        async def drain_stream(
-            stream: asyncio.StreamReader | None, target: TextIO
-        ) -> None:
-            """Display a stream in fixed-size chunks (no line buffering).
-
-            Used for upstream pipeline stderr, where output may be large and
-            without newlines -- ``readline`` would raise once a line exceeds the
-            stream's buffer limit, so read by chunk instead.
+            Reads by chunk rather than ``readline``: ``StreamReader.readline``
+            raises ``LimitOverrunError``/``ValueError`` once a line exceeds the
+            stream's buffer limit (64KiB by default). A single incremental
+            decoder per stream keeps multibyte characters that straddle a chunk
+            boundary intact.
             """
             if stream is None:
                 return
 
+            decoder = codecs.getincrementaldecoder(encoding)(errors="ignore")
             while True:
                 chunk = await stream.read(4096)
+                text = decoder.decode(chunk, final=not chunk)
+                if text:
+                    if output_list is not None:
+                        output_list.append(text)
+                    target.write(text)
+                    target.flush()
                 if not chunk:
                     break
-
-                target.write(chunk.decode(encoding, errors="ignore"))
-                target.flush()
 
         # ``proc.stdout``/``proc.stderr`` are the pipeline's *final* stage. Each
         # upstream stage of a pipeline has its own stderr pipe that must also be
@@ -765,13 +757,13 @@ class _AsyncTEE(AsyncExecutionModifier):
         # final stage's, matching ``popen().communicate()``. The loop adds nothing
         # for a plain command (no upstream stages).
         readers = [
-            read_stream(proc.stdout, stdout_lines, sys.stdout),
-            read_stream(proc.stderr, stderr_lines, sys.stderr),
+            read_stream(proc.stdout, sys.stdout, stdout_lines),
+            read_stream(proc.stderr, sys.stderr, stderr_lines),
         ]
         node: Any = proc
         while isinstance(node, AsyncPipelineProcess):
             node = node.srcproc
-            readers.append(drain_stream(node.stderr, sys.stderr))
+            readers.append(read_stream(node.stderr, sys.stderr))
 
         # Read every stage's streams concurrently
         try:
@@ -779,9 +771,14 @@ class _AsyncTEE(AsyncExecutionModifier):
                 asyncio.gather(*readers),
                 timeout=self.timeout,
             )
-        except asyncio.TimeoutError:
-            proc.kill()
-            await proc.wait()
+        except BaseException:
+            # On timeout or any other failure (e.g. a decode/read error or
+            # cancellation), make sure the subprocess is killed and reaped
+            # instead of being left running with open pipes.
+            with contextlib.suppress(Exception):
+                proc.kill()
+            with contextlib.suppress(Exception):
+                await proc.wait()
             raise
 
         # Wait for process to complete (reaps every pipeline stage)

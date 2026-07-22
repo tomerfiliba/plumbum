@@ -23,6 +23,8 @@ from typing import ClassVar
 import plumbum.commands.modifiers
 from plumbum.commands.processes import (
     ProcessTimedOut,
+    _close_streams,
+    _terminate_and_reap,
     iter_lines,
     run_proc,
 )
@@ -248,6 +250,10 @@ class BaseCommand:
         p = self.popen(args, **kwargs)
         was_run = [False]
 
+        def cleanup() -> None:
+            del p.run  # type: ignore[attr-defined]
+            _close_streams(p.stdin, p.stdout, p.stderr)
+
         def runner() -> tuple[int | None, str | bytes, str | bytes] | None:
             if was_run[0]:
                 return None  # already done
@@ -255,13 +261,25 @@ class BaseCommand:
             try:
                 return run_proc(p, retcode, timeout)
             finally:
-                del p.run  # type: ignore[attr-defined]
-                for f in (p.stdin, p.stdout, p.stderr):
-                    with contextlib.suppress(Exception):
-                        f.close()  # type: ignore[union-attr]
+                cleanup()
 
         p.run = runner  # type: ignore[attr-defined]
-        yield p
+        try:
+            yield p
+        except BaseException:
+            # The body raised (including KeyboardInterrupt): waiting for the
+            # process to finish could delay the exception indefinitely, and
+            # exit-code validation could replace it. Terminate and reap
+            # without validation instead.
+            if not was_run[0]:
+                was_run[0] = True
+                try:
+                    _terminate_and_reap(p)
+                finally:
+                    cleanup()
+            raise
+        # Reap/cleanup on normal exit. ``runner`` is guarded by ``was_run`` so
+        # an explicit ``p.run()`` in the body won't run it a second time.
         runner()
 
     def run(self, args: Sequence[Any] = (), **kwargs: Any) -> tuple[int, str, str]:
@@ -431,10 +449,13 @@ class Pipeline(BaseCommand):
         return self.srccmd._get_encoding() or self.dstcmd._get_encoding()
 
     def formulate(self, level: int = 0, args: Sequence[Any] = ()) -> list[str]:
+        # Call-time args are bound to the *source* command, matching ``popen``
+        # (which passes them to ``self.srccmd.popen``); e.g. ``(a | b)("x")``
+        # runs ``a x | b``.
         return [
-            *self.srccmd.formulate(level + 1),
+            *self.srccmd.formulate(level + 1, args),
             "|",
-            *self.dstcmd.formulate(level + 1, args),
+            *self.dstcmd.formulate(level + 1),
         ]
 
     @property
@@ -464,6 +485,10 @@ class Pipeline(BaseCommand):
             rc_dst = dstproc_wait(*args, **kwargs)
             rc_src = srcproc.wait(*args, **kwargs)
             dstproc.returncode = rc_dst or rc_src
+            # The source's stdout was already closed (redirected into dstproc's
+            # stdin) above; its stderr/stdin pipes, however, are left open and
+            # would leak. Now that both stages have been reaped, close them.
+            _close_streams(srcproc.stderr, srcproc.stdin)
             return dstproc.returncode
 
         dstproc._proc.wait = wait2  # type: ignore[attr-defined]

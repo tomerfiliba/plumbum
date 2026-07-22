@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"atexit", "contextlib", "heapq"}
+__lazy_modules__ = {"atexit", "contextlib", "heapq", "itertools"}
 
 import atexit
 import contextlib
 import enum
 import heapq
+import itertools
 import sys
 import time
 import typing
@@ -18,7 +19,7 @@ from plumbum.lib import IS_WIN32
 
 if typing.TYPE_CHECKING:
     import subprocess
-    from collections.abc import Callable, Container, Generator, Sequence
+    from collections.abc import Callable, Container, Generator
     from typing import IO, Literal
 
     from plumbum.machines.base import PopenWithAddons
@@ -259,7 +260,7 @@ class CommandNotFound(AttributeError):
     command was not found in the system's ``PATH``"""
 
     def __init__(self, program: object, path: object):
-        super().__init__(self, program, path)
+        super().__init__(program, path)
         self.program = program
         self.path = path
 
@@ -268,23 +269,31 @@ class CommandNotFound(AttributeError):
 # Timeout thread
 # ===================================================================================================
 class MinHeap:
-    __slots__ = ("_items",)
+    """Deadline-ordered heap of (deadline, proc) pairs.
 
-    def __init__(self, items: Sequence[tuple[float, subprocess.Popen[str]]] = ()):
-        self._items = list(items)
-        heapq.heapify(self._items)
+    An internal monotonic counter breaks deadline ties so heapq never falls
+    back to comparing the (uncomparable) Popen objects, which would raise
+    TypeError.
+    """
+
+    __slots__ = ("_counter", "_items")
+
+    def __init__(self) -> None:
+        self._items: list[tuple[float, int, subprocess.Popen[str]]] = []
+        self._counter = itertools.count()
 
     def __len__(self) -> int:
         return len(self._items)
 
-    def push(self, item: tuple[float, subprocess.Popen[str]]) -> None:
-        heapq.heappush(self._items, item)
+    def push(self, deadline: float, proc: subprocess.Popen[str]) -> None:
+        heapq.heappush(self._items, (deadline, next(self._counter), proc))
 
     def pop(self) -> None:
         heapq.heappop(self._items)
 
     def peek(self) -> tuple[float, subprocess.Popen[str]]:
-        return self._items[0]
+        deadline, _, proc = self._items[0]
+        return deadline, proc
 
 
 _timeout_queue = Queue[tuple[Any, float]]()
@@ -308,7 +317,7 @@ def _timeout_thread_func() -> None:
                 if proc is SystemExit:
                     # terminate
                     return
-                waiting.push((time_to_kill, proc))
+                waiting.push(time_to_kill, proc)
             now = time.time()
             while waiting:
                 ttk, proc = waiting.peek()
@@ -359,6 +368,35 @@ def _shutdown_bg_threads() -> None:
         bgthd.join(0.1)
 
 
+def _close_streams(*streams: IO[Any] | None) -> None:
+    """Close the given streams, ignoring ``None`` entries and close errors."""
+    for stream in streams:
+        if stream is not None:
+            with contextlib.suppress(Exception):
+                stream.close()
+
+
+def _terminate_and_reap(proc: PopenWithAddons[Any], grace: float = 1.0) -> None:
+    """Terminate *proc*, give it *grace* seconds to exit, then kill and reap it.
+
+    Polls instead of ``wait(timeout=...)`` because not every popen-like object
+    (remote/session procs) supports a wait timeout.
+    """
+    if proc.poll() is not None:
+        return
+    with contextlib.suppress(Exception):
+        proc.terminate()
+    deadline = time.monotonic() + grace
+    while time.monotonic() < deadline:
+        if proc.poll() is not None:
+            return
+        time.sleep(0.05)
+    with contextlib.suppress(Exception):
+        proc.kill()
+    with contextlib.suppress(Exception):
+        proc.wait()
+
+
 # ===================================================================================================
 # run_proc
 # ===================================================================================================
@@ -403,10 +441,7 @@ def run_proc(
         return _check_process(proc, retcode, timeout, stdout, stderr)  # type: ignore[return-value]
     finally:
         if getattr(proc, "close_streams_after_communicate", True):
-            for stream in (proc.stdin, proc.stdout, proc.stderr):
-                if stream is not None:
-                    with contextlib.suppress(Exception):
-                        stream.close()
+            _close_streams(proc.stdin, proc.stdout, proc.stderr)
 
 
 # ===================================================================================================
@@ -570,10 +605,7 @@ def iter_lines(
 
         # Only close streams once the process is known to have finished
         if not proc_running:
-            for stream in (proc.stdin, proc.stdout, proc.stderr):
-                if stream is not None:
-                    with contextlib.suppress(Exception):
-                        stream.close()
+            _close_streams(proc.stdin, proc.stdout, proc.stderr)
     if completed:
         # this will take care of checking return code and timeouts
         _check_process(proc, retcode, timeout, *("\n".join(s) + "\n" for s in buffers))  # type: ignore[arg-type]
