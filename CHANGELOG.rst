@@ -1,3 +1,28 @@
+2.0.2
+-----
+
+Fixes:
+
+* CLI parsing and terminal fixes: exact switch names win over abbreviations, clear errors for ``--flag=value`` on no-argument switches and for unknown ``requires``/``excludes`` names, ``Set`` no longer validates the unsplit CSV string, ``--helpall`` no longer corrupts later ``--help`` output, ``ask``/``choose``/``prompt`` no longer loop forever on closed stdin, and wide/tall images render with the right aspect (`#824 <https://github.com/tomerfiliba/plumbum/pull/824>`_)
+* Subprocess and pipeline lifecycle fixes: ``bgrun`` kills and reaps the process when the body raises, pipeline call-time args bind to the source command, leaked pipeline pipes are closed, the async TEE handles long lines and multibyte characters and reaps on failure, equal timeout deadlines no longer kill the timeout thread, and daemon fixes (`#822 <https://github.com/tomerfiliba/plumbum/pull/822>`_)
+* Path/fs edge cases: ``RemotePath.unlink`` no longer removes directories recursively and handles symlinks via lstat, ``RemotePath.access`` supports ``F_OK`` and requires every requested permission bit, ``LocalPath.chown`` leaves an unspecified owner/group unchanged, and ``AtomicFile.locked`` honors ``blocking=False`` for the in-process thread lock (`#825 <https://github.com/tomerfiliba/plumbum/pull/825>`_)
+* Don't change the global ``SIGPIPE`` disposition in the CLI (`#834 <https://github.com/tomerfiliba/plumbum/pull/834>`_)
+* Keep the return code off the last line of session output (`#830 <https://github.com/tomerfiliba/plumbum/pull/830>`_)
+* ``Path.parent`` no longer raises ``IndexError`` on the filesystem root (`#827 <https://github.com/tomerfiliba/plumbum/pull/827>`_)
+* Quote paths, cwd, and env names in remote shell command lines (`#821 <https://github.com/tomerfiliba/plumbum/pull/821>`_)
+* ``colorlib`` correctness fixes: stdout guard, ``Color(0)``, ``from_ansi``, bold-off (`#823 <https://github.com/tomerfiliba/plumbum/pull/823>`_)
+
+Docs:
+
+* Update terminal color support link to its permanent home (`#829 <https://github.com/tomerfiliba/plumbum/pull/829>`_)
+* Update example output to match the code (`#828 <https://github.com/tomerfiliba/plumbum/pull/828>`_)
+
+Internal:
+
+* Remove a redundant class definition and fix indentation (`#832 <https://github.com/tomerfiliba/plumbum/pull/832>`_)
+* Bump ``actions/checkout`` and ``astral-sh/setup-uv`` (`#826 <https://github.com/tomerfiliba/plumbum/pull/826>`_, `#831 <https://github.com/tomerfiliba/plumbum/pull/831>`_, `#833 <https://github.com/tomerfiliba/plumbum/pull/833>`_)
+
+
 2.0.1
 -----
 
