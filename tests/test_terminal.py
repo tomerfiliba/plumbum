@@ -5,6 +5,8 @@ from collections import OrderedDict
 from contextlib import contextmanager
 from io import StringIO
 
+import pytest
+
 from plumbum.cli.terminal import Progress, ask, choose, hexdump, prompt
 
 
@@ -125,6 +127,33 @@ class TestTerminal:
         with send_stdin():
             assert choose("Pick", dic, default="a") == "a"
         assert "[1]" in capsys.readouterr()[0]
+
+    def test_ask_eof_with_default(self):
+        # Exhausted stdin (EOF) must fall back to the default, not loop forever.
+        with send_stdin(""):
+            assert ask("Do you like cats?", default=True) is True
+        with send_stdin(""):
+            assert ask("Do you like cats?", default=False) is False
+
+    def test_ask_eof_no_default_raises(self):
+        with send_stdin(""), pytest.raises(EOFError):
+            ask("Do you like cats?")
+
+    def test_choose_eof_with_default(self):
+        with send_stdin(""):
+            assert choose("Pick", ["blue", "yellow"], default="yellow") == "yellow"
+
+    def test_choose_eof_no_default_raises(self):
+        with send_stdin(""), pytest.raises(EOFError):
+            choose("Pick", ["blue", "yellow"])
+
+    def test_prompt_eof_with_default(self):
+        with send_stdin(""):
+            assert prompt("Enter", default="hi") == "hi"
+
+    def test_prompt_eof_no_default_raises(self):
+        with send_stdin(""), pytest.raises(EOFError):
+            prompt("Enter", type=int)
 
     def test_hexdump(self):
         data = "hello world my name is queen marry" + "A" * 66 + "foo bar"

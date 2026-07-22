@@ -13,6 +13,7 @@ __lazy_modules__ = {
 }
 
 import contextlib
+import errno
 import functools
 import inspect
 import os
@@ -206,6 +207,9 @@ class Application:
     parent: Self | None = None
     nested_command: tuple[type[Application], list[str]] | None = None
     _unbound_switches: ClassVar[tuple[str, ...]] = ()
+    # Set transiently by ``helpall`` so that ``help`` demotes meta-switches for
+    # the nested render only, without mutating the shared SwitchInfo objects.
+    _hide_meta_switches: bool = False
 
     def __new__(cls, executable: object | None = None) -> Self:
         """Allows running the class directly as a shortcut for main.
@@ -363,6 +367,20 @@ class Application:
             if switch_.startswith(partialname)
         ]
 
+    def _lookup_switch(self, name: str, swinfo: SwitchInfo) -> SwitchInfo:
+        try:
+            return self._switches_by_name[name]
+        except KeyError:
+            raise SwitchError(
+                T_(
+                    "Switch {0} refers to an unknown switch {1} "
+                    "in its requires/excludes"
+                ).format(
+                    ("-" if len(swinfo.names[0]) == 1 else "--") + swinfo.names[0],
+                    name,
+                )
+            ) from None
+
     def _parse_args(
         self, argv: list[str]
     ) -> tuple[dict[Callable[..., None], Any], list[str]]:
@@ -391,13 +409,15 @@ class Application:
                 # [--name], [--name=XXX], [--name, XXX], [--name, ==, XXX],
                 # [--name=, XXX], [--name, =XXX]
                 eqsign = a.find("=")
-                if eqsign >= 0:
+                has_eq = eqsign >= 0
+                if has_eq:
                     name = a[2:eqsign]
                     argv.insert(0, a[eqsign:])
                 else:
                     name = a[2:]
 
-                if self.ALLOW_ABBREV:
+                # An exact match always wins over abbreviation (argparse-style).
+                if self.ALLOW_ABBREV and name not in self._switches_by_name:
                     partials = self._get_partial_matches(name)
                     if len(partials) == 1:
                         name = partials[0]
@@ -410,6 +430,10 @@ class Application:
                 if name not in self._switches_by_name:
                     raise UnknownSwitch(T_("Unknown switch {0}").format(swname))
                 swinfo = self._switches_by_name[name]
+                if not swinfo.argtype and has_eq:
+                    raise SwitchError(
+                        T_("Switch {0} does not take an argument").format(swname)
+                    )
                 if swinfo.argtype:
                     if not argv:
                         raise MissingArgument(
@@ -806,10 +830,10 @@ complete -F _{prog_name}_completion {prog_name}
                     )
                 )
             requirements[swinfo.func] = {
-                self._switches_by_name[req] for req in swinfo.requires
+                self._lookup_switch(req, swinfo) for req in swinfo.requires
             }
             exclusions[swinfo.func] = {
-                self._switches_by_name[exc] for exc in swinfo.excludes
+                self._lookup_switch(exc, swinfo) for exc in swinfo.excludes
             }
 
         # TODO: compute topological order
@@ -1005,10 +1029,14 @@ complete -F _{prog_name}_completion {prog_name}
             if exit:
                 # surface an EPIPE now, while we can still handle it below
                 sys.stdout.flush()
-        except BrokenPipeError:
-            # The reader closed the pipe (e.g. output piped to ``head``).
+        except OSError as exc:
+            # The reader closed the pipe (e.g. output piped to ``head``). On
+            # POSIX this is BrokenPipeError (EPIPE); on Windows the flush
+            # raises OSError EINVAL instead. Re-raise anything else.
             # Never change the SIGPIPE disposition instead: that would make a
             # socket send() to a closed peer kill the whole process.
+            if not isinstance(exc, BrokenPipeError) and exc.errno != errno.EINVAL:
+                raise
             retcode = 1
             if exit:
                 # Point stdout at devnull so the interpreter's final flush
@@ -1123,9 +1151,12 @@ complete -F _{prog_name}_completion {prog_name}
             for name, subcls in sorted(self._subcommands.items()):
                 subapp = (subcls.get())(f"{self.PROGNAME} {name}")
                 subapp.parent = self
-                for si in subapp._switches_by_func.values():
-                    if si.group == "Meta-switches":
-                        si.group = "Hidden-switches"
+                # Demote meta-switches in the nested help output. This must NOT
+                # mutate the shared SwitchInfo objects (which live on the
+                # function objects and are reused by every Application in the
+                # process); instead flag this instance so help() regroups them
+                # locally for this render only.
+                subapp._hide_meta_switches = True
                 subapp.helpall()
 
     @switch(
@@ -1274,9 +1305,14 @@ complete -F _{prog_name}_completion {prog_name}
 
         by_groups: dict[str, list[SwitchInfo]] = {}
         for si in self._switches_by_func.values():
-            if si.group not in by_groups:
-                by_groups[si.group] = []
-            by_groups[si.group].append(si)
+            group = (
+                "Hidden-switches"
+                if self._hide_meta_switches and si.group == "Meta-switches"
+                else si.group
+            )
+            if group not in by_groups:
+                by_groups[group] = []
+            by_groups[group].append(si)
 
         def switchs(
             by_groups: dict[str, list[SwitchInfo]], show_groups: bool

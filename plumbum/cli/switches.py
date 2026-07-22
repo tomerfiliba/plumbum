@@ -554,6 +554,7 @@ class Set(Validator[str]):
         if self.csv and check_csv:
             for v in value.split(self.csv):
                 yield from self._call_iter(v.strip(), check_csv=False)
+            return
 
         if not self.case_sensitive:
             value = value.lower()
