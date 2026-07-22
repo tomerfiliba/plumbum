@@ -13,6 +13,7 @@ __lazy_modules__ = {
 }
 
 import contextlib
+import errno
 import functools
 import inspect
 import os
@@ -1028,10 +1029,14 @@ complete -F _{prog_name}_completion {prog_name}
             if exit:
                 # surface an EPIPE now, while we can still handle it below
                 sys.stdout.flush()
-        except BrokenPipeError:
-            # The reader closed the pipe (e.g. output piped to ``head``).
+        except OSError as exc:
+            # The reader closed the pipe (e.g. output piped to ``head``). On
+            # POSIX this is BrokenPipeError (EPIPE); on Windows the flush
+            # raises OSError EINVAL instead. Re-raise anything else.
             # Never change the SIGPIPE disposition instead: that would make a
             # socket send() to a closed peer kill the whole process.
+            if not isinstance(exc, BrokenPipeError) and exc.errno != errno.EINVAL:
+                raise
             retcode = 1
             if exit:
                 # Point stdout at devnull so the interpreter's final flush
