@@ -469,8 +469,17 @@ class ParamikoMachine(BaseRemoteMachine):
         f.close()
 
     def _path_stat(self, fn: str) -> RemoteStatRes | None:
+        return self._sftp_stat(self.sftp.stat, fn)
+
+    def _path_lstat(self, fn: str) -> RemoteStatRes | None:
+        return self._sftp_stat(self.sftp.lstat, fn)
+
+    @staticmethod
+    def _sftp_stat(
+        stat_fn: Callable[[str], paramiko.SFTPAttributes], fn: str
+    ) -> RemoteStatRes | None:
         try:
-            st = self.sftp.stat(fn)
+            st = stat_fn(fn)
         except OSError as e:
             if e.errno == errno.ENOENT:
                 return None
@@ -491,9 +500,12 @@ class ParamikoMachine(BaseRemoteMachine):
         )
 
         assert st.st_mode is not None
-        if stat.S_ISDIR(st.st_mode):
+        res.text_mode = ""
+        if stat.S_ISLNK(st.st_mode):
+            res.text_mode = "symbolic link"
+        elif stat.S_ISDIR(st.st_mode):
             res.text_mode = "directory"
-        if stat.S_ISREG(st.st_mode):
+        elif stat.S_ISREG(st.st_mode):
             res.text_mode = "regular file"
         return res
 

@@ -88,6 +88,41 @@ class TestLocalPath:
             p.chown(p.uid.name)
             assert p.uid == os.getuid()
 
+    @skip_on_windows
+    def test_chown_leaves_unspecified_side_unchanged(self, monkeypatch):
+        # When only owner (or only group) is given, the other side must be
+        # passed as -1 ("leave unchanged") rather than the path's current value.
+        calls = []
+        monkeypatch.setattr(
+            os, "chown", lambda _path, uid, gid: calls.append((uid, gid))
+        )
+        with local.tempdir() as dir:
+            p = dir / "foo.txt"
+            p.write(b"hello")
+            calls.clear()
+            p.chown(owner=os.getuid())
+            assert calls == [(os.getuid(), -1)]
+            calls.clear()
+            p.chown(group=os.getgid())
+            assert calls == [(-1, os.getgid())]
+
+    @skip_on_windows
+    def test_chown_recursive_applies_to_children(self, monkeypatch):
+        calls = []
+        monkeypatch.setattr(
+            os, "chown", lambda path, uid, gid: calls.append((str(path), uid, gid))
+        )
+        with local.tempdir() as dir:
+            sub = dir / "sub"
+            sub.mkdir()
+            child = sub / "child.txt"
+            child.write(b"x")
+            calls.clear()
+            sub.chown(owner=os.getuid(), recursive=True)
+            # The dir itself and its child both get the change, gid untouched
+            assert (str(sub), os.getuid(), -1) in calls
+            assert (str(child), os.getuid(), -1) in calls
+
     def test_split(self):
         p = local.path("/var/log/messages")
         assert p.split() == ["var", "log", "messages"]

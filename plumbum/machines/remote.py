@@ -572,8 +572,16 @@ class BaseRemoteMachine(BaseMachine):
         res.text_mode = text_mode
         return res
 
+    def _path_lstat(self, fn: str) -> RemoteStatRes | None:
+        # ``stat`` without -L/--dereference already reports the link itself.
+        return self._path_stat(fn)
+
     def _path_delete(self, fn: str) -> None:
         self._session.run(f"rm -rf {shquote(fn)}")
+
+    def _path_unlink(self, fn: str) -> None:
+        # Non-recursive removal: refuses to descend into directories.
+        self._session.run(f"rm -f {shquote(fn)}")
 
     def _path_move(self, src: str, dst: str) -> RemotePath:
         self._session.run(f"mv {shquote(src)} {shquote(dst)}")
