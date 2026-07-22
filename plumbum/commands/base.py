@@ -14,7 +14,6 @@ import contextlib
 import functools
 import shlex
 import subprocess
-import time
 import typing
 from subprocess import PIPE, Popen
 from tempfile import TemporaryFile
@@ -24,6 +23,8 @@ from typing import ClassVar
 import plumbum.commands.modifiers
 from plumbum.commands.processes import (
     ProcessTimedOut,
+    _close_streams,
+    _terminate_and_reap,
     iter_lines,
     run_proc,
 )
@@ -249,6 +250,10 @@ class BaseCommand:
         p = self.popen(args, **kwargs)
         was_run = [False]
 
+        def cleanup() -> None:
+            del p.run  # type: ignore[attr-defined]
+            _close_streams(p.stdin, p.stdout, p.stderr)
+
         def runner() -> tuple[int | None, str | bytes, str | bytes] | None:
             if was_run[0]:
                 return None  # already done
@@ -256,10 +261,7 @@ class BaseCommand:
             try:
                 return run_proc(p, retcode, timeout)
             finally:
-                del p.run  # type: ignore[attr-defined]
-                for f in (p.stdin, p.stdout, p.stderr):
-                    with contextlib.suppress(Exception):
-                        f.close()  # type: ignore[union-attr]
+                cleanup()
 
         p.run = runner  # type: ignore[attr-defined]
         try:
@@ -271,24 +273,10 @@ class BaseCommand:
             # without validation instead.
             if not was_run[0]:
                 was_run[0] = True
-                del p.run  # type: ignore[attr-defined]
                 try:
-                    if p.poll() is None:
-                        with contextlib.suppress(Exception):
-                            p.terminate()
-                        for _ in range(20):  # ~1s grace before killing
-                            if p.poll() is not None:
-                                break
-                            time.sleep(0.05)
-                        else:
-                            with contextlib.suppress(Exception):
-                                p.kill()
-                            with contextlib.suppress(Exception):
-                                p.wait()
+                    _terminate_and_reap(p)
                 finally:
-                    for f in (p.stdin, p.stdout, p.stderr):
-                        with contextlib.suppress(Exception):
-                            f.close()  # type: ignore[union-attr]
+                    cleanup()
             raise
         # Reap/cleanup on normal exit. ``runner`` is guarded by ``was_run`` so
         # an explicit ``p.run()`` in the body won't run it a second time.
@@ -500,10 +488,7 @@ class Pipeline(BaseCommand):
             # The source's stdout was already closed (redirected into dstproc's
             # stdin) above; its stderr/stdin pipes, however, are left open and
             # would leak. Now that both stages have been reaped, close them.
-            for stream in (srcproc.stderr, srcproc.stdin):
-                if stream is not None:
-                    with contextlib.suppress(Exception):
-                        stream.close()
+            _close_streams(srcproc.stderr, srcproc.stdin)
             return dstproc.returncode
 
         dstproc._proc.wait = wait2  # type: ignore[attr-defined]

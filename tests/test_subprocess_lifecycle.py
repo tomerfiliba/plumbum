@@ -42,9 +42,9 @@ class TestTimeoutHeap:
 
         heap = MinHeap()
         deadline = 123.0
-        # Same deadline, distinct monotonic counter values as the tiebreaker.
-        heap.push((deadline, 0, FakeProc()))  # type: ignore[arg-type]
-        heap.push((deadline, 1, FakeProc()))  # type: ignore[arg-type]
+        # Same deadline; the heap's internal counter must break the tie.
+        heap.push(deadline, FakeProc())  # type: ignore[arg-type]
+        heap.push(deadline, FakeProc())  # type: ignore[arg-type]
         # peek/pop must not raise TypeError from comparing FakeProc objects
         first = heap.peek()
         assert first[0] == deadline

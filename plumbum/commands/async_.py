@@ -722,9 +722,11 @@ class _AsyncTEE(AsyncExecutionModifier):
         stderr_lines: list[str] = []
 
         async def read_stream(
-            stream: asyncio.StreamReader | None, output_list: list[str], target: TextIO
+            stream: asyncio.StreamReader | None,
+            target: TextIO,
+            output_list: list[str] | None = None,
         ) -> None:
-            """Read from stream in fixed-size chunks, display, and collect output.
+            """Read a stream in fixed-size chunks, display, and optionally collect.
 
             Reads by chunk rather than ``readline``: ``StreamReader.readline``
             raises ``LimitOverrunError``/``ValueError`` once a line exceeds the
@@ -738,50 +740,14 @@ class _AsyncTEE(AsyncExecutionModifier):
             decoder = codecs.getincrementaldecoder(encoding)(errors="ignore")
             while True:
                 chunk = await stream.read(4096)
-                if not chunk:
-                    break
-
-                text = decoder.decode(chunk)
+                text = decoder.decode(chunk, final=not chunk)
                 if text:
-                    output_list.append(text)
+                    if output_list is not None:
+                        output_list.append(text)
                     target.write(text)
                     target.flush()
-
-            text = decoder.decode(b"", final=True)
-            if text:
-                output_list.append(text)
-                target.write(text)
-                target.flush()
-
-        async def drain_stream(
-            stream: asyncio.StreamReader | None, target: TextIO
-        ) -> None:
-            """Display a stream in fixed-size chunks (no line buffering).
-
-            Used for upstream pipeline stderr, where output may be large and
-            without newlines -- ``readline`` would raise once a line exceeds the
-            stream's buffer limit, so read by chunk instead. A single incremental
-            decoder keeps multibyte characters that straddle a chunk boundary
-            intact.
-            """
-            if stream is None:
-                return
-
-            decoder = codecs.getincrementaldecoder(encoding)(errors="ignore")
-            while True:
-                chunk = await stream.read(4096)
                 if not chunk:
                     break
-
-                text = decoder.decode(chunk)
-                if text:
-                    target.write(text)
-                    target.flush()
-
-            text = decoder.decode(b"", final=True)
-            if text:
-                target.write(text)
-                target.flush()
 
         # ``proc.stdout``/``proc.stderr`` are the pipeline's *final* stage. Each
         # upstream stage of a pipeline has its own stderr pipe that must also be
@@ -791,13 +757,13 @@ class _AsyncTEE(AsyncExecutionModifier):
         # final stage's, matching ``popen().communicate()``. The loop adds nothing
         # for a plain command (no upstream stages).
         readers = [
-            read_stream(proc.stdout, stdout_lines, sys.stdout),
-            read_stream(proc.stderr, stderr_lines, sys.stderr),
+            read_stream(proc.stdout, sys.stdout, stdout_lines),
+            read_stream(proc.stderr, sys.stderr, stderr_lines),
         ]
         node: Any = proc
         while isinstance(node, AsyncPipelineProcess):
             node = node.srcproc
-            readers.append(drain_stream(node.stderr, sys.stderr))
+            readers.append(read_stream(node.stderr, sys.stderr))
 
         # Read every stage's streams concurrently
         try:
