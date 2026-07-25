@@ -622,6 +622,19 @@ class TestLocalMachine:
             sleep(3, timeout=1)
 
     @skip_on_windows
+    def test_timeout_with_surviving_grandchild(self):
+        # The timeout thread kills the direct child, but a grandchild that
+        # inherited the pipes keeps them open, so communicate() must not block
+        # waiting for EOF. See issue #685.
+        from plumbum.cmd import sh
+
+        cmd = sh["-c", "sleep 30 & wait"]
+        start = time.time()
+        with pytest.raises(ProcessTimedOut):
+            cmd(timeout=1)
+        assert time.time() - start < 15
+
+    @skip_on_windows
     def test_pipe_stderr(self, capfd):
         from plumbum.cmd import cat, head
 
