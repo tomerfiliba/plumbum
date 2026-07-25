@@ -12,6 +12,7 @@ __lazy_modules__ = {
 
 import contextlib
 import functools
+import os
 import shlex
 import subprocess
 import typing
@@ -69,10 +70,20 @@ class RedirectionError(Exception):
 # ===================================================================================================
 # Utilities
 # ===================================================================================================
+def _stringify(value: Any) -> str:
+    """Renders a command-line argument as text.
+
+    ``bytes`` are decoded with :func:`os.fsdecode` rather than going through
+    ``str()``, which would render them as their ``repr`` (``b'test'``).
+    """
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        return os.fsdecode(bytes(value))
+    return str(value)
+
+
 def shquote(text: Any) -> str:
     """Quotes the given text with shell escaping (assumes as syntax similar to ``sh``)"""
-    text = str(text)
-    return shlex.quote(text)
+    return shlex.quote(_stringify(text))
 
 
 def shquote_list(seq: Sequence[Any]) -> list[str]:
@@ -695,10 +706,11 @@ class ConcreteCommand(BaseCommand):
                     argv.extend(a.formulate(level + 1))
             elif isinstance(a, (list, tuple)):
                 argv.extend(
-                    shquote(b) if level >= self.QUOTE_LEVEL else str(b) for b in a
+                    shquote(b) if level >= self.QUOTE_LEVEL else _stringify(b)
+                    for b in a
                 )
             else:
-                argv.append(shquote(a) if level >= self.QUOTE_LEVEL else str(a))
+                argv.append(shquote(a) if level >= self.QUOTE_LEVEL else _stringify(a))
         return argv
 
     @property
