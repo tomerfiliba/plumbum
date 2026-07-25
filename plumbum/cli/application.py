@@ -804,6 +804,15 @@ complete -F _{prog_name}_completion {prog_name}
             # TODO: This is required to handle (correctly) None, but probably could be done better
             return NotImplemented  # type: ignore[no-any-return]
 
+    def _main_argspec(self) -> inspect.FullArgSpec:
+        """Get the argspec of main, looking through functools.wraps decorators.
+
+        A wrapper usually declares ``*args, **kwargs``, but copies the
+        annotations of the function it wraps, so the two must be read from the
+        same place for the names to match.
+        """
+        return inspect.getfullargspec(inspect.unwrap(self.main))
+
     def _validate_args(
         self,
         swfuncs: dict[Callable[..., Any], SwitchParseInfo],
@@ -856,7 +865,7 @@ complete -F _{prog_name}_completion {prog_name}
                     )
                 )
 
-        m = inspect.getfullargspec(self.main)
+        m = self._main_argspec()
 
         max_args = sys.maxsize if m.varargs else len(m.args) - 1
         min_args = len(m.args) - 1 - (len(m.defaults) if m.defaults else 0)
@@ -888,12 +897,14 @@ complete -F _{prog_name}_completion {prog_name}
             )
 
         elif hasattr(m, "annotations") and m.annotations:
-            annotations = typing.get_type_hints(self.main)
+            # Unwrapped too: string annotations resolve in the wrapped
+            # function's module, not the decorator's
+            annotations = typing.get_type_hints(inspect.unwrap(self.main))
             args_names = list(m.args[1:])
             positional: list[Any] = [None] * len(args_names)
             varargs = None
 
-            # All args are positional, so convert kargs to positional
+            # Only annotations that name a positional argument are validators
             for item, annotation in annotations.items():
                 if item == m.varargs:
                     varargs = annotation
@@ -1276,7 +1287,7 @@ complete -F _{prog_name}_completion {prog_name}
             for line in wrapped_paragraphs(self.DESCRIPTION_MORE, cols):
                 print(line)
 
-        m = inspect.getfullargspec(self.main)
+        m = self._main_argspec()
         tailargs_str = m.args[1:]  # skip self
         if m.defaults:
             for i, d in enumerate(reversed(m.defaults)):
