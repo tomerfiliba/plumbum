@@ -5,7 +5,9 @@ __lazy_modules__ = {"gettext", "importlib", "importlib.resources"}
 import locale
 
 # High performance method for English (no translation needed)
-loc = locale.getlocale()[0]
+# LC_MESSAGES is the correct category for selecting a message translation,
+# but it's not available on Windows, so fall back to the getlocale() default.
+loc = locale.getlocale(getattr(locale, "LC_MESSAGES", locale.LC_CTYPE))[0]
 if loc is None or loc.startswith("en") or loc == "C":
 
     class NullTranslation:

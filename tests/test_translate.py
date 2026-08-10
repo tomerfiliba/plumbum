@@ -59,3 +59,37 @@ def test_help_lang(capsys):
     stdout, _ = capsys.readouterr()
     assert "Utilisation" in stdout
     assert "Imprime ce message d'aide et sort" in stdout
+
+
+@pytest.fixture
+def french_ctype_only():
+    if not hasattr(locale, "LC_MESSAGES"):
+        pytest.skip("LC_MESSAGES is not available on this platform")
+
+    try:
+        locale.setlocale(locale.LC_CTYPE, "fr_FR.utf-8")
+        locale.setlocale(locale.LC_MESSAGES, "C")
+        reload_cli()
+        yield
+    except locale.Error:
+        pytest.skip(
+            "No fr_FR locale found, run 'sudo locale-gen fr_FR.UTF-8' to run this test"
+        )
+    finally:
+        locale.setlocale(locale.LC_ALL, "")
+        reload_cli()
+
+
+@pytest.mark.usefixtures("french_ctype_only")
+def test_help_lang_follows_lc_messages_not_lc_ctype(capsys):
+    class Simple(plumbum.cli.Application):
+        foo = plumbum.cli.SwitchAttr("--foo")
+
+        def main(self):
+            pass
+
+    _, rc = Simple.run(["foo", "-h"], exit=False)
+    assert rc == 0
+    stdout, _ = capsys.readouterr()
+    assert "Usage" in stdout
+    assert "Utilisation" not in stdout
