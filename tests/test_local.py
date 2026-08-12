@@ -1342,4 +1342,13 @@ class TestBytesArguments:
 
     @skip_on_windows
     def test_bytes_argument_in_list(self):
-        assert local["echo"][[b"a", b"b"]]().split() == ["a", "b"]
+        # A nested list is one argument that formulate() expands in place
+        assert local["echo"].formulate(0, [[b"a", b"b"]])[1:] == ["a", "b"]
+        assert local["echo"].run([[b"a", b"b"]])[1].split() == ["a", "b"]
+
+    @skip_on_windows
+    def test_bytes_as_only_argument(self):
+        # bytes must not be iterated like a sequence of arguments
+        assert local["echo"].run(b"ab")[1].strip() == "ab"
+        assert local["echo"].run(bytearray(b"ab"))[1].strip() == "ab"
+        assert local["echo"]["x"].run(b"ab")[1].split() == ["x", "ab"]

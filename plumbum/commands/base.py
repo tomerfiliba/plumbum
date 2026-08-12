@@ -74,7 +74,11 @@ def _stringify(value: Any) -> str:
     """Renders a command-line argument as text.
 
     ``bytes`` are decoded with :func:`os.fsdecode` rather than going through
-    ``str()``, which would render them as their ``repr`` (``b'test'``).
+    ``str()``, which would render them as their ``repr`` (``b'test'``). On
+    POSIX this round-trips any byte string, because ``subprocess`` encodes the
+    argument back with :func:`os.fsencode`. On Windows, and for remote
+    machines, only bytes that the local filesystem encoding can decode are
+    supported; other bytes raise ``UnicodeDecodeError``.
     """
     if isinstance(value, (bytes, bytearray, memoryview)):
         return os.fsdecode(bytes(value))
@@ -390,7 +394,7 @@ class BoundCommand(BaseCommand):
     def popen(
         self, args: Sequence[Any] | str = (), **kwargs: Any
     ) -> PopenWithAddons[str]:
-        if isinstance(args, str):
+        if isinstance(args, (str, bytes, bytearray)):
             args = [
                 args,
             ]
