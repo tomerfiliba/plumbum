@@ -32,7 +32,7 @@ from typing import Any, ClassVar
 from plumbum.commands import CommandNotFound, ConcreteCommand
 from plumbum.commands.daemons import posix_daemonize, win32_daemonize
 from plumbum.commands.processes import iter_lines
-from plumbum.lib import IS_WIN32, ProcInfo, StaticProperty
+from plumbum.lib import IS_WIN32, ProcInfo, StaticProperty, _parse_ps_lines
 from plumbum.machines.base import BaseMachine, PopenAddons, PopenWithAddons
 from plumbum.machines.env import BaseEnv
 from plumbum.machines.session import ShellSession
@@ -434,12 +434,7 @@ class LocalMachine(BaseMachine):
             """
             ps = self["ps"]
             lines = ps("-e", "-o", "pid,uid,stat,args").splitlines()
-            lines.pop(0)  # header
-            for line in lines:
-                parts = line.strip().split()
-                yield ProcInfo(
-                    int(parts[0]), int(parts[1]), parts[2], " ".join(parts[3:])
-                )
+            yield from _parse_ps_lines(lines)
 
     def pgrep(self, pattern: str) -> Generator[ProcInfo, None, None]:
         """
