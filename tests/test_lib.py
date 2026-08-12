@@ -84,6 +84,31 @@ def test_read_fd_decode_safely_raises_on_invalid_sequence() -> None:
             os.close(write_fd)
 
 
+def test_parse_ps_lines_handles_empty_stat_field() -> None:
+    # Some ``ps`` implementations emit an empty STAT field; the remaining
+    # columns must not shift (see issue #844).
+    lines = [
+        "  PID   UID STAT ARGS",
+        "    1     0 Ss   /sbin/launchd",
+        "12345   501      python -m pytest",
+    ]
+
+    launchd, python = lib._parse_ps_lines(lines)
+
+    assert (launchd.pid, launchd.uid, launchd.stat, launchd.args) == (
+        1,
+        0,
+        "Ss",
+        "/sbin/launchd",
+    )
+    assert (python.pid, python.uid, python.stat, python.args) == (
+        12345,
+        501,
+        "",
+        "python -m pytest",
+    )
+
+
 def test_read_fd_decode_safely_raises_when_stream_ends_mid_char() -> None:
     # One byte of a 4-byte UTF-8 sequence forces retry loop then final decode failure.
     read_fd, write_fd = os.pipe()

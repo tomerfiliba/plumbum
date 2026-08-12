@@ -28,6 +28,24 @@ class ProcInfo:
         return f"{self.__class__.__name__}({self.pid!r}, {self.uid!r}, {self.stat!r}, {self.args!r})"
 
 
+def _parse_ps_lines(lines: list[str]) -> Generator[ProcInfo, None, None]:
+    """Parse the output of ``ps -e -o pid,uid,stat,args``.
+
+    The args column is located by its offset in the header line rather than by
+    whitespace splitting, because ``ps`` may emit an empty STAT field, which
+    would otherwise shift every following field.
+    """
+    header = lines[0]
+    # The args column is the last header field; its name differs between
+    # implementations ("ARGS" on BSD/Darwin, "COMMAND" on Linux).
+    args_offset = len(header) - len(header.split()[-1])
+    for line in lines[1:]:
+        pid, uid, *stat = line[:args_offset].split()
+        yield ProcInfo(
+            int(pid), int(uid), stat[0] if stat else "", line[args_offset:].strip()
+        )
+
+
 @contextmanager
 def captured_stdout(stdin: str = "") -> Generator[TextIO, None, None]:
     """

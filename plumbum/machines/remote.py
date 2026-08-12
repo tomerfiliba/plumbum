@@ -15,7 +15,7 @@ from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING
 
 from plumbum.commands import CommandNotFound, ConcreteCommand, shquote
-from plumbum.lib import ProcInfo
+from plumbum.lib import ProcInfo, _parse_ps_lines
 from plumbum.machines.base import BaseMachine, PopenWithAddons
 from plumbum.machines.env import BaseEnv
 from plumbum.path.local import LocalPath
@@ -477,10 +477,7 @@ class BaseRemoteMachine(BaseMachine):
         """
         ps = self["ps"]
         lines = ps("-e", "-o", "pid,uid,stat,args").splitlines()
-        lines.pop(0)  # header
-        for line in lines:
-            parts = line.strip().split()
-            yield ProcInfo(int(parts[0]), int(parts[1]), parts[2], " ".join(parts[3:]))
+        yield from _parse_ps_lines(lines)
 
     def pgrep(self, pattern: str) -> Generator[ProcInfo, None, None]:
         """
