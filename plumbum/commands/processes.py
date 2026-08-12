@@ -407,22 +407,28 @@ def _communicate(proc: PopenWithAddons[Any], timeout: float | None) -> tuple[Any
     already-set ``_timed_out`` flag then makes ``verify()`` raise
     ``ProcessTimedOut`` as usual.
     """
-    if timeout is None:
+    # Popen-like objects (remote/session procs) may not accept a timeout.
+    if timeout is None or not getattr(proc, "communicate_supports_timeout", False):
         return proc.communicate()
     try:
         # Give the timeout thread a moment to kill the process first, so a
         # normally-terminating process still reports its real exit code.
         return proc.communicate(timeout=timeout + 1)  # type: ignore[call-arg]
-    except TypeError:
-        # Popen-like objects (remote/session procs) may not accept a timeout.
-        return proc.communicate()
-    except subprocess.TimeoutExpired:
-        proc._timed_out = True  # type: ignore[attr-defined]
+    except subprocess.TimeoutExpired as ex:
+        # Only the pipes timed out. If the process itself is still running,
+        # the timeout thread did not get to it, so kill it here.
+        if proc.poll() is None:
+            proc._timed_out = True  # type: ignore[attr-defined]
+            with contextlib.suppress(Exception):
+                proc.kill()
+        # A grandchild still holds the pipes, so keep this wait bounded too.
         with contextlib.suppress(Exception):
-            proc.kill()
-        with contextlib.suppress(Exception):
-            proc.wait()
-        return b"", b""
+            proc.wait(timeout=1)  # type: ignore[call-arg]
+        if IS_WIN32:
+            # communicate() leaves its reader threads running on these pipes
+            # and closes them itself once the grandchild is gone.
+            proc.close_streams_after_communicate = False  # type: ignore[attr-defined]
+        return ex.stdout, ex.stderr
 
 
 # ===================================================================================================
