@@ -109,6 +109,38 @@ def test_parse_ps_lines_handles_empty_stat_field() -> None:
     )
 
 
+def test_parse_ps_lines_handles_wide_columns() -> None:
+    # ps widens a column to its widest value but keeps the header unchanged, so
+    # the args column of a row can be to the right of the header one.
+    lines = [
+        "  PID   UID STAT ARGS",
+        "    1 12345678 Ssl  python3 /t.py",
+        "12345 2000000000 S<Lsl+ python3 -m pytest",
+        "   42 4294967294        sleep 5",
+    ]
+
+    small, wide, no_stat = lib._parse_ps_lines(lines)
+
+    assert (small.pid, small.uid, small.stat, small.args) == (
+        1,
+        12345678,
+        "Ssl",
+        "python3 /t.py",
+    )
+    assert (wide.pid, wide.uid, wide.stat, wide.args) == (
+        12345,
+        2000000000,
+        "S<Lsl+",
+        "python3 -m pytest",
+    )
+    assert (no_stat.pid, no_stat.uid, no_stat.stat, no_stat.args) == (
+        42,
+        4294967294,
+        "",
+        "sleep 5",
+    )
+
+
 def test_read_fd_decode_safely_raises_when_stream_ends_mid_char() -> None:
     # One byte of a 4-byte UTF-8 sequence forces retry loop then final decode failure.
     read_fd, write_fd = os.pipe()

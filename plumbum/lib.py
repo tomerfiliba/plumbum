@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"inspect", "io"}
+__lazy_modules__ = {"inspect", "io", "re"}
 
 import inspect
 import os
+import re
 import sys
 from contextlib import contextmanager
 from io import StringIO
@@ -31,19 +32,30 @@ class ProcInfo:
 def _parse_ps_lines(lines: list[str]) -> Generator[ProcInfo, None, None]:
     """Parse the output of ``ps -e -o pid,uid,stat,args``.
 
-    The args column is located by its offset in the header line rather than by
-    whitespace splitting, because ``ps`` may emit an empty STAT field, which
-    would otherwise shift every following field.
+    A plain whitespace split is not sufficient, because ``ps`` can emit an empty
+    STAT field, which makes the command line look like the STAT value. The args
+    column of the header tells the two cases apart: a field that starts at or
+    after that column is the command line, not a STAT value.
     """
-    header = lines[0]
-    # The args column is the last header field; its name differs between
+    # The last header field is the args column; its name differs between
     # implementations ("ARGS" on BSD/Darwin, "COMMAND" on Linux).
-    args_offset = len(header) - len(header.split()[-1])
+    fields = list(re.finditer(r"\S+", lines[0]))
+    uid_end = fields[1].end()
+    args_start = fields[-1].start()
     for line in lines[1:]:
-        pid, uid, *stat = line[:args_offset].split()
-        yield ProcInfo(
-            int(pid), int(uid), stat[0] if stat else "", line[args_offset:].strip()
-        )
+        match = re.match(r"\s*(\d+)\s+(\d+)", line)
+        if match is None:
+            raise ValueError(f"Unexpected ps output line: {line!r}")
+        rest = line[match.end() :]
+        stat_start = match.end() + len(rest) - len(rest.lstrip())
+        # ps sizes each column to its widest value but does not pad the header
+        # to match, so move the args column right by as much as this row
+        # overflows the header.
+        if stat_start >= args_start + max(0, match.end() - uid_end):
+            stat, args = "", rest.strip()
+        else:
+            stat, _, args = rest.strip().partition(" ")
+        yield ProcInfo(int(match[1]), int(match[2]), stat, args.strip())
 
 
 @contextmanager
