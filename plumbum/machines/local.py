@@ -172,7 +172,7 @@ class LocalCommand(ConcreteCommand):
         env: dict[str, str] | BaseEnv[LocalPath] | None = None,
         **kwargs: Any,
     ) -> PopenWithAddons[str]:
-        if isinstance(args, str):
+        if isinstance(args, (str, bytes, bytearray)):
             args = (args,)
         return self.machine._popen(
             self.executable,

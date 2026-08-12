@@ -1322,3 +1322,33 @@ def test_is_recursive_glob(pattern, expected):
     from plumbum.machines.remote import _is_recursive_glob
 
     assert _is_recursive_glob(pattern) is expected
+
+
+class TestBytesArguments:
+    """``bytes`` arguments must be decoded, not rendered via ``repr``.
+
+    See https://github.com/tomerfiliba/plumbum/issues/600
+    """
+
+    def test_shquote_bytes(self):
+        from plumbum.commands import shquote
+
+        assert shquote(b"test") == "test"
+        assert shquote(b"a b") == "'a b'"
+
+    @skip_on_windows
+    def test_bytes_argument(self):
+        assert local["echo"](b"test").strip() == "test"
+
+    @skip_on_windows
+    def test_bytes_argument_in_list(self):
+        # A nested list is one argument that formulate() expands in place
+        assert local["echo"].formulate(0, [[b"a", b"b"]])[1:] == ["a", "b"]
+        assert local["echo"].run([[b"a", b"b"]])[1].split() == ["a", "b"]
+
+    @skip_on_windows
+    def test_bytes_as_only_argument(self):
+        # bytes must not be iterated like a sequence of arguments
+        assert local["echo"].run(b"ab")[1].strip() == "ab"
+        assert local["echo"].run(bytearray(b"ab"))[1].strip() == "ab"
+        assert local["echo"]["x"].run(b"ab")[1].split() == ["x", "ab"]
