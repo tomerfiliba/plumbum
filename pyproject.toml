@@ -90,6 +90,10 @@ docs = [
 ]
 
 
+[tool.uv]
+exclude-newer = "7 days"
+
+
 [tool.mypy]
 files = ["plumbum", "examples"]
 python_version = "3.9"

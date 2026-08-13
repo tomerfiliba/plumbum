@@ -15,22 +15,27 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 
 jobs:
 
   pre-commit:
     name: Format
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # to check out the repository
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
-    - uses: actions/setup-python@v7
+        persist-credentials: false
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: "3.x"
-    - uses: pre-commit/action@v3.0.1
+    - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
     - name: Setup uv
-      uses: astral-sh/setup-uv@v9.0.0
+      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
     - name: pylint
       run: uvx nox -s pylint -- --output-format=github
 
@@ -55,21 +60,24 @@ jobs:
         - python-version: '3.15'
           os: macos-latest
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read  # to check out the repository
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
+        persist-credentials: false
 
     - name: Setup uv (cached)
-      uses: astral-sh/setup-uv@v9.0.0
+      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
       with:
         enable-cache: true
         cache-suffix: ${{ matrix.os }}-${{ matrix.python-version }}
         cache-dependency-glob: "**/pyproject.toml"
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v7
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
@@ -80,8 +88,10 @@ jobs:
 
     - name: Install
       run: |
-        uv venv --python ${{ matrix.python-version }}
+        uv venv --python "$PYTHON_VERSION"
         uv pip install -e.[test] pytest-github-actions-annotate-failures
+      env:
+        PYTHON_VERSION: ${{ matrix.python-version }}
 
     - name: Setup SSH tests
       if: runner.os != 'Windows'
@@ -114,8 +124,10 @@ jobs:
         COVERALLS_FLAG_NAME: test-${{ matrix.os }}-${{ matrix.python-version }}
 
   coverage:
+    name: Coverage
     needs: [tests]
     runs-on: ubuntu-slim
+    permissions: {}
     steps:
     - name: Install coveralls
       run: pipx install coveralls
