@@ -43,8 +43,6 @@ def _parse_ps_lines(lines: list[str]) -> Generator[ProcInfo, None, None]:
     uid_end = fields[1].end()
     args_start = fields[-1].start()
     for line in lines[1:]:
-        # uid can be negative: macOS ps reports -2 ("nobody") for some system
-        # processes.
         match = re.match(r"\s*(\d+)\s+(-?\d+)", line)
         if match is None:
             raise ValueError(f"Unexpected ps output line: {line!r}")
