@@ -1,11 +1,12 @@
 ci:
+  autoupdate_schedule: monthly
   autoupdate_commit_msg: "chore: update pre-commit hooks"
   autofix_commit_msg: "style: pre-commit fixes"
 
 repos:
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: "v6.0.0"
+  rev: "3e8a8703264a2f4a69428a0aa4dcb512790b2c8c"  # frozen: v6.0.0
   hooks:
   - id: check-added-large-files
   - id: check-case-conflict
@@ -19,14 +20,14 @@ repos:
   - id: trailing-whitespace
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.15.5"
+  rev: "b969e2851312ca2b24bbec879ba4954341d1bd12"  # frozen: v0.15.5
   hooks:
     - id: ruff-check
       args: ["--fix", "--unsafe-fixes"]
     - id: ruff-format
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: "v1.19.1"
+  rev: "a66e98df7b4aeeb3724184b332785976d062b92e"  # frozen: v1.19.1
   hooks:
   - id: mypy
     files: ^(plumbum|examples)
@@ -39,12 +40,12 @@ repos:
       - pillow
 
 - repo: https://github.com/abravalheri/validate-pyproject
-  rev: "v0.25"
+  rev: "4b2e70d08cb2ccd26d1fba73588de41c7a5d50b7"  # frozen: v0.25
   hooks:
   - id: validate-pyproject
 
 - repo: https://github.com/codespell-project/codespell
-  rev: "v2.4.2"
+  rev: "57b21406f092110c18776e39b0bda50d37c945c8"  # frozen: v2.4.3
   hooks:
   - id: codespell
     args: ["-w"]
@@ -52,15 +53,22 @@ repos:
     exclude: "(^pyproject.toml|.po)$"
 
 - repo: https://github.com/pre-commit/pygrep-hooks
-  rev: "v1.10.0"
+  rev: "3a6eb0fadf60b3cccfd80bad9dbb6fae7e47b316"  # frozen: v1.10.0
   hooks:
   - id: rst-backticks
   - id: rst-directive-colons
   - id: rst-inline-touching-normal
 
 - repo: https://github.com/henryiii/flake8-lazy
-  rev: v0.8.1
+  rev: 5fed9a818f2583f0403aed779bf2b6c9aa8d25f4  # frozen: v0.8.5
   hooks:
     - id: flake8-lazy
       args: [--apply=set]
       files: "^plumbum"
+
+- repo: https://github.com/zizmorcore/zizmor-pre-commit
+  rev: "451b56af716f9f0d0c2b816503a3fd0cf8b036fa"  # frozen: v1.29.0
+  hooks:
+  - id: zizmor
+    files: "^\\.github"
+    args: [--persona=pedantic]
