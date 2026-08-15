@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-__lazy_modules__ = {"atexit", "contextlib", "heapq", "itertools"}
+__lazy_modules__ = {"atexit", "contextlib", "heapq", "itertools", "subprocess"}
 
 import atexit
 import contextlib
 import enum
 import heapq
 import itertools
+import subprocess
 import sys
 import time
 import typing
@@ -18,7 +19,6 @@ from typing import Any
 from plumbum.lib import IS_WIN32
 
 if typing.TYPE_CHECKING:
-    import subprocess
     from collections.abc import Callable, Container, Generator
     from typing import IO, Literal
 
@@ -397,6 +397,40 @@ def _terminate_and_reap(proc: PopenWithAddons[Any], grace: float = 1.0) -> None:
         proc.wait()
 
 
+def _communicate(proc: PopenWithAddons[Any], timeout: float | None) -> tuple[Any, Any]:
+    """Like ``proc.communicate()``, but does not block past the timeout.
+
+    The timeout thread kills *proc* itself, but ``communicate()`` waits for
+    EOF on the pipes, and a grandchild that inherited them keeps them open --
+    so the call would block forever even though *proc* is already dead.
+    Passing the timeout through to ``communicate()`` bounds that wait; the
+    already-set ``_timed_out`` flag then makes ``verify()`` raise
+    ``ProcessTimedOut`` as usual.
+    """
+    # Popen-like objects (remote/session procs) may not accept a timeout.
+    if timeout is None or not getattr(proc, "communicate_supports_timeout", False):
+        return proc.communicate()
+    try:
+        # Give the timeout thread a moment to kill the process first, so a
+        # normally-terminating process still reports its real exit code.
+        return proc.communicate(timeout=timeout + 1)  # type: ignore[call-arg]
+    except subprocess.TimeoutExpired as ex:
+        # Only the pipes timed out. If the process itself is still running,
+        # the timeout thread did not get to it, so kill it here.
+        if proc.poll() is None:
+            proc._timed_out = True  # type: ignore[attr-defined]
+            with contextlib.suppress(Exception):
+                proc.kill()
+        # A grandchild still holds the pipes, so keep this wait bounded too.
+        with contextlib.suppress(Exception):
+            proc.wait(timeout=1)  # type: ignore[call-arg]
+        if IS_WIN32:
+            # communicate() leaves its reader threads running on these pipes
+            # and closes them itself once the grandchild is gone.
+            proc.close_streams_after_communicate = False  # type: ignore[attr-defined]
+        return ex.stdout, ex.stderr
+
+
 # ===================================================================================================
 # run_proc
 # ===================================================================================================
@@ -426,7 +460,7 @@ def run_proc(
     stdout: bytes | str
     stderr: bytes | str
     try:
-        stdout, stderr = proc.communicate()
+        stdout, stderr = _communicate(proc, timeout)
         proc._end_time = time.time()  # type: ignore[attr-defined]
         if not stdout:
             stdout = b""
