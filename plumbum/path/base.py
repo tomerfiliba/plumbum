@@ -265,7 +265,7 @@ class Path(str, ABC):
 
         .. versionadded:: 2.0
         """
-        return self.with_name(stem + "".join(self.suffixes))
+        return self.with_name(stem + self.suffix)
 
     @abstractmethod
     def glob(self, pattern: str) -> builtins.list[Self]:
