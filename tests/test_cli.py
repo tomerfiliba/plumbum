@@ -310,6 +310,42 @@ class TestCLI:
             # List item with invisible bullet should be indented without the bullet
             assert " XYZ" in stdout
 
+    def test_switch_help_paragraphs(self, capsys):
+        class WithParagraphs(cli.Application):
+            opt = cli.SwitchAttr(
+                ["--opt"],
+                str,
+                help="first paragraph of the switch help\n"
+                "\n"
+                "second paragraph after a blank line\n"
+                "\n"
+                "- a bullet item\n"
+                "- another bullet item",
+            )
+
+            def main(self):
+                pass
+
+        _, rc = WithParagraphs.run(["withparagraphs", "--help"], exit=False)
+        assert rc == 0
+        stdout, _ = capsys.readouterr()
+        cols, _ = get_terminal_size()
+
+        if cols < 60:
+            # Terminal is too narrow to keep each line intact
+            return
+
+        lines = [line.strip() for line in stdout.splitlines()]
+        # Each paragraph and bullet keeps its own line instead of being
+        # reflowed onto a single line the way switch help used to be. The first
+        # paragraph shares the line with the switch name, so match its end.
+        assert any(
+            line.endswith("first paragraph of the switch help") for line in lines
+        )
+        assert "second paragraph after a blank line" in lines
+        assert "- a bullet item" in lines
+        assert "- another bullet item" in lines
+
     def test_default_main(self, capsys):
         _, rc = Sample.run(["sample"], exit=False)
         assert rc == 1
