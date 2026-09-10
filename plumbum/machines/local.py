@@ -49,6 +49,7 @@ if typing.TYPE_CHECKING:
 
 class PlumbumLocalPopen(PopenAddons):
     iter_lines = iter_lines
+    communicate_supports_timeout = True
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self._proc = Popen(*args, **kwargs)  # pylint: disable=consider-using-with
