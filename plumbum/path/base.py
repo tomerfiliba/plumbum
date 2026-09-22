@@ -387,14 +387,17 @@ class Path(str, ABC):
     ) -> int:
         """Writes text to this file and returns the number of characters written.
 
+        The return value counts characters before newline translation.
+
         .. versionadded:: 2.0
         """
         if errors not in {None, "strict"}:
             raise NotImplementedError("Only errors='strict' is currently supported")
-        if newline is not None:
+        length = len(data)
+        if newline:
             data = data.replace("\n", newline)
         self.write(data, encoding=encoding or "utf-8")
-        return len(data)
+        return length
 
     @abstractmethod
     def touch(self) -> None:

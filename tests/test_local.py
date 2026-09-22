@@ -312,6 +312,19 @@ class TestLocalPath:
             empty.rmdir()
             assert not empty.exists()
 
+    @pytest.mark.parametrize("newline", ["", "\n", "\r", "\r\n"])
+    @pytest.mark.parametrize("text", ["", "café", "café\nsecond\r\nthird\rfinal\n"])
+    def test_write_text_newline(self, tmp_path, newline, text):
+        reference = tmp_path / "reference.txt"
+        with reference.open("w", encoding="utf-8", newline=newline) as stream:
+            expected_count = stream.write(text)
+
+        path = local.path(tmp_path / "plumbum.txt")
+        written = path.write_text(text, encoding="utf-8", newline=newline)
+
+        assert written == expected_count == len(text)
+        assert path.read_bytes() == reference.read_bytes()
+
     def test_copy_override(self):
         """Edit this when override behavior is added"""
         with local.tempdir() as tmp:
