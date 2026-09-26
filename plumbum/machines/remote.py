@@ -11,7 +11,7 @@ __lazy_modules__ = {
 import contextlib
 import re
 import typing
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import TYPE_CHECKING
 
 from plumbum.commands import CommandNotFound, ConcreteCommand, shquote
@@ -633,11 +633,11 @@ class BaseRemoteMachine(BaseMachine):
         if self.custom_encoding and isinstance(data, str):
             data = data.encode(self.custom_encoding)
         assert isinstance(data, (bytes, bytearray))
-        with NamedTemporaryFile() as f:
-            f.write(data)
-            f.flush()
-            f.seek(0)
-            self.upload(f.name, fn)
+        with TemporaryDirectory() as dirname:
+            # Close the file before upload, keeping its private permissions.
+            with NamedTemporaryFile(dir=dirname, delete=False) as source:
+                source.write(data)
+            self.upload(source.name, fn)
 
     def _path_link(self, src: str, dst: str, symlink: bool) -> None:
         symlink_str = "-s " if symlink else ""
