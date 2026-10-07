@@ -6,23 +6,9 @@ all the standard syntax for colors.
 
 from __future__ import annotations
 
-__lazy_modules__ = {"atexit"}
-
-import atexit
 import sys
 
 from plumbum.colorlib import ansicolors, main
-
-_reset = ansicolors.reset.now
-
-
-def ensure_colors_reset() -> None:
-    """
-    Call this to ensure colors are reset when the program exits. Might add an
-    extra blank line.
-    """
-    atexit.register(_reset)
-
 
 # Keep module-like metadata on the proxy object for tools that introspect it.
 ansicolors.__name__ = __name__  # type: ignore[attr-defined]
