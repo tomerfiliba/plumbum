@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import pickle
 import re
+import shutil
 import signal
 import sys
 import time
@@ -1226,20 +1227,24 @@ class TestLocalEncoding:
         out = cat("temp.txt")
         assert self.richstr in out
 
-    @pytest.mark.xfail(IS_WIN32, reason="Unicode path not supported on Windows for now")
     @pytest.mark.usefixtures("cleandir")
     def test_runfile_rich(self):
-        import os
         import stat
 
         name = self.richstr + "_program"
-        with open(name, "w") as f:
-            f.write(f"#!{sys.executable}\nprint('yes')")
+        if IS_WIN32:
+            name += ".exe"
+            shutil.copy2(sys.executable, name)
+            command = local[local.cwd / name]["-c", "print('yes')"]
+        else:
+            with open(name, "w") as f:
+                f.write(f"#!{sys.executable}\nprint('yes')")
 
-        st = os.stat(name)
-        os.chmod(name, st.st_mode | stat.S_IEXEC)
+            st = os.stat(name)
+            os.chmod(name, st.st_mode | stat.S_IEXEC)
+            command = local[local.cwd / name]
 
-        assert "yes" in local[local.cwd / name]()
+        assert "yes" in command()
 
 
 @pytest.mark.skipif(
