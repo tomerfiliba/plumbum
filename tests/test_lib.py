@@ -141,6 +141,24 @@ def test_parse_ps_lines_handles_wide_columns() -> None:
     )
 
 
+def test_parse_ps_lines_handles_negative_uid() -> None:
+    # macOS ps reports uid -2 ("nobody") for some system processes, e.g.
+    # distnoted; the id regex must accept a leading '-'.
+    lines = [
+        "  PID   UID STAT ARGS",
+        " 3472    -2      (distnoted)",
+    ]
+
+    (distnoted,) = lib._parse_ps_lines(lines)
+
+    assert (distnoted.pid, distnoted.uid, distnoted.stat, distnoted.args) == (
+        3472,
+        -2,
+        "",
+        "(distnoted)",
+    )
+
+
 def test_read_fd_decode_safely_raises_when_stream_ends_mid_char() -> None:
     # One byte of a 4-byte UTF-8 sequence forces retry loop then final decode failure.
     read_fd, write_fd = os.pipe()
