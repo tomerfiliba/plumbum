@@ -1371,9 +1371,7 @@ complete -F _{prog_name}_completion {prog_name}
                     )
                 )
 
-            msg = indentation.join(
-                wrapper.wrap(" ".join(ln.strip() for ln in help_txt.splitlines()))
-            )
+            msg = indentation.join(wrapped_paragraphs(help_txt, wrapper.width))
 
             if len(prefix) + wrapper.width >= cols:
                 padding = indentation
@@ -1396,11 +1394,7 @@ complete -F _{prog_name}_completion {prog_name}
                     else:
                         help_str = doc or ""
 
-                    msg = indentation.join(
-                        wrapper.wrap(
-                            " ".join(ln.strip() for ln in help_str.splitlines())
-                        )
-                    )
+                    msg = indentation.join(wrapped_paragraphs(help_str, wrapper.width))
 
                     if len(name) + wrapper.width >= cols:
                         padding = indentation

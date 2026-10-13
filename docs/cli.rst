@@ -317,6 +317,13 @@ all the switches that belong to the same group will be grouped together. Note th
 no other effects on the way switches are processed, but it can help improve the readability of
 the help message.
 
+Multi-line help
+^^^^^^^^^^^^^^^
+A switch's ``help`` text may span several paragraphs. Blank lines separate paragraphs and
+list items (lines starting with ``-`` or ``*``) are kept on their own lines, the same way
+``DESCRIPTION_MORE`` is rendered. Text within a paragraph is still reflowed to fit the
+terminal width, so single-line help messages look exactly as they did before.
+
 Switch Attributes
 -----------------
 Many times it's desired to simply store a switch's argument in an attribute, or set a flag if
