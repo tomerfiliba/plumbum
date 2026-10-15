@@ -276,8 +276,10 @@ class AtomicFile:
             self._fileobj.seek(0)
             while data:
                 chunk = data[: self.CHUNK_SIZE]
-                self._fileobj.write(chunk)
-                data = data[len(chunk) :]
+                written = self._fileobj.write(chunk)
+                if not written:
+                    raise OSError(errno.EIO, "Atomic file write made no progress")
+                data = data[written:]
             self._fileobj.flush()
             self._fileobj.truncate()
 

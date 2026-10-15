@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import io
+import os
 import threading
 from typing import Any
 
@@ -8,6 +10,50 @@ import pytest
 from plumbum import local
 from plumbum._testtools import skip_on_windows
 from plumbum.fs.atomic import AtomicCounterFile, AtomicFile, PidFile, PidFileTaken
+
+
+@pytest.mark.parametrize("size", [8, AtomicFile.CHUNK_SIZE + 7])
+def test_atomicfile_write_atomic_short_write(tmp_path, monkeypatch, size) -> None:
+    class PartialFileIO(io.FileIO):
+        def write(self, data):
+            return super().write(data[: max(1, len(data) // 2)])
+
+    path = tmp_path / "atomic.bin"
+    payload = bytes(range(256)) * (size // 256) + bytes(range(size % 256))
+    path.write_bytes(b"old contents to replace")
+    with AtomicFile(str(path)) as atomic:
+        original = atomic._fileobj
+        assert original is not None
+        with (
+            PartialFileIO(os.dup(original.fileno()), "r+") as writer,
+            monkeypatch.context() as patch,
+        ):
+            patch.setattr(atomic, "_fileobj", writer)
+            atomic.write_atomic(payload)
+            assert atomic.read_atomic() == payload
+    assert path.read_bytes() == payload
+
+
+@pytest.mark.parametrize("result", [0, None])
+def test_atomicfile_write_atomic_no_progress(tmp_path, monkeypatch, result) -> None:
+    class StalledFileIO(io.FileIO):
+        def write(self, _data):
+            return result
+
+    path = tmp_path / "atomic.bin"
+    previous = b"old contents to preserve"
+    path.write_bytes(previous)
+    with AtomicFile(str(path)) as atomic:
+        original = atomic._fileobj
+        assert original is not None
+        with (
+            StalledFileIO(os.dup(original.fileno()), "r+") as writer,
+            monkeypatch.context() as patch,
+        ):
+            patch.setattr(atomic, "_fileobj", writer)
+            with pytest.raises(OSError, match="write made no progress"):
+                atomic.write_atomic(b"replacement")
+    assert path.read_bytes() == previous
 
 
 @skip_on_windows

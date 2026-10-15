@@ -1,3 +1,11 @@
+Unreleased
+----------
+
+Fixes:
+
+* Retry partial writes in ``AtomicFile.write_atomic`` and raise an error if a write makes no progress.
+
+
 2.0.2
 -----
 
