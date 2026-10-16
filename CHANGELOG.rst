@@ -1,3 +1,11 @@
+Unreleased
+----------
+
+Fixes:
+
+* Store accepted boolean counter reset values as readable decimal integers.
+
+
 2.0.2
 -----
 

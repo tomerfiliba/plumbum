@@ -168,3 +168,25 @@ def test_pidfile_acquire_is_idempotent(monkeypatch) -> None:
 
         assert ctx.enter_calls == 1
         pidfile.release()
+
+
+@pytest.mark.parametrize("use_initial", [False, True])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [(False, 0), (True, 1), (0, 0), (-3, -3), (2**65, 2**65)],
+)
+def test_atomic_counter_reset_integer_values(
+    tmp_path, value, expected, use_initial
+) -> None:
+    path = tmp_path / "counter"
+    with AtomicCounterFile(
+        AtomicFile(str(path)), initial=value if use_initial else 0
+    ) as counter:
+        if use_initial:
+            counter.reset()
+        else:
+            counter.reset(value)
+
+        assert counter.atomicfile.read_atomic() == str(expected).encode("utf8")
+        assert counter.next() == expected
+        assert counter.next() == expected + 1
