@@ -3,9 +3,16 @@
 from __future__ import annotations
 
 import os
+import shutil
+import subprocess
+import sys
+import textwrap
 from unittest.mock import patch
 
+import pytest
+
 from plumbum import cli
+from plumbum._testtools import skip_on_windows
 
 
 class CompletionApp(cli.Application):
@@ -169,6 +176,75 @@ class TestCompletions:
             if mock_exit.called:
                 completions = mock_exit.call_args[0][0]
                 assert "--level" in completions
+
+    def test_autocomplete_env_bash_empty_current_word(self):
+        # bash's "${COMP_WORDS[*]}" ends with a space when the cursor is on a new,
+        # still empty word, and COMP_CWORD then indexes that empty word
+        env = {
+            "COMP_WORDS": "completionapp --level ",
+            "COMP_CWORD": "2",
+        }
+        with (
+            patch.dict(os.environ, env, clear=False),
+            patch.object(CompletionApp, "_print_completions_and_exit") as mock_exit,
+        ):
+            CompletionApp.autocomplete(["completionapp"])
+        mock_exit.assert_called_once()
+        assert mock_exit.call_args[0][0] == ["debug", "error", "info", "warning"]
+
+    @skip_on_windows
+    @pytest.mark.skipif(shutil.which("bash") is None, reason="needs bash")
+    @pytest.mark.parametrize(
+        ("words", "expected"),
+        [
+            (["--level", ""], ["debug", "error", "info", "warning"]),
+            (["--level", "in"], ["info"]),
+            (["-v", "--level", "w"], ["warning"]),
+        ],
+    )
+    def test_bash_completion_script_switch_argument(self, tmp_path, words, expected):
+        app = tmp_path / "completionapp"
+        app.write_text(
+            textwrap.dedent(
+                f"""\
+                #!{sys.executable}
+                from plumbum import cli
+
+                class CompletionApp(cli.Application):
+                    verbose = cli.Flag(["-v", "--verbose"])
+                    level = cli.SwitchAttr(
+                        ["--level"], cli.Set("debug", "info", "warning", "error")
+                    )
+
+                    def main(self):
+                        print("main should not run while completing")
+
+                CompletionApp.run()
+                """
+            )
+        )
+        app.chmod(0o755)
+        script = CompletionApp.completion_script_bash("completionapp")
+        comp_words = " ".join(f"'{word}'" for word in ["completionapp", *words])
+        result = subprocess.run(
+            [
+                "bash",
+                "--norc",
+                "--noprofile",
+                "-c",
+                f"""{script}
+COMP_WORDS=({comp_words})
+COMP_CWORD={len(words)}
+_completionapp_completion
+printf '%s\\n' "${{COMPREPLY[@]}}"
+""",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+            env={**os.environ, "PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}"},
+        )
+        assert sorted(result.stdout.split()) == expected
 
     def test_no_completion_when_not_requested(self):
         with (

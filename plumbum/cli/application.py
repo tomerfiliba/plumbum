@@ -542,7 +542,9 @@ class Application:
         cls, argv: list[str], comp_words: str, comp_cword: int
     ) -> None:
         """Handle bash completion request."""
-        words = comp_words.split()
+        # "${COMP_WORDS[*]}" joins the words with single spaces; keep empty words,
+        # such as the trailing one when completing a new word after a space
+        words = comp_words.split(" ")
         if comp_cword >= len(words):
             comp_cword = len(words) - 1
         partial = words[comp_cword] if comp_cword < len(words) else ""
@@ -721,7 +723,7 @@ _{prog_name}_completion() {{
                 prefix = "-" if len(name) == 1 else "--"
                 script += f"""
         {prefix}{name})
-            COMPREPLY=( $(compgen -W "$({prog_name} --complete $cur 2>/dev/null)" -- "$cur") )
+            COMPREPLY=( $(compgen -W "$(COMP_WORDS="${{COMP_WORDS[*]}}" COMP_CWORD="$COMP_CWORD" {prog_name} 2>/dev/null)" -- "$cur") )
             return
             ;;"""
 
