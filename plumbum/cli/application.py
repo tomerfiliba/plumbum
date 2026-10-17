@@ -472,8 +472,7 @@ class Application:
                     argv.insert(0, "-" + a[2:])
 
             else:
-                if a.startswith("-"):
-                    raise UnknownSwitch(T_("Unknown switch {0}").format(a))
+                # positional argument; a lone "-" is one too (conventionally stdin)
                 tailargs.append(a)
                 continue
 

@@ -257,6 +257,19 @@ class TestCLI:
         stdout, _ = capsys.readouterr()
         assert "Expected at most" in stdout
 
+    def test_lone_dash_is_positional(self, capsys):
+        # a lone "-" is an operand (conventionally stdin/stdout), not a switch
+        inst, rc = SimpleApp.run(["foo", "--bacon=81", "-", "-a", "x"], exit=False)
+        assert rc == 0
+        assert inst.tailargs == ("-", "x")
+        stdout, _ = capsys.readouterr()
+        assert "!!a" in stdout
+
+        _, rc = PositionalApp.run(["positionalapp", "-"], exit=False)
+        assert rc == 0
+        stdout, _ = capsys.readouterr()
+        assert "Got -" in stdout
+
     def test_subcommands(self):
         _, rc = Geet.run(["geet", "--debug"], exit=False)
         assert rc == 0
