@@ -148,10 +148,14 @@ def win32_daemonize(
         stdout = os.devnull
     if stderr is None:
         stderr = stdout
-    stdin_file = open(os.devnull, encoding="utf-8")
-    stdout_file = open(stdout, "a" if append else "w", encoding="utf-8")
-    stderr_file = open(stderr, "a" if append else "w", encoding="utf-8")
+    streams = []
     try:
+        stdin_file = open(os.devnull, encoding="utf-8")
+        streams.append(stdin_file)
+        stdout_file = open(stdout, "a" if append else "w", encoding="utf-8")
+        streams.append(stdout_file)
+        stderr_file = open(stderr, "a" if append else "w", encoding="utf-8")
+        streams.append(stderr_file)
         return command.popen(
             cwd=cwd,
             stdin=stdin_file.fileno(),
@@ -161,7 +165,7 @@ def win32_daemonize(
             | subprocess.DETACHED_PROCESS,  # type: ignore[attr-defined]
         )
     finally:
-        for stream in (stdin_file, stdout_file, stderr_file):
+        for stream in streams:
             with contextlib.suppress(Exception):
                 stream.close()
 
