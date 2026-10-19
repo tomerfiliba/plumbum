@@ -253,7 +253,11 @@ class Path(str, ABC):
         """Returns a path with the suffix replaced. Up to last ``depth`` suffixes will be
         replaced. None will replace all suffixes. If there are less than ``depth`` suffixes,
         this will replace all suffixes. ``.tar.gz`` is an example where ``depth=2`` or
-        ``depth=None`` is useful"""
+        ``depth=None`` is useful.
+
+        The suffix (file extension) must start with a dot, for example ``".txt"``.
+        An empty suffix removes the existing suffixes up to the specified depth.
+        """
 
     def preferred_suffix(self, suffix: str) -> Self:
         """Adds a suffix if one does not currently exist (otherwise, no change). Useful
