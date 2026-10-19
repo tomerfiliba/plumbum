@@ -523,7 +523,7 @@ def iter_lines(
                     terminated an exception will be raised
 
     :param linesize: Maximum number of characters to read from stdout/stderr at each iteration.
-                    ``-1`` (default) reads until a b'\\n' is encountered.
+                    ``-1`` (default) reads until a ``b'\\n'`` is encountered.
 
     :param line_timeout: The maximal amount of time (in seconds) to allow between consecutive lines in either stream.
                     Raise an :class:`ProcessLineTimedOut <plumbum.commands.processes.ProcessLineTimedOut>` if the timeout has
