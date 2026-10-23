@@ -109,7 +109,10 @@ def _iter_lines_posix(
         if proc.poll() is not None:
             break
     for stream_type, stream in streams:
-        for line in stream:
+        while True:
+            line = stream.readline(linesize)
+            if not line:
+                break
             yield stream_type, decode(line)
 
 

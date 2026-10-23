@@ -655,6 +655,56 @@ class TestLocalMachine:
         assert i in (2, 3)  # Mac is a bit flakey
 
     @skip_on_windows
+    @pytest.mark.parametrize("stream", ["stdout", "stderr"])
+    @pytest.mark.parametrize("linesize", [4, -1])
+    @pytest.mark.parametrize("by_type", [False, True])
+    @pytest.mark.parametrize("exited_first", [False, True])
+    @pytest.mark.parametrize("newline", ["", "\n"])
+    def test_iter_lines_remaining_linesize(
+        self, stream, linesize, by_type, exited_first, newline
+    ):
+        from plumbum.commands.processes import BY_POSITION, BY_TYPE
+
+        payload = "x" * 40 + newline
+        script = f"import sys; target = sys.{stream}; "
+        if not exited_first:
+            # Keep the child alive until the first fragment has been yielded.
+            script += "target.write('go\\n'); target.flush(); sys.stdin.read(1); "
+        script += f"target.write({payload!r}); target.flush()"
+        proc = local.python["-u", "-c", script].popen()
+        with proc:
+            kwargs = {"mode": BY_TYPE if by_type else BY_POSITION, "timeout": 5}
+            if linesize != -1:
+                kwargs["linesize"] = linesize
+            if exited_first:
+                proc.wait()
+            lines = proc.iter_lines(**kwargs)
+            rows = []
+            if not exited_first:
+                try:
+                    rows.append(next(lines))
+                    assert proc.poll() is None
+                finally:
+                    proc.stdin.write(b"x")
+                    proc.stdin.flush()
+                proc.wait()
+            rows.extend(lines)
+
+        stream_index = 0 if stream == "stdout" else 1
+        if by_type:
+            assert all(kind == stream_index + 1 for kind, _ in rows)
+            parts = [part for _, part in rows]
+        else:
+            assert all(row[1 - stream_index] is None for row in rows)
+            parts = [row[stream_index] for row in rows]
+        expected = ([] if exited_first else ["go"]) + [payload.rstrip("\n")]
+        assert "".join(parts) == "".join(expected)
+        if linesize == -1:
+            assert parts == expected
+        else:
+            assert all(len(part) <= linesize for part in parts)
+
+    @skip_on_windows
     def test_iter_lines_buffer_size(self):
         from plumbum.cmd import bash
 
