@@ -171,10 +171,11 @@ class BaseEnv(typing.Generic[AnyPath]):
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         """Updates the current environment (like dict.update)"""
-        self._curr.update(*args, **kwargs)
-        if not self.CASE_SENSITIVE:
-            for k, v in list(self._curr.items()):
-                self._curr[k.upper()] = v
+        if self.CASE_SENSITIVE:
+            self._curr.update(*args, **kwargs)
+        else:
+            for updates in (dict(*args), kwargs):
+                self._curr.update((k.upper(), v) for k, v in updates.items())
         self._update_path()
 
     def getdict(self) -> dict[str, str]:

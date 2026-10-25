@@ -4,6 +4,7 @@ import contextlib
 
 from plumbum import local
 from plumbum._testtools import skip_on_windows
+from plumbum.machines.env import BaseEnv
 
 with contextlib.suppress(ImportError):
     from plumbum.cmd import printenv
@@ -63,3 +64,19 @@ class TestEnv:
     @skip_on_windows
     def test_user(self):
         assert local.env.user
+
+
+def test_case_insensitive_update():
+    class CaseInsensitiveEnv(BaseEnv):
+        CASE_SENSITIVE = False
+
+    env = CaseInsensitiveEnv(local.path, ":", _curr={"FOO": "old"})
+    env.update({"foo": "new"})
+    assert dict(env) == {"FOO": "new"}
+    env.update({"foo": "first", "FOO": "second"}, foo="latest")
+    assert env["foo"] == "latest"
+    env.update([("path", "/one:/two")])
+    assert env.path == [local.path("/one"), local.path("/two")]
+    del env["foo"]
+    assert "foo" not in env
+    assert "foo" not in env.getdict()
