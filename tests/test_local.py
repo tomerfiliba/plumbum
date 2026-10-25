@@ -1352,3 +1352,13 @@ class TestBytesArguments:
         assert local["echo"].run(b"ab")[1].strip() == "ab"
         assert local["echo"].run(bytearray(b"ab"))[1].strip() == "ab"
         assert local["echo"]["x"].run(b"ab")[1].split() == ["x", "ab"]
+
+
+def test_absolute_resolves_relative_local_path(tmp_path):
+    with local.cwd(str(tmp_path)):
+        path = LocalPath("relative.txt")
+        assert not path.is_absolute()
+        absolute = path.absolute()
+        assert absolute.is_absolute()
+        assert str(absolute) == str(Path("relative.txt").absolute())
+        assert path == "relative.txt"

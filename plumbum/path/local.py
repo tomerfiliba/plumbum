@@ -86,6 +86,9 @@ class LocalPath(Path):
     def _path(self) -> str:
         return str(self)
 
+    def absolute(self) -> LocalPath:
+        return LocalPath(os.path.abspath(str(self)))
+
     def _get_info(self) -> str:
         return self._path
 
