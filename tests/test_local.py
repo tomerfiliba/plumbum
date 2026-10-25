@@ -354,6 +354,15 @@ class TestLocalPath:
     def test_path_dir(self):
         assert local.path(__file__).dirname == SDIR
 
+    @pytest.mark.parametrize("parents", [False, True])
+    def test_mkdir_existing_file(self, parents):
+        with local.tempdir() as tmp:
+            path = tmp / "file"
+            path.write("keep")
+            with pytest.raises(FileExistsError):
+                path.mkdir(parents=parents, exist_ok=True)
+            assert path.read() == "keep"
+
     def test_mkdir(self):
         # (identical to test_remote.TestRemotePath.test_mkdir)
         with local.tempdir() as tmp:

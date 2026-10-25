@@ -222,7 +222,7 @@ class LocalPath(Path):
     def mkdir(
         self, mode: int = 0o777, parents: bool = True, exist_ok: bool = True
     ) -> None:
-        if not self.exists() or not exist_ok:
+        if not self.is_dir() or not exist_ok:
             try:
                 if parents:
                     os.makedirs(str(self), mode)
@@ -230,7 +230,7 @@ class LocalPath(Path):
                     os.mkdir(str(self), mode)
             except OSError as ex:  # pragma: no cover
                 # directory might already exist (a race with other threads/processes)
-                if ex.errno != errno.EEXIST or not exist_ok:
+                if ex.errno != errno.EEXIST or not exist_ok or not self.is_dir():
                     raise
 
     def open(self, mode: str = "r", encoding: str | None = None) -> IO[str] | IO[bytes]:
