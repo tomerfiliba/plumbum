@@ -209,6 +209,10 @@ class LocalPath(Path):
         if override is False and dst.exists():
             raise TypeError("File exists and override was not specified")
         if override:
+            if dst.exists() and self.samefile(dst):
+                raise shutil.SameFileError(
+                    f"{str(self)!r} and {str(dst)!r} are the same file"
+                )
             dst.delete()
         if self.is_dir():
             shutil.copytree(str(self), str(dst))

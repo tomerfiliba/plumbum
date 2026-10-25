@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import pickle
 import re
+import shutil
 import signal
 import sys
 import time
@@ -353,6 +354,35 @@ class TestLocalPath:
 
     def test_path_dir(self):
         assert local.path(__file__).dirname == SDIR
+
+    @pytest.mark.parametrize("source_kind", ["file", "directory"])
+    def test_copy_override_same_path_preserves_source(self, source_kind):
+        with local.tempdir() as tmp:
+            source = tmp / "source"
+            if source_kind == "directory":
+                source.mkdir()
+                content = source / "child"
+            else:
+                content = source
+            content.write("keep")
+            with pytest.raises(shutil.SameFileError):
+                source.copy(source, override=True)
+            assert content.read() == "keep"
+
+    @skip_on_windows
+    @pytest.mark.parametrize("link_kind", ["hard", "symbolic"])
+    def test_copy_override_same_file_alias(self, link_kind):
+        with local.tempdir() as tmp:
+            source = tmp / "source"
+            source.write("keep")
+            alias = tmp / "alias"
+            if link_kind == "hard":
+                source.link(alias)
+            else:
+                source.symlink(alias)
+            with pytest.raises(shutil.SameFileError):
+                source.copy(alias, override=True)
+            assert source.read() == alias.read() == "keep"
 
     def test_mkdir(self):
         # (identical to test_remote.TestRemotePath.test_mkdir)
