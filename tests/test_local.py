@@ -354,6 +354,25 @@ class TestLocalPath:
     def test_path_dir(self):
         assert local.path(__file__).dirname == SDIR
 
+    @skip_on_windows
+    @pytest.mark.parametrize("target_kind", ["file", "directory", "missing"])
+    def test_delete_symlink(self, target_kind):
+        with local.tempdir() as tmp:
+            target = tmp / "target"
+            if target_kind == "file":
+                target.write("keep")
+            elif target_kind == "directory":
+                target.mkdir()
+                (target / "child").write("keep")
+            link = tmp / "link"
+            target.symlink(link)
+            link.delete()
+            assert not link.is_symlink()
+            if target_kind == "file":
+                assert target.read() == "keep"
+            elif target_kind == "directory":
+                assert (target / "child").read() == "keep"
+
     def test_mkdir(self):
         # (identical to test_remote.TestRemotePath.test_mkdir)
         with local.tempdir() as tmp:

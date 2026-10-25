@@ -184,9 +184,9 @@ class LocalPath(Path):
         )
 
     def delete(self) -> None:
-        if not self.exists():
+        if not self.exists() and not self.is_symlink():
             return
-        if self.is_dir():
+        if self.is_dir() and not self.is_symlink():
             shutil.rmtree(str(self))
         else:
             try:
