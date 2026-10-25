@@ -243,6 +243,8 @@ def hexdump(
         hexd_ljust = hexd.ljust(bytes_per_line * 3, " ")
         yield f"{i * bytes_per_line:06x} | {hexd_ljust}| {text}"
         skipped = False
+    if skipped:
+        yield "*"
 
 
 def pager(

@@ -193,3 +193,13 @@ hi
         stdout = capsys.readouterr().out
         output = "0/0 complete"
         assert output in stdout
+
+
+@pytest.mark.parametrize("stream", [False, True])
+def test_hexdump_reports_trailing_repeated_lines(stream):
+    data = "A" * 48
+    source = StringIO(data) if stream else data
+    assert list(hexdump(source)) == [
+        "000000 | " + "41 " * 16 + "| " + "A" * 16,
+        "*",
+    ]
