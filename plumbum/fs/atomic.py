@@ -330,6 +330,8 @@ class AtomicCounterFile:
         """
         if value is None:
             value = self.initial
+        if isinstance(value, bool):
+            raise TypeError(f"value must be an integer, not {type(value)!r}")
         if not isinstance(value, int):
             raise TypeError(f"value must be an integer, not {type(value)!r}")
         self.atomicfile.write_atomic(str(value).encode("utf8"))
