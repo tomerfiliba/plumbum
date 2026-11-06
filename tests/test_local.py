@@ -1349,3 +1349,12 @@ class TestBytesArguments:
         assert local["echo"].run(b"ab")[1].strip() == "ab"
         assert local["echo"].run(bytearray(b"ab"))[1].strip() == "ab"
         assert local["echo"]["x"].run(b"ab")[1].split() == ["x", "ab"]
+
+
+@skip_on_windows
+def test_as_posix_preserves_backslash_in_posix_filename(tmp_path):
+    filename = tmp_path / "file\\name.txt"
+    filename.write_text("content")
+    path = local.path(str(filename))
+    assert path.as_posix() == filename.as_posix()
+    assert Path(path.as_posix()).read_text() == "content"

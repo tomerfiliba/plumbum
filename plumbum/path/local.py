@@ -345,6 +345,9 @@ class LocalPath(Path):
             if ex.errno != errno.ENOENT:
                 raise
 
+    def as_posix(self) -> str:
+        return str(self).replace(os.path.sep, "/")
+
     def as_uri(self, scheme: str = "file") -> str:
         return urlparse.urljoin(f"{scheme}://", urllib.pathname2url(str(self)))
 
