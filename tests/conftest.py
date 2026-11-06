@@ -68,6 +68,9 @@ def pytest_addoption(parser):
     parser.addini(
         "optional_tests", "list of optional markers", type="linelist", default=""
     )
+    parser.addini(
+        "run_optional_tests", "optional test markers to run", type="string", default=""
+    )
 
 
 def pytest_configure(config):
@@ -88,7 +91,7 @@ def pytest_configure(config):
     if ot_run:
         ot_run = list(itertools.chain.from_iterable(a.split(",") for a in ot_run))
     else:
-        ot_run = config.inicfg.get("run_optional_tests", [])
+        ot_run = config.getini("run_optional_tests")
         if ot_run:
             ot_run = list(re.split(r"[,\s]+", ot_run))
     ot_run = set(ot_run)
