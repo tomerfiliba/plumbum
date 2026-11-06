@@ -13,7 +13,64 @@ import pytest
 
 from plumbum import local
 from plumbum._testtools import skip_on_windows
-from plumbum.commands.processes import CommandNotFound, MinHeap
+from plumbum.commands.processes import (
+    CommandNotFound,
+    MinHeap,
+    ProcessLineTimedOut,
+    iter_lines,
+)
+from plumbum.machines.paramiko_machine import ParamikoPopen
+
+
+@pytest.fixture
+def unterminable_remote(mocker):
+    """A running Paramiko process whose exit-status wait must not be reached."""
+    proc = object.__new__(ParamikoPopen)
+    proc.returncode = None
+    proc.channel = mocker.Mock()
+    proc.channel.exit_status_ready.return_value = False
+    proc.channel.recv_exit_status.side_effect = lambda: pytest.fail(
+        "wait() reached after remote termination failed"
+    )
+    proc.stdin = mocker.Mock()
+    proc.stdout = mocker.Mock()
+    proc.stderr = mocker.Mock()
+    proc.custom_encoding = "utf-8"
+    return proc
+
+
+def test_bgrun_preserves_exception_when_remote_cannot_be_killed(
+    unterminable_remote, mocker
+):
+    command = local["echo"]
+    mocker.patch.object(type(command), "popen", return_value=unterminable_remote)
+    original = RuntimeError("body failed")
+    with (
+        pytest.raises(RuntimeError, match="body failed") as exc_info,
+        command.bgrun(),
+    ):
+        raise original
+    assert exc_info.value is original
+    unterminable_remote.channel.recv_exit_status.assert_not_called()
+    unterminable_remote.stdin.close.assert_called_once()
+    unterminable_remote.stdout.close.assert_called_once()
+    unterminable_remote.stderr.close.assert_called_once()
+
+
+def test_iter_lines_preserves_timeout_when_remote_cannot_be_killed(
+    unterminable_remote,
+):
+    original = ProcessLineTimedOut("line timeout", ["remote-command"], None)
+
+    def timeout_iterator(*_args):
+        raise original
+
+    with pytest.raises(ProcessLineTimedOut) as exc_info:
+        list(iter_lines(unterminable_remote, _iter_lines=timeout_iterator))
+    assert exc_info.value is original
+    unterminable_remote.channel.recv_exit_status.assert_not_called()
+    # The remote process is still running; closing local streams does not kill it.
+    unterminable_remote.stdout.close.assert_not_called()
 
 
 class TestCommandNotFound:

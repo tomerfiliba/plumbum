@@ -393,7 +393,7 @@ def _terminate_and_reap(proc: PopenWithAddons[Any], grace: float = 1.0) -> None:
         time.sleep(0.05)
     with contextlib.suppress(Exception):
         proc.kill()
-    with contextlib.suppress(Exception):
+        # Unsupported termination must not lead to an unbounded remote wait.
         proc.wait()
 
 
@@ -588,7 +588,7 @@ def iter_lines(
         if proc_running and process_timed_out:
             with contextlib.suppress(Exception):
                 proc.kill()
-            with contextlib.suppress(Exception):
+                # Some remote backends cannot kill a running process.
                 proc.wait()
         elif completed:
             # Generator consumed all lines; ensure process is reaped
