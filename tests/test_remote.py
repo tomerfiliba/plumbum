@@ -462,7 +462,7 @@ s.close()
                 for i, _lines in enumerate(rem["ls"]["--bla"].popen()):  # noqa: B007
                     pass
                 assert i == 1
-            assert "ls: " in ex.value.stderr
+            assert "--bla" in ex.value.stderr or "illegal option" in ex.value.stderr
 
     def test_touch(self):
         with self._connect() as rem:
@@ -622,7 +622,8 @@ s.close()
                 assert rem["pwd"]().strip() == "/tmp/testuser"
         finally:
             with local.as_root():
-                local["userdel"]("-r", "testuser")
+                # a process from the closed session can outlive the connection
+                local["userdel"]("-f", "-r", "testuser")
 
 
 @skip_on_windows

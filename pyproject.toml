@@ -73,7 +73,7 @@ test = [
     "coverage[toml]",
     "paramiko",
     "psutil",
-    "pytest-asyncio>=0.21.0",
+    "pytest-asyncio>=0.24.0",
     "pytest-cov",
     "pytest-mock",
     "pytest-timeout",
@@ -118,6 +118,7 @@ filterwarnings = [
 ]
 log_level = "INFO"
 xfail_strict = true
+asyncio_default_fixture_loop_scope = "function"
 required_plugins = ["pytest-timeout", "pytest-mock", "pytest-asyncio"]
 timeout = 300
 optional_tests = """
