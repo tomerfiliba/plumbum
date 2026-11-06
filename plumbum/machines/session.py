@@ -151,7 +151,10 @@ class SessionPopen(PopenAddons):
             except EOFError as err:
                 shell_logger.debug("%s> Nothing returned.", name)
 
-                self.proc.poll()
+                # EOF can arrive just before the process exits
+                deadline = time.monotonic() + 5
+                while self.proc.poll() is None and time.monotonic() < deadline:
+                    time.sleep(0.01)
                 returncode = self.proc.returncode
                 assert self.custom_encoding is not None
                 stdout_txt = b"".join(stdout).decode(self.custom_encoding, "ignore")
