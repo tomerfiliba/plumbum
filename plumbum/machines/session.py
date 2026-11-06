@@ -101,7 +101,7 @@ class SessionPopen(PopenAddons):
     ) -> None:
         self.host = host
         self.proc: PopenWithAddons[Any] = proc  # type: ignore[assignment]
-        self.argv = argv
+        self.argv = [argv.decode(encoding)]
         self.isatty = isatty
         self.stdin = stdin
         self.stdout = stdout
@@ -159,7 +159,7 @@ class SessionPopen(PopenAddons):
                 assert self.custom_encoding is not None
                 stdout_txt = b"".join(stdout).decode(self.custom_encoding, "ignore")
                 stderr_txt = b"".join(stderr).decode(self.custom_encoding, "ignore")
-                argv = self.argv.decode(self.custom_encoding, "ignore").split(";")[:1]
+                argv = self.argv[0].split(";")[:1]
 
                 if returncode == 5:
                     raise IncorrectLogin(
