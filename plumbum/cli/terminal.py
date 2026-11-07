@@ -9,12 +9,14 @@ __lazy_modules__ = {
     "contextlib",
     f"{__spec__.parent}.progress",
     f"{__spec__.parent}.termsize",
+    "io",
 }
 
 import contextlib
 import os
 import sys
-from typing import IO, TYPE_CHECKING, TypeVar
+from io import TextIOBase
+from typing import IO, TYPE_CHECKING, TypeVar, cast
 
 from plumbum import local
 
@@ -247,10 +249,11 @@ def hexdump(
 
 def pager(
     rows: str | Iterable[str] | IO[str], pagercmd: BaseCommand | None = None
-) -> None:  # pragma: no cover
+) -> None:
     """Opens a pager (e.g., ``less``) to display the given text. Requires a terminal.
 
-    :param rows: a ``bytes`` or a list/iterator of "rows" (``bytes``)
+    :param rows: a string, a text stream, or a list/iterator of string rows.
+                 Binary pager input uses the command's encoding, or UTF-8 if unset.
     :param pagercmd: the pager program to run. Defaults to ``less -RSin``
     """
     if not pagercmd:
@@ -264,7 +267,12 @@ def pager(
         for row in rows:
             line = f"{row}\n"
             try:
-                pg.stdin.write(line)
+                if isinstance(pg.stdin, TextIOBase):
+                    pg.stdin.write(line)
+                else:
+                    cast("IO[bytes]", pg.stdin).write(
+                        line.encode(pagercmd._get_encoding() or "utf-8")
+                    )
                 pg.stdin.flush()
             except OSError:
                 break

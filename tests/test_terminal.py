@@ -3,11 +3,13 @@ from __future__ import annotations
 import sys
 from collections import OrderedDict
 from contextlib import contextmanager
-from io import StringIO
+from io import BytesIO, StringIO
+from types import SimpleNamespace
 
 import pytest
 
-from plumbum.cli.terminal import Progress, ask, choose, hexdump, prompt
+from plumbum.cli.terminal import Progress, ask, choose, hexdump, pager, prompt
+from plumbum.machines.local import LocalCommand
 
 
 @contextmanager
@@ -193,3 +195,75 @@ hi
         stdout = capsys.readouterr().out
         output = "0/0 complete"
         assert output in stdout
+
+
+class TestPager:
+    @pytest.mark.parametrize("encoding", ["utf-8", "latin-1", None])
+    @pytest.mark.parametrize("rows_type", [str, list, iter, StringIO])
+    def test_binary_stdin(self, tmp_path, mocker, encoding, rows_type):
+        output = tmp_path / "pager-output"
+        command = LocalCommand(sys.executable, encoding=encoding)[
+            "-c",
+            "import pathlib, sys; "
+            "pathlib.Path(sys.argv[1]).write_bytes(sys.stdin.buffer.read())",
+            str(output),
+        ]
+        process = command.popen(stdout=None, stderr=None)
+        popen = mocker.patch.object(type(command), "popen", return_value=process)
+        reset = mocker.patch("plumbum.cli.terminal.os.system")
+        rows = (
+            rows_type("café\nsecond")
+            if rows_type in (str, StringIO)
+            else rows_type(["café", "second"])
+        )
+        expected = "café\n\nsecond\n" if rows_type is StringIO else "café\nsecond\n"
+
+        try:
+            pager(rows, pagercmd=command)
+        finally:
+            if not process.stdin.closed:
+                process.stdin.close()
+            process.wait()
+
+        popen.assert_called_once_with(stdout=None, stderr=None)
+        reset.assert_not_called()
+        assert process.returncode == 0
+        assert output.read_bytes() == expected.encode(encoding or "utf-8")
+        if rows_type is StringIO:
+            assert rows.closed
+
+    def test_text_stdin(self, mocker):
+        stdin = StringIO()
+        write = mocker.spy(stdin, "write")
+        process = SimpleNamespace(stdin=stdin, wait=mocker.Mock(), poll=lambda: 0)
+        command = SimpleNamespace(popen=lambda **_kwargs: process)
+
+        pager(["café"], pagercmd=command)
+
+        write.assert_called_once_with("café\n")
+        assert stdin.closed
+        process.wait.assert_called_once_with()
+
+    @pytest.mark.parametrize("operation", ["write", "flush"])
+    def test_closed_pager(self, mocker, operation):
+        stdin = mocker.Mock(spec=BytesIO)
+        getattr(stdin, operation).side_effect = BrokenPipeError
+        process = SimpleNamespace(stdin=stdin, wait=mocker.Mock(), poll=lambda: 0)
+        command = SimpleNamespace(
+            popen=lambda **_kwargs: process, _get_encoding=lambda: "utf-8"
+        )
+        closed = mocker.Mock()
+
+        def rows():
+            try:
+                yield "café"
+                pytest.fail("Rows consumed after the pager closed")
+            finally:
+                closed()
+
+        pager(rows(), pagercmd=command)
+
+        stdin.write.assert_called_once_with("café\n".encode())
+        stdin.close.assert_called_once_with()
+        process.wait.assert_called_once_with()
+        closed.assert_called_once_with()
