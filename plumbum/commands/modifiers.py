@@ -16,7 +16,12 @@ from select import select
 from subprocess import PIPE
 
 import plumbum.commands.base
-from plumbum.commands.processes import BY_TYPE, ProcessExecutionError, run_proc
+from plumbum.commands.processes import (
+    BY_TYPE,
+    ProcessExecutionError,
+    _get_piped_streams,
+    run_proc,
+)
 from plumbum.lib import read_fd_decode_safely
 
 if typing.TYPE_CHECKING:
@@ -209,6 +214,8 @@ class _TEE(ExecutionModifier):
     and stderr, but ALSO return them.  Useful for interactive programs that
     expect a TTY but also have valuable output.
 
+    For pipelines, stderr includes every stage's piped error stream.
+
     Use as:
 
         ls["-l"] & TEE
@@ -242,48 +249,23 @@ class _TEE(ExecutionModifier):
         ) as p:
             outbuf: list[bytes] = []
             errbuf: list[bytes] = []
-            out = p.stdout
-            err = p.stderr
-            buffers = {out: outbuf, err: errbuf}
-            tee_to = {out: sys.stdout, err: sys.stderr}
-            done = False
-            while not done:
-                # After the process exits, we have to do one more
-                # round of reading in order to drain any data in the
-                # pipe buffer. Thus, we check poll() here,
-                # unconditionally enter the read loop, and only then
-                # break out of the outer loop if the process has
-                # exited.
-                done = p.poll() is not None
-
-                # We continue this loop until we've done a full
-                # `select()` call without collecting any input. This
-                # ensures that our final pass -- after process exit --
-                # actually drains the pipe buffers, even if it takes
-                # multiple calls to read().
-                progress = True
-                while progress:
-                    progress = False
-                    ready, _, _ = select((out, err), (), ())
-                    for fd in ready:
-                        assert fd
-                        buf = buffers[fd]
-                        data, text = read_fd_decode_safely(fd, 4096)
-                        if not data:  # eof
-                            continue
-                        progress = True
-
-                        # Python conveniently line-buffers stdout and stderr for
-                        # us, so all we need to do is write to them
-
-                        # This will automatically add up to three bytes if it cannot be decoded
-                        tee_to[fd].write(text)
-
-                        # And then "unbuffered" is just flushing after each write
-                        if not self.buffered:
-                            tee_to[fd].flush()
-
-                        buf.append(data)
+            streams = {stream: kind for kind, stream in _get_piped_streams(p)}
+            buffers = (outbuf, errbuf)
+            tee_to = (sys.stdout, sys.stderr)
+            # Drain every pipeline stage concurrently so an upstream stderr
+            # cannot fill its pipe and prevent the final stage from exiting.
+            while streams:
+                ready, _, _ = select(tuple(streams), (), ())
+                for fd in ready:
+                    data, text = read_fd_decode_safely(fd, 4096)
+                    if not data:  # eof
+                        del streams[fd]
+                        continue
+                    kind = streams[fd]
+                    tee_to[kind].write(text)
+                    if not self.buffered:
+                        tee_to[kind].flush()
+                    buffers[kind].append(data)
 
             p.wait()  # To get return code in p
             encoding = cmd._get_encoding() or "utf-8"
