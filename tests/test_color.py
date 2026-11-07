@@ -1,6 +1,7 @@
 # Just check to see if this file is importable
 from __future__ import annotations
 
+import subprocess
 import sys
 
 import pytest
@@ -14,6 +15,31 @@ from plumbum.colorlib.styles import (  # noqa: F401
     Color,
     ColorNotFound,
 )
+
+
+@pytest.mark.parametrize(
+    "import_statement",
+    ["from plumbum import colors", "import plumbum.colors as colors"],
+)
+@pytest.mark.parametrize("register_reset", [False, True])
+def test_colors_reset_at_exit(import_statement, register_reset):
+    code = f"{import_statement}\ncolors.use_color = 4\n"
+    if register_reset:
+        code += "colors.ensure_colors_reset()\n"
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, check=True
+    )
+    assert result.stdout == (b"\033[0m" if register_reset else b"")
+    assert result.stderr == b""
+
+
+def test_import_colors_reset(mocker):
+    from plumbum import colors
+    from plumbum.colors import ensure_colors_reset
+
+    register = mocker.patch("atexit.register")
+    ensure_colors_reset()
+    register.assert_called_once_with(colors.reset.now)
 
 
 class TestNearestColor:

@@ -4,8 +4,9 @@ Color-related factories. They produce Styles.
 
 from __future__ import annotations
 
-__lazy_modules__ = {f"{__spec__.parent}.names", "functools", "operator"}
+__lazy_modules__ = {"atexit", f"{__spec__.parent}.names", "functools", "operator"}
 
+import atexit
 import functools
 import operator
 import sys
@@ -167,6 +168,13 @@ class StyleFactory(ColorFactory[S]):
             setattr(self, item, style(attributes={item: True}))
 
         self.load_stylesheet(default_styles)
+
+    def ensure_colors_reset(self) -> None:
+        """
+        Call this to ensure colors are reset when the program exits. Might add an
+        extra blank line.
+        """
+        atexit.register(self.reset.now)
 
     @property
     def use_color(self) -> int:
