@@ -48,6 +48,13 @@ __all__ = [
 
 _lower_camel_names = [n.replace("_", "") for n in color_names]
 
+_ColorInput = TypeVar("_ColorInput")
+
+
+def _normalize_integer(value: _ColorInput) -> _ColorInput | int:
+    """Normalize integer subclasses without coercing other input types."""
+    return int(value) if isinstance(value, int) else value
+
 
 def get_color_repr() -> int:
     """Gets best colors for current system."""
@@ -189,7 +196,11 @@ class Color:
                     self._from_hex(r_or_color)
 
         elif isinstance(r_or_color, int) and g is not None and b is not None:
-            self.rgb = (r_or_color, g, b)
+            self.rgb = (
+                _normalize_integer(r_or_color),
+                _normalize_integer(g),
+                _normalize_integer(b),
+            )
             self.representation = 4
             self._init_number()
         else:
@@ -238,7 +249,7 @@ class Color:
             self.rgb = from_html(color_html[self.number])
 
         elif isinstance(color, int) and 0 <= color < 16:
-            self.number = color
+            self.number = int(color)
             self.rgb = from_html(color_html[color])
 
         else:
@@ -269,7 +280,7 @@ class Color:
             self.rgb = from_html(color_html[self.number])
 
         elif isinstance(color, int) and 0 <= color <= 255:
-            self.number = color
+            self.number = int(color)
             self.rgb = from_html(color_html[color])
 
         else:

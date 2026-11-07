@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sys
+from enum import IntEnum
 
 import pytest
 
@@ -14,6 +15,17 @@ from plumbum.colorlib.styles import (  # noqa: F401
     Color,
     ColorNotFound,
 )
+
+
+class NamedInt(int):
+    __slots__ = ()
+
+    def __str__(self):
+        return "not-a-number"
+
+
+class ColorValue(IntEnum):
+    ONE = 1
 
 
 class TestNearestColor:
@@ -40,6 +52,30 @@ class TestColorLoad:
     def test_rgb(self):
         blue = Color(0, 0, 255)  # Red, Green, Blue
         assert blue.rgb == (0, 0, 255)
+
+    @pytest.mark.parametrize("number", [False, True, NamedInt(1), ColorValue.ONE])
+    @pytest.mark.parametrize("channel", range(3))
+    @pytest.mark.parametrize("fg", [False, True])
+    def test_rgb_integer_subclasses(self, number, channel, fg):
+        rgb = [0, 0, 0]
+        rgb[channel] = number
+        color = Color(*rgb, fg=fg)
+        expected = Color(*(int(component) for component in rgb), fg=fg)
+
+        assert color.ansi_sequence == expected.ansi_sequence
+        assert color.hex_code == expected.hex_code
+        assert color == expected
+
+    @pytest.mark.parametrize("number", [False, True, NamedInt(1), ColorValue.ONE])
+    @pytest.mark.parametrize("factory", [Color.from_simple, Color.from_full])
+    @pytest.mark.parametrize("fg", [False, True])
+    def test_indexed_integer_subclasses(self, number, factory, fg):
+        color = factory(number, fg=fg)
+        expected = factory(int(number), fg=fg)
+
+        assert color.ansi_sequence == expected.ansi_sequence
+        assert color.rgb == expected.rgb
+        assert color == expected
 
     def test_simple_name(self):
         green = Color.from_simple("green")
